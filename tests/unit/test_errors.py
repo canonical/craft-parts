@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from craft_parts import errors
@@ -243,11 +244,13 @@ def test_file_organize_error():
 
 def test_part_files_conflict():
     err = errors.PartFilesConflict(
-        part_name="foo", other_part_name="bar", conflicting_files=["file1", "file2"]
+        part_name="foo",
+        other_part_name="bar",
+        conflicting_files=[Path("file1"), Path("file2")],
     )
     assert err.part_name == "foo"
     assert err.other_part_name == "bar"
-    assert err.conflicting_files == ["file1", "file2"]
+    assert err.conflicting_files == [Path("file1"), Path("file2")]
     assert err.brief == (
         "Failed to stage: parts list the same file with different contents or permissions."
     )
@@ -265,12 +268,12 @@ def test_part_files_conflict_with_partitions():
     err = errors.PartFilesConflict(
         part_name="foo",
         other_part_name="bar",
-        conflicting_files=["file1", "file2"],
+        conflicting_files=[Path("file1"), Path("file2")],
         partition="test",
     )
     assert err.part_name == "foo"
     assert err.other_part_name == "bar"
-    assert err.conflicting_files == ["file1", "file2"]
+    assert err.conflicting_files == [Path("file1"), Path("file2")]
     assert err.partition == "test"
     assert err.brief == (
         "Failed to stage: parts list the same file with different contents or permissions."
@@ -286,10 +289,10 @@ def test_part_files_conflict_with_partitions():
 
 def test_stage_files_conflict():
     err = errors.StageFilesConflict(
-        part_name="foo", conflicting_files=["file1", "file2"]
+        part_name="foo", conflicting_files=[Path("file1"), Path("file2")]
     )
     assert err.part_name == "foo"
-    assert err.conflicting_files == ["file1", "file2"]
+    assert err.conflicting_files == [Path("file1"), Path("file2")]
     assert err.brief == (
         "Failed to stage: part files conflict with files already being staged."
     )

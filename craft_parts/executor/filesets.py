@@ -129,10 +129,10 @@ class Fileset:
 
 def migratable_filesets(
     fileset: Fileset,
-    srcdir: Path | str,
+    srcdir: Path,
     default_partition: str,
     partition: str | None = None,
-) -> tuple[set[str], set[str]]:
+) -> tuple[set[Path], set[Path]]:
     """Determine the files to migrate from a directory based on a fileset.
 
     :param fileset: The fileset used to filter files in the srcdir.
@@ -159,7 +159,7 @@ def migratable_filesets(
 
     # Include (resolved) parent directories for each selected file.
     for _filename in files:
-        filename = Path(_get_resolved_relative_path(_filename, srcdir))
+        filename = _get_resolved_relative_path(_filename, srcdir)
         dirname = filename.parent
         while dirname != Path():
             dirs.add(dirname)
@@ -260,18 +260,14 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[Path]:
             include_files |= {directory / include}
 
     include_dirs = [x for x in include_files if x.is_dir() and not x.is_symlink()]
-    include_files = {Path(os.path.relpath(x, directory)) for x in include_files}
+    include_files = {x.relative_to(directory) for x in include_files}
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= {
-                Path(os.path.relpath(Path(root, d), directory)) for d in dirs
-            }
-            include_files |= {
-                Path(os.path.relpath(Path(root, f), directory)) for f in files
-            }
+            include_files |= {Path(root, d).relative_to(directory) for d in dirs}
+            include_files |= {Path(root, f).relative_to(directory) for f in files}
 
     return include_files
 
@@ -299,7 +295,7 @@ def _generate_exclude_set(
     return exclude_files, exclude_dirs
 
 
-def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> str:
+def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Path:
     """Resolve path components against target base_directory.
 
     If the resulting target path is a symlink, it will not be followed.
@@ -312,11 +308,10 @@ def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> st
     :return: Resolved path, relative to base_directory.
     """
     parent_relpath, filename = relative_path.parent, relative_path.name
-    parent_abspath = os.path.realpath(base_directory / parent_relpath)
+    parent_abspath = (base_directory / parent_relpath).resolve()
 
     filename_abspath = Path(parent_abspath, filename)
-    #  https://github.com/astral-sh/ty/issues/405
-    return os.path.relpath(filename_abspath, base_directory)  # ty: ignore[invalid-return-type]
+    return filename_abspath.relative_to(base_directory.resolve())
 
 
 def normalize_entry(entry: str, default_partition: str) -> str:

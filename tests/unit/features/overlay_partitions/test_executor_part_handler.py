@@ -651,18 +651,18 @@ class TestOverlayMigrationFilesystems:
         create_overlay_whiteout(Path(p2.part_layer_dir, b_relative))
 
     @pytest.mark.parametrize(
-        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"), [(Step.STAGE, Path("stage")), (Step.PRIME, Path("prime"))]
     )
     def test_write_overlay_migration_states(self, step, step_dir):
         _run_step_migration(self._p1_handler, step)
         _run_step_migration(self._p2_handler, step)
 
-        default_overlay_state_path = Path(f"overlay/{step_dir}_overlay")
+        default_overlay_state_path = Path(f"overlay/{step_dir.name}_overlay")
         mypart_overlay_state_path = Path(
-            f"partitions/mypart/overlay/{step_dir}_overlay"
+            f"partitions/mypart/overlay/{step_dir.name}_overlay"
         )
         yourpart_overlay_state_path = Path(
-            f"partitions/yourpart/overlay/{step_dir}_overlay"
+            f"partitions/yourpart/overlay/{step_dir.name}_overlay"
         )
 
         assert default_overlay_state_path.exists()
@@ -673,13 +673,21 @@ class TestOverlayMigrationFilesystems:
         mypart_overlay_state = _load_migration_state(mypart_overlay_state_path)
         yourpart_overlay_state = _load_migration_state(yourpart_overlay_state_path)
 
-        assert default_overlay_state.files == {"dir1/a", "dir1/baz", "dir1/dir2/.wh.b"}
-        assert default_overlay_state.directories == {"dir1", "dir1/dir2", "foo"}
+        assert default_overlay_state.files == {
+            Path("dir1/a"),
+            Path("dir1/baz"),
+            Path("dir1/dir2/.wh.b"),
+        }
+        assert default_overlay_state.directories == {
+            Path("dir1"),
+            Path("dir1/dir2"),
+            Path("foo"),
+        }
 
-        my_part_overlay_expected_files = {"bar", "qux"}
+        my_part_overlay_expected_files = {Path("bar"), Path("qux")}
         # Whiteout files are kept in stage but not in prime for non-default partitions
         if step == Step.STAGE:
-            my_part_overlay_expected_files.update({".wh.bla"})
+            my_part_overlay_expected_files.update({Path(".wh.bla")})
         assert mypart_overlay_state.files == my_part_overlay_expected_files
         assert mypart_overlay_state.directories == set()
         assert yourpart_overlay_state.files == set()

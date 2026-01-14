@@ -427,7 +427,7 @@ class PartFilesConflict(PartsError):  # noqa: N818
         *,
         part_name: str,
         other_part_name: str,
-        conflicting_files: list[str],
+        conflicting_files: list[pathlib.Path],
         partition: str | None = None,
     ) -> None:
         self.part_name = part_name
@@ -435,7 +435,7 @@ class PartFilesConflict(PartsError):  # noqa: N818
         self.conflicting_files = conflicting_files
         self.partition = partition
 
-        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
+        indented_conflicting_files = (f"    {i.as_posix()}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         partition_info = f" for the {partition!r} partition" if partition else ""
         brief = (
@@ -459,7 +459,7 @@ class OverlayStageConflict(PartsError):  # noqa: N818
         *,
         part_name: str,
         overlay_part_name: str,
-        conflicting_files: list[str],
+        conflicting_files: list[pathlib.Path],
         partition: str | None = None,
     ) -> None:
         self.part_name = part_name
@@ -467,7 +467,7 @@ class OverlayStageConflict(PartsError):  # noqa: N818
         self.conflicting_files = conflicting_files
         self.partition = partition
 
-        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
+        indented_conflicting_files = (f"    {i.as_posix()}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         partition_info = f" for the {partition!r} partition" if partition else ""
         brief = (

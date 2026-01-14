@@ -48,16 +48,16 @@ Stream = TextIO | int | None
 class StepPartitionContents:
     """Files and directories to be added to the step's state."""
 
-    files: set[str] = dataclasses.field(default_factory=set[str])
-    dirs: set[str] = dataclasses.field(default_factory=set[str])
+    files: set[Path] = dataclasses.field(default_factory=set[Path])
+    dirs: set[Path] = dataclasses.field(default_factory=set[Path])
 
 
 @dataclasses.dataclass(frozen=True)
 class StagePartitionContents(StepPartitionContents):
     """Files and directories for both stage and backstage in the step's state."""
 
-    backstage_files: set[str] = dataclasses.field(default_factory=set[str])
-    backstage_dirs: set[str] = dataclasses.field(default_factory=set[str])
+    backstage_files: set[Path] = dataclasses.field(default_factory=set[Path])
+    backstage_dirs: set[Path] = dataclasses.field(default_factory=set[Path])
 
 
 @dataclasses.dataclass(init=False)
@@ -326,7 +326,7 @@ class StepHandler:
             for partition in self._partitions:
                 partition_files, partition_dirs = filesets.migratable_filesets(
                     prime_fileset,
-                    str(self._part.part_install_dirs[partition]),
+                    self._part.part_install_dirs[partition],
                     self._step_info.default_partition,
                     partition,
                 )
@@ -349,7 +349,7 @@ class StepHandler:
         else:
             files, dirs = filesets.migratable_filesets(
                 prime_fileset,
-                str(self._part.part_install_dir),
+                self._part.part_install_dir,
                 DEFAULT_PARTITION,
             )
             files, dirs = migrate_files(

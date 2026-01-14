@@ -26,19 +26,19 @@ from tests.unit.executor.test_organize import organize_and_assert
     [
         # Files in the default partition
         {
-            "setup_files": ["foo", "bar", "baz", "qux1"],
+            "setup_files": [Path("foo"), Path("bar"), Path("baz"), Path("qux1")],
             "organize_map": {
-                "foo": "foo1",
-                "qux": "(default)/qux1",
-                "(default)/bar": "bar1",
-                "(default)/baz": "(default)/baz1",
+                Path("foo"): "foo1",
+                Path("qux"): "(default)/qux1",
+                Path("(default)/bar"): "bar1",
+                Path("(default)/baz"): "(default)/baz1",
             },
             "expected": [(["bar1", "baz1", "foo1", "qux1"], "")],
         },
         # Raise an error for files sourced from a non-default partition
         {
             "organize_map": {
-                "(mypart)/foo": "(our/special-part)/foo1",
+                Path("(mypart)/foo"): "(our/special-part)/foo1",
             },
             "expected": errors.FileOrganizeError,
             "expected_message": (
@@ -48,8 +48,8 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # Files that should have the same name in two different partitions
         {
-            "setup_files": ["foo", "bar"],
-            "organize_map": {"foo": "baz", "bar": "(mypart)/baz"},
+            "setup_files": [Path("foo"), Path("bar")],
+            "organize_map": {Path("foo"): "baz", Path("bar"): "(mypart)/baz"},
             "expected": [
                 (["baz"], ""),
                 (["baz"], "../partitions/mypart/parts/part-name/install"),
@@ -60,10 +60,10 @@ from tests.unit.executor.test_organize import organize_and_assert
         # Files that should have the same name in two different partitions where one is
         # a namespaced partition
         {
-            "setup_files": ["foo", "bar"],
+            "setup_files": [Path("foo"), Path("bar")],
             "organize_map": {
-                "foo": "baz",
-                "bar": "(our/special-part)/baz",
+                Path("foo"): "baz",
+                Path("bar"): "(our/special-part)/baz",
             },
             "expected": [
                 (["baz"], ""),
@@ -72,23 +72,23 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # simple_dir_with_file
         {
-            "setup_dirs": ["foodir"],
-            "setup_files": [str(Path("foodir", "foo"))],
-            "organize_map": {"foodir": "bardir"},
+            "setup_dirs": [Path("foodir")],
+            "setup_files": [Path("foodir", "foo")],
+            "organize_map": {Path("foodir"): "bardir"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize_to_the_same_directory
         {
-            "setup_dirs": ["bardir", "foodir"],
+            "setup_dirs": [Path("bardir"), Path("foodir")],
             "setup_files": [
-                str(Path("foodir", "foo")),
-                str(Path("bardir", "bar")),
+                Path("foodir", "foo"),
+                Path("bardir", "bar"),
                 "basefoo",
             ],
             "organize_map": {
-                "foodir": "bin",
-                "bardir": "bin",
-                "basefoo": "bin/basefoo",
+                Path("foodir"): "bin",
+                Path("bardir"): "bin",
+                Path("basefoo"): "bin/basefoo",
             },
             "expected": [
                 (["bin"], ""),
@@ -97,14 +97,14 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # leading_slash_in_value
         {
-            "setup_files": ["foo"],
-            "organize_map": {"foo": "/bar"},
+            "setup_files": [Path("foo")],
+            "organize_map": {Path("foo"): "/bar"},
             "expected": [(["bar"], "")],
         },
         # overwrite_existing_file
         {
-            "setup_files": ["foo", "bar"],
-            "organize_map": {"foo": "bar"},
+            "setup_files": [Path("foo"), Path("bar")],
+            "organize_map": {Path("foo"): "bar"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*trying to organize file 'foo' to 'bar', but 'bar' already exists.*"
@@ -113,10 +113,10 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # overwrite_existing_file with partitions
         {
-            "setup_files": ["foo", "bar"],
+            "setup_files": [Path("foo"), Path("bar")],
             "organize_map": {
-                "(default)/foo": "(our/special-part)/bar",
-                "(default)/bar": "(our/special-part)/bar",
+                Path("(default)/foo"): "(our/special-part)/bar",
+                Path("(default)/bar"): "(our/special-part)/bar",
             },
             "expected": errors.FileOrganizeError,
             "expected_message": (
@@ -129,8 +129,8 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # *_for_files
         {
-            "setup_files": ["foo.conf", "bar.conf"],
-            "organize_map": {"*.conf": "dir/"},
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
+            "organize_map": {Path("*.conf"): "dir/"},
             "expected": [
                 (["dir"], ""),
                 (["bar.conf", "foo.conf"], "dir"),
@@ -138,15 +138,15 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # *_for_files_with_non_dir_dst
         {
-            "setup_files": ["foo.conf", "bar.conf"],
-            "organize_map": {"*.conf": "dir"},
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
+            "organize_map": {Path("*.conf"): "dir"},
             "expected": errors.FileOrganizeError,
             "expected_message": r".*multiple files to be organized into 'dir'.*",
         },
         # *_for_files_with_non_dir_dst with partitions
         {
-            "setup_files": ["foo.conf", "bar.conf"],
-            "organize_map": {"*.conf": "(our/special-part)/dir"},
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
+            "organize_map": {Path("*.conf"): "(our/special-part)/dir"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*multiple files to be organized into '\(our/special-part\)/dir'.*"
@@ -154,12 +154,12 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # *_for_directories
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                str(Path("dir1", "foo")),
-                str(Path("dir2", "bar")),
+                Path("dir1", "foo"),
+                Path("dir2", "bar"),
             ],
-            "organize_map": {"dir*": "dir/"},
+            "organize_map": {Path("dir*"): "dir/"},
             "expected": [
                 (["dir"], ""),
                 (["dir1", "dir2"], "dir"),
@@ -169,13 +169,13 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # combined_*_with_file
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                str(Path("dir1", "foo")),
-                str(Path("dir1", "bar")),
-                str(Path("dir2", "bar")),
+                Path("dir1", "foo"),
+                Path("dir1", "bar"),
+                Path("dir2", "bar"),
             ],
-            "organize_map": {"dir*": "dir/", "dir1/bar": "."},
+            "organize_map": {Path("dir*"): "dir/", Path("dir1/bar"): "."},
             "expected": [
                 (["bar", "dir"], ""),
                 (["dir1", "dir2"], "dir"),
@@ -185,12 +185,12 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # *_into_dir
         {
-            "setup_dirs": ["dir"],
+            "setup_dirs": [Path("dir")],
             "setup_files": [
-                str(Path("dir", "foo")),
-                str(Path("dir", "bar")),
+                Path("dir", "foo"),
+                Path("dir", "bar"),
             ],
-            "organize_map": {"dir/f*": "nested/dir/"},
+            "organize_map": {Path("dir/f*"): "nested/dir/"},
             "expected": [
                 (["dir", "nested"], ""),
                 (["bar"], "dir"),
@@ -242,14 +242,14 @@ def test_organize(new_dir, data):
     [
         # Organize 2 files to the same destination, one with a dir as a destination
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                str(Path("dir1", "foo")),
-                str(Path("dir2", "foo")),
+                Path("dir1", "foo"),
+                Path("dir2", "foo"),
             ],
             "organize_map": {
-                "dir1/foo": "(our/special-part)/dir/foo",
-                "dir2/foo": "(our/special-part)/dir/",
+                Path("dir1/foo"): "(our/special-part)/dir/foo",
+                Path("dir2/foo"): "(our/special-part)/dir/",
             },
             "expected": errors.FileOrganizeError,
             "expected_message": (

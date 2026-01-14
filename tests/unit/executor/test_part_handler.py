@@ -1067,7 +1067,7 @@ class TestFileFilter:
     def test_apply_file_filter_empty(self, new_dir, partitions):
         fileset = filesets.Fileset([])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1181,12 +1181,12 @@ class TestHelpers:
         [
             (
                 {},
-                {None: {"a": "a"}},
-                {None: {"b": "b"}},
+                {None: {"a": Path("a")}},
+                {None: {"b": Path("b")}},
                 {
                     None: MigrationState(
-                        files={"a"},
-                        directories={"b"},
+                        files={Path("a")},
+                        directories={Path("b")},
                     )
                 },
             ),
@@ -1194,17 +1194,17 @@ class TestHelpers:
                 {
                     "default": MigrationState(
                         partition="default",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     )
                 },
-                {"default": {"a-key": "a-value", "c-key": "c-value"}},
-                {"default": {"b-key": "b-value"}},
+                {"default": {"a-key": Path("a-value"), "c-key": Path("c-value")}},
+                {"default": {"b-key": Path("b-value")}},
                 {
                     "default": MigrationState(
                         partition="default",
-                        files={"foo", "a-value", "c-value"},
-                        directories={"bar", "b-value"},
+                        files={Path("foo"), Path("a-value"), Path("c-value")},
+                        directories={Path("bar"), Path("b-value")},
                     )
                 },
             ),
@@ -1212,22 +1212,22 @@ class TestHelpers:
                 {
                     "partition-a": MigrationState(
                         partition="partition-a",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     )
                 },
-                {"default": {"a": "a"}},
-                {"default": {"b": "b"}},
+                {"default": {"a": Path("a")}},
+                {"default": {"b": Path("b")}},
                 {
                     "default": MigrationState(
                         partition="default",
-                        files={"a"},
-                        directories={"b"},
+                        files={Path("a")},
+                        directories={Path("b")},
                     ),
                     "partition-a": MigrationState(
                         partition="partition-a",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     ),
                 },
             ),
@@ -1235,25 +1235,25 @@ class TestHelpers:
                 {
                     "partition-a": MigrationState(
                         partition="partition-a",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     )
                 },
-                {"partition-b": {"a": "a"}},
-                {"partition-c": {"b": "b"}},
+                {"partition-b": {"a": Path("a")}},
+                {"partition-c": {"b": Path("b")}},
                 {
                     "partition-c": MigrationState(
                         partition="partition-c",
-                        directories={"b"},
+                        directories={Path("b")},
                     ),
                     "partition-a": MigrationState(
                         partition="partition-a",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     ),
                     "partition-b": MigrationState(
                         partition="partition-b",
-                        files={"a"},
+                        files={Path("a")},
                     ),
                 },
             ),

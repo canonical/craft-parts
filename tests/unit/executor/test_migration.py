@@ -158,7 +158,7 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert files == {"bin"}
+        assert files == {Path("bin")}
         assert dirs == set()
         assert Path(stage_dir, bin_path).is_symlink()
 
@@ -640,16 +640,16 @@ class TestFilterWhiteouts:
     def test_file_whiteout_removal(self, new_dir):
         """Expect all whiteout files to be removed."""
         files = {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "a/.wh.bar2.txt",
-            "b/baz.txt",
-            "b/.wh..wh..opq",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("a/.wh.bar2.txt"),
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),
         }
-        dirs = {"a", "b", "c"}
+        dirs = {Path("a"), Path("b"), Path("c")}
 
         # Create a backing file and dir
         Path("foo.txt").touch()
@@ -661,69 +661,69 @@ class TestFilterWhiteouts:
 
         # expect no modification in files or dirs
         assert files == {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",  # backing file exists
-            "a/.wh.bar.txt",  # backing file exists
-            "b/baz.txt",
-            "b/.wh..wh..opq",  # backing dir exists
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),  # backing file exists
+            Path("a/.wh.bar.txt"),  # backing file exists
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),  # backing dir exists
         }
-        assert dirs == {"a", "b", "c"}
+        assert dirs == {Path("a"), Path("b"), Path("c")}
 
     def test_file_whiteout_removal_no_base(self):
         """Ignore whiteout files if no base set."""
         files = {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "b/baz.txt",
-            "b/.wh..wh..opq",
-            ".wh..wh..opq",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),
+            Path(".wh..wh..opq"),
         }
-        dirs = {"a", "b", "c"}
+        dirs = {Path("a"), Path("b"), Path("c")}
 
         migration.filter_dangling_whiteouts(files, dirs, base_dir=None)
 
         # expect no modification in files or dirs
         assert files == {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "b/baz.txt",
-            "b/.wh..wh..opq",
-            ".wh..wh..opq",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),
+            Path(".wh..wh..opq"),
         }
-        assert dirs == {"a", "b", "c"}
+        assert dirs == {Path("a"), Path("b"), Path("c")}
 
     def test_filter_all_whiteouts(self):
         """Expect all whiteout files to be removed."""
         files = {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "b/baz.txt",
-            "b/.wh..wh..opq",
-            ".wh..wh..opq",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),
+            Path(".wh..wh..opq"),
         }
 
         whiteouts = migration.filter_all_whiteouts(files)
 
         assert files == {
-            "f1",
-            "f2",
-            "f3",
-            "b/baz.txt",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path("b/baz.txt"),
         }
         assert whiteouts == {
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "b/.wh..wh..opq",
-            ".wh..wh..opq",
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("b/.wh..wh..opq"),
+            Path(".wh..wh..opq"),
         }

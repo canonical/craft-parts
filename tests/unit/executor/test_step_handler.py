@@ -263,10 +263,10 @@ class TestStepHandlerBuiltins:
         step_contents = StepContents(stage=True)
         default_partition = partitions[0] if partitions else "default"
         step_contents.partitions_contents[default_partition] = StagePartitionContents(
-            files={"subdir/bar", "foo"},
-            dirs={"subdir"},
-            backstage_files={"foo", "subdir/bar"},
-            backstage_dirs={"subdir"},
+            files={Path("subdir/bar"), Path("foo")},
+            dirs={Path("subdir")},
+            backstage_files={Path("foo"), Path("subdir/bar")},
+            backstage_dirs={Path("subdir")},
         )
         if partitions:
             for partition in partitions[1:]:
@@ -296,7 +296,7 @@ class TestStepHandlerBuiltins:
         step_contents = StepContents()
         default_partition = partitions[0] if partitions else "default"
         step_contents.partitions_contents[default_partition] = StepPartitionContents(
-            files={"subdir/bar", "foo"}, dirs={"subdir"}
+            files={Path("subdir/bar"), Path("foo")}, dirs={Path("subdir")}
         )
         if partitions:
             for partition in partitions[1:]:

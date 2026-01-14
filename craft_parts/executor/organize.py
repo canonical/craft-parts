@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 def organize_files(  # noqa: PLR0912
     *,
     part_name: str,
-    file_map: dict[str, str],
+    file_map: dict[Path, str],
     install_dir_map: Mapping[str | None, Path],
     overwrite: bool,
     default_partition: str,
@@ -65,7 +65,7 @@ def organize_files(  # noqa: PLR0912
     :raises FileOrganizeError: If partitions are enabled and the source file is not from
         the default partition.
     """
-    for key in sorted(file_map, key=lambda x: ["*" in x, x]):
+    for key in sorted(file_map, key=lambda x: ["*" in x.as_posix(), x]):
         src = Path(get_src_path(key, part_name, install_dir_map, default_partition))
         _dst, dst_string = get_dst_path(
             key, file_map, install_dir_map, default_partition
@@ -84,7 +84,7 @@ def organize_files(  # noqa: PLR0912
             src_count += 1
 
             # Organize a dir to a dir
-            if src.is_dir() and "*" not in key:
+            if src.is_dir() and "*" not in str(key):
                 file_utils.link_or_copy_tree(src, dst)
                 shutil.rmtree(src)
                 continue
@@ -110,7 +110,7 @@ def organize_files(  # noqa: PLR0912
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
-                            f"trying to organize file {key!r} to "
+                            f"trying to organize file {key.as_posix()!r} to "
                             f"{file_map[key]!r}, but "
                             f"{dst_string!r} already exists"
                         ),
@@ -133,7 +133,7 @@ def organize_files(  # noqa: PLR0912
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
-                            f"trying to organize {key!r} to "
+                            f"trying to organize {key.as_posix()!r} to "
                             f"{file_map[key]!r}, but "
                             f"{rel_dst_string!r} already exists"
                         ),
@@ -147,11 +147,11 @@ def organize_files(  # noqa: PLR0912
 
 
 def get_src_path(
-    key: str,
+    key: Path,
     part_name: str,
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
-) -> str:
+) -> Path:
     """Return the full path for a relative source."""
     src_partition, src_inner_path = path_utils.get_partition_and_path(
         key, default_partition
@@ -173,15 +173,15 @@ def get_src_path(
     if src_partition == DEFAULT_PARTITION:
         src_partition = default_partition
 
-    return Path(install_dir_map[src_partition], src_inner_path).as_posix()
+    return install_dir_map[src_partition] / src_inner_path
 
 
 def get_dst_path(
-    key: str,
-    file_map: dict[str, str],
+    key: Path,
+    file_map: dict[Path, str],
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
-) -> tuple[str, str]:
+) -> tuple[Path, str]:
     """Return the full destination path and log-friendly representation of a destination."""
     # Remove the leading slash so the path actually joins
     # Also trailing slash is significant, be careful if using pathlib!
@@ -201,4 +201,4 @@ def get_dst_path(
     else:
         dst_string = str(dst_inner_path)
 
-    return Path(install_dir_map[dst_partition], dst_inner_path).as_posix(), dst_string
+    return install_dir_map[dst_partition] / dst_inner_path, dst_string

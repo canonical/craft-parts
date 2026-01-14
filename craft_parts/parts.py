@@ -365,7 +365,7 @@ class PartSpec(BaseModel):
             default.
     """
 
-    organize_files: dict[str, str] = Field(
+    organize_files: dict[Path, str] = Field(
         default_factory=dict,
         alias="organize",
         description="A map of files from the build directory to their destinations in the stage directory.",

@@ -53,7 +53,7 @@ class TestPartSpecs:
             "build-packages": ["build-pkg1", "build-pkg2"],
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
             "build-attributes": ["attr1", "attr2"],
-            "organize": {"src1": "dest1", "src2": "dest2"},
+            "organize": {Path("src1"): "dest1", Path("src2"): "dest2"},
             "stage": ["-usr/docs"],
             "prime": ["*"],
             "override-pull": "override-pull",
@@ -241,7 +241,7 @@ class TestPartData:
 
     def test_part_organize_files(self, partitions):
         p = Part("foo", {"organize": {"a": "b", "c": "d"}}, partitions=partitions)
-        assert p.spec.organize_files == {"a": "b", "c": "d"}
+        assert p.spec.organize_files == {Path("a"): "b", Path("c"): "d"}
 
     def test_part_dependencies(self, partitions):
         p = Part("foo", {"after": ["bar"]}, partitions=partitions)

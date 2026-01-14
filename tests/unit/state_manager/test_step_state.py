@@ -64,22 +64,22 @@ class TestMigrationState:
             (
                 step_state.MigrationState(
                     partition=None,
-                    files={"a", "b", "c"},
-                    directories={"d", "e", "f"},
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
                     partitions_contents={
                         "foo": step_state.MigrationContents(
-                            files={"bar"}, directories={"baz"}
+                            files={Path("bar")}, directories={Path("baz")}
                         )
                     },
                 ),
                 "foo",
-                ({"bar"}, {"baz"}),
+                ({Path("bar")}, {Path("baz")}),
             ),
             (
                 step_state.MigrationState(
                     partition=None,
-                    files={"a", "b", "c"},
-                    directories={"d", "e", "f"},
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
                     partitions_contents={
                         "foo": step_state.MigrationContents(
                             files={"bar"}, directories={"baz"}
@@ -87,7 +87,7 @@ class TestMigrationState:
                     },
                 ),
                 None,
-                ({"a", "b", "c"}, {"d", "e", "f"}),
+                ({Path("a"), Path("b"), Path("c")}, {Path("d"), Path("e"), Path("f")}),
             ),
             (
                 step_state.MigrationState(
@@ -101,15 +101,15 @@ class TestMigrationState:
                     },
                 ),
                 "default",
-                ({"a", "b", "c"}, {"d", "e", "f"}),
+                ({Path("a"), Path("b"), Path("c")}, {Path("d"), Path("e"), Path("f")}),
             ),
             (
                 step_state.MigrationState(
-                    files={"a", "b", "c"},
-                    directories={"d", "e", "f"},
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
                     partitions_contents={
                         "foo": step_state.MigrationContents(
-                            files={"bar"}, directories={"baz"}
+                            files={Path("bar")}, directories={Path("baz")}
                         )
                     },
                 ),
@@ -126,33 +126,33 @@ class TestMigrationState:
         [
             (
                 step_state.MigrationState(
-                    files={"a"},
-                    directories={"b"},
+                    files={Path("a")},
+                    directories={Path("b")},
                 ),
-                {"foo"},
-                {"bar"},
-                {"a", "foo"},
-                {"b", "bar"},
+                {Path("foo")},
+                {Path("bar")},
+                {Path("a"), Path("foo")},
+                {Path("b"), Path("bar")},
             ),
             (
                 step_state.MigrationState(
-                    files={"a"},
-                    directories={"b"},
+                    files={Path("a")},
+                    directories={Path("b")},
                 ),
                 None,
                 None,
-                {"a"},
-                {"b"},
+                {Path("a")},
+                {Path("b")},
             ),
             (
                 step_state.MigrationState(
-                    files={"a", "c"},
-                    directories={"b", "c"},
+                    files={Path("a"), Path("c")},
+                    directories={Path("b"), Path("c")},
                 ),
-                {"c"},
-                {"c"},
-                {"a", "c"},
-                {"b", "c"},
+                {Path("c")},
+                {Path("c")},
+                {Path("a"), Path("c")},
+                {Path("b"), Path("c")},
             ),
         ],
     )

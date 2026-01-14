@@ -563,14 +563,15 @@ class TestOverlayMigration:
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"),
+        [(Step.STAGE, Path("stage")), (Step.PRIME, Path("prime"))],
     )
     def test_migrate_overlay(self, step, step_dir):
         _run_step_migration(self._p1_handler, step)
-        assert Path(f"{step_dir}/dir1/foo").exists()
-        assert Path(f"{step_dir}/bar").exists()
-        assert Path(f"{step_dir}/dir1/baz").exists()
-        assert Path(f"overlay/{step_dir}_overlay").exists()
+        assert (step_dir / "dir1/foo").exists()
+        assert (step_dir / "bar").exists()
+        assert (step_dir / "dir1/baz").exists()
+        assert Path(f"overlay/{step_dir.name}_overlay").exists()
 
     @pytest.mark.parametrize(
         ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]

@@ -68,7 +68,7 @@ class StageCandidate:
     # Name of the part that produced these files and directories
     part_name: str
     # The actual files and directories, relative to ``source_dir``
-    contents: set[str]
+    contents: set[Path]
     # The directory that contains ``contents``
     source_dir: Path
     # The permissions that apply to ``contents``
@@ -86,7 +86,7 @@ def _get_candidate_from_install_dir(
         return None
 
     stage_fileset = filesets.Fileset(stage_files, name="stage")
-    srcdir = str(part.part_install_dirs[partition])
+    srcdir = part.part_install_dirs[partition]
     part_files, part_directories = filesets.migratable_filesets(
         stage_fileset,
         srcdir,
@@ -104,7 +104,7 @@ def _get_candidate_from_install_dir(
     )
 
 
-def _get_overlay_layer_contents(source: Path) -> tuple[set[str], set[str]]:
+def _get_overlay_layer_contents(source: Path) -> tuple[set[Path], set[Path]]:
     """Get the files and directories from a directory, relative to that directory."""
     concrete_files: set[Path] = set()
     concrete_dirs: set[Path] = set()
@@ -124,8 +124,8 @@ def _get_overlay_layer_contents(source: Path) -> tuple[set[str], set[str]]:
                 concrete_dirs.add(path)
 
     return (
-        {str(f.relative_to(source)) for f in concrete_files},
-        {str(d.relative_to(source)) for d in concrete_dirs},
+        {f.relative_to(source) for f in concrete_files},
+        {d.relative_to(source) for d in concrete_dirs},
     )
 
 
@@ -206,7 +206,7 @@ def _check_for_stage_collisions_per_partition(
             # Our files that are also in a different part.
             common = candidate.contents & other_candidate.contents
 
-            conflict_files: list[str] = []
+            conflict_files: list[Path] = []
             for item in common:
                 this = Path(candidate.source_dir, item)
                 other = Path(other_candidate.source_dir, item)
@@ -224,7 +224,7 @@ def _check_for_stage_collisions_per_partition(
                     other,
                     permissions_this,
                     permissions_other,
-                    rel_dirname=Path(item).parent.as_posix(),
+                    rel_dirname=item.parent,
                     path1_is_overlay=candidate.is_overlay,
                     path2_is_overlay=other_candidate.is_overlay,
                 ):
@@ -250,12 +250,12 @@ def _check_for_stage_collisions_per_partition(
 
 
 def paths_collide(
-    path1: Path | str,
-    path2: Path | str,
+    path1: Path,
+    path2: Path,
     permissions_path1: list[Permissions] | None = None,
     permissions_path2: list[Permissions] | None = None,
     *,
-    rel_dirname: str = "",
+    rel_dirname: Path = Path(),
     path1_is_overlay: bool = False,
     path2_is_overlay: bool = False,
 ) -> bool:
@@ -273,7 +273,6 @@ def paths_collide(
     :param path1_is_overlay: Indicates if path1 comes from the overlay.
     :param path2_is_overlay: Indicates if path2 comes from the overlay.
     """
-    path1, path2 = Path(path1), Path(path2)
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 
@@ -336,7 +335,7 @@ def _file_collides(file_this: Path, file_other: Path) -> bool:
     return False
 
 
-def normalize_symlink(path: str | Path, rel_dirname: str | Path) -> str:
+def normalize_symlink(path: Path, rel_dirname: Path) -> Path:
     """Simulate a symlink resolution (only one level).
 
     We do not want to really resolve the symlink with os.path.realpath() since it
@@ -346,4 +345,4 @@ def normalize_symlink(path: str | Path, rel_dirname: str | Path) -> str:
     root.
 
     """
-    return os.path.normpath(Path("/", rel_dirname, path))
+    return Path(os.path.normpath(Path("/", rel_dirname, path)))
