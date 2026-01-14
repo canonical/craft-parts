@@ -93,6 +93,7 @@ Here is a consolidated example of how to use the Gradle plugin.
     gradle-parameters:
       - -D<some-parameter>=<some-value>
     gradle-task: build
+    build-snaps: [gradle]
     build-environment:
       - http_proxy: <http-proxy-url>
       - https_proxy: <https-proxy-url>

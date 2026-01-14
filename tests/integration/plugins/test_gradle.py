@@ -53,6 +53,7 @@ def test_gradle_plugin(new_dir, testing_source_dir, partitions, use_gradlew):
             gradle-init-script: init.gradle
             source: {testing_source_dir}
             build-packages: [openjdk-21-jdk]
+            build-snaps: [gradle]
             build-environment:
                   # This is just because the test environment has multiple java versions and will
                   # use default-jre if unspecified.
