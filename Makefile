@@ -96,9 +96,6 @@ endif
 ifeq ($(wildcard /usr/share/doc/tinyproxy/copyright),)
 APT_PACKAGES += tinyproxy
 endif
-ifeq ($(wildcard /usr/share/doc/gradle/copyright),)
-APT_PACKAGES += gradle
-endif
 # Maven
 ifeq ($(wildcard /usr/share/doc/maven/copyright),)
 APT_PACKAGES += maven
@@ -242,8 +239,19 @@ else
 	sudo snap install core20
 endif
 
+.PHONY: install-gradle
+install-gradle:
+ifneq ($(NO_JAVA),1)
+ifneq ($(wildcard /snap/gradle/),)
+else ifeq ($(shell which snap),)
+	$(warning Cannot install gradle without snap. Please install it yourself.)
+else
+	sudo snap install gradle --classic
+endif
+endif
+
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup
+install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup install-gradle
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
