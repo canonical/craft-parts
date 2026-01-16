@@ -10,7 +10,8 @@ parts:
     plugin: gradle
     source: gradle-plugin
     gradle-task: publish
-    build-attributes: [self-contained]
+    build-attributes:
+      - self-contained
 
   main:
     plugin: gradle
