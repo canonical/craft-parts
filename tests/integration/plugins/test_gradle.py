@@ -117,6 +117,11 @@ def test_gradle_self_contained(new_dir, partitions):
     assert list(backstage.rglob("*.jar"))
     assert list(backstage.rglob("*.pom"))
 
+    assert list(backstage.rglob("hello-plugin*.jar"))
+    assert list(backstage.rglob("hello-plugin*.pom"))
+    assert list(backstage.rglob("org.starcraft.hello-plugin.gradle.plugin"))
+
+
     jar_dir = lf.project_info.prime_dir / "jar"
     jars = sorted(jar_dir.glob("*.jar"))
     assert jars

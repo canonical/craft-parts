@@ -6,11 +6,18 @@ parts:
     build-attributes:
       - self-contained
 
+  hello-plugin:
+    plugin: gradle
+    source: gradle-plugin
+    gradle-task: publish
+    build-attributes: [self-contained]
+
   main:
     plugin: gradle
     source: java-main
     gradle-task: build
     after:
       - hello
+      - hello-plugin
     build-attributes:
       - self-contained
