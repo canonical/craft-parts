@@ -16,7 +16,7 @@
 """Experiments with pydantic schemas."""
 
 from functools import reduce
-from typing import Annotated, Any, TypeAlias, cast
+from typing import Annotated, Any, Literal, TypeAlias, cast
 
 import pydantic
 from pydantic.json_schema import (
@@ -58,6 +58,8 @@ class Part(pydantic.BaseModel):
         ref_template: str = DEFAULT_REF_TEMPLATE,
         schema_generator: type[GenerateJsonSchema] = GenerateJsonSchema,
         mode: JsonSchemaMode = "validation",
+        *,
+        union_format: Literal["any_of", "primitive_type_array"] = "any_of",
     ) -> dict[str, Any]:
         """Create the JSON schema for a Part."""
         registered_plugins = plugins.get_registered_plugins()
@@ -126,6 +128,8 @@ class PartsFile(pydantic.BaseModel):
         ref_template: str = DEFAULT_REF_TEMPLATE,
         schema_generator: type[GenerateJsonSchema] = GenerateJsonSchema,
         mode: JsonSchemaMode = "validation",
+        *,
+        union_format: Literal["any_of", "primitive_type_array"] = "any_of",
     ) -> dict[str, Any]:
         """Create the JSON schema for a file with Parts."""
         schema = super().model_json_schema(
