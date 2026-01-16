@@ -3,6 +3,8 @@ parts:
     plugin: gradle
     source: java-dep-hello
     gradle-task: publish
+    gradle-parameters:
+      - --no-daemon
     build-attributes:
       - self-contained
 
@@ -10,6 +12,8 @@ parts:
     plugin: gradle
     source: gradle-plugin
     gradle-task: publish
+    gradle-parameters:
+      - --no-daemon
     build-attributes:
       - self-contained
 
@@ -17,6 +21,8 @@ parts:
     plugin: gradle
     source: java-main
     gradle-task: build
+    gradle-parameters:
+      - --no-daemon
     after:
       - hello
       - hello-plugin

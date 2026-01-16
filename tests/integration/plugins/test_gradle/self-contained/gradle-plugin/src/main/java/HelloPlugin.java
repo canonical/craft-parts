@@ -6,7 +6,7 @@
   public class HelloPlugin implements Plugin<Project> {
       @Override
       public void apply(Project project) {
-          project.getExtensions().getExtraProperties().set("helloPluginApplied", true);
+          System.out.println("applied HelloPlugin");
       }
   }
 

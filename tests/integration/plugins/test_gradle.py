@@ -120,12 +120,13 @@ def test_gradle_self_contained(new_dir, partitions):
 
     assert list(backstage.rglob("org.starcraft.hello-plugin.gradle.plugin"))
 
-    jar_dir = lf.project_info.prime_dir / "jar"
-    jars = sorted(jar_dir.glob("*.jar"))
-    assert jars
-
     output = subprocess.check_output(
-        ["java", "-cp", f"{jar_dir}/*", "org.starcraft.HelloCraft"],
+        [
+            "java",
+            "-cp",
+            f"{lf.project_info.prime_dir}/jar/*",
+            "org.starcraft.HelloCraft",
+        ],
         text=True,
     )
     assert output.strip() == "Hello, craft!"

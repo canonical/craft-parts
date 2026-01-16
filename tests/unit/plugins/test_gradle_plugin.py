@@ -225,8 +225,7 @@ def test_get_build_commands_self_contained(self_contained_part_info):
     init_script_path = (
         plugin._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
     )
-    assert "--offline" in commands[0]
-    assert f"--init-script {init_script_path}" in commands[0]
+    assert f"--offline --init-script {init_script_path}" in commands[0]
     init_script = init_script_path.read_text()
     assert "settingsEvaluated" in init_script
     assert "maven-publish" not in init_script
