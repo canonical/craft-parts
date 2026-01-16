@@ -419,13 +419,13 @@ dev = [
     { name = "types-setuptools" },
 ]
 dev-focal = [
-    { name = "python-apt", version = "2.0.1+ubuntu0", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "sys_platform == 'linux'" },
+    { name = "python-apt", version = "2.0.1+ubuntu0", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "python_full_version < '3.14' and sys_platform == 'linux'" },
 ]
 dev-jammy = [
-    { name = "python-apt", version = "2.4.0+ubuntu4", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "sys_platform == 'linux'" },
+    { name = "python-apt", version = "2.4.0+ubuntu4", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "python_full_version < '3.14' and sys_platform == 'linux'" },
 ]
 dev-noble = [
-    { name = "python-apt", version = "2.7.7+ubuntu3", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "sys_platform == 'linux'" },
+    { name = "python-apt", version = "2.7.7+ubuntu3", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "python_full_version < '3.14' and sys_platform == 'linux'" },
 ]
 dev-plucky = [
     { name = "python-apt", version = "2.9.9", source = { registry = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }, marker = "sys_platform == 'linux'" },
@@ -500,9 +500,9 @@ dev = [
     { name = "types-pygments" },
     { name = "types-setuptools" },
 ]
-dev-focal = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = "~=2.0.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
-dev-jammy = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = "~=2.4.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
-dev-noble = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = "~=2.7.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
+dev-focal = [{ name = "python-apt", marker = "python_full_version < '3.14' and sys_platform == 'linux'", specifier = "~=2.0.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
+dev-jammy = [{ name = "python-apt", marker = "python_full_version < '3.14' and sys_platform == 'linux'", specifier = "~=2.4.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
+dev-noble = [{ name = "python-apt", marker = "python_full_version < '3.14' and sys_platform == 'linux'", specifier = "~=2.7.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
 dev-plucky = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = "~=2.9.9", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
 dev-questing = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = "~=3.0.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
 dev-resolute = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = "~=3.0.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
