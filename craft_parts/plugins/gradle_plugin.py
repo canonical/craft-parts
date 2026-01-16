@@ -103,7 +103,10 @@ class GradlePlugin(JavaPlugin):
 
     @property
     def gradle_executable(self) -> str:
-        """Use gradlew by default if it exists."""
+        """Use gradlew by default if it exists, unless in self-contained mode."""
+        if self._is_self_contained():
+            return "gradle"
+
         return (
             f"{self._part_info.part_build_subdir}/gradlew"
             if (self._part_info.part_build_subdir / "gradlew").exists()
