@@ -37,7 +37,6 @@ def use_gradlew(request, new_dir):
 def copy_tree(new_dir, copy_dir):
     source_location = Path(__file__).parent / "test_gradle" / copy_dir
     shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
-    return Path(new_dir)
 
 
 @pytest.mark.parametrize("use_gradlew", [True, False], indirect=True)
@@ -120,7 +119,6 @@ def test_gradle_self_contained(new_dir, partitions):
     assert list(backstage.rglob("hello-plugin*.jar"))
     assert list(backstage.rglob("hello-plugin*.pom"))
     assert list(backstage.rglob("org.starcraft.hello-plugin.gradle.plugin"))
-
 
     jar_dir = lf.project_info.prime_dir / "jar"
     jars = sorted(jar_dir.glob("*.jar"))
