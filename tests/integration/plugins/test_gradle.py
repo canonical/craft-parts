@@ -113,20 +113,19 @@ def test_gradle_self_contained(new_dir, partitions):
 
     backstage = lf.project_info.backstage_dir / "maven-use"
     assert backstage.is_dir()
-    assert list(backstage.rglob("*.jar"))
-    assert list(backstage.rglob("*.pom"))
+    # assert dependencies were published to backstage
+    for part in ["hello", "hello-plugin"]:
+        assert list(backstage.rglob(f"{part}-1.0.0.jar"))
+        assert list(backstage.rglob(f"{part}-1.0.0.pom"))
 
-    assert list(backstage.rglob("hello-plugin*.jar"))
-    assert list(backstage.rglob("hello-plugin*.pom"))
     assert list(backstage.rglob("org.starcraft.hello-plugin.gradle.plugin"))
 
     jar_dir = lf.project_info.prime_dir / "jar"
     jars = sorted(jar_dir.glob("*.jar"))
     assert jars
 
-    cp = ":".join(str(p) for p in jars)
     output = subprocess.check_output(
-        ["java", "-cp", cp, "org.starcraft.HelloCraft"],
+        ["java", "-cp", f"{jar_dir}/*", "org.starcraft.HelloCraft"],
         text=True,
     )
     assert output.strip() == "Hello, craft!"
