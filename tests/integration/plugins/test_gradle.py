@@ -24,7 +24,7 @@ import yaml
 from craft_parts import LifecycleManager, Step
 from craft_parts.infos import ProjectInfo
 
-pytestmark = [pytest.mark.java]
+pytestmark = [pytest.mark.slow, pytest.mark.java]
 
 
 @pytest.fixture
@@ -50,8 +50,6 @@ def test_gradle_plugin(new_dir, partitions, use_gradlew):
             plugin: gradle
             gradle-task: testWrite build
             gradle-init-script: init.gradle
-            gradle-parameters:
-                - --no-daemon
             source: {new_dir}
             build-packages: [openjdk-21-jdk]
             build-snaps:
@@ -97,7 +95,6 @@ def _test_core_gradle_plugin_build_output(project_info: ProjectInfo) -> None:
     assert output.strip() == "Hello from Gradle-built Java"
 
 
-@pytest.mark.slow
 def test_gradle_self_contained(new_dir, partitions):
     copy_tree(new_dir, "self-contained")
     parts = yaml.safe_load((new_dir / "parts.yaml").read_text(encoding="utf-8"))

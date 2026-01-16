@@ -146,6 +146,7 @@ class GradlePlugin(JavaPlugin):
         """Return a dictionary with the environment to use in the build step."""
         env = super().get_build_environment()
         env["GRADLE_USER_HOME"] = str(self._gradle_user_home)
+        env["CRAFT_GRADLE_DAEMON"] = "off"
         return env
 
     @override
@@ -153,7 +154,6 @@ class GradlePlugin(JavaPlugin):
         """Return a list of commands to run during the build step."""
         options = cast(GradlePluginProperties, self._options)
 
-        gradle_cmd = [self.gradle_executable, options.gradle_task]
         self._setup_proxy()
 
         extra_args: list[str] = []
@@ -164,13 +164,20 @@ class GradlePlugin(JavaPlugin):
                 self._create_self_contained_init_script(options=options),
             ]
 
+        gradle_cmd = " ".join(
+            [
+                self.gradle_executable,
+                options.gradle_task,
+                *self._get_gradle_init_command_args(options=options),
+                *extra_args,
+                *options.gradle_parameters,
+            ]
+        )
+
         return [
-            " ".join(
-                gradle_cmd
-                + self._get_gradle_init_command_args(options=options)
-                + extra_args
-                + options.gradle_parameters
-            ),
+            'DAEMON_ARG=""',
+            '[ "$CRAFT_GRADLE_DAEMON" = on ] || DAEMON_ARG="--no-daemon"',
+            f"{gradle_cmd} $DAEMON_ARG",
             # remove gradle-wrapper.jar files included in the project if any.
             f'find {self._part_info.part_build_subdir} -name "gradle-wrapper.jar" -type f -delete',
             *self._get_java_post_build_commands(),

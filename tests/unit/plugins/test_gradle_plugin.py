@@ -26,6 +26,11 @@ from craft_parts.plugins.gradle_plugin import (
 )
 from typing_extensions import override
 
+DAEMON_ARGS = [
+    'DAEMON_ARG=""',
+    '[ "$CRAFT_GRADLE_DAEMON" = on ] || DAEMON_ARG="--no-daemon"',
+]
+
 
 @pytest.fixture
 def part_info(new_dir):
@@ -131,10 +136,10 @@ Gradle 4.4.1
         "expected_commands",
     ),
     [
-        ("build", [], "", ["gradle build"]),
-        ("pack", [], "", ["gradle pack"]),
-        ("pack", ["--parameter=value"], "", ["gradle pack --parameter=value"]),
-        ("pack", [], "init.gradle", ["gradle pack --init-script init.gradle"]),
+        ("build", [], "", "gradle build"),
+        ("pack", [], "", "gradle pack"),
+        ("pack", ["--parameter=value"], "", "gradle pack --parameter=value"),
+        ("pack", [], "init.gradle", "gradle pack --init-script init.gradle"),
     ],
 )
 @pytest.mark.usefixtures("init_script")
@@ -157,7 +162,8 @@ def test_get_build_commands(
 
     assert plugin.get_build_commands() == (
         [
-            *expected_commands,
+            *DAEMON_ARGS,
+            expected_commands + " $DAEMON_ARG",
             f'find {plugin._part_info.part_build_dir} -name "gradle-wrapper.jar" -type f -delete',
             *plugin._get_java_post_build_commands(),
         ]
@@ -173,7 +179,8 @@ def test_get_build_commands_use_gradlew(part_info):
 
     assert plugin.get_build_commands() == (
         [
-            f"{plugin._part_info.part_build_dir}/gradlew build",
+            *DAEMON_ARGS,
+            f"{plugin._part_info.part_build_dir}/gradlew build $DAEMON_ARG",
             f'find {plugin._part_info.part_build_dir} -name "gradle-wrapper.jar" -type f -delete',
             *plugin._get_java_post_build_commands(),
         ]
@@ -220,12 +227,12 @@ def test_get_build_commands_self_contained(self_contained_part_info):
     )
     plugin = GradlePlugin(properties=properties, part_info=self_contained_part_info)
 
-    commands = plugin.get_build_commands()
+    gradle_cmd = plugin.get_build_commands()[2]
 
     init_script_path = (
         plugin._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
     )
-    assert f"--offline --init-script {init_script_path}" in commands[0]
+    assert f"--offline --init-script {init_script_path}" in gradle_cmd
     init_script = init_script_path.read_text()
     assert "settingsEvaluated" in init_script
     assert "maven-publish" not in init_script
