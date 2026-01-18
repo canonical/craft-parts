@@ -143,7 +143,6 @@ def migratable_filesets(
     """
     includes, excludes = _get_file_list(fileset, partition, default_partition)
 
-    srcdir = Path(srcdir)
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
 

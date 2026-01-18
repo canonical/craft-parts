@@ -117,13 +117,12 @@ class Permissions(BaseModel):
 
         return fnmatch(str(path), self.path)
 
-    def apply_permissions(self, target: Path | str) -> None:
+    def apply_permissions(self, target: Path) -> None:
         """Apply the permissions configuration to ``target``.
 
         Note that this method doesn't check if this ``Permissions``'s path
         pattern matches ``target``; be sure to call ``applies_to()`` beforehand.
         """
-        target = Path(target)
         if self.mode is not None:
             target.chmod(self.mode_octal)
 
