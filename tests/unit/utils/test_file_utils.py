@@ -61,17 +61,17 @@ class TestLinkOrCopyTree:
 
     def test_link_file_to_file_raises(self):
         with pytest.raises(errors.CopyTreeError) as raised:
-            file_utils.link_or_copy_tree("1", "qux")
+            file_utils.link_or_copy_tree(Path("1"), Path("qux"))
         assert raised.value.message == "'1' is not a directory"
 
     def test_link_file_into_directory(self):
         Path("qux").mkdir()
         with pytest.raises(errors.CopyTreeError) as raised:
-            file_utils.link_or_copy_tree("1", "qux")
+            file_utils.link_or_copy_tree(Path("1"), Path("qux"))
         assert raised.value.message == "'1' is not a directory"
 
     def test_link_directory_to_directory(self):
-        file_utils.link_or_copy_tree("foo", "qux")
+        file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
         assert Path("qux", "2").is_file()
         assert Path("qux", "bar", "3").is_file()
         assert Path("qux", "bar", "baz", "4").is_file()
@@ -79,25 +79,27 @@ class TestLinkOrCopyTree:
     def test_link_directory_overwrite_file_raises(self):
         Path("qux").touch()
         with pytest.raises(errors.CopyTreeError) as raised:
-            file_utils.link_or_copy_tree("foo", "qux")
+            file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
         assert raised.value.message == (
             "cannot overwrite non-directory 'qux' with directory 'foo'"
         )
 
     def test_ignore(self):
-        file_utils.link_or_copy_tree("foo/bar", "qux", ignore=lambda x, y: ["3"])
+        file_utils.link_or_copy_tree(
+            Path("foo/bar"), Path("qux"), ignore=lambda x, y: ["3"]
+        )
         assert not Path("qux", "3").is_file()
         assert Path("qux", "baz", "4").is_file()
 
     def test_link_subtree(self):
-        file_utils.link_or_copy_tree("foo/bar", "qux")
+        file_utils.link_or_copy_tree(Path("foo/bar"), Path("qux"))
         assert Path("qux", "3").is_file()
         assert Path("qux", "baz", "4").is_file()
 
     def test_link_symlink_to_file(self):
         # Create a symlink to a file
         Path("foo", "2-link").symlink_to("2")
-        file_utils.link_or_copy_tree("foo", "qux")
+        file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
         # Verify that the symlink remains a symlink
         link = Path("qux", "2-link")
         assert link.is_symlink()
@@ -105,7 +107,7 @@ class TestLinkOrCopyTree:
 
     def test_link_symlink_to_dir(self):
         Path("foo", "bar-link").symlink_to("bar")
-        file_utils.link_or_copy_tree("foo", "qux")
+        file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
 
         # Verify that the symlink remains a symlink
         link = Path("qux", "bar-link")
@@ -132,10 +134,10 @@ class TestLinkOrCopy:
 
         mocker.patch("os.link", side_effect=link_and_oserror)
 
-        file_utils.link_or_copy("1", "foo/1")
+        file_utils.link_or_copy(Path("1"), Path("foo/1"))
 
     def test_copy_nested_file(self):
-        file_utils.link_or_copy("foo/bar/baz/4", "foo2/bar/baz/4")
+        file_utils.link_or_copy(Path("foo/bar/baz/4"), Path("foo2/bar/baz/4"))
         assert Path("foo2/bar/baz/4").is_file()
 
     def test_destination_exists(self):
@@ -143,7 +145,7 @@ class TestLinkOrCopy:
         Path("qux", "2").touch()
         assert Path("foo/2").stat().st_ino != Path("qux/2").stat().st_ino
 
-        file_utils.link_or_copy("foo/2", "qux/2")
+        file_utils.link_or_copy(Path("foo/2"), Path("qux/2"))
         assert Path("foo/2").stat().st_ino == Path("qux/2").stat().st_ino
 
     def test_with_permissions(self, mock_chown):
@@ -155,7 +157,7 @@ class TestLinkOrCopy:
         ]
 
         Path("qux").mkdir()
-        file_utils.link_or_copy("foo/2", "qux/2", permissions=permissions)
+        file_utils.link_or_copy(Path("foo/2"), Path("qux/2"), permissions=permissions)
 
         # Check that the copied file has the correct permission bits and ownership
         assert stat.S_IMODE(Path("qux/2").stat().st_mode) == 0o755
@@ -175,12 +177,12 @@ class TestCopy:
         Path("1").touch()
 
     def test_copy(self):
-        file_utils.copy("1", "3")
+        file_utils.copy(Path("1"), Path("3"))
         assert Path("3").is_file()
 
     def test_file_not_found(self):
         with pytest.raises(errors.CopyFileNotFound) as raised:
-            file_utils.copy("2", "3")
+            file_utils.copy(Path("2"), Path("3"))
         assert raised.value.name == "2"
 
 
@@ -190,7 +192,7 @@ class TestMove:
     def test_move_simple(self):
         Path("foo").touch()
         foo_stat = Path("foo").stat()
-        file_utils.move("foo", "bar")
+        file_utils.move(Path("foo"), Path("bar"))
         bar_stat = Path("bar").stat()
 
         assert Path("foo").exists() is False
@@ -201,7 +203,7 @@ class TestMove:
     def test_move_symlink(self):
         Path("foo").symlink_to("baz")
         foo_stat = os.lstat("foo")
-        file_utils.move("foo", "bar")
+        file_utils.move(Path("foo"), Path("bar"))
         bar_stat = os.lstat("bar")
 
         assert Path("foo").exists() is False
@@ -213,7 +215,7 @@ class TestMove:
     def test_move_chardev(self):
         os.mknod("foo", 0o750 | stat.S_IFCHR, os.makedev(1, 5))
         foo_stat = Path("foo").stat()
-        file_utils.move("foo", "bar")
+        file_utils.move(Path("foo"), Path("bar"))
         bar_stat = Path("bar").stat()
 
         assert Path("foo").exists() is False
@@ -227,7 +229,7 @@ class TestMove:
     def test_move_blockdev(self):
         os.mknod("foo", 0o750 | stat.S_IFBLK, os.makedev(7, 99))
         foo_stat = Path("foo").stat()
-        file_utils.move("foo", "bar")
+        file_utils.move(Path("foo"), Path("bar"))
         bar_stat = Path("bar").stat()
 
         assert Path("foo").exists() is False
@@ -240,7 +242,7 @@ class TestMove:
     def test_move_fifo(self):
         os.mkfifo("foo")
         foo_stat = Path("foo").stat()
-        file_utils.move("foo", "bar")
+        file_utils.move(Path("foo"), Path("bar"))
         bar_stat = Path("bar").stat()
 
         assert Path("foo").exists() is False

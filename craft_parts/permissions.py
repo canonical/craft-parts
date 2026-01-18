@@ -132,13 +132,13 @@ class Permissions(BaseModel):
 
 
 def filter_permissions(
-    target: Path | str, permissions: list[Permissions]
+    target: Path, permissions: list[Permissions]
 ) -> list[Permissions]:
     """Get the subset of ``permissions`` whose path patterns apply to ``target``."""
     return [p for p in permissions if p.applies_to(target)]
 
 
-def apply_permissions(target: Path | str, permissions: list[Permissions]) -> None:
+def apply_permissions(target: Path, permissions: list[Permissions]) -> None:
     """Apply all permissions configurations in ``permissions`` to ``target``."""
     for permission in permissions:
         permission.apply_permissions(target)

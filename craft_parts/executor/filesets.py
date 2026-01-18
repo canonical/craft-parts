@@ -287,10 +287,8 @@ def _generate_exclude_set(
         matches = directory.rglob(exclude)
         exclude_files |= set(matches)
 
-    exclude_dirs = {
-        Path(os.path.relpath(x, directory)) for x in exclude_files if x.is_dir()
-    }
-    exclude_files = {Path(os.path.relpath(x, directory)) for x in exclude_files}
+    exclude_dirs = {x.relative_to(directory) for x in exclude_files if x.is_dir()}
+    exclude_files = {x.relative_to(directory) for x in exclude_files}
 
     return exclude_files, exclude_dirs
 

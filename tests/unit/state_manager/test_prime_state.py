@@ -72,8 +72,8 @@ class TestPrimeStatePersist:
         state = PrimeState(
             part_properties=properties,
             project_options=ProjectOptions(target_arch="amd64"),
-            files={"a"},
-            directories={"b"},
+            files={Path("a")},
+            directories={Path("b")},
             dependency_paths={"c"},
             primed_stage_packages={"d"},
         )

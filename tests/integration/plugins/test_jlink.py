@@ -294,4 +294,4 @@ def test_jlink_plugin_base(new_dir, partitions):
         ctx.execute(actions)
 
     java = new_dir / "stage/usr/bin/java"
-    assert java.isfile()
+    assert java.is_file()

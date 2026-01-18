@@ -80,7 +80,7 @@ def host_arch() -> str:
 def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
     monkeypatch.chdir(tmpdir)
-    return tmpdir
+    return Path(tmpdir)
 
 
 @pytest.fixture

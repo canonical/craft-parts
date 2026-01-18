@@ -80,8 +80,8 @@ class TestStageStatePersist:
         state = StageState(
             part_properties=properties,
             project_options=ProjectOptions(target_arch="amd64"),
-            files={"a"},
-            directories={"b"},
+            files={Path("a")},
+            directories={Path("b")},
         )
 
         state.write(Path("state"))

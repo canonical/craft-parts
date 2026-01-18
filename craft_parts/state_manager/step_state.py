@@ -19,7 +19,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
@@ -33,6 +33,16 @@ logger = logging.getLogger(__name__)
 
 def _serialize_path_set(value: set[Path]) -> set[str]:
     return {v.as_posix() for v in value}
+
+
+def _serialize_organize(value: dict[Path, str]) -> dict[str, str]:
+    return {str(k): v for k, v in value.items()}
+
+
+def _serialize_part_properties(value: dict[str, Any]) -> dict[str, Any]:
+    if organize := value.get("organize"):
+        value["organize"] = _serialize_organize(cast(dict[Path, str], organize))
+    return value
 
 
 class MigrationContents(BaseModel):
@@ -109,7 +119,9 @@ class StepState(MigrationState, ABC):
     the step should run again on a new lifecycle execution.
     """
 
-    part_properties: dict[str, Any] = {}
+    part_properties: Annotated[
+        dict[str, Any], PlainSerializer(_serialize_part_properties)
+    ] = {}
     project_options: ProjectOptions = ProjectOptions()
     model_config = ConfigDict(
         validate_assignment=True,

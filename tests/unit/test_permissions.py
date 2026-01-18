@@ -90,9 +90,9 @@ def test_filter_permissions():
 
     permissions = [p1, p2, p3]
 
-    assert filter_permissions("etc", permissions) == [p1]
-    assert filter_permissions("etc/file2.bin", permissions) == [p1, p2]
-    assert filter_permissions("etc/file1.txt", permissions) == [p1, p2, p3]
+    assert filter_permissions(Path("etc"), permissions) == [p1]
+    assert filter_permissions(Path("etc/file2.bin"), permissions) == [p1, p2]
+    assert filter_permissions(Path("etc/file1.txt"), permissions) == [p1, p2, p3]
 
 
 def test_apply_permissions(tmp_path, mock_chown):

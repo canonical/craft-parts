@@ -353,7 +353,7 @@ class TestPackageManagement:
             new_dir / "overlay/overlay", self.mock_refresh_packages_list
         )
         self.mock_refresh_packages_list.assert_called_once_with()
-        self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
+        self.mock_umount.assert_called_once_with(str(new_dir / "overlay/overlay"))
 
     def test_package_cache_mount_download(self, mocker, new_dir):
         mock_download_packages = mocker.patch(
@@ -378,7 +378,7 @@ class TestPackageManagement:
             new_dir / "overlay/overlay", mock_download_packages, ["pkg1", "pkg2"]
         )
         mock_download_packages.assert_called_once_with(["pkg1", "pkg2"])
-        self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
+        self.mock_umount.assert_called_once_with(str(new_dir / "overlay/overlay"))
 
     def test_layer_mount_install(self, mocker, new_dir):
         mocker.patch("craft_parts.packages.Repository.download_packages")
@@ -410,4 +410,4 @@ class TestPackageManagement:
         mock_install_packages.assert_called_once_with(
             ["pkg1", "pkg2"], refresh_package_cache=False
         )
-        self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
+        self.mock_umount.assert_called_once_with(str(new_dir / "overlay/overlay"))

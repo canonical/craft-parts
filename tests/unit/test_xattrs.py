@@ -32,7 +32,7 @@ class TestXattrs:
         file_path = Path(".tests-xattr-test-file")
         file_path.touch()
 
-        yield str(file_path)
+        yield file_path
 
         file_path.unlink()
 
@@ -47,7 +47,7 @@ class TestXattrs:
 
     def test_read_xattr_nonexistent(self):
         with pytest.raises(FileNotFoundError):
-            xattrs.read_xattr("I-DONT-EXIST", "attr")
+            xattrs.read_xattr(Path("I-DONT-EXIST"), "attr")
 
     def test_write_xattr(self, test_file):
         value = "foo"
@@ -83,9 +83,9 @@ class TestXattrs:
 
     @linux_only
     def test_symlink(self, test_file):
-        test_symlink = test_file + "-symlink"
+        test_symlink = Path(str(test_file) + "-symlink")
         try:
-            Path(test_symlink).symlink_to(test_file)
+            test_symlink.symlink_to(test_file)
 
             result = xattrs.read_xattr(test_symlink, "attr")
             assert result is None

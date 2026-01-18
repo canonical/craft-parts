@@ -48,7 +48,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -77,7 +77,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -114,7 +114,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -145,7 +145,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["-usr"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition=partition,
         )
@@ -175,7 +175,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -206,7 +206,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -236,7 +236,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -267,7 +267,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -300,7 +300,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -342,7 +342,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -375,7 +375,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -415,8 +415,13 @@ class TestFileMigration:
         ]
 
         migration.migrate_files(
-            files={"1.txt", "bar/2.txt", "baz/3.txt", "baz/qux/4.txt"},
-            dirs={"bar", "baz", "baz/qux"},
+            files={
+                Path("1.txt"),
+                Path("bar/2.txt"),
+                Path("baz/3.txt"),
+                Path("baz/qux/4.txt"),
+            },
+            dirs={Path("bar"), Path("baz"), Path("baz/qux")},
             srcdir=source,
             destdir=target,
             permissions=permissions,
@@ -470,7 +475,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(filters),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -493,7 +498,7 @@ class TestFileMigrationErrors:
         with pytest.raises(errors.FeatureError) as raised:
             filesets.migratable_filesets(
                 Fileset(["*"]),
-                "install",
+                Path("install"),
                 default_partition="default",
                 partition="default",
             )
@@ -606,7 +611,7 @@ class TestHelpers:
         assert foo_path.is_file()
         assert bar_path.is_dir()
 
-        migration._clean_migrated_files({"foo.txt"}, {"bar"}, stage)
+        migration._clean_migrated_files({Path("foo.txt")}, {Path("bar")}, stage)
 
         assert not foo_path.exists()
         assert not bar_path.exists()
@@ -631,7 +636,7 @@ class TestHelpers:
         handler.run_action(Action("p1", Step.STAGE))
 
         # this shouldn't raise an exception
-        migration._clean_migrated_files({"foo.txt"}, {"bar"}, Path("stage"))
+        migration._clean_migrated_files({Path("foo.txt")}, {Path("bar")}, Path("stage"))
 
 
 class TestFilterWhiteouts:

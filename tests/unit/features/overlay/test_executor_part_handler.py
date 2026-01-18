@@ -178,10 +178,10 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         default_partition = partitions[0] if partitions is not None else "default"
         mock_step_contents.partitions_contents[default_partition] = (
             StagePartitionContents(
-                files={"file"},
-                dirs={"dir"},
-                backstage_files={"back_file"},
-                backstage_dirs={"back_dir"},
+                files={Path("file")},
+                dirs={Path("dir")},
+                backstage_files={Path("back_file")},
+                backstage_dirs={Path("back_dir")},
             )
         )
         partitions_migration_contents = {}
@@ -207,11 +207,11 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
-            directories={"dir"},
+            files={Path("file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
-            backstage_files={"back_file"},
-            backstage_directories={"back_dir"},
+            backstage_files={Path("back_file")},
+            backstage_directories={Path("back_dir")},
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
 

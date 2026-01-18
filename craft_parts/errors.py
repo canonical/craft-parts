@@ -30,6 +30,7 @@ from craft_parts.utils.formatting_utils import humanize_list
 if TYPE_CHECKING:
     import pathlib
     from collections.abc import Iterable
+    from pathlib import Path
 
     from pydantic_core import ErrorDetails
 
@@ -245,7 +246,7 @@ class XAttributeError(PartsError):
     def __init__(
         self,
         key: str,
-        path: str,
+        path: Path,
         *,
         is_write: bool = False,
     ) -> None:
@@ -254,7 +255,7 @@ class XAttributeError(PartsError):
         self.is_write = is_write
         action = "write" if is_write else "read"
         brief = f"Unable to {action} extended attribute."
-        details = f"Failed to {action} attribute {key!r} on {path!r}."
+        details = f"Failed to {action} attribute {key!r} on {str(path)!r}."
         resolution = "Make sure your filesystem supports extended attributes."
 
         super().__init__(brief=brief, details=details, resolution=resolution)
@@ -268,7 +269,7 @@ class XAttributeTooLong(PartsError):  # noqa: N818
     :param path: The file path.
     """
 
-    def __init__(self, key: str, value: str, path: str) -> None:
+    def __init__(self, key: str, value: str, path: Path) -> None:
         self.key = key
         self.value = value
         self.path = path
@@ -490,10 +491,12 @@ class StageFilesConflict(PartsError):  # noqa: N818
     :param conflicting_files: The list of confictling files.
     """
 
-    def __init__(self, *, part_name: str, conflicting_files: list[str]) -> None:
+    def __init__(
+        self, *, part_name: str, conflicting_files: list[pathlib.Path]
+    ) -> None:
         self.part_name = part_name
         self.conflicting_files = conflicting_files
-        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
+        indented_conflicting_files = (f"    {i.as_posix()}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         brief = "Failed to stage: part files conflict with files already being staged."
         details = (

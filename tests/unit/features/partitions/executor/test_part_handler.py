@@ -143,7 +143,7 @@ class TestFileFilter(test_part_handler.TestFileFilter):
 
         for partition in partitions:
             files, dirs = filesets.migratable_filesets(
-                fileset, str(self._destdir / partition), "default", partition
+                fileset, self._destdir / partition, "default", partition
             )
             part_handler._apply_file_filter(
                 filter_files=files, filter_dirs=dirs, destdir=self._destdir / partition

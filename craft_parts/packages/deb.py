@@ -728,16 +728,17 @@ class Ubuntu(BaseRepository):
             with tempfile.TemporaryDirectory(
                 suffix="deb-extract", dir=install_path.parent
             ) as extract_dir:
+                extract_dir_path = Path(extract_dir)
                 # Extract deb package.
-                deb_utils.extract_deb(pkg_path, Path(extract_dir), logger.debug)
+                deb_utils.extract_deb(pkg_path, extract_dir_path, logger.debug)
 
                 # Mark source of files.
                 if track_stage_packages:
                     marked_name = cls._extract_deb_name_version(pkg_path)
-                    mark_origin_stage_package(extract_dir, marked_name)
+                    mark_origin_stage_package(extract_dir_path, marked_name)
 
                 # Stage files to install_dir.
-                file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
+                file_utils.link_or_copy_tree(extract_dir_path, install_path)
 
         if pkg_path:
             normalize(install_path, repository=cls)

@@ -40,7 +40,9 @@ class TestLocal:
         dest_path.mkdir()
 
         dirs = ProjectDirs(partitions=partitions)
-        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
+        local = LocalSource(
+            "src", Path("destination"), cache_dir=new_dir, project_dirs=dirs
+        )
         local.pull()
 
         # Verify that the directories are not symlinks, but the file is a
@@ -61,7 +63,9 @@ class TestLocal:
         (dest_path / "existing-file").touch()
 
         dirs = ProjectDirs(partitions=partitions)
-        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
+        local = LocalSource(
+            "src", Path("destination"), cache_dir=new_dir, project_dirs=dirs
+        )
         local.pull()
 
         # Verify that the directories are not symlinks, but the file is a
@@ -80,7 +84,9 @@ class TestLocal:
         Path("destination").symlink_to("dummy")
 
         dirs = ProjectDirs(partitions=partitions)
-        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
+        local = LocalSource(
+            "src", Path("destination"), cache_dir=new_dir, project_dirs=dirs
+        )
 
         with pytest.raises(errors.CopyTreeError):
             local.pull()
@@ -95,7 +101,9 @@ class TestLocal:
 
         dirs = ProjectDirs(partitions=partitions)
 
-        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
+        local = LocalSource(
+            "src", Path("destination"), cache_dir=new_dir, project_dirs=dirs
+        )
         with pytest.raises(errors.CopyTreeError):
             local.pull()
 
@@ -111,7 +119,9 @@ class TestLocal:
 
         dirs = ProjectDirs(partitions=partitions)
 
-        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
+        local = LocalSource(
+            "src", Path("destination"), cache_dir=new_dir, project_dirs=dirs
+        )
         local.pull()
         local.pull()
 
@@ -141,7 +151,7 @@ class TestLocal:
 
         local = LocalSource(
             ".",
-            "parts/foo/src",
+            Path("parts/foo/src"),
             cache_dir=new_dir,
             ignore_patterns=["*.znap"],
             project_dirs=dirs,
@@ -176,7 +186,7 @@ class TestLocal:
         dirs = ProjectDirs(work_dir="src/work_dir", partitions=partitions)
         local = LocalSource(
             "src",
-            "destination",
+            Path("destination"),
             cache_dir=new_dir,
             project_dirs=dirs,
             ignore_patterns=["*.znap"],
@@ -212,7 +222,7 @@ class TestLocal:
         dirs = ProjectDirs(work_dir="src/some/deep/work_dir", partitions=partitions)
         local = LocalSource(
             "src",
-            "destination",
+            Path("destination"),
             cache_dir=new_dir,
             project_dirs=dirs,
             ignore_patterns=["*.znap"],
@@ -249,7 +259,7 @@ class TestLocal:
         dirs = ProjectDirs(work_dir="/work_dir", partitions=partitions)
         local = LocalSource(
             "src",
-            "destination",
+            Path("destination"),
             cache_dir=new_dir,
             project_dirs=dirs,
             ignore_patterns=["*.znap"],
@@ -274,7 +284,9 @@ class TestLocal:
 
         dirs = ProjectDirs(partitions=partitions)
 
-        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
+        local = LocalSource(
+            "src", Path("destination"), cache_dir=new_dir, project_dirs=dirs
+        )
         local.pull()
 
         # Verify that both the file and the directory symlinks were kept.
@@ -296,7 +308,7 @@ class TestLocal:
 
         s1 = LocalSource(
             "src",
-            "destination",
+            Path("destination"),
             project_dirs=project_dirs,
             cache_dir=new_dir,
             ignore_patterns=ignore_patterns,
@@ -305,7 +317,7 @@ class TestLocal:
 
         s2 = LocalSource(
             "src",
-            "destination",
+            Path("destination"),
             project_dirs=project_dirs,
             cache_dir=new_dir,
             ignore_patterns=ignore_patterns,
@@ -316,7 +328,7 @@ class TestLocal:
         dirs = ProjectDirs(work_dir=Path("src/work"), partitions=partitions)
         local = LocalSource(
             "does-not-exist",
-            "destination",
+            Path("destination"),
             cache_dir=new_dir,
             project_dirs=dirs,
         )
@@ -489,7 +501,7 @@ class TestLocalUpdate:
 
         local = LocalSource(
             "source",
-            "destination",
+            Path("destination"),
             cache_dir=new_dir,
             ignore_patterns=ignore_patterns,
             project_dirs=dirs,

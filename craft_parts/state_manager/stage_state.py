@@ -23,9 +23,12 @@ import pydantic
 from typing_extensions import override
 
 from craft_parts.infos import ProjectOptions
-from craft_parts.state_manager.step_state import _serialize_path_set
 
 from .step_state import StepState, validate_hex_string
+
+
+def _serialize_path_set(value: set[Path]) -> set[str]:
+    return {v.as_posix() for v in value}
 
 
 class StageState(StepState):

@@ -38,8 +38,8 @@ class TestMigrationState:
     def test_marshal_data(self):
         state = step_state.MigrationState(
             partition="foo",
-            files={"a", "b", "c"},
-            directories={"d", "e", "f"},
+            files={Path("a"), Path("b"), Path("c")},
+            directories={Path("d"), Path("e"), Path("f")},
         )
         assert state.marshal() == {
             "partition": "foo",
@@ -82,7 +82,7 @@ class TestMigrationState:
                     directories={Path("d"), Path("e"), Path("f")},
                     partitions_contents={
                         "foo": step_state.MigrationContents(
-                            files={"bar"}, directories={"baz"}
+                            files={Path("bar")}, directories={Path("baz")}
                         )
                     },
                 ),
@@ -92,11 +92,11 @@ class TestMigrationState:
             (
                 step_state.MigrationState(
                     partition="default",
-                    files={"a", "b", "c"},
-                    directories={"d", "e", "f"},
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
                     partitions_contents={
                         "foo": step_state.MigrationContents(
-                            files={"bar"}, directories={"baz"}
+                            files={Path("bar")}, directories={Path("baz")}
                         )
                     },
                 ),
@@ -206,8 +206,8 @@ class TestStepState:
                 "name": "foo",
             },
             project_options=ProjectOptions(),
-            files={"a"},
-            directories={"b"},
+            files={Path("a")},
+            directories={Path("b")},
         )
         assert state.marshal() == {
             "partition": None,
@@ -246,8 +246,8 @@ class TestStepStatePersist:
                 "name": "foo",
             },
             project_options=ProjectOptions(),
-            files={"a"},
-            directories={"b"},
+            files={Path("a")},
+            directories={Path("b")},
         )
 
         state.write(Path("state"))

@@ -1510,7 +1510,7 @@ def _get_primed_stage_packages(
             snap_file = prime_dir / _snap_file
             if not snap_file.exists():
                 continue
-            stage_package = read_origin_stage_package(str(snap_file))
+            stage_package = read_origin_stage_package(snap_file)
             if stage_package:
                 primed_stage_packages.add(stage_package)
     return primed_stage_packages

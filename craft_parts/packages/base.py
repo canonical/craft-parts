@@ -265,17 +265,17 @@ def get_pkg_name_parts(pkg_name: str) -> tuple[str, str | None]:
     return name, version
 
 
-def read_origin_stage_package(path: str) -> str | None:
+def read_origin_stage_package(path: Path) -> str | None:
     """Read origin stage package."""
     return xattrs.read_xattr(path, _STAGE_PACKAGE_KEY)
 
 
-def write_origin_stage_package(path: Path | str, value: str) -> None:
+def write_origin_stage_package(path: Path, value: str) -> None:
     """Write origin stage package."""
     xattrs.write_xattr(path, _STAGE_PACKAGE_KEY, value)
 
 
-def mark_origin_stage_package(sources_dir: str, stage_package: str) -> None:
+def mark_origin_stage_package(sources_dir: Path, stage_package: str) -> None:
     """Mark all files in sources_dir as coming from stage_package."""
     for root, _, files in os.walk(sources_dir):
         for file_name in files:

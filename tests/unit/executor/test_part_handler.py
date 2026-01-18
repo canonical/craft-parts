@@ -193,10 +193,10 @@ class TestPartHandling:
         mock_step_contents = StepContents(stage=True, partitions=partitions)
         mock_step_contents.partitions_contents[default_partition] = (
             StagePartitionContents(
-                files={"file"},
-                dirs={"dir"},
-                backstage_files={"back_file"},
-                backstage_dirs={"back_dir"},
+                files={Path("file")},
+                dirs={Path("dir")},
+                backstage_files={Path("back_file")},
+                backstage_dirs={Path("back_dir")},
             )
         )
         partitions_migration_contents = {}
@@ -222,11 +222,11 @@ class TestPartHandling:
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
-            directories={"dir"},
+            files={Path("file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
-            backstage_files={"back_file"},
-            backstage_directories={"back_dir"},
+            backstage_files={Path("back_file")},
+            backstage_directories={Path("back_dir")},
             overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
         )
 
@@ -235,8 +235,8 @@ class TestPartHandling:
         mock_step_contents = StepContents(partitions=partitions)
         mock_step_contents.partitions_contents[default_partition] = (
             StepPartitionContents(
-                files={"file", "pkg_file"},
-                dirs={"dir"},
+                files={Path("file"), Path("pkg_file")},
+                dirs={Path("dir")},
             )
         )
         partitions_migration_contents = {}
@@ -290,8 +290,8 @@ class TestPartHandling:
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file", "pkg_file"},
-            directories={"dir"},
+            files={Path("file"), Path("pkg_file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
             primed_stage_packages={"pkg"},
         )
@@ -301,8 +301,8 @@ class TestPartHandling:
         mock_step_contents = StepContents(partitions=partitions)
         mock_step_contents.partitions_contents[default_partition] = (
             StepPartitionContents(
-                files={"file"},
-                dirs={"dir"},
+                files={Path("file")},
+                dirs={Path("dir")},
             )
         )
         partitions_migration_contents = {}
@@ -329,8 +329,8 @@ class TestPartHandling:
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
-            directories={"dir"},
+            files={Path("file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
             primed_stage_packages=set(),
         )
@@ -1083,7 +1083,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1099,7 +1099,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_dir(self, new_dir, partitions):
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1114,7 +1114,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_symlink(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file4", "-dir3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1130,7 +1130,7 @@ class TestFileFilter:
     def test_apply_file_filter_keep_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["dir1/file3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir

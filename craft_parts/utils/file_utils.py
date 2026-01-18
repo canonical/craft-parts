@@ -73,8 +73,8 @@ class NonBlockingRWFifo:
 
 
 def link_or_copy(
-    source: Path | str,
-    destination: Path | str,
+    source: Path,
+    destination: Path,
     *,
     follow_symlinks: bool = False,
     permissions: list[Permissions] | None = None,
@@ -91,7 +91,6 @@ def link_or_copy(
     :param permissions: The permissions definitions that should be applied to the
         new file.
     """
-    source, destination = Path(source), Path(destination)
     try:
         if permissions or (not follow_symlinks and source.is_symlink()):
             copy(source, destination)
@@ -116,8 +115,8 @@ def link_or_copy(
 
 
 def link(
-    source: str | Path,
-    destination: str | Path,
+    source: Path,
+    destination: Path,
     *,
     follow_symlinks: bool = False,
 ) -> None:
@@ -131,26 +130,24 @@ def link(
     """
     # Note that follow_symlinks doesn't seem to work for os.link, so we'll
     # implement this logic ourselves using realpath.
-    source_path = Path(source)
-    destination = Path(destination)
     if follow_symlinks:
-        source_path = Path(os.path.realpath(source))
+        source = source.resolve()
 
     if not destination.parent.exists():
-        create_similar_directory(source_path.parent, destination.parent)
+        create_similar_directory(source.parent, destination.parent)
 
     # Setting follow_symlinks=False in case this bug is ever fixed
     # upstream-- we want this function to continue supporting NOT following
     # symlinks.
     try:
-        os.link(source_path, destination, follow_symlinks=False)
+        os.link(source, destination, follow_symlinks=False)
     except FileNotFoundError as err:
         raise errors.CopyFileNotFound(str(source)) from err
 
 
 def copy(
-    source: Path | str,
-    destination: Path | str,
+    source: Path,
+    destination: Path,
     *,
     follow_symlinks: bool = False,
     permissions: list[Permissions] | None = None,
@@ -168,7 +165,6 @@ def copy(
 
     :raises CopyFileNotFound: If source doesn't exist.
     """
-    source, destination = Path(source), Path(destination)
     # If os.link raised an I/O error, it may have left a file behind. Skip on
     # OSError in case it doesn't exist or is a directory.
     with contextlib.suppress(OSError):
@@ -192,8 +188,8 @@ def copy(
 
 
 def link_or_copy_tree(
-    source_tree: Path | str,
-    destination_tree: Path | str,
+    source_tree: Path,
+    destination_tree: Path,
     ignore: Callable[[str, list[str]], list[str]] | None = None,
     copy_function: Callable[..., None] = link_or_copy,
 ) -> None:
@@ -206,7 +202,6 @@ def link_or_copy_tree(
         for every dir copied. Should return list of contents to NOT copy.
     :param copy_function: Callable that actually copies.
     """
-    source_tree, destination_tree = Path(source_tree), Path(destination_tree)
     if not source_tree.is_dir():
         raise errors.CopyTreeError(f"{str(source_tree)!r} is not a directory")
 
@@ -257,31 +252,28 @@ def link_or_copy_tree(
             copy_function(source, destination)
 
 
-def move(source: str | Path, destination: str | Path) -> None:
+def move(source: Path, destination: Path) -> None:
     """Move regular files, directories, or special files from source to destination.
 
     :param source: Directory from which to move the file or directory.
     :param destination: Directory where the file or directory will be moved to.
     """
-    src_path = Path(source)
-    dest_path = Path(destination)
-
-    src_stat = src_path.stat(follow_symlinks=False)
+    src_stat = source.stat(follow_symlinks=False)
     src_mode = src_stat.st_mode
 
     if stat.S_ISCHR(src_mode) or stat.S_ISBLK(src_mode):
-        os.mknod(dest_path, src_mode, src_stat.st_rdev)
-        shutil.copystat(src_path, dest_path)
-        os.chown(dest_path, src_stat.st_uid, src_stat.st_gid)
-        src_path.unlink()
+        os.mknod(destination, src_mode, src_stat.st_rdev)
+        shutil.copystat(source, destination)
+        os.chown(destination, src_stat.st_uid, src_stat.st_gid)
+        source.unlink()
         return
 
-    shutil.move(src_path, dest_path)
+    shutil.move(source, destination)
 
 
 def create_similar_directory(
-    source: Path | str,
-    destination: Path | str,
+    source: Path,
+    destination: Path,
     permissions: list[Permissions] | None = None,
 ) -> None:
     """Create a directory with the same permission bits and owner information.
@@ -294,7 +286,6 @@ def create_similar_directory(
         If omitted, the new directory will have the same permissions and ownership
         of ``source``.
     """
-    source, destination = Path(source), Path(destination)
     stat = source.stat(follow_symlinks=False)
     uid = stat.st_uid
     gid = stat.st_gid
