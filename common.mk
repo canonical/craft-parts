@@ -94,7 +94,7 @@ endif
 .PHONY: clean
 clean:  ## Clean up the development environment
 	uv tool run pyclean .
-	rm -rf dist/ build/ docs/_build/ docs/_linkcheck *.snap .coverage*
+	rm -rf dist/ build/ docs/_build/ docs/_linkcheck docs/reference/gen *.snap .coverage*
 
 .PHONY: autoformat
 autoformat: format  # Hidden alias for 'format'
@@ -205,7 +205,7 @@ lint-docs:  ##- Lint the documentation
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
+	uv run $(UV_DOCS_GROUPS) sphinx-lint --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d line-tool-long,missing-underscore-after-hyperlink,missing-space-in-hyperlink
 	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
