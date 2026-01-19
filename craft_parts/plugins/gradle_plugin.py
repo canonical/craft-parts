@@ -17,6 +17,7 @@
 """The gradle plugin."""
 
 import os
+import shlex
 from pathlib import Path
 from textwrap import dedent
 from typing import Literal, cast
@@ -146,7 +147,7 @@ class GradlePlugin(JavaPlugin):
         """Return a dictionary with the environment to use in the build step."""
         env = super().get_build_environment()
         env["GRADLE_USER_HOME"] = str(self._gradle_user_home)
-        env["CRAFT_GRADLE_DAEMON"] = "off"
+        env["USE_GRADLE_DAEMON"] = "0"
         return env
 
     @override
@@ -158,16 +159,19 @@ class GradlePlugin(JavaPlugin):
 
         extra_args: list[str] = []
         if self._is_self_contained():
-            extra_args += [
-                "--offline",
-                "--init-script",
-                self._create_self_contained_init_script(options=options),
-            ]
+            extra_args.extend(
+                [
+                    "--offline",
+                    "--init-script",
+                    self._create_self_contained_init_script(options=options),
+                ]
+            )
 
-        gradle_cmd = " ".join(
+        tasks = shlex.split(options.gradle_task)
+        gradle_cmd = shlex.join(
             [
                 self.gradle_executable,
-                options.gradle_task,
+                *tasks,
                 *self._get_gradle_init_command_args(options=options),
                 *extra_args,
                 *options.gradle_parameters,
@@ -176,7 +180,7 @@ class GradlePlugin(JavaPlugin):
 
         return [
             'DAEMON_ARG=""',
-            '[ "$CRAFT_GRADLE_DAEMON" = on ] || DAEMON_ARG="--no-daemon"',
+            '[ "$USE_GRADLE_DAEMON" = 1 ] || DAEMON_ARG="--no-daemon"',
             f"{gradle_cmd} $DAEMON_ARG",
             # remove gradle-wrapper.jar files included in the project if any.
             f'find {self._part_info.part_build_subdir} -name "gradle-wrapper.jar" -type f -delete',

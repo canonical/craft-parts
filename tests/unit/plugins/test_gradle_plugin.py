@@ -28,7 +28,7 @@ from typing_extensions import override
 
 DAEMON_ARGS = [
     'DAEMON_ARG=""',
-    '[ "$CRAFT_GRADLE_DAEMON" = on ] || DAEMON_ARG="--no-daemon"',
+    '[ "$USE_GRADLE_DAEMON" = 1 ] || DAEMON_ARG="--no-daemon"',
 ]
 
 
@@ -244,7 +244,8 @@ def test_get_build_commands_self_contained_publish(self_contained_part_info):
     )
     plugin = GradlePlugin(properties=properties, part_info=self_contained_part_info)
 
-    plugin.get_build_commands()
+    gradle_cmd = plugin.get_build_commands()[2]
+    assert "--offline" in gradle_cmd
     init_script = (
         plugin._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
     ).read_text()

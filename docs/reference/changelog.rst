@@ -20,6 +20,18 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
+.. _release-2.29.0:
+
+2.29.0 (unreleased)
+-------------------
+
+New features:
+
+- Add self-contained support for parts using the Gradle plugin.
+- The Gradle plugin runs with the Gradle daemon disabled during the build. Use
+  ``USE_GRADLE_DAEMON=1`` to enable it.
+
+
 .. _release-2.28.0:
 
 2.28.0 (2026-01-08)
