@@ -32,6 +32,13 @@ INIT_SCRIPT_TEMPLATE = dedent(
 
   allprojects {{
       // add local maven repo for project dependency resolution
+      buildscript {{
+          repositories.clear()
+          repositories {{
+              maven {{ url = uri("{local_maven_repo}") }}
+          }}
+      }}
+
       repositories.clear()
       repositories {{
           maven {{ url = uri("{local_maven_repo}") }}
@@ -56,11 +63,13 @@ PUBLISH_BLOCK_TEMPLATE = dedent(
                           url = uri("{publish_maven_repo}")
                       }}
                   }}
-                  // ensure java plugin is present
-                  if ((p.plugins.hasPlugin("java") || p.plugins.hasPlugin("java-library"))
-                      && publications.findByName("mavenJava") == null) {{
-                      publications.create("mavenJava", MavenPublication) {{
-                          from p.components.java
+
+                  // generate publication for any missing components
+                  p.components.each {{ component ->
+                      if (publications.findByName(component.name) == null) {{
+                          publications.create(component.name, MavenPublication) {{
+                              from component
+                          }}
                       }}
                   }}
               }}
