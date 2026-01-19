@@ -65,7 +65,7 @@ Additionally, extensions like ``colcon-cmake``,
 ``colcon-package-selection``,
 ``colcon-python-setup-py`` and ``colcon-parallel-executor``
 are needed to support basic builds.
-These dependencies are provided by the plugin as a ``build-packages`` entry.
+These dependencies are provided and handled by the plugin.
 
 
 How it works
