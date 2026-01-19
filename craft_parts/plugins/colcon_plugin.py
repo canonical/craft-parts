@@ -106,11 +106,7 @@ class ColconPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        return (
-            self._get_workspace_activation_commands()
-            + self._get_build_commands()
-            + self._get_post_build_commands()
-        )
+        return self._get_workspace_activation_commands() + self._get_build_commands()
 
     def _get_build_commands(self) -> list[str]:
         options = cast(ColconPluginProperties, self._options)
@@ -150,10 +146,6 @@ class ColconPlugin(Plugin):
         )
 
         return [" ".join(build_command)]
-
-    def _get_post_build_commands(self) -> list[str]:
-        """Return a list of commands to run during the post-build step."""
-        return []
 
     def _get_install_path(self) -> pathlib.Path:
         """Return the install path for the colcon plugin.
