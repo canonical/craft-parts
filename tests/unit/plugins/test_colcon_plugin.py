@@ -78,15 +78,22 @@ class TestPluginColconPlugin:
             "colcon_cmake_args",
         ),
         [
-            ({}, "", "", ""),
-            (
+            pytest.param({}, "", "", "", id="no optional properties"),
+            pytest.param(
                 {"colcon-packages-ignore": ["rlcpy", "example"]},
                 "--packages-ignore rlcpy example",
                 "",
                 "",
+                id="packages ignore only",
             ),
-            ({"colcon-packages": ["package1"]}, "", "--packages-select package1", ""),
-            (
+            pytest.param(
+                {"colcon-packages": ["package1"]},
+                "",
+                "--packages-select package1",
+                "",
+                id="packages select only",
+            ),
+            pytest.param(
                 {
                     "colcon-packages-ignore": ["rlcpy", "example"],
                     "colcon-packages": ["package1"],
@@ -94,6 +101,7 @@ class TestPluginColconPlugin:
                 "--packages-ignore rlcpy example",
                 "--packages-select package1",
                 "",
+                id="packages ignore and select",
             ),
         ],
     )
@@ -141,10 +149,11 @@ class TestPluginColconPlugin:
     @pytest.mark.parametrize(
         ("properties", "colcon_cmake_args"),
         [
-            ({}, ""),
-            (
+            pytest.param({}, "", id="no cmake args"),
+            pytest.param(
                 {"colcon-cmake-args": ['-DCMAKE_CXX_FLAGS="-Wall -Wextra"']},
                 '-DCMAKE_CXX_FLAGS="-Wall -Wextra"',
+                id="cmake args with flags",
             ),
         ],
     )
