@@ -43,7 +43,7 @@ class GradlePluginProperties(PluginProperties, frozen=True):
       The task to run to build the project.
     - gradle_use_daemon:
       (boolean)
-      Whether to use the Gradle daemon.
+      Whether to use the Gradle daemon during the build.
     """
 
     plugin: Literal["gradle"] = "gradle"
@@ -94,12 +94,12 @@ class GradlePlugin(JavaPlugin):
     - gradle-parameters:
       (list of strings)
       Flags to pass to the build using the gradle semantics for parameters.
-    - gradle_task:
+    - gradle-task:
       (string)
       The task to run to build the project.
-    - gradle_use_daemon:
+    - gradle-use-daemon:
       (boolean, default False)
-      Whether to use the Gradle daemon during the build..
+      Whether to use the Gradle daemon during the build.
     """
 
     properties_class = GradlePluginProperties

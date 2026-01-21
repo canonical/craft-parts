@@ -24,7 +24,7 @@ available, to configure the project prior to building. This script is executed v
 ``./gradlew --init-script <gradle-init-script>`` command.
 
 The ``gradle-use-daemon`` key is used to control whether the Gradle daemon is used
-during builds. The daemon is disabled by default.
+during the build. The daemon is disabled by default.
 
 The plugin is able to detect and apply the following proxy environment variables:
 ``http_proxy``, ``https_proxy`` and ``no_proxy``. These environment variables can be

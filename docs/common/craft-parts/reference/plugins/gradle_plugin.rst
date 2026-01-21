@@ -56,8 +56,8 @@ gradle-use-daemon
 
 **Type:** boolean
 
-Wheether to use the `Gradle daemon <https://docs.gradle.org/current/userguide/gradle_daemon.html>`_
-during builds. The daemon is disabled by default.
+Whether to use the `Gradle daemon <https://docs.gradle.org/current/userguide/gradle_daemon.html>`_
+during the build. The daemon is disabled by default.
 
 
 Environment variables
