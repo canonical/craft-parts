@@ -59,6 +59,15 @@ settings. All dependencies, including plugins, must then be provided as build pa
 in an earlier part.
 
 
+gradle-use-daemon
+~~~~~~~~~~~~~~~~~
+
+**Type:** boolean
+
+Whether to use the `Gradle daemon <https://docs.gradle.org/current/userguide/gradle_daemon.html>`_
+during the build. The daemon is disabled by default.
+
+
 Environment variables
 ---------------------
 

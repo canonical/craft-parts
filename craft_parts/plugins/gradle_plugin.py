@@ -45,6 +45,9 @@ class GradlePluginProperties(PluginProperties, frozen=True):
     - gradle_task:
       (string)
       The task to run to build the project.
+    - gradle_use_daemon:
+      (boolean)
+      Whether to use the Gradle daemon during the build.
     """
 
     plugin: Literal["gradle"] = "gradle"
@@ -52,6 +55,7 @@ class GradlePluginProperties(PluginProperties, frozen=True):
     gradle_init_script: str = ""
     gradle_parameters: list[str] = []
     gradle_task: str = "build"
+    gradle_use_daemon: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -89,14 +93,17 @@ class GradlePlugin(JavaPlugin):
     Additionally, this plugin uses the following plugin-specific keywords:
 
     - gradle-init-script:
-      (list of strings)
+      (string)
       Path to the Gradle init script to use during build task execution.
     - gradle-parameters:
       (list of strings)
       Flags to pass to the build using the gradle semantics for parameters.
-    - gradle_task:
+    - gradle-task:
       (string)
       The task to run to build the project.
+    - gradle-use-daemon:
+      (boolean, default False)
+      Whether to use the Gradle daemon during the build.
     """
 
     properties_class = GradlePluginProperties
@@ -162,6 +169,9 @@ class GradlePlugin(JavaPlugin):
                     self._create_self_contained_init_script(options=options),
                 ]
             )
+
+        if not options.gradle_use_daemon:
+            extra_args.append("--no-daemon")
 
         tasks = shlex.split(options.gradle_task)
         gradle_cmd = shlex.join(

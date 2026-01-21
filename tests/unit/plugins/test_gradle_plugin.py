@@ -131,10 +131,20 @@ Gradle 4.4.1
         "expected_commands",
     ),
     [
-        ("build", [], "", ["gradle build"]),
-        ("pack", [], "", ["gradle pack"]),
-        ("pack", ["--parameter=value"], "", ["gradle pack --parameter=value"]),
-        ("pack", [], "init.gradle", ["gradle pack --init-script init.gradle"]),
+        ("build", [], "", "gradle build --no-daemon"),
+        ("pack", [], "", "gradle pack --no-daemon"),
+        (
+            "pack",
+            ["--parameter=value"],
+            "",
+            "gradle pack --no-daemon --parameter=value",
+        ),
+        (
+            "pack",
+            [],
+            "init.gradle",
+            "gradle pack --init-script init.gradle --no-daemon",
+        ),
     ],
 )
 @pytest.mark.usefixtures("init_script")
@@ -157,7 +167,7 @@ def test_get_build_commands(
 
     assert plugin.get_build_commands() == (
         [
-            *expected_commands,
+            expected_commands,
             f'find {plugin._part_info.part_build_dir} -name "gradle-wrapper.jar" -type f -delete',
             *plugin._get_java_post_build_commands(),
         ]
@@ -173,7 +183,7 @@ def test_get_build_commands_use_gradlew(part_info):
 
     assert plugin.get_build_commands() == (
         [
-            f"{plugin._part_info.part_build_dir}/gradlew build",
+            f"{plugin._part_info.part_build_dir}/gradlew build --no-daemon",
             f'find {plugin._part_info.part_build_dir} -name "gradle-wrapper.jar" -type f -delete',
             *plugin._get_java_post_build_commands(),
         ]
@@ -212,6 +222,24 @@ def test_proxy_settings_configured(part_info, mocker):
     assert "systemProp.https.proxyUser=user" in gradle_properties
     assert "systemProp.https.proxyPassword=password" in gradle_properties
     assert "systemProp.https.nonProxyHosts=test_no_proxy_url" in gradle_properties
+
+
+def test_gradle_use_daemon_default(part_info):
+    properties = GradlePlugin.properties_class.unmarshal(
+        {"source": ".", "gradle-task": "build"}
+    )
+    plugin = GradlePlugin(properties=properties, part_info=part_info)
+    gradle_cmd = plugin.get_build_commands()[0]
+    assert "--no-daemon" in gradle_cmd
+
+
+def test_gradle_use_daemon_enabled(part_info):
+    properties = GradlePlugin.properties_class.unmarshal(
+        {"source": ".", "gradle-task": "build", "gradle-use-daemon": True}
+    )
+    plugin = GradlePlugin(properties=properties, part_info=part_info)
+    gradle_cmd = plugin.get_build_commands()[0]
+    assert "--no-daemon" not in gradle_cmd
 
 
 def test_get_build_commands_self_contained(self_contained_part_info):

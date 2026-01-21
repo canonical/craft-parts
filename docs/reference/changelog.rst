@@ -28,6 +28,8 @@ Changelog
 New features:
 
 - Add self-contained support for parts using the Gradle plugin.
+- The Gradle daemon is now disabled by default when using the Gradle plugin. You can
+  control this behaviour with the new ``gradle-use-daemon`` key.
 
 
 .. _release-2.28.0:
