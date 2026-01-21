@@ -126,7 +126,7 @@ class GradlePlugin(JavaPlugin):
 
     @property
     def _gradle_user_home(self) -> Path:
-        """Path to default Gradle cache."""
+        """Path to default Gradle user home."""
         return self._part_info.part_build_subdir / ".gradle"
 
     @override
