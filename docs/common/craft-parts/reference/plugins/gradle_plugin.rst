@@ -51,6 +51,15 @@ The `Gradle task <https://docs.gradle.org/current/userguide/more_about_tasks.htm
 to build the project.
 
 
+gradle-use-daemon
+~~~~~~~~~~~~~~~~~
+
+**Type:** boolean
+
+Wheether to use the `Gradle daemon <https://docs.gradle.org/current/userguide/gradle_daemon.html>`_
+during builds. The daemon is disabled by default.
+
+
 Environment variables
 ---------------------
 
