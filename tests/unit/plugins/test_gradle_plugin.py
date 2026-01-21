@@ -26,11 +26,6 @@ from craft_parts.plugins.gradle_plugin import (
 )
 from typing_extensions import override
 
-DAEMON_ARGS = [
-    'DAEMON_ARG=""',
-    '[ "$USE_GRADLE_DAEMON" = 1 ] || DAEMON_ARG="--no-daemon"',
-]
-
 
 @pytest.fixture
 def part_info(new_dir):
@@ -136,10 +131,10 @@ Gradle 4.4.1
         "expected_commands",
     ),
     [
-        ("build", [], "", "gradle build"),
-        ("pack", [], "", "gradle pack"),
-        ("pack", ["--parameter=value"], "", "gradle pack --parameter=value"),
-        ("pack", [], "init.gradle", "gradle pack --init-script init.gradle"),
+        ("build", [], "", ["gradle build"]),
+        ("pack", [], "", ["gradle pack"]),
+        ("pack", ["--parameter=value"], "", ["gradle pack --parameter=value"]),
+        ("pack", [], "init.gradle", ["gradle pack --init-script init.gradle"]),
     ],
 )
 @pytest.mark.usefixtures("init_script")
@@ -162,8 +157,7 @@ def test_get_build_commands(
 
     assert plugin.get_build_commands() == (
         [
-            *DAEMON_ARGS,
-            expected_commands + " $DAEMON_ARG",
+            *expected_commands,
             f'find {plugin._part_info.part_build_dir} -name "gradle-wrapper.jar" -type f -delete',
             *plugin._get_java_post_build_commands(),
         ]
@@ -179,8 +173,7 @@ def test_get_build_commands_use_gradlew(part_info):
 
     assert plugin.get_build_commands() == (
         [
-            *DAEMON_ARGS,
-            f"{plugin._part_info.part_build_dir}/gradlew build $DAEMON_ARG",
+            f"{plugin._part_info.part_build_dir}/gradlew build",
             f'find {plugin._part_info.part_build_dir} -name "gradle-wrapper.jar" -type f -delete',
             *plugin._get_java_post_build_commands(),
         ]
@@ -227,7 +220,7 @@ def test_get_build_commands_self_contained(self_contained_part_info):
     )
     plugin = GradlePlugin(properties=properties, part_info=self_contained_part_info)
 
-    gradle_cmd = plugin.get_build_commands()[2]
+    gradle_cmd = plugin.get_build_commands()[0]
 
     init_script_path = (
         plugin._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
@@ -244,7 +237,7 @@ def test_get_build_commands_self_contained_publish(self_contained_part_info):
     )
     plugin = GradlePlugin(properties=properties, part_info=self_contained_part_info)
 
-    gradle_cmd = plugin.get_build_commands()[2]
+    gradle_cmd = plugin.get_build_commands()[0]
     assert "--offline" in gradle_cmd
     init_script = (
         plugin._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"

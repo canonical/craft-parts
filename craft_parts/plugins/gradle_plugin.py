@@ -126,11 +126,8 @@ class GradlePlugin(JavaPlugin):
 
     @property
     def _gradle_user_home(self) -> Path:
-        return (
-            self._part_info.project_info.dirs.backstage_dir / ".gradle"
-            if self._is_self_contained()
-            else self._part_info.part_build_subdir / ".gradle"
-        )
+        """Path to default Gradle cache."""
+        return self._part_info.part_build_subdir / ".gradle"
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -147,7 +144,6 @@ class GradlePlugin(JavaPlugin):
         """Return a dictionary with the environment to use in the build step."""
         env = super().get_build_environment()
         env["GRADLE_USER_HOME"] = str(self._gradle_user_home)
-        env["USE_GRADLE_DAEMON"] = "0"
         return env
 
     @override
@@ -179,9 +175,7 @@ class GradlePlugin(JavaPlugin):
         )
 
         return [
-            'DAEMON_ARG=""',
-            '[ "$USE_GRADLE_DAEMON" = 1 ] || DAEMON_ARG="--no-daemon"',
-            f"{gradle_cmd} $DAEMON_ARG",
+            gradle_cmd,
             # remove gradle-wrapper.jar files included in the project if any.
             f'find {self._part_info.part_build_subdir} -name "gradle-wrapper.jar" -type f -delete',
             *self._get_java_post_build_commands(),
