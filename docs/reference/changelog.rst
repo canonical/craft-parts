@@ -20,6 +20,17 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
+.. _release-2.29.0:
+
+2.29.0 (unreleased)
+-------------------
+
+New features:
+
+- The Gradle daemon is now disabled by default when using the Gradle plugin. You can
+  control this behaviour with the new ``gradle-use-daemon`` key.
+
+
 .. _release-2.28.0:
 
 2.28.0 (2026-01-08)

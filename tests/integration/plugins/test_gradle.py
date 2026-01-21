@@ -51,8 +51,6 @@ def test_gradle_plugin(new_dir, testing_source_dir, partitions, use_gradlew):
             plugin: gradle
             gradle-task: testWrite build
             gradle-init-script: init.gradle
-            gradle-parameters:
-                - --no-daemon
             source: {testing_source_dir}
             build-packages: [openjdk-21-jdk]
             build-snaps:
