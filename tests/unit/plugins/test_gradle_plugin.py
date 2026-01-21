@@ -36,6 +36,14 @@ def part_info(new_dir):
 
 
 @pytest.fixture
+def self_contained_part_info(new_dir):
+    return PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {"build-attributes": ["self-contained"]}),
+    )
+
+
+@pytest.fixture
 def patch_succeed_cmd_validator(mocker):
     """Fixture to run successful command via self._execute for Gradle plugin Validator."""
     temp_dir = tempfile.gettempdir()
@@ -135,7 +143,7 @@ Gradle 4.4.1
             "pack",
             [],
             "init.gradle",
-            "gradle pack --no-daemon --init-script init.gradle",
+            "gradle pack --init-script init.gradle --no-daemon",
         ),
     ],
 )
@@ -232,3 +240,34 @@ def test_gradle_use_daemon_enabled(part_info):
     plugin = GradlePlugin(properties=properties, part_info=part_info)
     gradle_cmd = plugin.get_build_commands()[0]
     assert "--no-daemon" not in gradle_cmd
+
+
+def test_get_build_commands_self_contained(self_contained_part_info):
+    properties = GradlePlugin.properties_class.unmarshal(
+        {"source": ".", "gradle-task": "build"}
+    )
+    plugin = GradlePlugin(properties=properties, part_info=self_contained_part_info)
+
+    gradle_cmd = plugin.get_build_commands()[0]
+
+    init_script_path = (
+        plugin._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
+    )
+    assert f"--offline --init-script {init_script_path}" in gradle_cmd
+    init_script = init_script_path.read_text()
+    assert "settingsEvaluated" in init_script
+    assert "maven-publish" not in init_script
+
+
+def test_get_build_commands_self_contained_publish(self_contained_part_info):
+    properties = GradlePlugin.properties_class.unmarshal(
+        {"source": ".", "gradle-task": "publish"}
+    )
+    plugin = GradlePlugin(properties=properties, part_info=self_contained_part_info)
+
+    gradle_cmd = plugin.get_build_commands()[0]
+    assert "--offline" in gradle_cmd
+    init_script = (
+        plugin._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
+    ).read_text()
+    assert "maven-publish" in init_script
