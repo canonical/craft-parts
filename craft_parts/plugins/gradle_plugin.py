@@ -129,8 +129,9 @@ class GradlePlugin(JavaPlugin):
         """Return a list of commands to run during the build step."""
         options = cast(GradlePluginProperties, self._options)
 
-        daemon_flag = "" if options.gradle_use_daemon else "--no-daemon"
-        gradle_cmd = [self.gradle_executable, options.gradle_task, daemon_flag]
+        gradle_cmd = [self.gradle_executable, options.gradle_task]
+        if not options.gradle_use_daemon:
+            gradle_cmd.append("--no-daemon")
 
         self._setup_proxy()
 
