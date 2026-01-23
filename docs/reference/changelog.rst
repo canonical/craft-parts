@@ -27,7 +27,7 @@ Changelog
 
 New features:
 
-- Add a new ``colcon`` plugin for buiding projects using the colcon build tool.
+- Add a colcon plugin for building parts that use the colcon build tool.
 - Add self-contained support for parts using the Gradle plugin.
 - The Gradle daemon is now disabled by default when using the Gradle plugin. You can
   control this behaviour with the new ``gradle-use-daemon`` key.

@@ -3,12 +3,11 @@
 Colcon plugin
 =============
 
-The colcon plugin configures projects using the colcon_ build tool.
-This plugin supports by default CMake_ based projects as well as
-Python_ based packages using ``setup.py``.
+The colcon plugin manages the colcon_ build tool inside a part.
+It supports projects that build with CMake_ and Python_ packages
+that build with ``setup.py``.
 
-After a successful build, this plugin will install the generated artifacts in
-``$CRAFT_PART_INSTALL``.
+It stores build artifacts in the ``$CRAFT_PART_INSTALL`` path.
 
 
 Keys
@@ -25,7 +24,11 @@ colcon-cmake-args
 Arguments to pass to cmake projects.
 Note that any arguments here which match colcon arguments
 need to be prefixed with a space.
-This can be done by quoting each argument with a leading space.
+Arguments to pass to CMake projects.
+If an argument has the same name as a colcon argument, it
+must be prefixed with a space to avoid a collision.
+A space in an argument is made literal by wrapping the argument
+in quotation marks (").
 
 
 colcon-packages
@@ -35,7 +38,7 @@ colcon-packages
 
 List of colcon packages to build.
 If not specified, all packages in the workspace will be built.
-If set to an empty list ([]), no packages will be built,
+If set to an empty list (``[]``), no packages will be built,
 which could be useful if you only want Debian packages in the snap.
 
 colcon-packages-ignore
@@ -49,9 +52,10 @@ Environment variables
 ---------------------
 
 The plugin sets:
-    - ``AMENT_PYTHON_EXECUTABLE``: "/usr/bin/python3" -- This is required for ROS 2
-      packages.
-    - ``COLCON_PYTHON_EXECUTABLE``: "/usr/bin/python3",
+
+- ``AMENT_PYTHON_EXECUTABLE`` to "/usr/bin/python3". This is required for ROS 2
+  packages.
+- ``COLCON_PYTHON_EXECUTABLE`` to "/usr/bin/python3".
 
 
 Dependencies
