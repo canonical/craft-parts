@@ -105,7 +105,7 @@ lxml==5.3.0
     #   -c (workspace)
     #   -r requirements.txt
     #   pyspelling
-markdown==3.7
+markdown==3.10.1
     # via
     #   -c (workspace)
     #   -r requirements.txt
