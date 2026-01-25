@@ -31,6 +31,7 @@ New features:
   All plugin groups should contain at least the plugins from the :py:data:`craft_parts.plugins.PluginGroup.MINIMAL` group.
 - A new :ref:`craft_parts_ruby_plugin` allows convenient building of Ruby projects, including bundling Ruby interpreters.
 - The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to disable this feature.
+- The craft-part now uses pathlib.Path internally and in its external API.
 
 Bug fixes:
 
