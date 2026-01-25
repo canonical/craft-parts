@@ -53,7 +53,7 @@ class TestPartSpecs:
             "build-packages": ["build-pkg1", "build-pkg2"],
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
             "build-attributes": ["attr1", "attr2"],
-            "organize": {Path("src1"): "dest1", Path("src2"): "dest2"},
+            "organize": {"src1": "dest1", "src2": "dest2"},
             "stage": ["-usr/docs"],
             "prime": ["*"],
             "override-pull": "override-pull",
