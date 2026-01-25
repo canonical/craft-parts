@@ -26,6 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 from typing_extensions import override
 
 from craft_parts.infos import ProjectOptions
+from craft_parts.parts import serialize_organize
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
@@ -35,13 +36,9 @@ def _serialize_path_set(value: set[Path]) -> set[str]:
     return {v.as_posix() for v in value}
 
 
-def _serialize_organize(value: dict[Path, str]) -> dict[str, str]:
-    return {str(k): v for k, v in value.items()}
-
-
 def _serialize_part_properties(value: dict[str, Any]) -> dict[str, Any]:
     if organize := value.get("organize"):
-        value["organize"] = _serialize_organize(cast(dict[Path, str], organize))
+        value["organize"] = serialize_organize(cast(dict[Path, str], organize))
     return value
 
 

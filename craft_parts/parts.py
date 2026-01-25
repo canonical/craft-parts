@@ -22,12 +22,13 @@ import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, TypeVar
+from typing import Annotated, Any, TypeVar
 
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    PlainSerializer,
     ValidationError,
     field_validator,
     model_validator,
@@ -49,6 +50,14 @@ from craft_parts.utils.partition_utils import (
 from craft_parts.utils.path_utils import get_partition_and_path
 
 _T_validate = TypeVar("_T_validate")
+
+
+def serialize_organize(organize: dict[Path, str]) -> dict[str, str]:
+    """Serialize the organize_files field to a jsonable dict.
+
+    :param organize: The organize field.
+    """
+    return {str(k): v for k, v in organize.items()}
 
 
 class PartSpec(BaseModel):
@@ -365,11 +374,13 @@ class PartSpec(BaseModel):
             default.
     """
 
-    organize_files: dict[Path, str] = Field(
-        default_factory=dict[Path, str],
-        alias="organize",
-        description="A map of files from the build directory to their destinations in the stage directory.",
-        examples=["{hello.py: bin/hello}"],
+    organize_files: Annotated[dict[Path, str], PlainSerializer(serialize_organize)] = (
+        Field(
+            default_factory=dict[Path, str],
+            alias="organize",
+            description="A map of files from the build directory to their destinations in the stage directory.",
+            examples=["{hello.py: bin/hello}"],
+        )
     )
     """A map of files from the build directory to their destinations in the stage
     directory.
