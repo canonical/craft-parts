@@ -217,6 +217,12 @@ class TestCallbackExecution:
     def test_run_pre_step(self, capfd):
         callbacks.register_pre_step(_callback_1)
         callbacks.register_pre_step(_callback_2)
+        callbacks.register_post_step(_callback_3)
+        callbacks.register_step(
+            _callback_4,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_ORGANIZE,
+        )
         callbacks.run_pre_step(self._step_info)
         out, err = capfd.readouterr()
         assert not err
@@ -225,7 +231,33 @@ class TestCallbackExecution:
     def test_run_post_step(self, capfd):
         callbacks.register_post_step(_callback_1)
         callbacks.register_post_step(_callback_2)
+        callbacks.register_pre_step(_callback_3)
+        callbacks.register_step(
+            _callback_4,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_ORGANIZE,
+        )
         callbacks.run_post_step(self._step_info)
+        out, err = capfd.readouterr()
+        assert not err
+        assert out == "hello callback 1\nhello callback 2\n"
+
+    def test_run_mid_step(self, capfd):
+        callbacks.register_step(
+            _callback_1,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_ORGANIZE,
+        )
+        callbacks.register_step(
+            _callback_2,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_ORGANIZE,
+        )
+        callbacks.register_pre_step(_callback_3)
+        callbacks.register_post_step(_callback_4)
+        callbacks.run_mid_step(
+            self._step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE
+        )
         out, err = capfd.readouterr()
         assert not err
         assert out == "hello callback 1\nhello callback 2\n"
