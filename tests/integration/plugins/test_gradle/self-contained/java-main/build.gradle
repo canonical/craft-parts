@@ -1,0 +1,22 @@
+plugins {
+    id 'application'
+    id 'org.starcraft.hello-plugin' version '1.0.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.starcraft:hello:1.0.0"
+}
+
+application {
+    mainClass = "org.starcraft.HelloCraft"
+}
+
+tasks.named("jar") {
+    manifest {
+        attributes("Main-Class": application.mainClass.get())
+    }
+}
