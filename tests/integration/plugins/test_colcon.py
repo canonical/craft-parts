@@ -20,9 +20,32 @@ from pathlib import Path
 
 import pytest
 import yaml
-from craft_parts import LifecycleManager, Step
+from craft_parts import LifecycleManager, Step, errors, plugins
+from craft_parts.plugins.colcon_plugin import ColconPlugin
+from craft_parts.utils import os_utils
 
-pytestmark = [pytest.mark.plugin]
+
+def is_ubuntu_jammy() -> bool:
+    release = os_utils.OsRelease()
+    try:
+        return release.id() == "ubuntu" and release.version_id() == "22.04"
+    except errors.OsReleaseIdError:
+        return False
+
+
+pytestmark = [
+    pytest.mark.plugin,
+    pytest.mark.skipif(
+        is_ubuntu_jammy(), reason="Ubuntu colcon package was not released before 24.04."
+    ),
+]
+
+
+@pytest.fixture(autouse=True)
+def setup_function():
+    plugins.register({"colcon": ColconPlugin})
+    yield
+    plugins.unregister_all()
 
 
 def test_colcon_plugin(new_dir, partitions):

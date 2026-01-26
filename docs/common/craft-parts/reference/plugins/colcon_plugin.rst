@@ -9,6 +9,8 @@ that build with ``setup.py``.
 
 It stores build artifacts in the ``$CRAFT_PART_INSTALL`` path.
 
+This plugin is not supported on Core22.
+
 
 Keys
 ----
