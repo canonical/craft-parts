@@ -209,7 +209,10 @@ class RustPlugin(Plugin):
         options = cast(RustPluginProperties, self._options)
         if options.rust_ignore_toolchain_file:
             return False
-        return Path("rust-toolchain.toml").exists() or Path("rust-toolchain").exists()
+        return (
+            (self._part_info.part_build_subdir / "rust-toolchain.toml").exists() or
+            (self._part_info.part_build_subdir / "rust-toolchain").exists()
+        )
 
     @override
     def get_build_environment(self) -> dict[str, str]:
