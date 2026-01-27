@@ -83,7 +83,7 @@ class TestXattrs:
 
     @linux_only
     def test_symlink(self, test_file):
-        test_symlink = Path(str(test_file) + "-symlink")
+        test_symlink = test_file.with_name(f"{test_file.name}-symlink")
         try:
             test_symlink.symlink_to(test_file)
 
