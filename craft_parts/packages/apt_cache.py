@@ -127,8 +127,8 @@ class AptCache(ContextDecorator):
             apt_dir = snap_dir / "usr" / "lib" / "apt"
             apt_pkg.config.set("Dir", str(apt_dir))
             # yes apt is broken like that we need to append os.path.sep
-            methods_dir = str(apt_dir / "methods")
-            apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
+            methods_dir = str(apt_dir / "methods") + os.path.sep
+            apt_pkg.config.set("Dir::Bin::methods", methods_dir)
             solvers_dir = str(apt_dir / "solvers")
             apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
             apt_key_path = str(snap_dir / "usr" / "bin" / "apt-key")
