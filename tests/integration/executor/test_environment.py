@@ -96,7 +96,7 @@ def test_step_callback(new_dir, mocker, capfd, step):
             CRAFT_PART_SRC={new_dir}/parts/foo/src
             CRAFT_PART_SRC_WORK={new_dir}/parts/foo/src
             CRAFT_PRIME={new_dir}/prime
-            CRAFT_PROJECT_DIR={str(Path.cwd())}
+            CRAFT_PROJECT_DIR={Path.cwd().as_posix()}
             CRAFT_STAGE={new_dir}/stage
             CRAFT_STEP_NAME={Step(step).name}
             CRAFT_TARGET_ARCH=arm64
