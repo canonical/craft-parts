@@ -50,7 +50,7 @@ class JavaPlugin(Plugin):
 
             try:
                 subprocess.call([javac, "-d", tempdir, f"{tempdir}/Test.java"])
-                java_home = Path(javac).parent.parent.as_posix()
+                java_home = Path(javac).parents[1].as_posix()
                 spec_version = subprocess.check_output(
                     [java_home + "/bin/java", "-cp", tempdir, "Test"], text=True
                 )
