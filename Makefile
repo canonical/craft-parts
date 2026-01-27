@@ -144,8 +144,8 @@ endif
 endif
 endif
 
-# Colcon is not available in apt on jammy.
-ifneq ($(VERSION_CODENAME),jammy)
+# Colcon is not available in apt on jammy or focal.
+ifeq ($(filter $(VERSION_CODENAME),jammy focal),)
 ifeq ($(wildcard /usr/share/doc/colcon/copyright),)
 APT_PACKAGES += colcon
 endif
