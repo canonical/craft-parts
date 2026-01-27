@@ -165,7 +165,6 @@ ifeq ($(wildcard /usr/share/doc/python3-colcon-parallel-executor/),)
 APT_PACKAGES += python3-colcon-parallel-executor
 endif
 endif
-$(info   VAR is $(APT_PACKAGES))
 
 # Tools needed for plugin integration tests that aren't java or python
 ifneq ($(NO_PLUGIN),1)
