@@ -45,7 +45,7 @@ class JavaPlugin(Plugin):
                         System.out.println(System.getProperty("java.specification.version"));
                     }
                 }"""
-            with Path(f"{tempdir}/Test.java").open("w") as file:
+            with Path(tempdir, "Test.java").open("w") as file:
                 file.write(test_class)
 
             try:
