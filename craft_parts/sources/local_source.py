@@ -65,7 +65,7 @@ class LocalSource(SourceHandler):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, project_dirs=project_dirs, **kwargs)
-        self.source_abspath = Path(self.source).resolve()
+        self.source_abspath = Path(self.source).absolute()
         self.copy_function = copy_function
 
         if self._dirs.work_dir.resolve() == Path(self.source_abspath):
