@@ -47,7 +47,7 @@ class TestLocal:
 
         # Verify that the directories are not symlinks, but the file is a
         # hardlink.
-        assert dest_path.is_symlink() is False
+        assert not dest_path.is_symlink()
         assert (dest_path / "dir").is_symlink() is False
         assert (dest_path / "dir" / "file").stat().st_nlink > 1
 
