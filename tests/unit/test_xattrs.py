@@ -94,7 +94,7 @@ class TestXattrs:
             result = xattrs.read_xattr(test_symlink, "attr")
             assert result is None
         finally:
-            Path(test_symlink).unlink()
+            test_symlink.unlink()
 
     def test_read_non_linux(self, test_file, mocker):
         mocker.patch("sys.platform", return_value="win32")
