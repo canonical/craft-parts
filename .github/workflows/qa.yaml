@@ -29,7 +29,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      fast-test-python-versions: '["3.10", "3.12", "3.13"]'
+      fast-test-python-versions: '["3.10", "3.12", "3.14", "3.14+freethreaded"]'
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -39,7 +39,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       # We must always test on at least one EOL base to ensure that chisel behaves
       # correctly on said EOL base.
       lowest-python-platform: '["amd64", "focal"]'
