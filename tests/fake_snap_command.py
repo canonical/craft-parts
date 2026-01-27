@@ -100,7 +100,7 @@ class FakeSnapCommand:
 
         if cmd == "download":
             if self.fake_download:
-                dest = Path(kwargs["cwd"], params[0] + ".snap")
+                dest = Path(kwargs["cwd"], f"{params[0]}.snap"))
                 shutil.copyfile(self.fake_download, dest)
             return b"Downloaded  "
 
