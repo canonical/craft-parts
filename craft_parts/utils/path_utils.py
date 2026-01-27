@@ -36,7 +36,7 @@ class PartitionPathPair(NamedTuple):
     """A pair containing a partition name and a path."""
 
     partition: str | None
-    path: str | PurePath
+    path: PurePath | str
 
 
 def _has_partition(path: PurePath | str) -> bool:
