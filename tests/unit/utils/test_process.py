@@ -61,7 +61,7 @@ def test_run_selector(out, err, new_dir):
     # set up unix socket
     sock_path = Path(new_dir, "test.socket")
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.bind(str(sock_path))
+    sock.bind(sock_path.as_posix())
     sock.listen(1)
 
     def accept(sock: socket.socket, _mask: int) -> None:
