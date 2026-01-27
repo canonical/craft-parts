@@ -113,7 +113,7 @@ class TestGitSource(GitBaseTestCase):
         git.pull()
 
         # assert we actually pulled the commit
-        assert Path(working_tree, "test.txt").read_text() == "Howdy, Partner!"
+        assert (working_tree / "test.txt").read_text() == "Howdy, Partner!"
 
     @pytest.mark.skipif(
         OsRelease().id() == "ubuntu" and OsRelease().version_id() <= "20.04",
