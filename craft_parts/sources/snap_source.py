@@ -98,7 +98,7 @@ class SnapSource(FileSourceHandler):
             snap_file.unlink()
 
 
-def _get_snap_name(snap: str, snap_dir: str) -> str:
+def _get_snap_name(snap: str, snap_dir: Path) -> str:
     """Obtain the snap name from the snap details file.
 
     :param snap: The snap package file.
