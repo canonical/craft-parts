@@ -25,10 +25,12 @@ from craft_parts.plugins.colcon_plugin import ColconPlugin
 from craft_parts.utils import os_utils
 
 
-def is_ubuntu_jammy() -> bool:
+def is_ubuntu_jammy_or_focal() -> bool:
     release = os_utils.OsRelease()
     try:
-        return release.id() == "ubuntu" and release.version_id() == "22.04"
+        return release.id() == "ubuntu" and (
+            release.version_id() == "22.04" or release.version_id() == "20.04"
+        )
     except errors.OsReleaseIdError:
         return False
 
@@ -36,7 +38,8 @@ def is_ubuntu_jammy() -> bool:
 pytestmark = [
     pytest.mark.plugin,
     pytest.mark.skipif(
-        is_ubuntu_jammy(), reason="Ubuntu colcon package was not released before 24.04."
+        is_ubuntu_jammy_or_focal(),
+        reason="Ubuntu colcon package was not released before 24.04.",
     ),
 ]
 

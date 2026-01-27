@@ -155,9 +155,6 @@ endif
 ifeq ($(wildcard /usr/share/doc/python3-colcon-cmake/),)
 APT_PACKAGES += python3-colcon-cmake
 endif
-ifeq ($(wildcard /usr/share/doc/python3-colcon-cmake/),)
-APT_PACKAGES += python3-colcon-cmake
-endif
 ifeq ($(wildcard /usr/share/doc/python3-colcon-package-selection/),)
 APT_PACKAGES += python3-colcon-package-selection
 endif
