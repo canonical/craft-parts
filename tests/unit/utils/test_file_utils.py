@@ -270,7 +270,7 @@ def test_create_similar_directory_permissions(tmp_path, mock_chown):
 
     file_utils.create_similar_directory(source, target, permissions=permissions)
 
-    assert stat.S_IMODE(Path(target).stat().st_mode) == 0o755
+    assert stat.S_IMODE(target.stat().st_mode) == 0o755
     mock_call = mock_chown[target]
     assert mock_call.owner == 1111
     assert mock_call.group == 2222
