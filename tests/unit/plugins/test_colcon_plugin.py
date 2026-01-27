@@ -55,6 +55,7 @@ class TestPluginColconPlugin:
             "gcc",
             "g++",
             "cmake",
+            "colcon",
             "python3-colcon-core",
             "python3-colcon-cmake",
             "python3-colcon-package-selection",
