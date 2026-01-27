@@ -290,7 +290,7 @@ def paths_collide(
             and path2_target.is_absolute()
             and path2_is_overlay
         ):
-            path1_target = Path(normalize_symlink(path1_target, rel_dirname))
+            path1_target = normalize_symlink(path1_target, rel_dirname)
 
         if (
             not path2_target.is_absolute()
