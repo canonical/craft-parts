@@ -78,7 +78,6 @@ have their own built-in packaging systems (think CPAN, PyPI, NPM). In those
 cases you want to refer to the documentation for the specific plugin.
 """
 
-import os
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -224,7 +223,7 @@ def get_source_type_from_uri(
         if source_model.pattern and re.search(source_model.pattern, source):
             return _get_type_name_from_model(source_model)
     # Special case for the "local" source for backwards compatibility.
-    if os.path.isdir(source):  # noqa: PTH112
+    if Path(source).is_dir():
         return "local"
     if ignore_errors:
         return ""

@@ -45,6 +45,10 @@ New features:
   All plugin groups should contain at least the plugins from the :py:data:`craft_parts.plugins.PluginGroup.MINIMAL` group.
 - A new :ref:`craft_parts_ruby_plugin` allows convenient building of Ruby projects, including bundling Ruby interpreters.
 - The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to disable this feature.
+- Switched to the `pathlib module
+  <https://docs.python.org/3/library/pathlib.html>`_ internally and in the API, resulting in a more explicit typing, with
+  pathlib.Path instead of str, and reducing the need to use the `os.path module
+  <https://docs.python.org/3/library/os.path.html>`_.
 
 Bug fixes:
 

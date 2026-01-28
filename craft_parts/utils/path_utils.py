@@ -45,7 +45,7 @@ def _has_partition(path: PurePath | str) -> bool:
 
 
 def get_partition_and_path(
-    path: FlexiblePath, default_partition: str
+    path: str | PurePath, default_partition: str
 ) -> PartitionPathPair:
     """Break a partition path into the partition and the child path.
 
@@ -64,7 +64,7 @@ def get_partition_and_path(
 
     if _has_partition(str_path):
         partition, inner_path = _split_partition_and_inner_path(str_path)
-        return PartitionPathPair(partition.strip("()"), path.__class__(inner_path))
+        return PartitionPathPair(partition.strip("()"), type(path)(inner_path))
 
     return PartitionPathPair(default_partition, path)
 

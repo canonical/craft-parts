@@ -72,14 +72,14 @@ class TestPrimeStatePersist:
         state = PrimeState(
             part_properties=properties,
             project_options=ProjectOptions(target_arch="amd64"),
-            files={"a"},
-            directories={"b"},
+            files={Path("a")},
+            directories={Path("b")},
             dependency_paths={"c"},
             primed_stage_packages={"d"},
         )
 
         state.write(Path("state"))
-        with open("state") as f:  # noqa: PTH123
+        with Path("state").open() as f:
             content = f.read()
 
         new_state = yaml.safe_load(content)

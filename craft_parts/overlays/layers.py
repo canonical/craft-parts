@@ -84,7 +84,7 @@ class LayerHash:
         if not hash_file.exists():
             return None
 
-        with open(hash_file) as file:  # noqa: PTH123
+        with hash_file.open() as file:
             hex_string = file.readline()
 
         return cls(bytes.fromhex(hex_string))

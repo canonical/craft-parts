@@ -83,7 +83,7 @@ class TestOriginStagePackage:
         file_path = new_homedir_path / ".tests-xattr-test-file"
         file_path.touch()
 
-        yield str(file_path)
+        yield file_path
 
         file_path.unlink()
 
@@ -116,9 +116,9 @@ class TestOriginStagePackage:
         Path(test_dir / "foo").touch()
         Path(test_dir / "bar").touch()
 
-        base.mark_origin_stage_package(str(test_dir), "package")
-        assert base.read_origin_stage_package(str(test_dir / "foo")) == "package"
-        assert base.read_origin_stage_package(str(test_dir / "bar")) == "package"
+        base.mark_origin_stage_package(test_dir, "package")
+        assert base.read_origin_stage_package(test_dir / "foo") == "package"
+        assert base.read_origin_stage_package(test_dir / "bar") == "package"
 
 
 class TestRepositoryEvaluation:

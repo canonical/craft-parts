@@ -16,6 +16,7 @@
 
 from copy import deepcopy
 from functools import partial
+from pathlib import Path
 
 import pydantic
 import pytest
@@ -228,7 +229,7 @@ class TestPartData:
 
     def test_part_organize_files(self):
         p = Part("foo", {"organize": {"a": "b", "c": "d"}})
-        assert p.spec.organize_files == {"a": "b", "c": "d"}
+        assert p.spec.organize_files == {Path("a"): "b", Path("c"): "d"}
 
     def test_part_dependencies(self):
         p = Part("foo", {"after": ["bar"]})

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+
 import pytest
 from craft_parts import errors, features
 from craft_parts.executor import filesets
@@ -33,7 +35,10 @@ class TestFileMigrationErrors:
         """Error if the partition feature is enabled and a partition is not provided."""
         with pytest.raises(errors.FeatureError) as raised:
             filesets.migratable_filesets(
-                Fileset(["*"]), "install", default_partition="default", partition=None
+                Fileset(["*"]),
+                Path("install"),
+                default_partition="default",
+                partition=None,
             )
 
         assert features.Features().enable_partitions
