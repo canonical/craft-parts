@@ -144,6 +144,28 @@ endif
 endif
 endif
 
+# Colcon is not available in apt on jammy or focal.
+ifeq ($(filter $(VERSION_CODENAME),jammy focal),)
+ifeq ($(wildcard /usr/share/doc/colcon/copyright),)
+APT_PACKAGES += colcon
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-core/),)
+APT_PACKAGES += python3-colcon-core
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-cmake/),)
+APT_PACKAGES += python3-colcon-cmake
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-package-selection/),)
+APT_PACKAGES += python3-colcon-package-selection
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-python-setup-py/),)
+APT_PACKAGES += python3-colcon-python-setup-py
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-parallel-executor/),)
+APT_PACKAGES += python3-colcon-parallel-executor
+endif
+endif
+
 # Tools needed for plugin integration tests that aren't java or python
 ifneq ($(NO_PLUGIN),1)
 ifeq ($(wildcard /usr/share/doc/automake/copyright),)
