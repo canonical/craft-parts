@@ -466,9 +466,7 @@ class PartHandler:
                 stderr=stderr,
             )
 
-            callbacks.run_mid_step(
-                step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE
-            )
+            callbacks.run_step(step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE)
 
             # Organize the installed files as requested. We do this in the build step for
             # two reasons:

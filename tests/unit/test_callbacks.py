@@ -248,7 +248,7 @@ class TestCallbackExecution:
         assert not err
         assert out == "hello callback 1\nhello callback 2\n"
 
-    def test_run_mid_step(self, capfd):
+    def test_run_step(self, capfd):
         callbacks.register_step(
             _callback_1,
             step_list=[Step.BUILD],
@@ -261,7 +261,7 @@ class TestCallbackExecution:
             step_list=[Step.BUILD],
             hook_point=callbacks.HookPoint.PRE_ORGANIZE,
         )
-        callbacks.run_mid_step(
+        callbacks.run_step(
             self._step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE
         )
         out, err = capfd.readouterr()

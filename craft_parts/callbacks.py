@@ -220,8 +220,8 @@ def run_post_step(step_info: StepInfo) -> None:
     return _run_step(step_info=step_info, hook_point=HookPoint.POST_STEP)
 
 
-def run_mid_step(step_info: StepInfo, hook_point: HookPoint) -> None:
-    """Run all mid-step callbacks registered with the given hook point.
+def run_step(step_info: StepInfo, hook_point: HookPoint) -> None:
+    """Run all step callbacks registered with the given hook point.
 
     :param step_info: the step information to be sent to the callback functions.
     :param hook_point: the mid-step hook the callback was registered at.
