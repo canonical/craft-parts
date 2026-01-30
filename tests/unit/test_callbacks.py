@@ -109,6 +109,36 @@ class TestCallbackRegistration:
         # But we can register a different one
         callbacks.register_post_step(_callback_2)
 
+    def test_register_step(self):
+        callbacks.register_step(
+            _callback_1, step_list=[Step.BUILD], hook_point=callbacks.HookPoint.PRE_STEP
+        )
+
+        # A callback function shouldn't be registered again
+        with pytest.raises(errors.CallbackRegistrationError) as raised:
+            callbacks.register_step(
+                _callback_1,
+                step_list=[Step.BUILD],
+                hook_point=callbacks.HookPoint.PRE_STEP,
+            )
+        assert raised.value.message == (
+            "callback function '_callback_1' is already registered."
+        )
+
+        # But we can register a different one
+        callbacks.register_step(
+            _callback_2,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_STEP,
+        )
+
+        # And also register the same callback in a different hook point
+        callbacks.register_step(
+            _callback_1,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.POST_STEP,
+        )
+
     def test_register_prologue(self):
         callbacks.register_prologue(_callback_3)
 
@@ -261,9 +291,7 @@ class TestCallbackExecution:
             step_list=[Step.BUILD],
             hook_point=callbacks.HookPoint.PRE_ORGANIZE,
         )
-        callbacks.run_step(
-            self._step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE
-        )
+        callbacks.run_step(self._step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE)
         out, err = capfd.readouterr()
         assert not err
         assert out == "hello callback 1\nhello callback 2\n"
