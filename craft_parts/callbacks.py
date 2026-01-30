@@ -144,7 +144,7 @@ def register_step(
     """Register a step callback function.
 
     :param func: The callback function to run.
-    :param step_list: The steps after which the callback function should run.
+    :param step_list: The steps for which the callback function should run.
         If not specified, the callback function will be executed in all steps.
     :param hook_point: The point during step execution this callback is attached to.
     """
