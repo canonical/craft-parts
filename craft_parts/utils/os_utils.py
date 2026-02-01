@@ -179,7 +179,7 @@ def is_inside_container() -> bool:
     :return: Whether the process is running inside a container.
     """
     for path in (Path("/.dockerenv"), Path("/run/.containerenv")):
-        if Path(path).exists():
+        if path.exists():
             logger.debug("application running in a docker or podman (OCI) container")
             return True
 
