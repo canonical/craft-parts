@@ -142,7 +142,7 @@ def test_prologue_callback(new_dir, capfd, mocker):
             CRAFT_PART_SRC={new_dir}/parts/foo/src
             CRAFT_PART_SRC_WORK={new_dir}/parts/foo/src
             CRAFT_PRIME={new_dir}/prime
-            CRAFT_PROJECT_DIR={str(Path.cwd())}
+            CRAFT_PROJECT_DIR={Path.cwd().as_posix()}
             CRAFT_STAGE={new_dir}/stage
             CRAFT_STEP_NAME=PULL
             CRAFT_TARGET_ARCH=arm64
