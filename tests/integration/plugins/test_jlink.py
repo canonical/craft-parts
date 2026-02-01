@@ -270,7 +270,7 @@ def test_jlink_plugin_java_home(new_dir, partitions):
     assert 'JAVA_VERSION="17.' in java_release.read_text()
 
 
-def test_jlink_plugin_base(new_dir, partitions):
+def test_jlink_plugin_base(new_path, partitions):
     """Test that jlink produces base image"""
 
     parts_yaml = textwrap.dedent(
@@ -286,12 +286,12 @@ def test_jlink_plugin_base(new_dir, partitions):
     parts = yaml.safe_load(parts_yaml)
 
     lf = LifecycleManager(
-        parts, application_name="test_jlink", cache_dir=new_dir, partitions=partitions
+        parts, application_name="test_jlink", cache_dir=new_path, partitions=partitions
     )
     actions = lf.plan(Step.PRIME)
 
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    java = new_dir / "stage/usr/bin/java"
+    java = new_path / "stage/usr/bin/java"
     assert java.is_file()

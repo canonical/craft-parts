@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 def organize_files(  # noqa: PLR0912
     *,
     part_name: str,
-    file_map: dict[Path, str],
+    file_map: dict[str, str],
     install_dir_map: Mapping[str | None, Path],
     overwrite: bool,
     default_partition: str,
@@ -65,12 +65,11 @@ def organize_files(  # noqa: PLR0912
     :raises FileOrganizeError: If partitions are enabled and the source file is not from
         the default partition.
     """
-    for key in sorted(file_map, key=lambda x: ["*" in x.as_posix(), x]):
-        src = Path(get_src_path(key, part_name, install_dir_map, default_partition))
-        _dst, dst_string = get_dst_path(
+    for key in sorted(file_map, key=lambda x: ["*" in x, x]):
+        src = get_src_path(key, part_name, install_dir_map, default_partition)
+        dst, dst_string = get_dst_path(
             key, file_map, install_dir_map, default_partition
         )
-        dst = Path(_dst)
 
         base = src.parent
         if "*" in str(src):
@@ -110,7 +109,7 @@ def organize_files(  # noqa: PLR0912
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
-                            f"trying to organize file {key.as_posix()!r} to "
+                            f"trying to organize file {key!r} to "
                             f"{file_map[key]!r}, but "
                             f"{dst_string!r} already exists"
                         ),
@@ -133,7 +132,7 @@ def organize_files(  # noqa: PLR0912
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
-                            f"trying to organize {key.as_posix()!r} to "
+                            f"trying to organize {key!r} to "
                             f"{file_map[key]!r}, but "
                             f"{rel_dst_string!r} already exists"
                         ),
@@ -147,7 +146,7 @@ def organize_files(  # noqa: PLR0912
 
 
 def get_src_path(
-    key: Path,
+    key: str,
     part_name: str,
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
@@ -177,8 +176,8 @@ def get_src_path(
 
 
 def get_dst_path(
-    key: Path,
-    file_map: dict[Path, str],
+    key: str,
+    file_map: dict[str, str],
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
 ) -> tuple[Path, str]:

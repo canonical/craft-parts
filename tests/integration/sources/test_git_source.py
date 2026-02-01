@@ -44,48 +44,48 @@ class GitBaseTestCase:
 
     # pylint: enable=attribute-defined-outside-init
 
-    def rm_dir(self, dir_name):
-        if Path(dir_name).exists():
+    def rm_dir(self, dir_name: Path):
+        if dir_name.exists():
             shutil.rmtree(dir_name)
 
-    def clean_dir(self, dir_name):
+    def clean_dir(self, dir_name: Path):
         self.rm_dir(dir_name)
-        Path(dir_name).mkdir()
+        dir_name.mkdir()
 
-    def clone_repo(self, repo, tree):
+    def clone_repo(self, repo: Path, tree: Path):
         self.clean_dir(tree)
-        _call(["git", "clone", repo, tree])
+        _call(["git", "clone", repo.as_posix(), tree.as_posix()])
         os.chdir(tree)
         _call(["git", "config", "--local", "user.name", '"Example Dev"'])
         _call(["git", "config", "--local", "user.email", "dev@example.com"])
 
-    def add_file(self, filename, body, message):
-        with Path(filename).open("w") as fp:
+    def add_file(self, filename: Path, body: str, message: str):
+        with filename.open("w") as fp:
             fp.write(body)
 
-        _call(["git", "add", filename])
+        _call(["git", "add", filename.as_posix()])
         _call(["git", "commit", "-am", message])
 
-    def check_file_contents(self, path, expected):
+    def check_file_contents(self, path: Path, expected: str):
         body = None
-        with Path(path).open() as fp:
+        with path.open() as fp:
             body = fp.read()
         assert body == expected
 
-    def get_commit(self, path) -> str:
-        return _call_with_output(["git", "-C", path, "rev-parse", "HEAD"])
+    def get_commit(self, path: Path) -> str:
+        return _call_with_output(["git", "-C", path.as_posix(), "rev-parse", "HEAD"])
 
 
 class TestGitSource(GitBaseTestCase):
     def test_pull_existing_after_update(self, new_dir, monkeypatch):
         """Test that `pull_existing` works after the remote is updated."""
         # set up repositories
-        remote = str(Path("remote.git").absolute())
+        remote = Path("remote.git").absolute()
         working_tree = Path("working-tree").absolute()
-        other_tree = str(Path("helper-tree").absolute())
+        other_tree = Path("helper-tree").absolute()
 
         git = GitSource(
-            str(remote), working_tree, cache_dir=new_dir, project_dirs=self._dirs
+            remote, working_tree, cache_dir=new_dir, project_dirs=self._dirs
         )
 
         self.clean_dir(remote)
@@ -99,14 +99,14 @@ class TestGitSource(GitBaseTestCase):
         # from the working tree, clone, commit, and push
         self.clone_repo(remote, working_tree)
         monkeypatch.chdir(working_tree)
-        self.add_file("test.txt", "Hello, World!", "created test.txt")
-        _call(["git", "push", str(remote)])
+        self.add_file(Path("test.txt"), "Hello, World!", "created test.txt")
+        _call(["git", "push", remote.as_posix()])
 
         # from the other tree, clone, commit and push
         self.clone_repo(remote, other_tree)
         monkeypatch.chdir(other_tree)
-        self.add_file("test.txt", "Howdy, Partner!", "updated test.txt")
-        _call(["git", "push", "-f", str(remote)])
+        self.add_file(Path("test.txt"), "Howdy, Partner!", "updated test.txt")
+        _call(["git", "push", "-f", remote.as_posix()])
 
         # go back to the working tree and pull the new commit
         monkeypatch.chdir(working_tree)
@@ -127,7 +127,7 @@ class TestGitSource(GitBaseTestCase):
         other_tree = Path("helper-tree").absolute()
 
         git = GitSource(
-            str(remote),
+            remote,
             working_tree,
             cache_dir=new_dir,
             source_branch="test-branch",
@@ -145,21 +145,21 @@ class TestGitSource(GitBaseTestCase):
         # from the working tree, clone, commit, and push
         self.clone_repo(remote, working_tree)
         monkeypatch.chdir(working_tree)
-        self.add_file("test.txt", "Hello, World!", "created test.txt")
-        _call(["git", "push", str(remote)])
+        self.add_file(Path("test.txt"), "Hello, World!", "created test.txt")
+        _call(["git", "push", remote.as_posix()])
 
         # from the other tree, clone, commit and push
         self.clone_repo(remote, other_tree)
         monkeypatch.chdir(other_tree)
-        self.add_file("test.txt", "Howdy, Partner!", "updated test.txt")
-        _call(["git", "push", "-f", str(remote)])
+        self.add_file(Path("test.txt"), "Howdy, Partner!", "updated test.txt")
+        _call(["git", "push", "-f", remote.as_posix()])
 
         # go back to the working tree and pull the new commit
         monkeypatch.chdir(working_tree)
         git.pull()
 
         # assert the commit was actually pulled
-        assert Path(working_tree / "test.txt").read_text() == "Howdy, Partner!"
+        assert (working_tree / "test.txt").read_text() == "Howdy, Partner!"
 
     @pytest.mark.parametrize("use_short_commit", [True, False])
     def test_pull_new_commit(self, use_short_commit, new_dir, monkeypatch):
@@ -168,6 +168,7 @@ class TestGitSource(GitBaseTestCase):
         remote = Path("remote.git").absolute()
         working_tree = Path("working-tree").absolute()
         other_tree = Path("helper-tree").absolute()
+
         self.clean_dir(remote)
         self.clean_dir(working_tree)
         self.clean_dir(other_tree)
@@ -179,19 +180,19 @@ class TestGitSource(GitBaseTestCase):
         # initialize the other tree, clone, commit, and push
         self.clone_repo(remote, other_tree)
         monkeypatch.chdir(other_tree)
-        self.add_file("test.txt", "Hello, World!", "created test.txt")
-        _call(["git", "push", str(remote)])
+        self.add_file(Path("test.txt"), "Hello, World!", "created test.txt")
+        _call(["git", "push", remote.as_posix()])
         commit = self.get_commit(other_tree)
 
         # test that short commits are expanded
         commit = commit[:10] if use_short_commit else commit
 
         # create a second commit and push
-        self.add_file("test.txt", "Howdy, Partner!", "updated test.txt")
-        _call(["git", "push", str(remote)])
+        self.add_file(Path("test.txt"), "Howdy, Partner!", "updated test.txt")
+        _call(["git", "push", remote.as_posix()])
 
         git = GitSource(
-            str(remote),
+            remote,
             working_tree,
             cache_dir=new_dir,
             project_dirs=self._dirs,
@@ -202,7 +203,7 @@ class TestGitSource(GitBaseTestCase):
         git.pull()
 
         # assert the first commit was pulled
-        assert Path(working_tree / "test.txt").read_text() == "Hello, World!"
+        assert (working_tree / "test.txt").read_text() == "Hello, World!"
 
     @pytest.mark.parametrize("use_short_commit", [True, False])
     def test_pull_existing_commit(self, use_short_commit, new_dir, monkeypatch):
@@ -210,6 +211,7 @@ class TestGitSource(GitBaseTestCase):
         # set up repositories
         remote = Path("remote.git").absolute()
         working_tree = Path("working-tree").absolute()
+
         self.clean_dir(remote)
         self.clean_dir(working_tree)
 
@@ -222,19 +224,19 @@ class TestGitSource(GitBaseTestCase):
 
         # from the working tree, clone, commit, and push
         monkeypatch.chdir(working_tree)
-        self.add_file("test.txt", "Hello, World!", "created test.txt")
-        _call(["git", "push", str(remote)])
+        self.add_file(Path("test.txt"), "Hello, World!", "created test.txt")
+        _call(["git", "push", remote.as_posix()])
         commit = self.get_commit(working_tree)
 
         # test that short commits are expanded
         commit = commit[:10] if use_short_commit else commit
 
         # create a second commit and push
-        self.add_file("test.txt", "Howdy, Partner!", "updated test.txt")
-        _call(["git", "push", str(remote)])
+        self.add_file(Path("test.txt"), "Howdy, Partner!", "updated test.txt")
+        _call(["git", "push", remote.as_posix()])
 
         git = GitSource(
-            str(remote),
+            remote,
             working_tree,
             cache_dir=new_dir,
             project_dirs=self._dirs,
@@ -245,16 +247,17 @@ class TestGitSource(GitBaseTestCase):
         git.pull()
 
         # assert the first commit was pulled
-        assert Path(working_tree / "test.txt").read_text() == "Hello, World!"
+        assert (working_tree / "test.txt").read_text() == "Hello, World!"
 
 
 class TestGitConflicts(GitBaseTestCase):
     """Test that git pull errors don't kill the parser"""
 
     def test_git_conflicts(self, new_dir, monkeypatch):
-        repo = str(Path("conflict-test.git").resolve())
+        repo = Path("conflict-test.git").resolve()
         working_tree = Path("git-conflict-test").absolute()
-        conflicting_tree = f"{working_tree}-conflict"
+        conflicting_tree = working_tree.with_name(f"{working_tree.name}-conflict")
+
         git = GitSource(repo, working_tree, cache_dir=new_dir, project_dirs=self._dirs)
 
         self.clean_dir(repo)
@@ -271,31 +274,32 @@ class TestGitConflicts(GitBaseTestCase):
 
         # add a file to the repo
         monkeypatch.chdir(working_tree)
-        self.add_file("fake", "fake 1", "fake 1")
-        _call(["git", "push", repo])
+        self.add_file(Path("fake"), "fake 1", "fake 1")
+        _call(["git", "push", repo.as_posix()])
 
         git.pull()
 
         monkeypatch.chdir(conflicting_tree)
-        self.add_file("fake", "fake 2", "fake 2")
-        _call(["git", "push", "-f", repo])
+        self.add_file(Path("fake"), "fake 2", "fake 2")
+        _call(["git", "push", "-f", repo.as_posix()])
 
         monkeypatch.chdir(working_tree)
         git.pull()
 
         body = None
-        with Path(working_tree, "fake").open() as fp:
+        with (working_tree / "fake").open() as fp:
             body = fp.read()
 
         assert body == "fake 2"
 
     def test_git_submodules(self, new_dir, monkeypatch):
         """Test that updates to submodules are pulled"""
-        repo = str(Path("submodules.git").resolve())
-        sub_repo = str(Path("subrepo").resolve())
+        repo = Path("submodules.git").resolve()
+        sub_repo = Path("subrepo").resolve()
         working_tree = Path("git-submodules").absolute()
-        working_tree_two = f"{str(working_tree)}-two"
-        sub_working_tree = str(Path("git-submodules-sub").resolve())
+        working_tree_two = working_tree.with_name(f"{working_tree.name}-two")
+        sub_working_tree = Path("git-submodules-sub").resolve()
+
         git = GitSource(repo, working_tree, cache_dir=new_dir, project_dirs=self._dirs)
 
         self.clean_dir(repo)
@@ -308,35 +312,40 @@ class TestGitConflicts(GitBaseTestCase):
         _call(["git", "init", "--bare"])
 
         self.clone_repo(sub_repo, sub_working_tree)
-        self.add_file("sub-file", "sub-file", "sub-file")
-        _call(["git", "push", sub_repo])
+        self.add_file(Path("sub-file"), "sub-file", "sub-file")
+        _call(["git", "push", sub_repo.as_posix()])
 
         monkeypatch.chdir(repo)
         _call(["git", "init", "--bare"])
 
         self.clone_repo(repo, working_tree)
-        _call(["git", "-c", "protocol.file.allow=always", "submodule", "add", sub_repo])
+        _call(
+            [
+                "git",
+                "-c",
+                "protocol.file.allow=always",
+                "submodule",
+                "add",
+                sub_repo.as_posix(),
+            ]
+        )
         _call(["git", "commit", "-am", "added submodule"])
-        _call(["git", "push", repo])
+        _call(["git", "push", repo.as_posix()])
 
         git.pull()
 
-        self.check_file_contents(
-            str(Path(working_tree, "subrepo", "sub-file")), "sub-file"
-        )
+        self.check_file_contents((working_tree / "subrepo" / "sub-file"), "sub-file")
 
         # add a file to the repo
         monkeypatch.chdir(sub_working_tree)
-        self.add_file("fake", "fake 1", "fake 1")
-        _call(["git", "push", sub_repo])
+        self.add_file(Path("fake"), "fake 1", "fake 1")
+        _call(["git", "push", sub_repo.as_posix()])
 
         monkeypatch.chdir(working_tree)
         git.pull()
 
         # this shouldn't cause any change
-        self.check_file_contents(
-            str(Path(working_tree, "subrepo", "sub-file")), "sub-file"
-        )
+        self.check_file_contents(Path(working_tree, "subrepo", "sub-file"), "sub-file")
         assert Path(working_tree, "subrepo", "fake").exists() is False
 
         # update the submodule
@@ -361,16 +370,14 @@ class TestGitConflicts(GitBaseTestCase):
         git.pull()
 
         # new file should be there now
-        self.check_file_contents(
-            str(Path(working_tree, "subrepo", "sub-file")), "sub-file"
-        )
-        self.check_file_contents(str(Path(working_tree, "subrepo", "fake")), "fake 1")
+        self.check_file_contents((working_tree / "subrepo" / "sub-file"), "sub-file")
+        self.check_file_contents((working_tree / "subrepo" / "fake"), "fake 1")
 
 
 class TestGitDetails(GitBaseTestCase):
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions, monkeypatch):
-        def _add_and_commit_file(filename, content=None, message=None):
+        def _add_and_commit_file(filename: str, content=None, message=None):
             if not content:
                 content = filename
 
@@ -383,7 +390,7 @@ class TestGitDetails(GitBaseTestCase):
             _call(["git", "add", filename])
             _call(["git", "commit", "-am", message])
 
-        self.working_tree = "git-test"
+        self.working_tree = Path("git-test")
         self.source_dir = Path("git-checkout")
         self.clean_dir(self.working_tree)
 

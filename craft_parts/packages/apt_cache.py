@@ -118,10 +118,10 @@ class AptCache(ContextDecorator):
         apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
 
         # Methods and solvers dir for when in the SNAP.
-        snap_dir = Path(os.getenv("SNAP", ""))
+        snap_dir = Path(os.environ["SNAP"]) if "SNAP" in os.environ else None
         if (
             os_utils.is_snap(application_package_name)
-            and snap_dir != Path()
+            and snap_dir is not None
             and snap_dir.exists()
         ):
             apt_dir = snap_dir / "usr" / "lib" / "apt"
@@ -129,8 +129,8 @@ class AptCache(ContextDecorator):
             # yes apt is broken like that we need to append os.path.sep
             methods_dir = str(apt_dir / "methods") + os.path.sep
             apt_pkg.config.set("Dir::Bin::methods", methods_dir)
-            solvers_dir = str(apt_dir / "solvers")
-            apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
+            solvers_dir = str(apt_dir / "solvers") + os.path.sep
+            apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir)
             apt_key_path = str(snap_dir / "usr" / "bin" / "apt-key")
             apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
             gpgv_path = str(snap_dir / "usr" / "bin" / "gpgv")

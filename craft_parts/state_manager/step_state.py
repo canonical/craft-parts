@@ -19,14 +19,13 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Annotated, Any, cast
+from typing import Annotated, Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 from typing_extensions import override
 
 from craft_parts.infos import ProjectOptions
-from craft_parts.parts import serialize_organize
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
@@ -34,12 +33,6 @@ logger = logging.getLogger(__name__)
 
 def _serialize_path_set(value: set[Path]) -> set[str]:
     return {v.as_posix() for v in value}
-
-
-def _serialize_part_properties(value: dict[str, Any]) -> dict[str, Any]:
-    if organize := value.get("organize"):
-        value["organize"] = serialize_organize(cast(dict[Path, str], organize))
-    return value
 
 
 class MigrationContents(BaseModel):
@@ -116,9 +109,7 @@ class StepState(MigrationState, ABC):
     the step should run again on a new lifecycle execution.
     """
 
-    part_properties: Annotated[
-        dict[str, Any], PlainSerializer(_serialize_part_properties)
-    ] = {}
+    part_properties: dict[str, Any] = {}
     project_options: ProjectOptions = ProjectOptions()
     model_config = ConfigDict(
         validate_assignment=True,

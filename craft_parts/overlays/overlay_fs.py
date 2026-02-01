@@ -51,7 +51,7 @@ class OverlayFS:
 
         try:
             os_utils.mount_overlayfs(
-                str(mountpoint),
+                mountpoint,
                 f"-olowerdir={lower_dir!s},upperdir={self._upper_dir!s},"
                 f"workdir={self._work_dir!s}",
             )
@@ -68,12 +68,12 @@ class OverlayFS:
         if not self._mountpoint:
             return
 
-        logger.debug("unmount overlayfs from %s", self._mountpoint)
+        logger.debug("unmount overlayfs from %s", self._mountpoint.as_posix())
         try:
-            os_utils.umount(str(self._mountpoint))
+            os_utils.umount(self._mountpoint)
         except CalledProcessError as err:
             raise errors.OverlayUnmountError(
-                str(self._mountpoint), message=str(err)
+                self._mountpoint.as_posix(), message=str(err)
             ) from err
 
         self._mountpoint = None

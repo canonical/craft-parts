@@ -241,7 +241,7 @@ class TestPartData:
 
     def test_part_organize_files(self, partitions):
         p = Part("foo", {"organize": {"a": "b", "c": "d"}}, partitions=partitions)
-        assert p.spec.organize_files == {Path("a"): "b", Path("c"): "d"}
+        assert p.spec.organize_files == {"a": "b", "c": "d"}
 
     def test_part_dependencies(self, partitions):
         p = Part("foo", {"after": ["bar"]}, partitions=partitions)

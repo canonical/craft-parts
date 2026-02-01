@@ -41,7 +41,7 @@ class TestOverlayFS:
         ovfs = self._make_overlay_fs([Path("/lower")])
         ovfs.mount(Path("/mountpoint"))
         mock_mount_overlayfs.assert_called_once_with(
-            "/mountpoint",
+            Path("/mountpoint"),
             "-olowerdir=/lower,upperdir=/upper,workdir=/work",
         )
 
@@ -53,7 +53,7 @@ class TestOverlayFS:
         ovfs = self._make_overlay_fs([Path("/lower1"), Path("/lower2")])
         ovfs.mount(Path("/mountpoint"))
         mock_mount_overlayfs.assert_called_once_with(
-            "/mountpoint",
+            Path("/mountpoint"),
             "-olowerdir=/lower1:/lower2,upperdir=/upper,workdir=/work",
         )
 
@@ -79,7 +79,7 @@ class TestOverlayFS:
         ovfs = self._make_overlay_fs([Path("/lower")])
         ovfs.mount(Path("/mountpoint"))
         ovfs.unmount()
-        mock_umount.assert_called_once_with("/mountpoint")
+        mock_umount.assert_called_once_with(Path("/mountpoint"))
 
     def test_unmount_not_mounted(self, mocker):
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
@@ -97,7 +97,7 @@ class TestOverlayFS:
         ovfs.unmount()
         ovfs.unmount()
         ovfs.unmount()
-        mock_umount.assert_called_once_with("/mountpoint")
+        mock_umount.assert_called_once_with(Path("/mountpoint"))
 
     def test_unmount_error(self, mocker):
         mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")

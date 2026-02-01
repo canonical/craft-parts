@@ -1328,7 +1328,7 @@ class PartHandler:
         snap_files = snaps_dir.glob("*.snap")
         snap_sources = (
             sources.SnapSource(
-                source=str(s),
+                source=s,
                 part_src_dir=snaps_dir,
                 cache_dir=self._part_info.cache_dir,
                 project_dirs=self._part.dirs,

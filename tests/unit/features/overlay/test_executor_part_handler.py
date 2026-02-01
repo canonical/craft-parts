@@ -145,14 +145,14 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         )
 
         self._mock_mount_overlayfs.assert_called_with(
-            f"{self._part_info.overlay_mount_dir}",
+            self._part_info.overlay_mount_dir,
             (
                 f"-olowerdir={self._part_info.overlay_packages_dir}:/base,"
                 f"upperdir={self._part.part_layer_dir},"
                 f"workdir={self._part_info.overlay_work_dir}"
             ),
         )
-        self._mock_umount.assert_called_with(f"{self._part_info.overlay_mount_dir}")
+        self._mock_umount.assert_called_with(self._part_info.overlay_mount_dir)
 
     def test_run_build_without_overlay_visibility(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")

@@ -80,11 +80,12 @@ def host_arch() -> str:
 def new_dir(monkeypatch, tmpdir):
     """Change to a new temporary directory."""
     monkeypatch.chdir(tmpdir)
-    return Path(tmpdir)
+    return tmpdir
 
 
 @pytest.fixture
 def new_path(monkeypatch, tmp_path):
+    """Change to a new temporary directory and returns its path."""
     monkeypatch.chdir(tmp_path)
     return tmp_path
 
@@ -211,17 +212,17 @@ def mock_overlay_support_prerequisites(mocker, add_overlay_feature):
 
 
 @pytest.fixture(autouse=True)
-def temp_xdg(tmpdir, mocker):
+def temp_xdg(tmp_path: Path, mocker):
     """Use a temporary locaction for XDG directories."""
 
     mocker.patch(
-        "xdg.BaseDirectory.xdg_config_home", new=Path(tmpdir, ".config").as_posix()
+        "xdg.BaseDirectory.xdg_config_home", new=(tmp_path / ".config").as_posix()
     )
     mocker.patch(
-        "xdg.BaseDirectory.xdg_data_home", new=Path(tmpdir, ".local").as_posix()
+        "xdg.BaseDirectory.xdg_data_home", new=(tmp_path / ".local").as_posix()
     )
     mocker.patch(
-        "xdg.BaseDirectory.xdg_cache_home", new=Path(tmpdir, ".cache").as_posix()
+        "xdg.BaseDirectory.xdg_cache_home", new=(tmp_path / ".cache").as_posix()
     )
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
@@ -236,7 +237,7 @@ def temp_xdg(tmpdir, mocker):
         ],
     )
     mocker.patch.dict(
-        os.environ, {"XDG_CONFIG_HOME": Path(tmpdir, ".config").as_posix()}
+        os.environ, {"XDG_CONFIG_HOME": (tmp_path / ".config").as_posix()}
     )
 
 

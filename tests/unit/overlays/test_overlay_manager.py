@@ -51,7 +51,7 @@ class TestLayerMounting:
     def test_mount_layer(self, new_dir):
         self.om.mount_layer(self.p2)
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir={new_dir}/parts/p1/layer:base_dir,"
             f"upperdir={new_dir}/parts/p2/layer,"
             f"workdir={new_dir}/overlay/work",
@@ -60,7 +60,7 @@ class TestLayerMounting:
     def test_mount_layer_single_part(self, new_dir):
         self.om.mount_layer(self.p1)
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir=base_dir,upperdir={new_dir}/parts/p1/layer,"
             f"workdir={new_dir}/overlay/work",
         )
@@ -68,7 +68,7 @@ class TestLayerMounting:
     def test_mount_layer_pkg_cache(self, new_dir):
         self.om.mount_layer(self.p1, pkg_cache=True)
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir={new_dir}/overlay/packages:base_dir,"
             f"upperdir={new_dir}/parts/p1/layer,"
             f"workdir={new_dir}/overlay/work",
@@ -92,7 +92,7 @@ class TestLayerMounting:
     def test_mount_pkg_cache(self, new_dir):
         self.om.mount_pkg_cache()
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir=base_dir,upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
         )
@@ -123,7 +123,7 @@ class TestLayerMounting:
         self.om._overlay_fs.mount(Path("/mnt"))
 
         self.om.unmount()
-        self.mock_umount.assert_called_with("/mnt")
+        self.mock_umount.assert_called_with(Path("/mnt"))
 
     def test_unmount_not_mounted(self):
         with pytest.raises(RuntimeError) as raised:
@@ -167,7 +167,7 @@ class TestLayerMountingCacheLevel:
     def test_mount_layer(self, new_dir):
         self.om.mount_layer(self.p2)
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir={new_dir}/parts/p1/layer:base_dir,"
             f"upperdir={new_dir}/parts/p2/layer,"
             f"workdir={new_dir}/overlay/work",
@@ -176,7 +176,7 @@ class TestLayerMountingCacheLevel:
     def test_mount_layer_single_part(self, new_dir):
         self.om.mount_layer(self.p1)
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir=base_dir,upperdir={new_dir}/parts/p1/layer,"
             f"workdir={new_dir}/overlay/work",
         )
@@ -184,7 +184,7 @@ class TestLayerMountingCacheLevel:
     def test_mount_1st_layer_pkg_cache(self, new_dir):
         self.om.mount_layer(self.p1, pkg_cache=True)
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir=base_dir,upperdir={new_dir}/parts/p1/layer,"
             f"workdir={new_dir}/overlay/work",
         )
@@ -192,7 +192,7 @@ class TestLayerMountingCacheLevel:
     def test_mount_2nd_layer_pkg_cache(self, new_dir):
         self.om.mount_layer(self.p2, pkg_cache=True)
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir={new_dir}/overlay/packages:{new_dir}/parts/p1/layer:base_dir,"
             f"upperdir={new_dir}/parts/p2/layer,"
             f"workdir={new_dir}/overlay/work",
@@ -216,7 +216,7 @@ class TestLayerMountingCacheLevel:
     def test_mount_pkg_cache(self, new_dir):
         self.om.mount_pkg_cache()
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir={new_dir}/parts/p1/layer:base_dir,"
             f"upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
@@ -280,7 +280,7 @@ class TestPackageManagement:
         self.om.refresh_packages_list()
 
         self.mock_mount_overlayfs.assert_called_once_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir=base_dir,upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
         )
@@ -299,7 +299,7 @@ class TestPackageManagement:
         self.om.download_packages(["pkg1", "pkg2"])
 
         self.mock_mount_overlayfs.assert_called_once_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir=base_dir,upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
         )
@@ -318,7 +318,7 @@ class TestPackageManagement:
         self.om.install_packages(["pkg1", "pkg2"])
 
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir={new_dir}/overlay/packages:base_dir,"
             f"upperdir={new_dir}/parts/p1/layer,"
             f"workdir={new_dir}/overlay/work",
@@ -345,7 +345,7 @@ class TestPackageManagement:
             ctx.refresh_packages_list()
 
         self.mock_mount_overlayfs.assert_called_once_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir=base_dir,upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
         )
@@ -353,7 +353,7 @@ class TestPackageManagement:
             new_dir / "overlay/overlay", self.mock_refresh_packages_list
         )
         self.mock_refresh_packages_list.assert_called_once_with()
-        self.mock_umount.assert_called_once_with(str(new_dir / "overlay/overlay"))
+        self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
 
     def test_package_cache_mount_download(self, mocker, new_dir):
         mock_download_packages = mocker.patch(
@@ -370,7 +370,7 @@ class TestPackageManagement:
             ctx.download_packages(["pkg1", "pkg2"])
 
         self.mock_mount_overlayfs.assert_called_once_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir=base_dir,upperdir={new_dir}/overlay/packages,"
             f"workdir={new_dir}/overlay/work",
         )
@@ -378,7 +378,7 @@ class TestPackageManagement:
             new_dir / "overlay/overlay", mock_download_packages, ["pkg1", "pkg2"]
         )
         mock_download_packages.assert_called_once_with(["pkg1", "pkg2"])
-        self.mock_umount.assert_called_once_with(str(new_dir / "overlay/overlay"))
+        self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
 
     def test_layer_mount_install(self, mocker, new_dir):
         mocker.patch("craft_parts.packages.Repository.download_packages")
@@ -396,7 +396,7 @@ class TestPackageManagement:
             ctx.install_packages(["pkg1", "pkg2"])
 
         self.mock_mount_overlayfs.assert_called_with(
-            str(new_dir / "overlay/overlay"),
+            new_dir / "overlay/overlay",
             f"-olowerdir={new_dir}/overlay/packages:base_dir,"
             f"upperdir={new_dir}/parts/p1/layer,"
             f"workdir={new_dir}/overlay/work",
@@ -410,4 +410,4 @@ class TestPackageManagement:
         mock_install_packages.assert_called_once_with(
             ["pkg1", "pkg2"], refresh_package_cache=False
         )
-        self.mock_umount.assert_called_once_with(str(new_dir / "overlay/overlay"))
+        self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")

@@ -29,11 +29,11 @@ class TestSnapSource:
     """Snap source pull tests."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir, partitions):
+    def setup_method_fixture(self, new_path, partitions):
         # pylint: disable=attribute-defined-outside-init
-        self._path = new_dir
+        self._path = new_path
         self._test_file = _LOCAL_DIR / "data" / "test-snap.snap"
-        self._dest_dir = new_dir / "dest_dir"
+        self._dest_dir = new_path / "dest_dir"
         self._dest_dir.mkdir()
         self._dirs = ProjectDirs(partitions=partitions)
         # pylint: enable=attribute-defined-outside-init
@@ -59,11 +59,11 @@ class TestSnapSource:
             )
         assert raised.value.option == param.replace("_", "-")
 
-    def test_pull_snap_file_must_extract(self, new_dir):
+    def test_pull_snap_file_must_extract(self, new_path):
         source = sources.SnapSource(
-            str(self._test_file),
+            self._test_file,
             self._dest_dir,
-            cache_dir=new_dir,
+            cache_dir=new_path,
             project_dirs=self._dirs,
         )
         source.pull()
@@ -108,7 +108,7 @@ class TestGetName:
 
         with Path("meta", "snap.yaml").open("w") as snap_yaml_file:
             print("name: my-snap", file=snap_yaml_file)
-        assert snap_source._get_snap_name("snap", ".") == "my-snap"
+        assert snap_source._get_snap_name("snap", Path()) == "my-snap"
 
     def test_no_name_yaml(self):
         Path("meta").mkdir()
@@ -117,12 +117,12 @@ class TestGetName:
             print("summary: no name", file=snap_yaml_file)
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:
-            snap_source._get_snap_name("snap", ".")
+            snap_source._get_snap_name("snap", Path())
         assert raised.value.snap_file == "snap"
 
     def test_no_snap_yaml(self):
         Path("meta").mkdir()
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:
-            snap_source._get_snap_name("snap", ".")
+            snap_source._get_snap_name("snap", Path())
         assert raised.value.snap_file == "snap"

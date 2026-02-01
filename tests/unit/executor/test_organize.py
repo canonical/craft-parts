@@ -29,14 +29,14 @@ from craft_parts.executor.organize import organize_files
         # simple_file
         {
             "setup_files": [Path("foo")],
-            "organize_map": {Path("foo"): "bar"},
+            "organize_map": {"foo": "bar"},
             "expected": [(["bar"], "")],
         },
         # simple_dir_with_file
         {
             "setup_dirs": [Path("foodir")],
             "setup_files": [Path("foodir", "foo")],
-            "organize_map": {Path("foodir"): "bardir"},
+            "organize_map": {"foodir": "bardir"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize_to_the_same_directory
@@ -48,22 +48,22 @@ from craft_parts.executor.organize import organize_files
                 "basefoo",
             ],
             "organize_map": {
-                Path("foodir"): "bin",
-                Path("bardir"): "bin",
-                Path("basefoo"): "bin/basefoo",
+                "foodir": "bin",
+                "bardir": "bin",
+                "basefoo": "bin/basefoo",
             },
             "expected": [(["bin"], ""), (["bar", "basefoo", "foo"], "bin")],
         },
         # leading_slash_in_value
         {
             "setup_files": [Path("foo")],
-            "organize_map": {Path("foo"): "/bar"},
+            "organize_map": {"foo": "/bar"},
             "expected": [(["bar"], "")],
         },
         # overwrite_existing_file
         {
             "setup_files": [Path("foo"), Path("bar")],
-            "organize_map": {Path("foo"): "bar"},
+            "organize_map": {"foo": "bar"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*trying to organize file 'foo' to 'bar', but 'bar' already exists.*"
@@ -73,13 +73,13 @@ from craft_parts.executor.organize import organize_files
         # *_for_files
         {
             "setup_files": [Path("foo.conf"), Path("bar.conf")],
-            "organize_map": {Path("*.conf"): "dir/"},
+            "organize_map": {"*.conf": "dir/"},
             "expected": [(["dir"], ""), (["bar.conf", "foo.conf"], "dir")],
         },
         # *_for_files_with_non_dir_dst
         {
             "setup_files": [Path("foo.conf"), Path("bar.conf")],
-            "organize_map": {Path("*.conf"): "dir"},
+            "organize_map": {"*.conf": "dir"},
             "expected": errors.FileOrganizeError,
             "expected_message": r".*multiple files to be organized into 'dir'.*",
         },
@@ -90,7 +90,7 @@ from craft_parts.executor.organize import organize_files
                 Path("dir1", "foo"),
                 Path("dir2", "bar"),
             ],
-            "organize_map": {Path("dir*"): "dir/"},
+            "organize_map": {"dir*": "dir/"},
             "expected": [
                 (["dir"], ""),
                 (["dir1", "dir2"], "dir"),
@@ -106,7 +106,7 @@ from craft_parts.executor.organize import organize_files
                 Path("dir1", "bar"),
                 Path("dir2", "bar"),
             ],
-            "organize_map": {Path("dir*"): "dir/", Path("dir1/bar"): "."},
+            "organize_map": {"dir*": "dir/", "dir1/bar": "."},
             "expected": [
                 (["bar", "dir"], ""),
                 (["dir1", "dir2"], "dir"),
@@ -121,7 +121,7 @@ from craft_parts.executor.organize import organize_files
                 Path("dir", "foo"),
                 Path("dir", "bar"),
             ],
-            "organize_map": {Path("dir/f*"): "nested/dir/"},
+            "organize_map": {"dir/f*": "nested/dir/"},
             "expected": [
                 (["dir", "nested"], ""),
                 (["bar"], "dir"),
@@ -132,28 +132,28 @@ from craft_parts.executor.organize import organize_files
         # organize a file to itself
         {
             "setup_files": [Path("foo")],
-            "organize_map": {Path("foo"): "foo"},
+            "organize_map": {"foo": "foo"},
             "expected": [(["foo"], "")],
         },
         # organize a file to itself with different path
         {
             "setup_dirs": [Path("bardir")],
             "setup_files": [Path("foo")],
-            "organize_map": {Path("bardir/../foo"): "foo"},
+            "organize_map": {"bardir/../foo": "foo"},
             "expected": [(["bardir", "foo"], "")],
         },
         # organize a set with a file to itself
         {
             "setup_dirs": [Path("bardir")],
             "setup_files": [Path("bardir/foo")],
-            "organize_map": {Path("bardir/*"): "bardir/"},
+            "organize_map": {"bardir/*": "bardir/"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize from subdirs to itself
         {
             "setup_dirs": [Path("foodir"), Path("foodir/bardir")],
             "setup_files": [Path("foodir/bardir/foo")],
-            "organize_map": {Path("**/bardir/*"): "bardir/"},
+            "organize_map": {"**/bardir/*": "bardir/"},
             "expected": [(["bardir", "foodir"], ""), (["foo"], "bardir")],
         },
     ],
@@ -197,7 +197,7 @@ def test_organize(new_dir, data):
         {
             "setup_files": [Path("foo")],
             "setup_symlinks": [("foo-link", "foo")],
-            "organize_map": {Path("foo-link"): "foo"},
+            "organize_map": {"foo-link": "foo"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*trying to organize file 'foo-link' to 'foo', but 'foo' already exists.*"
@@ -207,7 +207,7 @@ def test_organize(new_dir, data):
         {
             "setup_files": [Path("foo")],
             "setup_symlinks": [("bardir", ".")],
-            "organize_map": {Path("bardir/foo"): "foo"},
+            "organize_map": {"bardir/foo": "foo"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*trying to organize file 'bardir/foo' to 'foo', but 'foo' already exists.*"
@@ -217,7 +217,7 @@ def test_organize(new_dir, data):
         {
             "setup_files": [Path("foo")],
             "setup_symlinks": [("bardir", ".")],
-            "organize_map": {Path("foo"): "bardir/foo"},
+            "organize_map": {"foo": "bardir/foo"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*trying to organize file 'foo' to 'bardir/foo', but 'bardir/foo' already exists.*"
@@ -230,7 +230,7 @@ def test_organize(new_dir, data):
                 Path("dir1", "foo"),
                 Path("dir2", "foo"),
             ],
-            "organize_map": {Path("dir1/foo"): "dir/foo", Path("dir2/foo"): "dir/"},
+            "organize_map": {"dir1/foo": "dir/foo", "dir2/foo": "dir/"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*trying to organize 'dir2/foo' to 'dir/', but 'dir/foo' already exists.*"
@@ -243,7 +243,7 @@ def test_organize(new_dir, data):
                 Path("dir1", "foo"),
                 Path("dir2", "foo"),
             ],
-            "organize_map": {Path("dir1/foo"): "dir/foo", Path("dir2/*"): "dir/"},
+            "organize_map": {"dir1/foo": "dir/foo", "dir2/*": "dir/"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
                 r".*trying to organize 'dir2/\*' to 'dir/', but 'dir/foo' already exists.*"

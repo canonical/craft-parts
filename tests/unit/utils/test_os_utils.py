@@ -362,21 +362,21 @@ class TestMount:
 
     def test_mount(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
-        os_utils.mount("/dev/node", "/mountpoint", "some", "args")
+        os_utils.mount(Path("/dev/node"), "/mountpoint", "some", "args")
         mock_call.assert_called_once_with(
             ["/bin/mount", "some", "args", "/dev/node", "/mountpoint"]
         )
 
     def test_mount_overlayfs(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
-        os_utils.mount_overlayfs("/mountpoint", "some", "args")
+        os_utils.mount_overlayfs(Path("/mountpoint"), "some", "args")
         mock_call.assert_called_once_with(
             ["fuse-overlayfs", "some", "args", "/mountpoint"]
         )
 
     def test_umount(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
-        os_utils.umount("/mountpoint", "some", "args")
+        os_utils.umount(Path("/mountpoint"), "some", "args")
         mock_call.assert_called_once_with(
             ["/bin/umount", "some", "args", "/mountpoint"]
         )
@@ -391,7 +391,7 @@ class TestMount:
         mock_call = mocker.patch("subprocess.check_call", side_effect=side_effect)
         mock_sleep = mocker.patch("time.sleep")
 
-        os_utils.umount("/mountpoint")
+        os_utils.umount(Path("/mountpoint"))
         assert mock_call.mock_calls == [
             call(["/bin/umount", "/mountpoint"]),
             call(["/bin/umount", "/mountpoint"]),
@@ -405,7 +405,7 @@ class TestMount:
         )
         mock_sleep = mocker.patch("time.sleep")
         with pytest.raises(subprocess.CalledProcessError) as raised:
-            os_utils.umount("/mountpoint")
+            os_utils.umount(Path("/mountpoint"))
         assert str(raised.value) == "Command 'cmd' returned non-zero exit status 42."
         assert mock_call.mock_calls == [
             call(["/bin/umount", "/mountpoint"]),

@@ -103,7 +103,7 @@ class SourceHandler(abc.ABC):
 
     def __init__(
         self,
-        source: str,
+        source: str | Path,
         part_src_dir: Path,
         *,
         cache_dir: Path,
@@ -116,7 +116,7 @@ class SourceHandler(abc.ABC):
 
         invalid_options: list[str] = []
         model_params = {key.replace("_", "-"): value for key, value in kwargs.items()}
-        model_params["source"] = source
+        model_params["source"] = str(source)
         properties = self.source_model.model_json_schema()["properties"]
         for option, value in kwargs.items():
             option_alias = option.replace("_", "-")
@@ -138,7 +138,7 @@ class SourceHandler(abc.ABC):
 
         self._data = self.source_model.model_validate(model_params)
 
-        self.source = source
+        self.source = str(source)
         self.part_src_dir = part_src_dir
         self._cache_dir = cache_dir
         self.source_details: dict[str, str | None] | None = None
@@ -216,7 +216,7 @@ class FileSourceHandler(SourceHandler):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        source: str,
+        source: Path | str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
@@ -227,7 +227,7 @@ class FileSourceHandler(SourceHandler):
         **kwargs: Any,
     ) -> None:
         super().__init__(
-            source,
+            str(source),
             part_src_dir,
             cache_dir=cache_dir,
             source_checksum=source_checksum,

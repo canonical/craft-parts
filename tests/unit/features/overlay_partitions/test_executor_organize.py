@@ -27,20 +27,20 @@ from tests.unit.executor.test_organize import organize_and_assert
         # simple_file
         {
             "setup_files": [Path("foo")],
-            "organize_map": {Path("foo"): "bar"},
+            "organize_map": {"foo": "bar"},
             "expected": [(["bar"], "")],
         },
         # simple_dir_with_file
         {
             "setup_dirs": ["foodir"],
             "setup_files": [Path("foodir", "foo")],
-            "organize_map": {Path("foodir"): "bardir"},
+            "organize_map": {"foodir": "bardir"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize into overlay
         {
             "setup_files": [Path("foo")],
-            "organize_map": {Path("foo"): "(overlay)/bar"},
+            "organize_map": {"foo": "(overlay)/bar"},
             "expected": [([], ""), (["bar"], "../overlay_dir")],
         },
     ],

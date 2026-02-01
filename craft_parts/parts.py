@@ -22,13 +22,12 @@ import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import Annotated, Any, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    PlainSerializer,
     ValidationError,
     field_validator,
     model_validator,
@@ -50,14 +49,6 @@ from craft_parts.utils.partition_utils import (
 from craft_parts.utils.path_utils import get_partition_and_path
 
 _T_validate = TypeVar("_T_validate")
-
-
-def serialize_organize(organize: dict[Path, str]) -> dict[str, str]:
-    """Serialize the organize_files field to a jsonable dict.
-
-    :param organize: The organize field.
-    """
-    return {str(k): v for k, v in organize.items()}
 
 
 class PartSpec(BaseModel):
@@ -374,13 +365,11 @@ class PartSpec(BaseModel):
             default.
     """
 
-    organize_files: Annotated[dict[Path, str], PlainSerializer(serialize_organize)] = (
-        Field(
-            default_factory=dict[Path, str],
-            alias="organize",
-            description="A map of files from the build directory to their destinations in the stage directory.",
-            examples=["{hello.py: bin/hello}"],
-        )
+    organize_files: dict[str, str] = Field(
+        default_factory=dict[str, str],
+        alias="organize",
+        description="A map of files from the build directory to their destinations in the stage directory.",
+        examples=["{hello.py: bin/hello}"],
     )
     """A map of files from the build directory to their destinations in the stage
     directory.
@@ -647,7 +636,7 @@ class PartSpec(BaseModel):
         if not Features().enable_partitions or not Features().enable_overlay:
             return False
         for dest in self.organize_files.values():
-            partition, _ = get_partition_and_path(dest, DEFAULT_PARTITION)
+            partition, _ = get_partition_and_path(Path(dest), DEFAULT_PARTITION)
             if partition == OVERLAY_PARTITION:
                 return True
         return False

@@ -156,10 +156,12 @@ def _setup_chroot_linux(path: Path) -> None:
 
         # Only mount if mountpoint exists.
         if mountpoint.exists():
-            logger.debug("[pid=%d] mount %r on chroot", pid, str(mountpoint))
-            os_utils.mount(entry.src, str(mountpoint), *args)
+            logger.debug("[pid=%d] mount %r on chroot", pid, mountpoint.as_posix())
+            os_utils.mount(Path(entry.src), mountpoint.as_posix(), *args)
         else:
-            logger.debug("[pid=%d] mountpoint %r does not exist", pid, str(mountpoint))
+            logger.debug(
+                "[pid=%d] mountpoint %r does not exist", pid, mountpoint.as_posix()
+            )
 
     logger.debug("chroot setup complete")
 
@@ -171,11 +173,11 @@ def _cleanup_chroot_linux(path: Path) -> None:
         mountpoint = path / entry.mountpoint.lstrip("/")
 
         if mountpoint.exists():
-            logger.debug("[pid=%d] umount: %r", pid, str(mountpoint))
+            logger.debug("[pid=%d] umount: %r", pid, mountpoint.as_posix())
             # The activity executed in the chroot can lead to additional mounts
             # under those mounted to prepare the chroot.
             # Remount as private to ease unmounting.
-            os_utils.mount(str(mountpoint), "--make-rprivate")
+            os_utils.mount(mountpoint, "--make-rprivate")
 
             args: list[str] = ["--recursive"]
             if entry.options and "--rbind" in entry.options:
@@ -183,4 +185,4 @@ def _cleanup_chroot_linux(path: Path) -> None:
                 # unmountable. This may happen in destructive mode depending on
                 # the host environment, so use MNT_DETACH to defer unmounting.
                 args.append("--lazy")
-            os_utils.umount(str(mountpoint), *args)
+            os_utils.umount(mountpoint, *args)

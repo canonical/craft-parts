@@ -220,7 +220,7 @@ def _get_file_list(
     processed_includes: list[str] = []
     for file in includes:
         file_partition, file_inner_path = path_utils.get_partition_and_path(
-            file, default_partition
+            Path(file), default_partition
         )
         if file_partition == partition:
             processed_includes.append(str(file_inner_path))
@@ -229,7 +229,7 @@ def _get_file_list(
     processed_excludes: list[str] = []
     for file in excludes:
         file_partition, file_inner_path = path_utils.get_partition_and_path(
-            file, default_partition
+            Path(file), default_partition
         )
         if file_partition == partition:
             processed_excludes.append(str(file_inner_path))
@@ -325,7 +325,7 @@ def normalize_entry(entry: str, default_partition: str) -> str:
     split_file = (entry[0], entry[1:]) if entry[0] == "-" else ("", entry)
 
     partition, inner_path = path_utils.get_partition_and_path(
-        split_file[1], default_partition
+        Path(split_file[1]), default_partition
     )
 
     if partition:
