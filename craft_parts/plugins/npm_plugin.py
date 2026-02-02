@@ -370,9 +370,10 @@ class NpmPlugin(Plugin):
             node -e "
             const fs = require('fs')
             const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
-            const deps = pkg.dependencies || {}
-            if (Object.keys(deps).length > 0) {
-                pkg.bundledDependencies = Object.keys(deps)
+            const deps = Object.keys(pkg.dependencies || {})
+            if (deps.length > 0) {
+                const bundledDependencies = pkg.bundledDependencies || []
+                pkg.bundledDependencies = [...new Set([...bundledDependencies, ...deps])]
                 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2))
             }
             "
