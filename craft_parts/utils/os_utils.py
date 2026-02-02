@@ -261,9 +261,11 @@ def umount(mountpoint: str, *args: str) -> None:
     attempt = 0
     while True:  # unmount in Github CI fails randomly and needs a retry
         try:
-            subprocess.check_call(
+            subprocess.run(
                 ["/bin/umount", *args, mountpoint],
-                stderr=subprocess.PIPE,
+                text=True,
+                capture_output=True,
+                check=True,
             )
             break
         except subprocess.CalledProcessError as exc:
