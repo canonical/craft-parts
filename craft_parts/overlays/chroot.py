@@ -172,10 +172,6 @@ def _cleanup_chroot_linux(path: Path) -> None:
 
         if mountpoint.exists():
             logger.debug("[pid=%d] umount: %r", pid, str(mountpoint))
-            # The activity executed in the chroot can lead to additional mounts
-            # under those mounted to prepare the chroot.
-            # Remount as private to ease unmounting.
-            os_utils.mount(str(mountpoint), "--make-rprivate")
 
             args: list[str] = ["--recursive"]
             if entry.options and "--rbind" in entry.options:
