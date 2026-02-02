@@ -70,7 +70,7 @@ class OverlayFS:
 
         logger.debug("unmount overlayfs from %s", self._mountpoint)
         try:
-            os_utils.umount(str(self._mountpoint))
+            os_utils.umount(str(self._mountpoint), "--recursive")
         except CalledProcessError as err:
             raise errors.OverlayUnmountError(
                 str(self._mountpoint), message=str(err)
