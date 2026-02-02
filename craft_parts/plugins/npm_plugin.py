@@ -20,6 +20,7 @@ import logging
 import os
 import platform
 import re
+from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
 
@@ -59,6 +60,7 @@ class NpmPluginProperties(PluginProperties, frozen=True):
     # part properties required by the plugin
     npm_include_node: bool = False
     npm_node_version: str | None = None
+    npm_publish_to_cache: bool = False
     source: str  # pyright: ignore[reportGeneralTypeIssues]
 
     @model_validator(mode="after")
@@ -134,6 +136,20 @@ class NpmPlugin(Plugin):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._node_binary_path: str | None = None
+
+    @property
+    def _is_self_contained(self) -> bool:
+        return "self-contained" in self._part_info.build_attributes
+
+    @property
+    def _npm_cache_export(self) -> Path:
+        """Path to npm cache in to publish to."""
+        return self._part_info.part_export_dir / "npm-cache"
+
+    @property
+    def _npm_cache_backstage(self) -> Path:
+        """Path to npm cache to consume packages from."""
+        return self._part_info.project_info.dirs.backstage_dir / "npm-cache"
 
     @staticmethod
     def _get_architecture() -> str:
@@ -265,6 +281,10 @@ class NpmPlugin(Plugin):
         }
         if cast(NpmPluginProperties, self._options).npm_include_node:
             base_env["PATH"] = "${CRAFT_PART_INSTALL}/bin:${PATH}"
+
+        if self._is_self_contained:
+            base_env["npm_config_registry"] = "https://localhost:1"
+
         return base_env
 
     @override
@@ -277,6 +297,9 @@ class NpmPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         cmd: list[str] = []
         options = cast(NpmPluginProperties, self._options)
+        if self._is_self_contained:
+            return self._get_self_contained_build_commands(options)
+
         if options.npm_include_node:
             arch = self._get_architecture()
             version = options.npm_node_version
@@ -324,3 +347,54 @@ class NpmPlugin(Plugin):
             )
         ]
         return cmd
+
+    def _get_self_contained_build_commands(
+        self, options: NpmPluginProperties
+    ) -> list[str]:
+        install_deps_cmd = dedent(
+            f"""\
+            # collect dependency tarballs
+            tarballs=""
+            for dep in $(npm pkg get dependencies 2>/dev/null | awk -F'"' '/:/ {{print $2}}'); do
+                set -- "{self._npm_cache_backstage}/${{dep}}"-*.tgz
+                [ -f "$1" ] && tarballs="$tarballs $1"
+            done
+            [ -n "$tarballs" ] && npm install --offline $tarballs
+            """
+        )
+
+        # pack tarball with its deps bundled inside
+        # add bundledDependencies to package.json
+        bundle_deps_cmd = dedent(
+            """\
+            node -e "
+            const fs = require('fs')
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+            const deps = pkg.dependencies || {}
+            if (Object.keys(deps).length > 0) {
+                pkg.bundledDependencies = Object.keys(deps)
+                fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2))
+            }
+            "
+            """
+        )
+
+        if options.npm_publish_to_cache:
+            self._npm_cache_export.mkdir(parents=True, exist_ok=True)
+            return [
+                install_deps_cmd,
+                bundle_deps_cmd,
+                f'npm pack --pack-destination="{self._npm_cache_export}"',
+            ]
+
+        return [
+            install_deps_cmd,
+            bundle_deps_cmd,
+            'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
+        ]
+
+    @classmethod
+    @override
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports."""
+        return {"self-contained"}
