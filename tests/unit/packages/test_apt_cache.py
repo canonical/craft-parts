@@ -84,6 +84,120 @@ class TestAptStageCache:
 
             assert sorted(names) == ["libpci3", "pciutils"]
 
+    def test_mark_packages_version_interdependency(self, tmpdir, mocker):
+        """Test that mark_packages pins all versions before calling mark_install.
+
+        Simulates libnvinfer-dev depending on libnvinfer10 with an exact
+        version constraint. Without the two-pass fix, iteration order can
+        cause mark_install to fail because the dependency's candidate has
+        not been pinned yet.
+        """
+        # Declarative description of packages and their versions/deps.
+        # "default" is the candidate apt would pick without pinning.
+        # "deps" maps version -> list of (pkg_name, relation, version).
+        package_specs = {
+            "libnvinfer-dev": {
+                "versions": ["10.14.1", "10.15.1"],
+                "default": "10.15.1",
+                "deps": {"10.14.1": [("libnvinfer10", "=", "10.14.1")]},
+            },
+            "libnvinfer10": {
+                "versions": ["10.14.1", "10.15.1"],
+                "default": "10.15.1",
+                "deps": {},
+            },
+        }
+
+        # Build mock objects from specs.
+        pkg_mocks = {}  # name -> mock Package
+        ver_mocks = {}  # (name, version_str) -> mock Version
+
+        for name, spec in package_specs.items():
+            for ver_str in spec["versions"]:
+                v = mocker.MagicMock()
+                v.version = ver_str
+                v.__str__ = lambda self, s=ver_str: s
+                v.dependencies = []
+                ver_mocks[(name, ver_str)] = v
+
+            versions_dict = {vs: ver_mocks[(name, vs)] for vs in spec["versions"]}
+            pkg = mocker.MagicMock(
+                spec=[
+                    "name",
+                    "installed",
+                    "marked_install",
+                    "candidate",
+                    "versions",
+                    "mark_install",
+                    "mark_auto",
+                ],
+            )
+            pkg.name = name
+            pkg.installed = None
+            pkg.marked_install = False
+            pkg.candidate = ver_mocks[(name, spec["default"])]
+            pkg.versions = mocker.MagicMock()
+            pkg.versions.get = versions_dict.get
+            pkg.mark_auto.side_effect = lambda auto: None
+            pkg_mocks[name] = pkg
+
+        # Wire up dependency objects on versions.
+        for name, spec in package_specs.items():
+            for ver_str, dep_list in spec.get("deps", {}).items():
+                groups = []
+                for dep_name, dep_rel, dep_ver in dep_list:
+                    dep = mocker.MagicMock()
+                    dep.name = dep_name
+                    dep.relation = dep_rel
+                    dep.version = dep_ver
+                    dep.target_versions = [ver_mocks[(dep_name, dep_ver)]]
+                    groups.append([dep])
+                ver_mocks[(name, ver_str)].dependencies = groups
+
+        # Simulate apt's mark_install: fail when a dependency's candidate
+        # doesn't match the required version.
+        def make_mark_install(pkg):
+            def side_effect(auto_fix=True, from_user=True):
+                for dep_group in pkg.candidate.dependencies if pkg.candidate else []:
+                    for d in dep_group:
+                        dep_pkg = pkg_mocks.get(d.name)
+                        if dep_pkg is None:
+                            continue
+                        if (
+                            dep_pkg.candidate is None
+                            or dep_pkg.candidate.version != d.version
+                        ):
+                            pkg.candidate = None
+                            pkg.marked_install = False
+                            return
+                pkg.marked_install = True
+
+            return side_effect
+
+        for pkg in pkg_mocks.values():
+            pkg.mark_install.side_effect = make_mark_install(pkg)
+
+        # Mock cache.
+        mock_cache = mocker.MagicMock()
+        mock_cache.is_virtual_package.return_value = False
+        mock_cache.__contains__ = lambda self, n: n in pkg_mocks
+        mock_cache.__getitem__ = lambda self, n: pkg_mocks[n]
+        mocker.patch("apt.cache.Cache", return_value=mock_cache)
+
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+
+        with AptCache(stage_cache=stage_cache) as cache:
+            cache.mark_packages(
+                {
+                    "libnvinfer-dev=10.14.1",
+                    "libnvinfer10=10.14.1",
+                }
+            )
+
+        for pkg in pkg_mocks.values():
+            assert pkg.marked_install is True
+
     def test_packages_without_candidate(self, tmpdir, mocker):
         class MockPackage:
             def __init__(self):
