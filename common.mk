@@ -70,7 +70,7 @@ _setup-lint: install-uv install-shellcheck install-pyright install-lint-build-de
 
 .PHONY: setup-tests
 setup-tests: _setup-tests ##- Set up a testing environment without linters
-	uv sync $(UV_TEST_GROUPS)
+	uv sync $(UV_EXTRA_ARGS) $(UV_TEST_GROUPS)
 
 .PHONY: _setup-tests
 _setup-tests: install-uv install-build-deps
@@ -223,15 +223,15 @@ endif
 
 .PHONY: test
 test:  ## Run all tests
-	uv run pytest
+	uv run $(UV_EXTRA_ARGS) pytest
 
 .PHONY: test-fast
 test-fast:  ##- Run fast tests
-	uv run pytest -m 'not slow'
+	uv run $(UV_EXTRA_ARGS) pytest -m 'not slow'
 
 .PHONY: test-slow
 test-slow:  ##- Run slow tests
-	uv run pytest -m 'slow'
+	uv run $(UV_EXTRA_ARGS) pytest -m 'slow'
 
 .PHONY: test-coverage
 test-coverage:  ## Generate coverage report
