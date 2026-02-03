@@ -58,15 +58,7 @@ class PartsError(Exception):
         self.doc_slug = doc_slug
 
     def __str__(self) -> str:
-        components = [self.brief]
-
-        if self.details:
-            components.append(self.details)
-
-        if self.resolution:
-            components.append(self.resolution)
-
-        return "\n".join(components)
+        return self.brief
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(brief={self.brief!r}, details={self.details!r}, resolution={self.resolution!r}, doc_slug={self.doc_slug!r})"
