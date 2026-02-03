@@ -47,28 +47,32 @@ class TestPluginCMakePlugin:
 
     def test_get_build_snaps(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
-        assert plugin.get_build_snaps() == set()
+        assert plugin.get_build_snaps() == {"cmake"}
 
     def test_get_build_packages_default(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
-        assert plugin.get_build_packages() == {
-            "gcc",
-            "cmake",
-        }
+        assert plugin.get_build_packages() == {"gcc"}
+        assert plugin.get_build_snaps() == {"cmake"}
 
     def test_get_build_packages_ninja(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir, properties={"cmake-generator": "Ninja"})
 
         assert plugin.get_build_packages() == {
             "gcc",
-            "cmake",
             "ninja-build",
         }
+        assert plugin.get_build_snaps() == {"cmake"}
 
     def test_get_build_packages_unix_makefiles(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(
             new_dir, properties={"cmake-generator": "Unix Makefiles"}
         )
+
+        assert plugin.get_build_packages() == {"gcc"}
+        assert plugin.get_build_snaps() == {"cmake"}
+
+    def test_get_build_packages_deb(self, setup_method_fixture, new_dir):
+        plugin = setup_method_fixture(new_dir, properties={"cmake-source": "deb"})
 
         assert plugin.get_build_packages() == {
             "gcc",
