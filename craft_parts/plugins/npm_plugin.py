@@ -356,8 +356,42 @@ class NpmPlugin(Plugin):
             # collect dependency tarballs
             tarballs=""
             for dep in $(npm pkg get dependencies 2>/dev/null | awk -F'"' '/:/ {{print $2}}'); do
-                set -- "{self._npm_cache_backstage}/${{dep}}"-*.tgz
-                [ -f "$1" ] && tarballs="$tarballs $1"
+                dep_version=$(npm pkg get "dependencies.$dep" | tr -d '"')
+                existing_versions=$(ls "{self._npm_cache_backstage}/$dep"-*.tgz 2>/dev/null | sed "s|.*/$dep-||; s|\\.tgz$||")
+                if [ -z "$existing_versions" ]; then
+                    echo "Error: could not resolve dependency '$dep ($dep_version)'" >&2
+                    exit 1
+                fi
+                if [ "$(echo "$existing_versions" | wc -l)" -gt 1 ]; then
+                    # use semver package to find best version from multiple versons found
+                    semver_bin=""
+                    node_pkgs="$(dirname "$(dirname "$(realpath "$(command -v node)")")")/lib/node_modules"
+                    # first path is where semver is located in snap, second path is deb pkg
+                    for candidate in "$node_pkgs/npm/node_modules/semver/bin/semver.js" \
+                                "/usr/share/nodejs/semver/bin/semver.js"; do
+                        if [ -f "$candidate" ]; then
+                            semver_bin="$candidate"
+                            break
+                        fi
+                    done
+                    if [ -f "$semver_bin" ]; then
+                        best_version=$("$semver_bin" -r "$dep_version" $existing_versions 2>/dev/null | tail -1)
+                        if [ -z "$best_version" ]; then
+                            # if semver returns nothing then none of the versions satisfy the version requirement
+                            echo "Error: could not resolve dependency '$dep ($dep_version)'" >&2
+                            exit 1
+                        fi
+
+                        tarballs="$tarballs {self._npm_cache_backstage}/${{dep}}-${{best_version}}.tgz"
+                    else
+                        # some fallback
+                        echo "fallback"
+                    fi
+                else
+                    # only 1 version found
+                    tarballs="$tarballs {self._npm_cache_backstage}/${{dep}}-${{existing_versions}}.tgz"
+                fi
+
             done
             [ -n "$tarballs" ] && npm install --offline $tarballs
             """
