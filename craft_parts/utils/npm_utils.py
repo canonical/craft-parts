@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 from glob import escape
+from typing import Any
 from semantic_version import NpmSpec, Version
 
 
@@ -44,6 +45,20 @@ def find_tarballs(dependencies: dict[str, str], cache_dir: Path) -> list[str]:
         _find_tarball(cache_dir, _get_npm_basename(dep), dep_version)
         for dep, dep_version in dependencies.items()
     ]
+
+def read_pkg(pkg_path: Path) -> dict[str, Any]:
+    if not pkg_path.exists():
+        raise RuntimeError(
+            f"Error: could not find 'package.json'."
+        )
+    with pkg_path.open() as f:
+        return json.load(f)
+
+def write_pkg(pkg_path: Path, pkg: dict[str, Any]) -> None:
+  with pkg_path.open("w") as f:
+      json.dump(pkg, f, indent=2)
+
+# def add_bundled_deps(pkg: dict[str, Any]) -> None:
 
 def get_dependencies(pkg_path: Path):
     if not pkg_path.exists():

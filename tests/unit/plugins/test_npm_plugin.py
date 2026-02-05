@@ -43,6 +43,20 @@ def self_contained_part_info(new_dir):
     )
 
 
+@pytest.fixture
+def mocker_deps(mocker):
+    read_pkg = mocker.patch(
+        "craft_parts.plugins.npm_plugin.read_pkg",
+        return_value={"dependencies": {"my-dep": "^1.0.0"}},
+    )
+    find_tarballs = mocker.patch(
+        "craft_parts.plugins.npm_plugin.find_tarballs",
+        return_value=["/backstage/npm-cache/my-dep-1.0.0.tgz"],
+    )
+    write_pkg = mocker.patch("craft_parts.plugins.npm_plugin.write_pkg")
+    return read_pkg, find_tarballs, write_pkg
+
+
 class TestPluginNpmPlugin:
     """Npm plugin tests."""
 
@@ -389,66 +403,63 @@ class TestPluginNpmPlugin:
 
         assert plugin.get_out_of_source_build() is False
 
-    def test_get_self_contained_build_commands(self, self_contained_part_info, mocker):
-        mocker.patch(
-            "craft_parts.plugins.npm_plugin.get_dependencies",
-            return_value={"my-dep": "^1.0.0"},
-        )
-        mocker.patch(
-            "craft_parts.plugins.npm_plugin.find_tarballs",
-            return_value=["/backstage/npm-cache/my-dep-1.0.0.tgz"],
-        )
-
+    def test_get_self_contained_build_commands(
+        self, self_contained_part_info, mocker_deps
+    ):
+        _, _, write_pkg = mocker_deps
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
 
-        cmd = plugin.get_build_commands()
+        assert plugin.get_build_commands() == [
+            "npm install --offline /backstage/npm-cache/my-dep-1.0.0.tgz",
+            'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
+        ]
 
-        assert len(cmd) == 3
-        assert "npm install --offline /backstage/npm-cache/my-dep-1.0.0.tgz" in cmd
-        assert "bundledDependencies" in cmd
-        assert 'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}"' in cmd
+        write_pkg.assert_called_once()
+        args, _ = write_pkg.call_args
+        assert "bundledDependencies" in args[1]
+        assert "my-dep" in args[1]["bundledDependencies"]
 
     def test_get_self_contained_build_commands_publish_to_cache(
-        self, self_contained_part_info, mocker
+        self, self_contained_part_info, mocker_deps
     ):
-        mocker.patch(
-            "craft_parts.plugins.npm_plugin.get_dependencies",
-            return_value={"my-dep": "^1.0.0"},
-        )
-        mocker.patch(
-            "craft_parts.plugins.npm_plugin.find_tarballs",
-            return_value=["/backstage/npm-cache/my-dep-1.0.0.tgz"],
-        )
 
         properties = NpmPlugin.properties_class.unmarshal(
             {"source": ".", "npm-publish-to-cache": True}
         )
         plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
 
-        cmd = plugin.get_build_commands()
-        assert "npm install --offline /backstage/npm-cache/my-dep-1.0.0.tgz" in cmd
-        assert f'npm pack --pack-destination="{str(plugin._npm_cache_export)}"' in cmd
+        assert plugin.get_build_commands() == [
+            "npm install --offline /backstage/npm-cache/my-dep-1.0.0.tgz",
+            f'npm pack --pack-destination="{str(plugin._npm_cache_export)}"',
+        ]
+        _, _, write_pkg = mocker_deps
+        write_pkg.assert_called_once()
+        args, _ = write_pkg.call_args
+        assert "bundledDependencies" in args[1]
+        assert "my-dep" in args[1]["bundledDependencies"]
 
-    def test_get_self_contained_build_commands_no_dependencies(self, self_contained_part_info, mocker):
+    def test_get_self_contained_build_commands_no_dependencies(
+        self, self_contained_part_info, mocker
+    ):
         mocker.patch(
-            "craft_parts.plugins.npm_plugin.get_dependencies",
-            return_value={},
+            "craft_parts.plugins.npm_plugin.read_pkg",
+            return_value={"dependencies": {}},
         )
 
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
 
-        cmd = plugin.get_build_commands()
-
-        assert cmd == [
+        assert plugin.get_build_commands() == [
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"'
         ]
 
-    def test_get_self_contained_build_commands_missing_tarball(self, self_contained_part_info, mocker):
+    def test_get_self_contained_build_commands_missing_tarball(
+        self, self_contained_part_info, mocker
+    ):
         mocker.patch(
-            "craft_parts.plugins.npm_plugin.get_dependencies",
-            return_value={"missing-dep": "^1.0.0"},
+            "craft_parts.plugins.npm_plugin.read_pkg",
+            return_value={"dependencies": {"missing-dep": "^1.0.0"}},
         )
 
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})

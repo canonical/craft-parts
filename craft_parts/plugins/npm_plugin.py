@@ -27,7 +27,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
 
-from craft_parts.utils.npm_utils import get_dependencies, find_tarballs
+from craft_parts.utils.npm_utils import read_pkg, write_pkg, find_tarballs
 
 import requests
 from pydantic import model_validator
@@ -357,30 +357,17 @@ class NpmPlugin(Plugin):
     def _get_self_contained_build_commands(
         self, options: NpmPluginProperties
     ) -> list[str]:
-
         cmd: list[str] = []
         pkg_path = self._part_info.part_src_dir / "package.json"
-        if dependencies := get_dependencies(pkg_path):
+        pkg = read_pkg(pkg_path)
+        if dependencies := pkg.get("dependencies", {}):
             tarballs = find_tarballs(dependencies, cache_dir=self._npm_cache_backstage)
             cmd.append(f"npm install --offline {shlex.join(tarballs)}")
+
             # pack tarball with its deps bundled inside
             # add bundledDependencies to package.json
-            cmd.append(
-                dedent(
-                    """\
-                node -e "
-                const fs = require('fs')
-                const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
-                const deps = Object.keys(pkg.dependencies || {})
-                if (deps.length > 0) {
-                    const bundledDependencies = pkg.bundledDependencies || []
-                    pkg.bundledDependencies = [...new Set([...bundledDependencies, ...deps])]
-                    fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2))
-                }
-                "
-                """
-                )
-            )
+            pkg["bundledDependencies"] = list({*pkg.get("bundledDependencies", []), *dependencies})
+            write_pkg(pkg_path, pkg)
 
         if options.npm_publish_to_cache:
             self._npm_cache_export.mkdir(parents=True, exist_ok=True)
