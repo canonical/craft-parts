@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import shutil
 import subprocess
 import textwrap
 from pathlib import Path
@@ -23,6 +24,11 @@ import yaml
 from craft_parts import LifecycleManager, Step
 
 pytestmark = [pytest.mark.plugin]
+
+
+def copy_tree(new_dir, copy_dir):
+    source_location = Path(__file__).parent / "test_npm" / copy_dir
+    shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
 
 
 def test_npm_plugin(new_dir, partitions):
@@ -169,3 +175,110 @@ def test_npm_plugin_include_node(new_dir, partitions):
     # try to use bundled Node.js to execute the script
     output = subprocess.check_output([str(node_path), str(binary)], text=True)
     assert output == "hello world\n"
+
+
+def test_npm_self_contained(new_dir, partitions):
+    for copy_dir in ["hello-app", "hello-dep-v1"]:
+        copy_tree(new_dir / copy_dir, copy_dir)
+
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          hello-dep:
+            plugin: npm
+            source: {new_dir / "hello-dep-v1"}
+            npm-publish-to-cache: true
+            build-attributes:
+              - self-contained
+          hello-app:
+            plugin: npm
+            source: {new_dir / "hello-app"}
+            after:
+              - hello-dep
+            build-attributes:
+              - self-contained
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lifecycle = LifecycleManager(
+        parts,
+        application_name="test_npm_self_contained",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lifecycle.plan(Step.PRIME)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    backstage = lifecycle.project_info.backstage_dir / "npm-cache"
+    assert backstage.is_dir()
+    assert list(backstage.glob("hello-dep-*.tgz"))
+
+    binary = Path(lifecycle.project_info.prime_dir, "bin", "hello-app")
+    output = subprocess.check_output([str(binary)], text=True)
+    assert "hello from 1.0.0" in output
+
+
+def test_npm_self_contained_version_resolution(new_dir, partitions):
+    """Test that the correct version from multiple tarballs is installed."""
+    # publish two compatible versions (1.0.0 and 1.1.0) and one incompatible (2.0.0)
+    for copy_dir in ["hello-app", "hello-dep-v1", "hello-dep-v1.1", "hello-dep-v2"]:
+        copy_tree(new_dir / copy_dir, copy_dir)
+
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          hello-dep-v1:
+            plugin: npm
+            source: {new_dir / "hello-dep-v1"}
+            npm-publish-to-cache: true
+            build-attributes:
+              - self-contained
+          hello-dep-v1-1:
+            plugin: npm
+            source: {new_dir / "hello-dep-v1-1"}
+            npm-publish-to-cache: true
+            build-attributes:
+              - self-contained
+          hello-dep-v2:
+            plugin: npm
+            source: {new_dir / "hello-dep-v2"}
+            npm-publish-to-cache: true
+            build-attributes:
+              - self-contained
+          hello-app:
+            plugin: npm
+            source: {new_dir / "hello-app"}
+            after:
+              - hello-dep-v1
+              - hello-dep-v1-1
+              - hello-dep-v2
+            build-attributes:
+              - self-contained
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lifecycle = LifecycleManager(
+        parts,
+        application_name="test_npm_self_contained_multiple_versions",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lifecycle.plan(Step.PRIME)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    backstage = lifecycle.project_info.backstage_dir / "npm-cache"
+    assert backstage.is_dir()
+    tarballs = sorted(backstage.glob("hello-dep-*.tgz"))
+    assert len(tarballs) == 3
+
+    binary = Path(lifecycle.project_info.prime_dir, "bin", "hello-app")
+    output = subprocess.check_output([str(binary)], text=True)
+    assert "hello from 1.1.0" in output

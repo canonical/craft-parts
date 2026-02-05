@@ -20,9 +20,7 @@ import logging
 import os
 import platform
 import re
-import json
 import shlex
-from glob import escape
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
@@ -31,7 +29,6 @@ from craft_parts.utils.npm_utils import read_pkg, write_pkg, find_tarballs
 
 import requests
 from pydantic import model_validator
-from semantic_version import NpmSpec, Version
 from typing_extensions import Self, override
 
 from craft_parts.errors import InvalidArchitecture
