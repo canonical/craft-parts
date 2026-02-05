@@ -20,12 +20,18 @@ import logging
 import os
 import platform
 import re
+import json
+import shlex
+from glob import escape
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
 
+from craft_parts.utils.npm_utils import get_dependencies, find_tarballs
+
 import requests
 from pydantic import model_validator
+from semantic_version import NpmSpec, Version
 from typing_extensions import Self, override
 
 from craft_parts.errors import InvalidArchitecture
@@ -351,80 +357,40 @@ class NpmPlugin(Plugin):
     def _get_self_contained_build_commands(
         self, options: NpmPluginProperties
     ) -> list[str]:
-        install_deps_cmd = dedent(
-            f"""\
-            # collect dependency tarballs
-            tarballs=""
-            for dep in $(npm pkg get dependencies 2>/dev/null | awk -F'"' '/:/ {{print $2}}'); do
-                dep_version=$(npm pkg get "dependencies.$dep" | tr -d '"')
-                existing_versions=$(ls "{self._npm_cache_backstage}/$dep"-*.tgz 2>/dev/null | sed "s|.*/$dep-||; s|\\.tgz$||")
-                if [ -z "$existing_versions" ]; then
-                    echo "Error: could not resolve dependency '$dep ($dep_version)'" >&2
-                    exit 1
-                fi
-                if [ "$(echo "$existing_versions" | wc -l)" -gt 1 ]; then
-                    # use semver package to find best version from multiple versons found
-                    semver_bin=""
-                    node_pkgs="$(dirname "$(dirname "$(realpath "$(command -v node)")")")/lib/node_modules"
-                    # first path is where semver is located in snap, second path is deb pkg
-                    for candidate in "$node_pkgs/npm/node_modules/semver/bin/semver.js" \
-                                "/usr/share/nodejs/semver/bin/semver.js"; do
-                        if [ -f "$candidate" ]; then
-                            semver_bin="$candidate"
-                            break
-                        fi
-                    done
-                    if [ -f "$semver_bin" ]; then
-                        best_version=$("$semver_bin" -r "$dep_version" $existing_versions 2>/dev/null | tail -1)
-                        if [ -z "$best_version" ]; then
-                            # if semver returns nothing then none of the versions satisfy the version requirement
-                            echo "Error: could not resolve dependency '$dep ($dep_version)'" >&2
-                            exit 1
-                        fi
 
-                        tarballs="$tarballs {self._npm_cache_backstage}/${{dep}}-${{best_version}}.tgz"
-                    else
-                        # some fallback
-                        echo "fallback"
-                    fi
-                else
-                    # only 1 version found
-                    tarballs="$tarballs {self._npm_cache_backstage}/${{dep}}-${{existing_versions}}.tgz"
-                fi
-
-            done
-            [ -n "$tarballs" ] && npm install --offline $tarballs
-            """
-        )
-
-        # pack tarball with its deps bundled inside
-        # add bundledDependencies to package.json
-        bundle_deps_cmd = dedent(
-            """\
-            node -e "
-            const fs = require('fs')
-            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
-            const deps = Object.keys(pkg.dependencies || {})
-            if (deps.length > 0) {
-                const bundledDependencies = pkg.bundledDependencies || []
-                pkg.bundledDependencies = [...new Set([...bundledDependencies, ...deps])]
-                fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2))
-            }
-            "
-            """
-        )
+        cmd: list[str] = []
+        pkg_path = self._part_info.part_src_dir / "package.json"
+        if dependencies := get_dependencies(pkg_path):
+            tarballs = find_tarballs(dependencies, cache_dir=self._npm_cache_backstage)
+            cmd.append(f"npm install --offline {shlex.join(tarballs)}")
+            # pack tarball with its deps bundled inside
+            # add bundledDependencies to package.json
+            cmd.append(
+                dedent(
+                    """\
+                node -e "
+                const fs = require('fs')
+                const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+                const deps = Object.keys(pkg.dependencies || {})
+                if (deps.length > 0) {
+                    const bundledDependencies = pkg.bundledDependencies || []
+                    pkg.bundledDependencies = [...new Set([...bundledDependencies, ...deps])]
+                    fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2))
+                }
+                "
+                """
+                )
+            )
 
         if options.npm_publish_to_cache:
             self._npm_cache_export.mkdir(parents=True, exist_ok=True)
             return [
-                install_deps_cmd,
-                bundle_deps_cmd,
+                *cmd,
                 f'npm pack --pack-destination="{self._npm_cache_export}"',
             ]
 
         return [
-            install_deps_cmd,
-            bundle_deps_cmd,
+            *cmd,
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
         ]
 

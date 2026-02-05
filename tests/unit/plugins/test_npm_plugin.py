@@ -17,6 +17,7 @@
 import os
 
 import pytest
+from typing import cast
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
@@ -31,6 +32,14 @@ def part_info(new_dir):
     return PartInfo(
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
+    )
+
+
+@pytest.fixture
+def self_contained_part_info(new_dir):
+    return PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {"build-attributes": ["self-contained"]}),
     )
 
 
@@ -379,3 +388,71 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_out_of_source_build() is False
+
+    def test_get_self_contained_build_commands(self, self_contained_part_info, mocker):
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.get_dependencies",
+            return_value={"my-dep": "^1.0.0"},
+        )
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.find_tarballs",
+            return_value=["/backstage/npm-cache/my-dep-1.0.0.tgz"],
+        )
+
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
+
+        cmd = plugin.get_build_commands()
+
+        assert len(cmd) == 3
+        assert "npm install --offline /backstage/npm-cache/my-dep-1.0.0.tgz" in cmd
+        assert "bundledDependencies" in cmd
+        assert 'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}"' in cmd
+
+    def test_get_self_contained_build_commands_publish_to_cache(
+        self, self_contained_part_info, mocker
+    ):
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.get_dependencies",
+            return_value={"my-dep": "^1.0.0"},
+        )
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.find_tarballs",
+            return_value=["/backstage/npm-cache/my-dep-1.0.0.tgz"],
+        )
+
+        properties = NpmPlugin.properties_class.unmarshal(
+            {"source": ".", "npm-publish-to-cache": True}
+        )
+        plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
+
+        cmd = plugin.get_build_commands()
+        assert "npm install --offline /backstage/npm-cache/my-dep-1.0.0.tgz" in cmd
+        assert f'npm pack --pack-destination="{str(plugin._npm_cache_export)}"' in cmd
+
+    def test_get_self_contained_build_commands_no_dependencies(self, self_contained_part_info, mocker):
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.get_dependencies",
+            return_value={},
+        )
+
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
+
+        cmd = plugin.get_build_commands()
+
+        assert cmd == [
+            'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"'
+        ]
+
+    def test_get_self_contained_build_commands_missing_tarball(self, self_contained_part_info, mocker):
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.get_dependencies",
+            return_value={"missing-dep": "^1.0.0"},
+        )
+
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
+
+        with pytest.raises(RuntimeError, match="could not resolve dependency"):
+            plugin.get_build_commands()
