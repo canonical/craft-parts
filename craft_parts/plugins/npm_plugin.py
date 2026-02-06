@@ -153,7 +153,7 @@ class NpmPlugin(Plugin):
 
     @property
     def _npm_cache_export(self) -> Path:
-        """Path to npm cache in to publish to."""
+        """Path to npm pack destination."""
         return self._part_info.part_export_dir / "npm-cache"
 
     @property
