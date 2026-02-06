@@ -47,7 +47,7 @@ own special variables.
     variables for uv, see the `uv environment documentation
     <https://docs.astral.sh/uv/configuration/environment/>`_.
 
-UV_FROZEN
+UV_LOCKED
 ~~~~~~~~~
 
 **Default:** true

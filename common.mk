@@ -21,7 +21,7 @@ PRETTIER_FILES="**/*.{yaml,yml,json,json5,css,md}"
 SLOW_CUTOFF_TIME ?= 1
 
 # By default we should not update the uv lock file here.
-export UV_FROZEN := true
+export UV_LOCKED := true
 
 .DEFAULT_GOAL := help
 
@@ -175,7 +175,7 @@ endif
 
 .PHONY: lint-uv-lockfile
 lint-uv-lockfile: install-uv  ##- Check that uv.lock matches expectations from pyproject.toml
-	unset UV_FROZEN
+	unset UV_LOCKED
 	uv lock --check
 
 .PHONY: lint-shellcheck

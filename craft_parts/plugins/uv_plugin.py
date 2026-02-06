@@ -135,7 +135,7 @@ class UvPlugin(BasePythonPlugin):
             "VIRTUAL_ENV": venv_dir,
             "UV_COMPILE_BYTECODE": "1",
             "UV_PROJECT_ENVIRONMENT": venv_dir,
-            "UV_FROZEN": "true",
+            "UV_LOCKED": "true",
             "UV_PYTHON_DOWNLOADS": "never",
             "UV_PYTHON": '"${PARTS_PYTHON_INTERPRETER}"',
             "UV_PYTHON_PREFERENCE": "only-system",
