@@ -60,6 +60,34 @@ architecture.
     significant security hazard. If your project still requires a JavaScript runtime
     from nearly a decade ago, consider migrating to the modern Node.js runtime.
 
+npm-publish-to-cache
+~~~~~~~~~~~~~~~~~~~~
+
+**Type:** boolean
+
+**Default:** False
+
+When set to ``true``, the plugin packs the project as a tarball and publishes it to a
+shared cache directory instead of installing it globally. Requires the ``self-contained``
+build attribute.
+
+
+Attributes
+----------
+
+This plugin supports the ``self-contained`` build attribute. Declaring this attribute
+enables offline builds by blocking npm registry access and installing dependencies from
+pre-cached tarballs.
+
+Parts that produce dependencies should set ``npm-publish-to-cache: true`` to publish their
+tarballs to the shared cache.
+
+
+.. note::
+
+    The ``npm-include-node`` option is not supported in self-contained builds.
+    Node.js must be provided by a build snap or build package.
+
 
 Examples
 --------

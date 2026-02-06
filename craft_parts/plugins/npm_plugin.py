@@ -134,6 +134,10 @@ class NpmPlugin(Plugin):
             * latest mainline version ("node")
 
           Note that "system" and "iojs" options are not supported.
+
+        - npm-publish-to-cache
+          (bool; default: False)
+          If true, publish a tarball to the shared cache for self-contained builds.
     """
 
     properties_class = NpmPluginProperties
