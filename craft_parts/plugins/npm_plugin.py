@@ -410,9 +410,9 @@ class NpmPlugin(Plugin):
             pkg["bundledDependencies"] = list(
                 {*pkg.get("bundledDependencies", []), *dependencies}
             )
-            # npm install command needs to be called
+            # installing dependencies command needs to be called
             # without bundledDependcies in package.json
-            # overwrite package.json after install command and before packing
+            # overwrite package.json after install deps command and before packing
             bundled_pkg_path = self._part_info.part_build_dir / "package.bundled.json"
             write_pkg(bundled_pkg_path, pkg)
             cmd.append(f"mv {bundled_pkg_path} {pkg_path}")
