@@ -424,10 +424,7 @@ class NpmPlugin(Plugin):
 
         if options.npm_publish_to_cache:
             self._npm_cache_export.mkdir(parents=True, exist_ok=True)
-            return [
-                *cmd,
-                f'npm pack --pack-destination="{self._npm_cache_export}"',
-            ]
+            return [*cmd, f'mv "$(npm pack . | tail -1)" "{self._npm_cache_export}/"']
 
         return [
             *cmd,

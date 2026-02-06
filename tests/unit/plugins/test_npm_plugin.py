@@ -482,9 +482,7 @@ class TestPluginNpmPlugin:
         assert (
             cmd[-2] == f"mv {build_dir}/package.bundled.json {build_dir}/package.json"
         )
-        assert (
-            cmd[-1] == f'npm pack --pack-destination="{str(plugin._npm_cache_export)}"'
-        )
+        assert cmd[-1] == f'mv "$(npm pack . | tail -1)" "{plugin._npm_cache_export}/"'
 
         _, _, write_pkg = mocker_deps
         write_pkg.assert_called_once()
