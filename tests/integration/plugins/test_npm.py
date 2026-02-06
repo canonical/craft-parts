@@ -248,10 +248,10 @@ def test_npm_self_contained_version_resolution(new_dir, partitions):
             plugin: npm
             source: {new_dir / "hello-dep-v1.1"}
             npm-publish-to-cache: true
+            after:
+              - another-dep-v2
             build-attributes:
               - self-contained
-            after:
-                - another-dep-v2
           hello-dep-v2:
             plugin: npm
             source: {new_dir / "hello-dep-v2"}
