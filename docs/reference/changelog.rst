@@ -44,7 +44,7 @@ New features:
 - A new :ref:`craft_parts_ruby_plugin` allows convenient building of Ruby projects, including bundling Ruby interpreters.
 - The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to disable this feature.
 - For explicit typing of file system operations, switch to the `pathlib module
-  <https://docs.python.org/3/library/pathlib.html>`__. All uses of ``str`` for paths are
+  <https://docs.python.org/3/library/pathlib.html>`_. All uses of ``str`` for paths are
   replaced with ``pathlib.Path``. In the public APIs, this change only impacts the
   ``files`` and ``directories`` variables of the ``MigrationState`` class.
 
