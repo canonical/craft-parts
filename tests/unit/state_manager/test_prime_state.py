@@ -79,8 +79,7 @@ class TestPrimeStatePersist:
         )
 
         state.write(Path("state"))
-        with Path("state").open() as f:
-            content = f.read()
+        content = Path("state").read_text()
 
         new_state = yaml.safe_load(content)
         assert PrimeState.unmarshal(new_state).marshal() == state.marshal()
