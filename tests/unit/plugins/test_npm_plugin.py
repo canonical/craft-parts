@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 
 import pytest
-from typing import cast
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
@@ -51,7 +51,7 @@ def mocker_deps(mocker):
     )
     find_tarballs = mocker.patch(
         "craft_parts.plugins.npm_plugin.find_tarballs",
-        return_value=["/backstage/npm-cache/my-dep-1.0.0.tgz"],
+        return_value=(["/backstage/npm-cache/my-dep-1.0.0.tgz"], []),
     )
     write_pkg = mocker.patch("craft_parts.plugins.npm_plugin.write_pkg")
     return read_pkg, find_tarballs, write_pkg
@@ -411,9 +411,38 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
 
         assert plugin.get_build_commands() == [
-            "npm install --offline /backstage/npm-cache/my-dep-1.0.0.tgz",
+            "TARBALLS=/backstage/npm-cache/my-dep-1.0.0.tgz",
+            "npm install --offline $TARBALLS",
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
         ]
+
+        write_pkg.assert_called_once()
+        args, _ = write_pkg.call_args
+        assert "bundledDependencies" in args[1]
+        assert "my-dep" in args[1]["bundledDependencies"]
+
+    def test_get_self_contained_build_commands_multiple_versions(
+        self, self_contained_part_info, mocker_deps
+    ):
+        _, find_tarballs, write_pkg = mocker_deps
+        find_tarballs.return_value = ([], [("my-dep", "^1.0.0", ["1.0.0", "2.0.0"])])
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
+
+        cmd = plugin.get_build_commands()
+
+        assert cmd[0] == "TARBALLS="
+        assert "SEMVER_BIN" in cmd[1]
+        assert "'^1.0.0' 1.0.0 2.0.0" in cmd[2]
+
+        cache_dir = self_contained_part_info.backstage_dir / "npm-cache"
+        assert f'TARBALLS="$TARBALLS {cache_dir}/my-dep-$BEST_VERSION.tgz' in cmd[2]
+
+        assert cmd[-2] == "npm install --offline $TARBALLS"
+        assert (
+            cmd[-1]
+            == 'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"'
+        )
 
         write_pkg.assert_called_once()
         args, _ = write_pkg.call_args
@@ -423,14 +452,14 @@ class TestPluginNpmPlugin:
     def test_get_self_contained_build_commands_publish_to_cache(
         self, self_contained_part_info, mocker_deps
     ):
-
         properties = NpmPlugin.properties_class.unmarshal(
             {"source": ".", "npm-publish-to-cache": True}
         )
         plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
 
         assert plugin.get_build_commands() == [
-            "npm install --offline /backstage/npm-cache/my-dep-1.0.0.tgz",
+            "TARBALLS=/backstage/npm-cache/my-dep-1.0.0.tgz",
+            "npm install --offline $TARBALLS",
             f'npm pack --pack-destination="{str(plugin._npm_cache_export)}"',
         ]
         _, _, write_pkg = mocker_deps
@@ -465,5 +494,7 @@ class TestPluginNpmPlugin:
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
 
-        with pytest.raises(RuntimeError, match="could not resolve dependency"):
+        with pytest.raises(
+            RuntimeError, match=re.escape("Error: could not resolve dependency 'missing-dep (^1.0.0)'")
+        ):
             plugin.get_build_commands()

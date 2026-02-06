@@ -25,13 +25,16 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
 
-from craft_parts.utils.npm_utils import read_pkg, write_pkg, find_tarballs
-
 import requests
 from pydantic import model_validator
 from typing_extensions import Self, override
 
 from craft_parts.errors import InvalidArchitecture
+from craft_parts.utils.npm_utils import (
+    find_tarballs,
+    read_pkg,
+    write_pkg,
+)
 
 from . import validator
 from .base import Plugin
@@ -358,12 +361,60 @@ class NpmPlugin(Plugin):
         pkg_path = self._part_info.part_src_dir / "package.json"
         pkg = read_pkg(pkg_path)
         if dependencies := pkg.get("dependencies", {}):
-            tarballs = find_tarballs(dependencies, cache_dir=self._npm_cache_backstage)
-            cmd.append(f"npm install --offline {shlex.join(tarballs)}")
+            resolved, needs_resolution = find_tarballs(
+                dependencies, cache_dir=self._npm_cache_backstage
+            )
+
+            if resolved:
+                cmd.append(f"TARBALLS={shlex.join(resolved)}")
+            else:
+                cmd.append("TARBALLS=")
+
+            if needs_resolution:
+                cmd.append(
+                    dedent(
+                        """\
+                        # find semver.js that ships with node
+                        SEMVER_BIN=""
+                        NODE_LIBS="$(dirname "$(dirname "$(realpath "$(command -v node)")")")/lib/node_modules"
+                        if [ -f "$NODE_LIBS/npm/node_modules/semver/bin/semver.js" ]; then
+                            # semver.js path in snap
+                            SEMVER_BIN="$NODE_LIBS/npm/node_modules/semver/bin/semver.js"
+                        elif [ -f "/usr/share/nodejs/semver/bin/semver.js" ]; then
+                            # semver.js path in deb pkg
+                            SEMVER_BIN="/usr/share/nodejs/semver/bin/semver.js"
+                        fi
+
+                        if [ -z "$SEMVER_BIN" ]; then
+                            echo "Error: semver.js not found" >&2
+                            exit 1
+                        fi"""
+                    )
+                )
+
+                for dependency, specified_version, available_versions in needs_resolution:
+                    cmd.append(
+                        dedent(
+                            f"""\
+                            # find version that satisfies {dependency} ({specified_version})
+                            BEST_VERSION=$("$SEMVER_BIN" -r {shlex.quote(specified_version)} {shlex.join(available_versions)} | tail -1)
+                            if [ -z "$BEST_VERSION" ]; then
+                                echo "Error: could not resolve dependency '{dependency} ({specified_version})'" >&2
+                                exit 1
+                            fi
+                            TARBALLS="$TARBALLS {self._npm_cache_backstage}/{dependency}-$BEST_VERSION.tgz\""""
+                        )
+                    )
+
+            # all tarballs need to be included in one command
+            # or npm will try to search registry
+            cmd.append("npm install --offline $TARBALLS")
 
             # pack tarball with its deps bundled inside
             # add bundledDependencies to package.json
-            pkg["bundledDependencies"] = list({*pkg.get("bundledDependencies", []), *dependencies})
+            pkg["bundledDependencies"] = list(
+                {*pkg.get("bundledDependencies", []), *dependencies}
+            )
             write_pkg(pkg_path, pkg)
 
         if options.npm_publish_to_cache:
