@@ -20,6 +20,18 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
+.. _release-2.29.1:
+
+2.29.1 (Unreleased)
+-------------------
+
+Bug fixes:
+
+- Fix ``mark_packages`` failing with ``PackageNotFound`` when versioned packages
+  have interdependencies on each other. The method now sets all candidate
+  versions before calling ``mark_install``, so the resolver sees the correct
+  candidates for all dependencies.
+
 .. _release-2.29.0:
 
 2.29.0 (2026-02-03)
