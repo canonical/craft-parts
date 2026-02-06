@@ -45,8 +45,7 @@ class JavaPlugin(Plugin):
                         System.out.println(System.getProperty("java.specification.version"));
                     }
                 }"""
-            with Path(tempdir, "Test.java").open("w") as file:
-                file.write(test_class)
+            Path(tempdir, "Test.java").write_text(test_class)
 
             try:
                 subprocess.call([javac, "-d", tempdir, f"{tempdir}/Test.java"])
