@@ -225,7 +225,14 @@ def test_npm_self_contained(new_dir, partitions):
 def test_npm_self_contained_version_resolution(new_dir, partitions):
     """Test that the correct version from multiple tarballs is installed."""
     # publish two compatible versions (1.0.0 and 1.1.0) and one incompatible (2.0.0)
-    for copy_dir in ["hello-app", "hello-dep-v1", "hello-dep-v1.1", "hello-dep-v2"]:
+    # version 1.1.0 has another dependency
+    for copy_dir in [
+        "hello-app",
+        "hello-dep-v1",
+        "hello-dep-v1.1",
+        "hello-dep-v2",
+        "another-dep-v2",
+    ]:
         copy_tree(new_dir / copy_dir, copy_dir)
 
     parts_yaml = textwrap.dedent(
@@ -239,13 +246,21 @@ def test_npm_self_contained_version_resolution(new_dir, partitions):
               - self-contained
           hello-dep-v1-1:
             plugin: npm
-            source: {new_dir / "hello-dep-v1-1"}
+            source: {new_dir / "hello-dep-v1.1"}
             npm-publish-to-cache: true
             build-attributes:
               - self-contained
+            after:
+                - another-dep-v2
           hello-dep-v2:
             plugin: npm
             source: {new_dir / "hello-dep-v2"}
+            npm-publish-to-cache: true
+            build-attributes:
+              - self-contained
+          another-dep-v2:
+            plugin: npm
+            source: {new_dir / "another-dep-v2"}
             npm-publish-to-cache: true
             build-attributes:
               - self-contained

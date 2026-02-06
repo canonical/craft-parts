@@ -31,14 +31,11 @@ def _get_npm_basename(pkg_name: str) -> str:
 
 def find_tarballs(
     dependencies: dict[str, str], cache_dir: Path
-) -> tuple[list[str], list[tuple[str, str, list[str]]]]:
+) -> list[tuple[str, str, list[str]]]:
     """Find tarballs in cache directory.
 
-    Returns a tuple (resolved, needs_resolution)
-    - resolved: List of resolved tarballs paths (those with one version found)
-    - needs_resolution: List of (dependency, specified_version, available_versions)
+    Returns a list of (dependency, specified_version, available_versions)
     """
-    resolved: list[str] = []
     needs_resolution: list[tuple[str, str, list[str]]] = []
 
     for dep, specified_version in dependencies.items():
@@ -48,16 +45,12 @@ def find_tarballs(
                 f"Error: could not resolve dependency '{dep} ({specified_version})'"
             )
 
-        if len(tarballs) == 1:
-            resolved.append(str(tarballs[0]))
-        else:
-            available_versions = [
-                t.name.removeprefix(f"{basename}-").removesuffix(".tgz")
-                for t in tarballs
-            ]
-            needs_resolution.append((basename, specified_version, available_versions))
+        available_versions = [
+            t.name.removeprefix(f"{basename}-").removesuffix(".tgz") for t in tarballs
+        ]
+        needs_resolution.append((basename, specified_version, available_versions))
 
-    return resolved, needs_resolution
+    return needs_resolution
 
 
 def read_pkg(pkg_path: Path) -> dict[str, Any]:

@@ -358,53 +358,48 @@ class NpmPlugin(Plugin):
         self, options: NpmPluginProperties
     ) -> list[str]:
         cmd: list[str] = []
-        pkg_path = self._part_info.part_src_dir / "package.json"
+        pkg_path = self._part_info.part_build_dir / "package.json"
         pkg = read_pkg(pkg_path)
         if dependencies := pkg.get("dependencies", {}):
-            resolved, needs_resolution = find_tarballs(
+            deps_to_resolve = find_tarballs(
                 dependencies, cache_dir=self._npm_cache_backstage
             )
 
-            if resolved:
-                cmd.append(f"TARBALLS={shlex.join(resolved)}")
-            else:
-                cmd.append("TARBALLS=")
+            cmd.append(
+                dedent(
+                    """\
+                    # find semver.js that ships with node
+                    SEMVER_BIN=""
+                    NODE_LIBS="$(dirname "$(dirname "$(realpath "$(command -v node)")")")/lib/node_modules"
+                    if [ -f "$NODE_LIBS/npm/node_modules/semver/bin/semver.js" ]; then
+                        # semver.js path in snap
+                        SEMVER_BIN="$NODE_LIBS/npm/node_modules/semver/bin/semver.js"
+                    elif [ -f "/usr/share/nodejs/semver/bin/semver.js" ]; then
+                        # semver.js path in deb pkg
+                        SEMVER_BIN="/usr/share/nodejs/semver/bin/semver.js"
+                    fi
 
-            if needs_resolution:
+                    if [ -z "$SEMVER_BIN" ]; then
+                        echo "Error: semver.js not found" >&2
+                        exit 1
+                    fi"""
+                )
+            )
+
+            cmd.append("TARBALLS=")
+            for dependency, specified_version, available_versions in deps_to_resolve:
                 cmd.append(
                     dedent(
-                        """\
-                        # find semver.js that ships with node
-                        SEMVER_BIN=""
-                        NODE_LIBS="$(dirname "$(dirname "$(realpath "$(command -v node)")")")/lib/node_modules"
-                        if [ -f "$NODE_LIBS/npm/node_modules/semver/bin/semver.js" ]; then
-                            # semver.js path in snap
-                            SEMVER_BIN="$NODE_LIBS/npm/node_modules/semver/bin/semver.js"
-                        elif [ -f "/usr/share/nodejs/semver/bin/semver.js" ]; then
-                            # semver.js path in deb pkg
-                            SEMVER_BIN="/usr/share/nodejs/semver/bin/semver.js"
-                        fi
-
-                        if [ -z "$SEMVER_BIN" ]; then
-                            echo "Error: semver.js not found" >&2
+                        f"""\
+                        # find version that satisfies {dependency} ({specified_version})
+                        BEST_VERSION=$("$SEMVER_BIN" -r {shlex.quote(specified_version)} {shlex.join(available_versions)} | tail -1)
+                        if [ -z "$BEST_VERSION" ]; then
+                            echo "Error: could not resolve dependency '{dependency} ({specified_version})'" >&2
                             exit 1
-                        fi"""
+                        fi
+                        TARBALLS="$TARBALLS {self._npm_cache_backstage}/{dependency}-$BEST_VERSION.tgz\""""
                     )
                 )
-
-                for dependency, specified_version, available_versions in needs_resolution:
-                    cmd.append(
-                        dedent(
-                            f"""\
-                            # find version that satisfies {dependency} ({specified_version})
-                            BEST_VERSION=$("$SEMVER_BIN" -r {shlex.quote(specified_version)} {shlex.join(available_versions)} | tail -1)
-                            if [ -z "$BEST_VERSION" ]; then
-                                echo "Error: could not resolve dependency '{dependency} ({specified_version})'" >&2
-                                exit 1
-                            fi
-                            TARBALLS="$TARBALLS {self._npm_cache_backstage}/{dependency}-$BEST_VERSION.tgz\""""
-                        )
-                    )
 
             # all tarballs need to be included in one command
             # or npm will try to search registry
@@ -415,7 +410,12 @@ class NpmPlugin(Plugin):
             pkg["bundledDependencies"] = list(
                 {*pkg.get("bundledDependencies", []), *dependencies}
             )
-            write_pkg(pkg_path, pkg)
+            # npm install command needs to be called
+            # without bundledDependcies in package.json
+            # overwrite package.json after install command and before packing
+            bundled_pkg_path = self._part_info.part_build_dir / "package.bundled.json"
+            write_pkg(bundled_pkg_path, pkg)
+            cmd.append(f"mv {bundled_pkg_path} {pkg_path}")
 
         if options.npm_publish_to_cache:
             self._npm_cache_export.mkdir(parents=True, exist_ok=True)
