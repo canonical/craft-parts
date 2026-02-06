@@ -36,7 +36,7 @@ def find_tarballs(
 
     Returns a list of (dependency, specified_version, available_versions)
     """
-    needs_resolution: list[tuple[str, str, list[str]]] = []
+    found: list[tuple[str, str, list[str]]] = []
 
     for dep, specified_version in dependencies.items():
         basename = _get_npm_basename(dep)
@@ -48,9 +48,9 @@ def find_tarballs(
         available_versions = [
             t.name.removeprefix(f"{basename}-").removesuffix(".tgz") for t in tarballs
         ]
-        needs_resolution.append((basename, specified_version, available_versions))
+        found.append((basename, specified_version, available_versions))
 
-    return needs_resolution
+    return found
 
 
 def read_pkg(pkg_path: Path) -> dict[str, Any]:
