@@ -353,8 +353,7 @@ class TestLocalUpdate:
         source.mkdir()
         destination.mkdir()
 
-        with Path(source, name).open("w") as f:
-            f.write("1")
+        Path(source, name).write_text("1")
 
         # Now make a reference file with a timestamp later than the file was
         # created. We'll ensure this by setting it ourselves
