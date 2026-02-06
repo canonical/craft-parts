@@ -372,7 +372,7 @@ class NpmPlugin(Plugin):
             cmd.append(
                 dedent(
                     """\
-                    # find semver.js that ships with node
+                    # find semver.js bundled with node
                     SEMVER_BIN=""
                     NODE_LIBS="$(dirname "$(dirname "$(realpath "$(command -v node)")")")/lib/node_modules"
                     if [ -f "$NODE_LIBS/npm/node_modules/semver/bin/semver.js" ]; then
@@ -396,7 +396,7 @@ class NpmPlugin(Plugin):
                     dedent(
                         f"""\
                         # find version that satisfies {dependency} ({specified_version})
-                        BEST_VERSION=$("$SEMVER_BIN" -r {shlex.quote(specified_version)} {shlex.join(available_versions)} | tail -1)
+                        BEST_VERSION=$("$SEMVER_BIN" -r {shlex.quote(specified_version)} {" ".join(available_versions)} | tail -1)
                         if [ -z "$BEST_VERSION" ]; then
                             echo "Error: could not resolve dependency '{dependency} ({specified_version})'" >&2
                             exit 1
