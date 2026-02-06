@@ -84,7 +84,7 @@ class TestAptStageCache:
 
             assert sorted(names) == ["libpci3", "pciutils"]
 
-    def test_mark_packages_version_interdependency(self, tmpdir, mocker):
+    def test_mark_packages_version_interdependency(self, tmpdir, mocker):  # noqa: PLR0915
         """Test that mark_packages pins all versions before calling mark_install.
 
         Simulates libnvinfer-dev depending on libnvinfer10 with an exact
@@ -119,8 +119,13 @@ class TestAptStageCache:
         # Create Package mocks directly.
         # Default candidates are v15 (the "wrong" version apt would pick).
         pkg_attrs = [
-            "name", "installed", "marked_install", "candidate",
-            "versions", "mark_install", "mark_auto",
+            "name",
+            "installed",
+            "marked_install",
+            "candidate",
+            "versions",
+            "mark_install",
+            "mark_auto",
         ]
 
         nvinfer_dev_pkg = mocker.MagicMock(spec=pkg_attrs)
