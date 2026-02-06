@@ -20,6 +20,16 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
+.. _release-2.30.0:
+
+2.30.0 (unreleased)
+-------------------
+
+New features:
+
+- Add self-contained support for parts using the NPM plugin.
+
+
 .. _release-2.29.0:
 
 2.29.0 (2026-02-03)
