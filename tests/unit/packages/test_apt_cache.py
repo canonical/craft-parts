@@ -92,67 +92,65 @@ class TestAptStageCache:
         cause mark_install to fail because the dependency's candidate has
         not been pinned yet.
         """
-        # Declarative description of packages and their versions/deps.
-        # "default" is the candidate apt would pick without pinning.
-        # "deps" maps version -> list of (pkg_name, relation, version).
-        package_specs = {
-            "libnvinfer-dev": {
-                "versions": ["10.14.1", "10.15.1"],
-                "default": "10.15.1",
-                "deps": {"10.14.1": [("libnvinfer10", "=", "10.14.1")]},
-            },
-            "libnvinfer10": {
-                "versions": ["10.14.1", "10.15.1"],
-                "default": "10.15.1",
-                "deps": {},
-            },
+        # Create Version mocks directly.
+        nvinfer10_v14 = mocker.MagicMock()
+        nvinfer10_v14.version = "10.14.1"
+        nvinfer10_v14.dependencies = []
+
+        nvinfer10_v15 = mocker.MagicMock()
+        nvinfer10_v15.version = "10.15.1"
+        nvinfer10_v15.dependencies = []
+
+        # libnvinfer-dev 10.14.1 depends on libnvinfer10 (= 10.14.1)
+        dep = mocker.MagicMock()
+        dep.name = "libnvinfer10"
+        dep.relation = "="
+        dep.version = "10.14.1"
+        dep.target_versions = [nvinfer10_v14]
+
+        nvinfer_dev_v14 = mocker.MagicMock()
+        nvinfer_dev_v14.version = "10.14.1"
+        nvinfer_dev_v14.dependencies = [[dep]]
+
+        nvinfer_dev_v15 = mocker.MagicMock()
+        nvinfer_dev_v15.version = "10.15.1"
+        nvinfer_dev_v15.dependencies = []
+
+        # Create Package mocks directly.
+        # Default candidates are v15 (the "wrong" version apt would pick).
+        pkg_attrs = [
+            "name", "installed", "marked_install", "candidate",
+            "versions", "mark_install", "mark_auto",
+        ]
+
+        nvinfer_dev_pkg = mocker.MagicMock(spec=pkg_attrs)
+        nvinfer_dev_pkg.name = "libnvinfer-dev"
+        nvinfer_dev_pkg.installed = None
+        nvinfer_dev_pkg.marked_install = False
+        nvinfer_dev_pkg.candidate = nvinfer_dev_v15
+        nvinfer_dev_pkg.versions = mocker.MagicMock()
+        nvinfer_dev_pkg.versions.get = {
+            "10.14.1": nvinfer_dev_v14,
+            "10.15.1": nvinfer_dev_v15,
+        }.get
+        nvinfer_dev_pkg.mark_auto.side_effect = lambda auto: None
+
+        nvinfer10_pkg = mocker.MagicMock(spec=pkg_attrs)
+        nvinfer10_pkg.name = "libnvinfer10"
+        nvinfer10_pkg.installed = None
+        nvinfer10_pkg.marked_install = False
+        nvinfer10_pkg.candidate = nvinfer10_v15
+        nvinfer10_pkg.versions = mocker.MagicMock()
+        nvinfer10_pkg.versions.get = {
+            "10.14.1": nvinfer10_v14,
+            "10.15.1": nvinfer10_v15,
+        }.get
+        nvinfer10_pkg.mark_auto.side_effect = lambda auto: None
+
+        pkg_mocks = {
+            "libnvinfer-dev": nvinfer_dev_pkg,
+            "libnvinfer10": nvinfer10_pkg,
         }
-
-        # Build mock objects from specs.
-        pkg_mocks = {}  # name -> mock Package
-        ver_mocks = {}  # (name, version_str) -> mock Version
-
-        for name, spec in package_specs.items():
-            for ver_str in spec["versions"]:
-                v = mocker.MagicMock()
-                v.version = ver_str
-                v.__str__ = lambda self, s=ver_str: s
-                v.dependencies = []
-                ver_mocks[(name, ver_str)] = v
-
-            versions_dict = {vs: ver_mocks[(name, vs)] for vs in spec["versions"]}
-            pkg = mocker.MagicMock(
-                spec=[
-                    "name",
-                    "installed",
-                    "marked_install",
-                    "candidate",
-                    "versions",
-                    "mark_install",
-                    "mark_auto",
-                ],
-            )
-            pkg.name = name
-            pkg.installed = None
-            pkg.marked_install = False
-            pkg.candidate = ver_mocks[(name, spec["default"])]
-            pkg.versions = mocker.MagicMock()
-            pkg.versions.get = versions_dict.get
-            pkg.mark_auto.side_effect = lambda auto: None
-            pkg_mocks[name] = pkg
-
-        # Wire up dependency objects on versions.
-        for name, spec in package_specs.items():
-            for ver_str, dep_list in spec.get("deps", {}).items():
-                groups = []
-                for dep_name, dep_rel, dep_ver in dep_list:
-                    dep = mocker.MagicMock()
-                    dep.name = dep_name
-                    dep.relation = dep_rel
-                    dep.version = dep_ver
-                    dep.target_versions = [ver_mocks[(dep_name, dep_ver)]]
-                    groups.append([dep])
-                ver_mocks[(name, ver_str)].dependencies = groups
 
         # Simulate apt's mark_install: fail when a dependency's candidate
         # doesn't match the required version.
