@@ -21,8 +21,8 @@ from typing import Any, cast
 
 
 def _get_npm_basename(pkg_name: str) -> str:
-    # scoped packages eg. @comanpy/my-package
-    # are packed as company-my-package-version.tgz
+    # scoped packages eg. @scope/my-package
+    # are packed as scope-my-package-version.tgz
     if pkg_name.startswith("@"):
         scope, name = pkg_name[1:].split("/", 1)
         return f"{scope}-{name}"

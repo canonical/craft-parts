@@ -1,1 +1,1 @@
-module.exports = { echo: (msg) => msg };
+module.exports = { echo: msg => msg };

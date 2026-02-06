@@ -419,16 +419,11 @@ class TestPluginNpmPlugin:
         cache_dir = self_contained_part_info.backstage_dir / "npm-cache"
         assert f'TARBALLS="$TARBALLS {cache_dir}/my-dep-$BEST_VERSION.tgz' in cmd[2]
 
-        assert cmd[-3] == "npm install --offline $TARBALLS"
-
-        build_dir = self_contained_part_info.part_build_dir
-        assert (
-            cmd[-2] == f"mv {build_dir}/package.bundled.json {build_dir}/package.json"
-        )
-        assert (
-            cmd[-1]
-            == 'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"'
-        )
+        assert cmd[-3:] == [
+            "npm install --offline $TARBALLS",
+            "mv package.bundled.json package.json",
+            'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
+        ]
 
         write_pkg.assert_called_once()
         args, _ = write_pkg.call_args
@@ -452,15 +447,11 @@ class TestPluginNpmPlugin:
         cache_dir = self_contained_part_info.backstage_dir / "npm-cache"
         assert f'TARBALLS="$TARBALLS {cache_dir}/my-dep-$BEST_VERSION.tgz' in cmd[2]
 
-        assert cmd[-3] == "npm install --offline $TARBALLS"
-        build_dir = self_contained_part_info.part_build_dir
-        assert (
-            cmd[-2] == f"mv {build_dir}/package.bundled.json {build_dir}/package.json"
-        )
-        assert (
-            cmd[-1]
-            == 'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"'
-        )
+        assert cmd[-3:] == [
+            "npm install --offline $TARBALLS",
+            "mv package.bundled.json package.json",
+            'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
+        ]
 
         write_pkg.assert_called_once()
         args, _ = write_pkg.call_args
@@ -476,13 +467,12 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
 
         cmd = plugin.get_build_commands()
-        assert cmd[-3] == "npm install --offline $TARBALLS"
 
-        build_dir = self_contained_part_info.part_build_dir
-        assert (
-            cmd[-2] == f"mv {build_dir}/package.bundled.json {build_dir}/package.json"
-        )
-        assert cmd[-1] == f'mv "$(npm pack . | tail -1)" "{plugin._npm_cache_export}/"'
+        assert cmd[-3:] == [
+            "npm install --offline $TARBALLS",
+            "mv package.bundled.json package.json",
+            f'mv "$(npm pack . | tail -1)" "{plugin._npm_cache_export}/"',
+        ]
 
         _, _, write_pkg = mocker_deps
         write_pkg.assert_called_once()

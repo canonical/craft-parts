@@ -409,18 +409,17 @@ class NpmPlugin(Plugin):
             # or npm will try to search registry
             cmd.append("npm install --offline $TARBALLS")
 
-            # add bundledDependencies to pack tarball with its deps bundled inside
+            # modify package.json to bundle all dependencies with tarball
             pkg["bundledDependencies"] = list(
                 {*pkg.get("bundledDependencies", []), *dependencies}
             )
-            bundled_pkg_path = self._part_info.part_build_dir / "package.bundled.json"
-            write_pkg(bundled_pkg_path, pkg)
+            write_pkg(self._part_info.part_build_dir / "package.bundled.json", pkg)
 
-            # when installing from tarballs,
-            # npm rewrites package.json with dependencies: { dep: file://tarball-path }
-            # which leads to corrupted tarballs if packed that way
+            # npm rewrites the deps in package.json as
+            # dependencies: { dep: file:tarball-path }
+            # on `npm install`, resulting in corrupted tarballs.
             # overwrite package.json after install command and before packing
-            cmd.append(f"mv {bundled_pkg_path} {pkg_path}")
+            cmd.append("mv package.bundled.json package.json")
 
         if options.npm_publish_to_cache:
             self._npm_cache_export.mkdir(parents=True, exist_ok=True)
