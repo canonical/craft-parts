@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import re
 from pathlib import Path
 from typing import Any, cast
@@ -29,23 +28,23 @@ from craft_parts.executor.organize import organize_files
     [
         # simple_file
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "bar"},
             "expected": [(["bar"], "")],
         },
         # simple_dir_with_file
         {
-            "setup_dirs": ["foodir"],
-            "setup_files": [os.path.join("foodir", "foo")],  # noqa: PTH118
+            "setup_dirs": [Path("foodir")],
+            "setup_files": [Path("foodir", "foo")],
             "organize_map": {"foodir": "bardir"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize_to_the_same_directory
         {
-            "setup_dirs": ["bardir", "foodir"],
+            "setup_dirs": [Path("bardir"), Path("foodir")],
             "setup_files": [
-                os.path.join("foodir", "foo"),  # noqa: PTH118
-                os.path.join("bardir", "bar"),  # noqa: PTH118
+                Path("foodir", "foo"),
+                Path("bardir", "bar"),
                 "basefoo",
             ],
             "organize_map": {
@@ -57,13 +56,13 @@ from craft_parts.executor.organize import organize_files
         },
         # leading_slash_in_value
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "/bar"},
             "expected": [(["bar"], "")],
         },
         # overwrite_existing_file
         {
-            "setup_files": ["foo", "bar"],
+            "setup_files": [Path("foo"), Path("bar")],
             "organize_map": {"foo": "bar"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
@@ -73,87 +72,87 @@ from craft_parts.executor.organize import organize_files
         },
         # *_for_files
         {
-            "setup_files": ["foo.conf", "bar.conf"],
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
             "organize_map": {"*.conf": "dir/"},
             "expected": [(["dir"], ""), (["bar.conf", "foo.conf"], "dir")],
         },
         # *_for_files_with_non_dir_dst
         {
-            "setup_files": ["foo.conf", "bar.conf"],
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
             "organize_map": {"*.conf": "dir"},
             "expected": errors.FileOrganizeError,
             "expected_message": r".*multiple files to be organized into 'dir'.*",
         },
         # *_for_directories
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "bar"),  # noqa: PTH118
+                Path("dir1", "foo"),
+                Path("dir2", "bar"),
             ],
             "organize_map": {"dir*": "dir/"},
             "expected": [
                 (["dir"], ""),
                 (["dir1", "dir2"], "dir"),
-                (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
-                (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
+                (["foo"], Path("dir", "dir1")),
+                (["bar"], Path("dir", "dir2")),
             ],
         },
         # combined_*_with_file
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir1", "bar"),  # noqa: PTH118
-                os.path.join("dir2", "bar"),  # noqa: PTH118
+                Path("dir1", "foo"),
+                Path("dir1", "bar"),
+                Path("dir2", "bar"),
             ],
             "organize_map": {"dir*": "dir/", "dir1/bar": "."},
             "expected": [
                 (["bar", "dir"], ""),
                 (["dir1", "dir2"], "dir"),
-                (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
-                (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
+                (["foo"], Path("dir", "dir1")),
+                (["bar"], Path("dir", "dir2")),
             ],
         },
         # *_into_dir
         {
-            "setup_dirs": ["dir"],
+            "setup_dirs": [Path("dir")],
             "setup_files": [
-                os.path.join("dir", "foo"),  # noqa: PTH118
-                os.path.join("dir", "bar"),  # noqa: PTH118
+                Path("dir", "foo"),
+                Path("dir", "bar"),
             ],
             "organize_map": {"dir/f*": "nested/dir/"},
             "expected": [
                 (["dir", "nested"], ""),
                 (["bar"], "dir"),
                 (["dir"], "nested"),
-                (["foo"], os.path.join("nested", "dir")),  # noqa: PTH118
+                (["foo"], Path("nested", "dir")),
             ],
         },
         # organize a file to itself
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "foo"},
             "expected": [(["foo"], "")],
         },
         # organize a file to itself with different path
         {
-            "setup_dirs": ["bardir"],
-            "setup_files": ["foo"],
+            "setup_dirs": [Path("bardir")],
+            "setup_files": [Path("foo")],
             "organize_map": {"bardir/../foo": "foo"},
             "expected": [(["bardir", "foo"], "")],
         },
         # organize a set with a file to itself
         {
-            "setup_dirs": ["bardir"],
-            "setup_files": ["bardir/foo"],
+            "setup_dirs": [Path("bardir")],
+            "setup_files": [Path("bardir/foo")],
             "organize_map": {"bardir/*": "bardir/"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize from subdirs to itself
         {
-            "setup_dirs": ["foodir", "foodir/bardir"],
-            "setup_files": ["foodir/bardir/foo"],
+            "setup_dirs": [Path("foodir"), Path("foodir/bardir")],
+            "setup_files": [Path("foodir/bardir/foo")],
             "organize_map": {"**/bardir/*": "bardir/"},
             "expected": [(["bardir", "foodir"], ""), (["foo"], "bardir")],
         },
@@ -196,7 +195,7 @@ def test_organize(new_dir, data):
         # and replace it with the symlink, effectively pointing at itself.
         # This is the current behavior but might not be the intended one.
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "setup_symlinks": [("foo-link", "foo")],
             "organize_map": {"foo-link": "foo"},
             "expected": errors.FileOrganizeError,
@@ -206,7 +205,7 @@ def test_organize(new_dir, data):
         },
         # organize a file under a symlinked directory to the symlink target
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "setup_symlinks": [("bardir", ".")],
             "organize_map": {"bardir/foo": "foo"},
             "expected": errors.FileOrganizeError,
@@ -216,7 +215,7 @@ def test_organize(new_dir, data):
         },
         # organize a file under a symlinked directory to the symlink target
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "setup_symlinks": [("bardir", ".")],
             "organize_map": {"foo": "bardir/foo"},
             "expected": errors.FileOrganizeError,
@@ -226,10 +225,10 @@ def test_organize(new_dir, data):
         },
         # Organize 2 files to the same destination, one with a dir as a destination
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "foo"),  # noqa: PTH118
+                Path("dir1", "foo"),
+                Path("dir2", "foo"),
             ],
             "organize_map": {"dir1/foo": "dir/foo", "dir2/foo": "dir/"},
             "expected": errors.FileOrganizeError,
@@ -239,10 +238,10 @@ def test_organize(new_dir, data):
         },
         # Organize 2 files to the same destination, one referenced with a wildcard
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "foo"),  # noqa: PTH118
+                Path("dir1", "foo"),
+                Path("dir2", "foo"),
             ],
             "organize_map": {"dir1/foo": "dir/foo", "dir2/*": "dir/"},
             "expected": errors.FileOrganizeError,
@@ -319,7 +318,6 @@ def organize_and_assert(
         )
         expected = cast(list[tuple[list[str], str]], expected)
         for expect in expected:
-            dir_path = (install_dir / expect[1]).as_posix()
-            dir_contents = os.listdir(dir_path)  # noqa: PTH208
-            dir_contents.sort()
+            dir_path = install_dir / expect[1]
+            dir_contents = sorted(path.name for path in dir_path.iterdir())
             assert dir_contents == expect[0]

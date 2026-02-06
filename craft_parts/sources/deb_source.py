@@ -17,7 +17,6 @@
 """The deb source handler."""
 
 import logging
-import os
 from pathlib import Path
 from typing import Literal
 
@@ -53,7 +52,7 @@ class DebSource(FileSourceHandler):
         src: Path | None = None,
     ) -> None:
         """Extract deb file contents to the part source dir."""
-        deb_file = src if src else self.part_src_dir / os.path.basename(self.source)  # noqa: PTH119
+        deb_file = src if src else self.part_src_dir / Path(self.source).name
 
         deb_utils.extract_deb(deb_file, dst, logger.debug)
 

@@ -18,7 +18,6 @@
 
 import abc
 import logging
-import os
 import shutil
 import subprocess
 from collections.abc import Sequence
@@ -104,7 +103,7 @@ class SourceHandler(abc.ABC):
 
     def __init__(
         self,
-        source: str,
+        source: str | Path,
         part_src_dir: Path,
         *,
         cache_dir: Path,
@@ -117,7 +116,7 @@ class SourceHandler(abc.ABC):
 
         invalid_options: list[str] = []
         model_params = {key.replace("_", "-"): value for key, value in kwargs.items()}
-        model_params["source"] = source
+        model_params["source"] = str(source)
         properties = self.source_model.model_json_schema()["properties"]
         for option, value in kwargs.items():
             option_alias = option.replace("_", "-")
@@ -139,7 +138,7 @@ class SourceHandler(abc.ABC):
 
         self._data = self.source_model.model_validate(model_params)
 
-        self.source = source
+        self.source = str(source)
         self.part_src_dir = part_src_dir
         self._cache_dir = cache_dir
         self.source_details: dict[str, str | None] | None = None
@@ -217,7 +216,7 @@ class FileSourceHandler(SourceHandler):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        source: str,
+        source: Path | str,
         part_src_dir: Path,
         *,
         cache_dir: Path,
@@ -228,7 +227,7 @@ class FileSourceHandler(SourceHandler):
         **kwargs: Any,
     ) -> None:
         super().__init__(
-            source,
+            str(source),
             part_src_dir,
             cache_dir=cache_dir,
             source_checksum=source_checksum,
@@ -261,7 +260,7 @@ class FileSourceHandler(SourceHandler):
         if is_source_url:
             source_file = self.download()
         else:
-            basename = os.path.basename(self.source)  # noqa: PTH119
+            basename = Path(self.source).name
             source_file = Path(self.part_src_dir, basename)
             # We make this copy as the provisioning logic can delete
             # this file and we don't want that.
@@ -282,7 +281,7 @@ class FileSourceHandler(SourceHandler):
         :param filepath: the destination file to download to.
         """
         if filepath is None:
-            self._file = Path(self.part_src_dir, os.path.basename(self.source))  # noqa: PTH119
+            self._file = Path(self.part_src_dir, Path(self.source).name)
         else:
             self._file = filepath
 

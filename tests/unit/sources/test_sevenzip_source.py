@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import subprocess
 from pathlib import Path
 from unittest.mock import call
@@ -79,7 +78,7 @@ class TestZipSource:
                     "7z",
                     "x",
                     f"-o{dest_dir}",
-                    os.path.join(new_dir, dest_dir, source_file),  # noqa: PTH118
+                    str(Path(new_dir, dest_dir, source_file)),
                 ],
                 text=True,
             ),
@@ -112,7 +111,7 @@ class TestZipSource:
                     "7z",
                     "x",
                     f"-o{dest_dir}",
-                    os.path.join(new_dir, dest_dir, source_file),  # noqa: PTH118
+                    str(Path(new_dir, dest_dir, source_file)),
                 ],
                 text=True,
             )

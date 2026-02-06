@@ -241,7 +241,7 @@ class TestOsRelease:
 
     def _write_os_release(self, contents) -> str:
         path = "os-release"
-        with open(path, "w") as f:  # noqa: PTH123
+        with Path(path).open("w") as f:
             f.write(contents)
         return path
 
@@ -343,15 +343,17 @@ class TestEnvironment:
         assert os_utils.is_snap(app_name) == result
 
     def test_is_inside_container_has_dockerenv(self, mocker):
-        mocker.patch("os.path.exists", new=lambda x: "/.dockerenv" in x)
+        mocker.patch("pathlib.Path.exists", new=lambda x: Path("/.dockerenv") == x)
         assert os_utils.is_inside_container()
 
     def test_is_inside_container_has_containerenv(self, mocker):
-        mocker.patch("os.path.exists", new=lambda x: "/run/.containerenv" in x)
+        mocker.patch(
+            "pathlib.Path.exists", new=lambda x: Path("/run/.containerenv") == x
+        )
         assert os_utils.is_inside_container()
 
     def test_is_inside_container_no_files(self, mocker):
-        mocker.patch("os.path.exists", return_value=False)
+        mocker.patch("pathlib.Path.exists", return_value=False)
         assert os_utils.is_inside_container() is False
 
 
@@ -360,21 +362,21 @@ class TestMount:
 
     def test_mount(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
-        os_utils.mount("/dev/node", "/mountpoint", "some", "args")
+        os_utils.mount(Path("/dev/node"), "/mountpoint", "some", "args")
         mock_call.assert_called_once_with(
             ["/bin/mount", "some", "args", "/dev/node", "/mountpoint"]
         )
 
     def test_mount_overlayfs(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
-        os_utils.mount_overlayfs("/mountpoint", "some", "args")
+        os_utils.mount_overlayfs(Path("/mountpoint"), "some", "args")
         mock_call.assert_called_once_with(
             ["fuse-overlayfs", "some", "args", "/mountpoint"]
         )
 
     def test_umount(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
-        os_utils.umount("/mountpoint", "some", "args")
+        os_utils.umount(Path("/mountpoint"), "some", "args")
         mock_call.assert_called_once_with(
             ["/bin/umount", "some", "args", "/mountpoint"]
         )
@@ -389,7 +391,7 @@ class TestMount:
         mock_call = mocker.patch("subprocess.check_call", side_effect=side_effect)
         mock_sleep = mocker.patch("time.sleep")
 
-        os_utils.umount("/mountpoint")
+        os_utils.umount(Path("/mountpoint"))
         assert mock_call.mock_calls == [
             call(["/bin/umount", "/mountpoint"]),
             call(["/bin/umount", "/mountpoint"]),
@@ -403,7 +405,7 @@ class TestMount:
         )
         mock_sleep = mocker.patch("time.sleep")
         with pytest.raises(subprocess.CalledProcessError) as raised:
-            os_utils.umount("/mountpoint")
+            os_utils.umount(Path("/mountpoint"))
         assert str(raised.value) == "Command 'cmd' returned non-zero exit status 42."
         assert mock_call.mock_calls == [
             call(["/bin/umount", "/mountpoint"]),

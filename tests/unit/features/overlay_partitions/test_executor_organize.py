@@ -26,7 +26,7 @@ from tests.unit.executor.test_organize import organize_and_assert
     [
         # simple_file
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "bar"},
             "expected": [(["bar"], "")],
         },
@@ -39,7 +39,7 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # organize into overlay
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "(overlay)/bar"},
             "expected": [([], ""), (["bar"], "../overlay_dir")],
         },
