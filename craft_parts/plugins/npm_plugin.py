@@ -364,9 +364,11 @@ class NpmPlugin(Plugin):
         cmd: list[str] = []
         pkg_path = self._part_info.part_build_dir / "package.json"
         pkg = read_pkg(pkg_path)
-        if dependencies := pkg.get("dependencies", {}):
+        dependencies = pkg.get("dependencies", {})
+        dev_dependencies = pkg.get("devDependencies", {})
+        if all_dependencies := {**dependencies, **dev_dependencies}:
             deps_to_resolve = find_tarballs(
-                dependencies, cache_dir=self._npm_cache_backstage
+                all_dependencies, cache_dir=self._npm_cache_backstage
             )
 
             cmd.append(
@@ -407,19 +409,26 @@ class NpmPlugin(Plugin):
 
             # all tarballs need to be included in one command
             # or npm will try to search registry
-            cmd.append("npm install --offline $TARBALLS")
-
-            # modify package.json to bundle all dependencies with tarball
-            pkg["bundledDependencies"] = list(
-                {*pkg.get("bundledDependencies", []), *dependencies}
+            cmd.append(
+                "npm install --offline --include=dev --no-package-lock $TARBALLS"
             )
-            write_pkg(self._part_info.part_build_dir / "package.bundled.json", pkg)
+
+            # modify package.json to bundle all non-dev dependencies with tarball
+            if dependencies:
+                pkg["bundledDependencies"] = list(
+                    {*pkg.get("bundledDependencies", []), *dependencies}
+                )
 
             # npm rewrites the deps in package.json as
             # dependencies: { dep: file:tarball-path }
             # on `npm install`, resulting in corrupted tarballs.
             # overwrite package.json after install command and before packing
-            cmd.append("mv package.bundled.json package.json")
+            bundled_pkg_path = (
+                self._part_info.part_build_subdir / ".parts" / "package.bundled.json"
+            )
+            bundled_pkg_path.parent.mkdir(parents=True, exist_ok=True)
+            write_pkg(bundled_pkg_path, pkg)
+            cmd.append(f"cp {bundled_pkg_path} package.json")
 
         if options.npm_publish_to_cache:
             self._npm_cache_export.mkdir(parents=True, exist_ok=True)

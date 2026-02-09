@@ -420,8 +420,8 @@ class TestPluginNpmPlugin:
         assert f'TARBALLS="$TARBALLS {cache_dir}/my-dep-$BEST_VERSION.tgz' in cmd[2]
 
         assert cmd[-3:] == [
-            "npm install --offline $TARBALLS",
-            "mv package.bundled.json package.json",
+            "npm install --offline --include=dev --no-package-lock $TARBALLS",
+            f"cp {self_contained_part_info.part_build_subdir}/.parts/package.bundled.json package.json",
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
         ]
 
@@ -448,8 +448,8 @@ class TestPluginNpmPlugin:
         assert f'TARBALLS="$TARBALLS {cache_dir}/my-dep-$BEST_VERSION.tgz' in cmd[2]
 
         assert cmd[-3:] == [
-            "npm install --offline $TARBALLS",
-            "mv package.bundled.json package.json",
+            "npm install --offline --include=dev --no-package-lock $TARBALLS",
+            f"cp {self_contained_part_info.part_build_subdir}/.parts/package.bundled.json package.json",
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
         ]
 
@@ -469,8 +469,8 @@ class TestPluginNpmPlugin:
         cmd = plugin.get_build_commands()
 
         assert cmd[-3:] == [
-            "npm install --offline $TARBALLS",
-            "mv package.bundled.json package.json",
+            "npm install --offline --include=dev --no-package-lock $TARBALLS",
+            f"cp {self_contained_part_info.part_build_subdir}/.parts/package.bundled.json package.json",
             f'mv "$(npm pack . | tail -1)" "{plugin._npm_cache_export}/"',
         ]
 
@@ -479,6 +479,67 @@ class TestPluginNpmPlugin:
         args, _ = write_pkg.call_args
         assert "bundledDependencies" in args[1]
         assert args[1]["bundledDependencies"] == ["my-dep"]
+
+    def test_get_self_contained_build_commands_dev_dependencies(
+        self, self_contained_part_info, mocker
+    ):
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.read_pkg",
+            return_value={
+                "dependencies": {"my-dep": "^1.0.0"},
+                "devDependencies": {"dev-dep": "~2.0.0"},
+            },
+        )
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.find_tarballs",
+            return_value=[
+                ("my-dep", "^1.0.0", ["1.0.0"]),
+                ("dev-dep", "~2.0.0", ["2.0.0"]),
+            ],
+        )
+        write_pkg = mocker.patch("craft_parts.plugins.npm_plugin.write_pkg")
+
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
+
+        cmd = plugin.get_build_commands()
+
+        assert "my-dep" in cmd[2]
+        assert "dev-dep" in cmd[3]
+
+        write_pkg.assert_called_once()
+        args, _ = write_pkg.call_args
+        # dev dependency should not be bundled
+        assert args[1]["bundledDependencies"] == ["my-dep"]
+
+    def test_get_self_contained_build_commands_only_dev_dependencies(
+        self, self_contained_part_info, mocker
+    ):
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.read_pkg",
+            return_value={
+                "devDependencies": {"dev-dep": "~2.0.0"},
+            },
+        )
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.find_tarballs",
+            return_value=[
+                ("dev-dep", "~2.0.0", ["2.0.0"]),
+            ],
+        )
+        write_pkg = mocker.patch("craft_parts.plugins.npm_plugin.write_pkg")
+
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
+
+        cmd = plugin.get_build_commands()
+
+        assert "dev-dep" in cmd[2]
+
+        write_pkg.assert_called_once()
+        args, _ = write_pkg.call_args
+        # there should be no bundled dependencies
+        assert "bundledDependencies" not in args[1]
 
     def test_get_self_contained_build_commands_no_dependencies(
         self, self_contained_part_info, mocker
