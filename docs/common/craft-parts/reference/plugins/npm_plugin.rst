@@ -85,7 +85,9 @@ tarballs to the shared cache.
 
 .. note::
 
-    The ``npm-include-node`` option is not supported in self-contained builds.
+    In self-contained builds, ``package-lock.json`` is ignored. Dependencies
+    are resolved at build time from cached tarballs produced by other parts.
+    The ``npm-include-node`` option is not supported with this build attribute.
     Node.js must be provided by a build snap or build package.
 
 
