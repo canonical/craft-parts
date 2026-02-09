@@ -225,7 +225,7 @@ def test_npm_self_contained(new_dir, partitions):
 def test_npm_self_contained_version_resolution(new_dir, partitions):
     """Test that the correct version from multiple tarballs is installed."""
     # publish two compatible versions (1.0.0 and 1.1.0) and one incompatible (2.0.0)
-    # version 1.1.0 has another dependency
+    # version 1.1.0 will be selected and has another dependency
     for copy_dir in [
         "hello-app",
         "hello-dep-v1",
@@ -291,7 +291,7 @@ def test_npm_self_contained_version_resolution(new_dir, partitions):
 
     backstage = lifecycle.project_info.backstage_dir / "npm-cache"
     assert backstage.is_dir()
-    tarballs = sorted(backstage.glob("hello-dep-*.tgz"))
+    tarballs = list(backstage.glob("hello-dep-*.tgz"))
     assert len(tarballs) == 3
 
     binary = Path(lifecycle.project_info.prime_dir, "bin", "hello-app")

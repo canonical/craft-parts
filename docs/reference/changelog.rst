@@ -27,7 +27,8 @@ Changelog
 
 New features:
 
-- Add self-contained support for parts using the NPM plugin.
+- Add support for the ``self-contained`` build attribute for parts using the
+  :ref:`craft_parts_npm_plugin`.
 
 
 .. _release-2.29.0:

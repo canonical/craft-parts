@@ -18,7 +18,7 @@ npm-include-node
 
 **Type:** boolean
 
-**Default:** False
+**Default:** false
 
 When set to ``true``, the plugin downloads and includes the Node.js binaries and its
 dependencies in the resulting package. If ``npm-include-node`` is ``true``, then
@@ -65,7 +65,7 @@ npm-publish-to-cache
 
 **Type:** boolean
 
-**Default:** False
+**Default:** false
 
 When set to ``true``, the plugin packs the project as a tarball and publishes it to a
 shared cache directory instead of installing it globally. Requires the ``self-contained``
