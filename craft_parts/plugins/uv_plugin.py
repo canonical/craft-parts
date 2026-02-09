@@ -139,4 +139,5 @@ class UvPlugin(BasePythonPlugin):
             "UV_PYTHON_DOWNLOADS": "never",
             "UV_PYTHON": '"${PARTS_PYTHON_INTERPRETER}"',
             "UV_PYTHON_PREFERENCE": "only-system",
+            "UV_LINK_MODE": "copy",
         }
