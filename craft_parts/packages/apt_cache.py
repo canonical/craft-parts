@@ -292,10 +292,10 @@ class AptCache(ContextDecorator):
     def mark_packages(self, package_names: set[str]) -> None:
         """Mark the given package names to be fetched from the repository.
 
-        # Two-pass fix: set all candidate versions before marking any packages.
-        # This fixes versioned interdependencies where package A=v1 depends on
-        # package B (= v1), but B's default candidate is v2. By setting all
-        # candidates first, mark_install can resolve dependencies correctly.
+        Two-pass fix: set all candidate versions before marking any packages.
+        This fixes versioned interdependencies where package A=v1 depends on
+        package B (= v1), but B's default candidate is v2. By setting all
+        candidates first, mark_install can resolve dependencies correctly.
 
         :param package_names: The set of package names to be marked.
         """
