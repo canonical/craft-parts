@@ -293,6 +293,7 @@ class NpmPlugin(Plugin):
             base_env["PATH"] = "${CRAFT_PART_INSTALL}/bin:${PATH}"
 
         if self._is_self_contained:
+            # explicitly block registry access during offline builds
             base_env["npm_config_registry"] = "https://localhost:1"
 
         return base_env
