@@ -285,8 +285,6 @@ def test_go_monorepo_with_replace_directives(new_dir, partitions):
             source: {source_location}
             source-subdir: sdk
             plugin: go-use
-<<<<<<< HEAD
-=======
           test-core:
             source: {source_location}
             source-subdir: core
@@ -294,17 +292,13 @@ def test_go_monorepo_with_replace_directives(new_dir, partitions):
           test-root:
             source: {source_location}
             plugin: go-use
->>>>>>> bc9012c (test!/test for Go monorepos with replace directive to relative path)
           hello:
             after:
             - test-trace
             - test-metric
             - test-sdk
-<<<<<<< HEAD
-=======
             - test-core
             - test-root
->>>>>>> bc9012c (test!/test for Go monorepos with replace directive to relative path)
             plugin: go
             source: .
             build-environment:
