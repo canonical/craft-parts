@@ -30,6 +30,17 @@ New features:
 - Add support for the ``self-contained`` build attribute for parts using the
   :ref:`craft_parts_npm_plugin`.
 
+.. _release-2.29.1:
+
+2.29.1 (Unreleased)
+-------------------
+
+Bug fixes:
+
+- Fix ``mark_packages`` failing with ``PackageNotFound`` when versioned packages
+  have interdependencies on each other. The method now sets all candidate
+  versions before calling ``mark_install``, so the resolver sees the correct
+  candidates for all dependencies.
 
 .. _release-2.29.0:
 
