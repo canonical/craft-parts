@@ -1,3 +1,6 @@
+.. meta::
+    :description: See the features and bug fixes added in each release of Craft Parts.
+
 Changelog
 =========
 
@@ -17,14 +20,74 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
-2.27.0 (2025-MM-DD)
+.. _release-2.29.1:
+
+2.29.1 (Unreleased)
 -------------------
+
+Bug fixes:
+
+- Fix ``mark_packages`` failing with ``PackageNotFound`` when versioned packages
+  have interdependencies on each other. The method now sets all candidate
+  versions before calling ``mark_install``, so the resolver sees the correct
+  candidates for all dependencies.
+
+.. _release-2.29.0:
+
+2.29.0 (2026-02-03)
+-------------------
+
+New features:
+
+- Add support for mid-step callbacks.
+- Add a colcon plugin for building parts that use the colcon build tool. Requires
+  core24 or higher.
+- Add self-contained support for parts using the Gradle plugin.
+- The Gradle daemon is now disabled by default when using the Gradle plugin. You can
+  control this behaviour with the new ``gradle-use-daemon`` key.
+
+For a complete list of commits, check out the `2.29.0`_ release on GitHub.
+
+.. _release-2.28.0:
+
+2.28.0 (2026-01-08)
+-------------------
+
+New features:
+
+- The entire set of active plugins can now be replaced by using :py:func:`craft_parts.plugins.set_plugin_group`.
+  All plugin groups should contain at least the plugins from the :py:data:`craft_parts.plugins.PluginGroup.MINIMAL` group.
+- A new :ref:`craft_parts_ruby_plugin` allows convenient building of Ruby projects, including bundling Ruby interpreters.
+- The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to disable this feature.
+
+Bug fixes:
+
+- The Maven Use plugin now correctly infers a ``groupId`` when there is a parent pom to
+  infer from.
+- The ``make clean`` command now deletes ``docs/reference/gen``, which fixes
+  documentation builds that break because of outdated and leftover files in that
+  directory.
+
+For a complete list of commits, check out the `2.28.0`_ release on GitHub.
+
+.. _release-2.27.0:
+
+2.27.0 (2025-11-28)
+-------------------
+
+New features:
+
+- Add new ``jlink-multi-release`` and ``jlink-modules`` keys to the JLink plugin.
+- The Meson plugin now calls ``meson setup`` during build.
 
 Bug fixes:
 
 - Shallow clones of git sources are now possible when using ``source-commit`` with
   ``source-depth``.
+- Ignored outdated files are now still 'pulled', otherwise git will always consider
+  the repository dirty.
 
+For a complete list of commits, check out the `2.27.0`_ release on GitHub.
 
 .. _release-2.26.0:
 
@@ -56,8 +119,6 @@ New features:
 
 - Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
   A ``mount`` value cannot be a parent of any preceding ``mount`` values.
-
-- The Meson plugin now calls ``meson setup`` during build.
 
 Bug fixes:
 
@@ -1529,6 +1590,9 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.29.0: https://github.com/canonical/craft-parts/releases/tag/2.29.0
+.. _2.28.0: https://github.com/canonical/craft-parts/releases/tag/2.28.0
+.. _2.27.0: https://github.com/canonical/craft-parts/releases/tag/2.27.0
 .. _2.26.0: https://github.com/canonical/craft-parts/releases/tag/2.26.0
 .. _2.25.0: https://github.com/canonical/craft-parts/releases/tag/2.25.0
 .. _2.24.0: https://github.com/canonical/craft-parts/releases/tag/2.24.0

@@ -66,6 +66,8 @@ class LifecycleManager:
     :param application_package_name: The name of the application package, if required
         by the package manager used by the platform. Defaults to the application name.
     :param ignore_local_sources: A list of local source patterns to ignore.
+    :param ignore_outdated: A list of file patterns to ignore when testing for
+       outdated files.
     :param extra_build_packages: A list of additional build packages to install.
     :param extra_build_snaps: A list of additional build snaps to install.
     :param track_stage_packages: Add primed stage packages to the prime state.
@@ -90,7 +92,7 @@ class LifecycleManager:
         to callbacks.
     """
 
-    def __init__(  # noqa: PLR0912, PLR0913
+    def __init__(  # noqa: PLR0912, PLR0913, PLR0915
         self,
         all_parts: dict[str, Any],
         *,
@@ -103,6 +105,7 @@ class LifecycleManager:
         parallel_build_count: int = 1,
         application_package_name: str | None = None,
         ignore_local_sources: list[str] | None = None,
+        ignore_outdated: list[str] | None = None,
         extra_build_packages: list[str] | None = None,
         extra_build_snaps: list[str] | None = None,
         track_stage_packages: bool = False,
@@ -196,13 +199,18 @@ class LifecycleManager:
         else:
             layer_hash = None
 
+        if ignore_outdated is None:
+            ignore_outdated = []
+        if ignore_local_sources is not None:
+            ignore_outdated.extend(ignore_local_sources)
+
         self._part_list = part_list
         self._application_name = application_name
         self._target_arch = project_info.target_arch
         self._sequencer = sequencer.Sequencer(
             part_list=self._part_list,
             project_info=project_info,
-            ignore_outdated=ignore_local_sources,
+            ignore_outdated=ignore_outdated,
             base_layer_hash=layer_hash,
         )
         self._executor = executor.Executor(

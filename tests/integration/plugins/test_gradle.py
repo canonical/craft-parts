@@ -24,54 +24,24 @@ import yaml
 from craft_parts import LifecycleManager, Step
 from craft_parts.infos import ProjectInfo
 
-pytestmark = [pytest.mark.java]
+pytestmark = [pytest.mark.slow, pytest.mark.java]
 
 
 @pytest.fixture
-def local_proxy_url():
-    conf_file = Path("proxy.conf")
-    conf_file.write_text(
-        """
-Port 8888
-Timeout 600
-DefaultErrorFile "/usr/share/tinyproxy/default.html"
-StatFile "/usr/share/tinyproxy/stats.html"
-LogFile "/var/log/tinyproxy/tinyproxy.log"
-LogLevel Info
-PidFile "/run/tinyproxy/tinyproxy.pid"
-MaxClients 100
-Allow 127.0.0.1
-Allow ::1
-ViaProxyName "tinyproxy"
-    """,
-        encoding="utf-8",
-    )
-    proc = subprocess.Popen(["sudo", "tinyproxy", "-d", str(conf_file)])
-    yield "http://localhost:8888"
-    proc.kill()
+def use_gradlew(request, new_dir):
+    if not (use_wrapper := request.param):
+        Path(new_dir, "gradlew").unlink(missing_ok=True)
+    return use_wrapper
 
 
-@pytest.fixture
-def testing_source_dir(new_dir):
-    source_location = Path(__file__).parent / "test_gradle"
+def copy_tree(new_dir, copy_dir):
+    source_location = Path(__file__).parent / "test_gradle" / copy_dir
     shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
-    return new_dir
 
 
-@pytest.fixture
-def use_gradlew(request, testing_source_dir):
-    if request.param:
-        yield request.param
-        return
-    (testing_source_dir / "gradlew").unlink(missing_ok=True)
-
-
-# Parametrization of using gradle vs gradlew is not applied since gradle cannot
-# run init scripts at the time of writing (2025-04-2) due to the version provided
-# by Ubuntu packages archive being too low (4.4.1).
-def test_gradle_plugin_gradlew(
-    new_dir, testing_source_dir, partitions, local_proxy_url
-):
+@pytest.mark.parametrize("use_gradlew", [True, False], indirect=True)
+def test_gradle_plugin(new_dir, partitions, use_gradlew):
+    copy_tree(new_dir, "simple")
     part_name = "foo"
     parts_yaml = textwrap.dedent(
         f"""
@@ -80,14 +50,14 @@ def test_gradle_plugin_gradlew(
             plugin: gradle
             gradle-task: testWrite build
             gradle-init-script: init.gradle
-            source: {testing_source_dir}
-            build-packages: [gradle, openjdk-21-jdk]
+            source: {new_dir}
+            build-packages: [openjdk-21-jdk]
+            build-snaps:
+                - gradle
             build-environment:
                   # This is just because the test environment has multiple java versions and will
                   # use default-jre if unspecified.
                 - JAVA_HOME: /usr/lib/jvm/java-21-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
-                - http_proxy: {local_proxy_url}
-                - https_proxy: {local_proxy_url}
                   # Set GRADLE_USER_HOME dir to the according part's build .gradle dir to avoid
                   # interfering with other tests.
                 - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
@@ -97,7 +67,7 @@ def test_gradle_plugin_gradlew(
     parts = yaml.safe_load(parts_yaml)
     lf = LifecycleManager(
         parts,
-        application_name="test_ant",
+        application_name="test_gradle",
         cache_dir=new_dir,
         work_dir=new_dir,
         partitions=partitions,
@@ -114,40 +84,6 @@ def test_gradle_plugin_gradlew(
     ).exists()
 
 
-@pytest.mark.skip(reason="Current apt provided Gradle (4.4.1) cannot build even with ")
-@pytest.mark.parametrize("use_gradlew", [False], indirect=True)
-def test_gradle_plugin_gradle(new_dir, testing_source_dir, partitions, use_gradlew):
-    part_name = "foo"
-    parts_yaml = textwrap.dedent(
-        f"""
-        parts:
-          {part_name}:
-            plugin: gradle
-            gradle-task: build
-            source: {testing_source_dir}
-            build-packages: [gradle, openjdk-11-jdk]
-            build-environment:
-            - JAVA_HOME: /usr/lib/jvm/java-11-openjdk-${{CRAFT_ARCH_BUILD_FOR}}
-            - GRADLE_USER_HOME: {new_dir}/parts/{part_name}/build/.gradle
-            stage-packages: [openjdk-11-jdk]
-        """
-    )
-    parts = yaml.safe_load(parts_yaml)
-    lf = LifecycleManager(
-        parts,
-        application_name="test_ant",
-        cache_dir=new_dir,
-        work_dir=new_dir,
-        partitions=partitions,
-    )
-    actions = lf.plan(Step.PRIME)
-
-    with lf.action_executor() as ctx:
-        ctx.execute(actions)
-
-    _test_core_gradle_plugin_build_output(project_info=lf.project_info)
-
-
 def _test_core_gradle_plugin_build_output(project_info: ProjectInfo) -> None:
     prime_dir = project_info.prime_dir
     java_binary = Path(prime_dir, "bin", "java")
@@ -157,3 +93,39 @@ def _test_core_gradle_plugin_build_output(project_info: ProjectInfo) -> None:
         [str(java_binary), "-jar", f"{prime_dir}/jar/build-1.0.jar"], text=True
     )
     assert output.strip() == "Hello from Gradle-built Java"
+
+
+def test_gradle_self_contained(new_dir, partitions):
+    copy_tree(new_dir, "self-contained")
+    parts = yaml.safe_load((new_dir / "parts.yaml").read_text(encoding="utf-8"))
+
+    lf = LifecycleManager(
+        parts,
+        application_name="test_gradle_self_contained",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    backstage = lf.project_info.backstage_dir / "maven-use"
+    assert backstage.is_dir()
+    # assert dependencies were published to backstage
+    for part in ["hello", "hello-plugin"]:
+        assert list(backstage.rglob(f"{part}-1.0.0.jar"))
+        assert list(backstage.rglob(f"{part}-1.0.0.pom"))
+
+    assert list(backstage.rglob("org.starcraft.hello-plugin.gradle.plugin"))
+
+    output = subprocess.check_output(
+        [
+            "java",
+            "-cp",
+            f"{lf.project_info.prime_dir}/jar/*",
+            "org.starcraft.HelloCraft",
+        ],
+        text=True,
+    )
+    assert output.strip() == "Hello, craft!"

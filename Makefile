@@ -96,9 +96,6 @@ endif
 ifeq ($(wildcard /usr/share/doc/tinyproxy/copyright),)
 APT_PACKAGES += tinyproxy
 endif
-ifeq ($(wildcard /usr/share/doc/gradle/copyright),)
-APT_PACKAGES += gradle
-endif
 # Maven
 ifeq ($(wildcard /usr/share/doc/maven/copyright),)
 APT_PACKAGES += maven
@@ -140,6 +137,32 @@ ifneq ($(VERSION_CODENAME),jammy)
 ifeq ($(wildcard /usr/share/doc/python3-poetry-plugin-export/copyright),)
 APT_PACKAGES += python3-poetry-plugin-export
 endif
+# On Jammy, we can use pip to install meson. Everywhere else we install it through apt.
+ifeq ($(wildcard /usr/share/doc/meson/copyright),)
+APT_PACKAGES += meson
+endif
+endif
+endif
+
+# Colcon is not available in apt on jammy or focal.
+ifeq ($(filter $(VERSION_CODENAME),jammy focal),)
+ifeq ($(wildcard /usr/share/doc/colcon/copyright),)
+APT_PACKAGES += colcon
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-core/),)
+APT_PACKAGES += python3-colcon-core
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-cmake/),)
+APT_PACKAGES += python3-colcon-cmake
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-package-selection/),)
+APT_PACKAGES += python3-colcon-package-selection
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-python-setup-py/),)
+APT_PACKAGES += python3-colcon-python-setup-py
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-parallel-executor/),)
+APT_PACKAGES += python3-colcon-parallel-executor
 endif
 endif
 
@@ -156,6 +179,21 @@ APT_PACKAGES += cargo
 endif
 ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
 APT_PACKAGES += cmake
+endif
+# Ruby
+ifeq ($(wildcard /usr/share/doc/ruby/copyright),)
+APT_PACKAGES += ruby
+endif
+ifeq ($(wildcard /usr/share/doc/ruby-bundler/copyright),)
+APT_PACKAGES += ruby-bundler
+endif
+# all the packages ruby-install wants to use to build mruby
+# https://github.com/postmodern/ruby-install/blob/master/share/ruby-install/mruby/dependencies.sh
+ifeq ($(wildcard /usr/share/doc/build-essential/copyright),)
+APT_PACKAGES += build-essential
+endif
+ifeq ($(wildcard /usr/share/doc/bison/copyright),)
+APT_PACKAGES += bison
 endif
 # We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
 # 22.04 -> 25.10 (and possibly 26.04).
@@ -223,8 +261,19 @@ else
 	sudo snap install core20
 endif
 
+.PHONY: install-gradle
+install-gradle:
+ifneq ($(NO_JAVA),1)
+ifneq ($(wildcard /snap/gradle/),)
+else ifeq ($(shell which snap),)
+	$(warning Cannot install gradle without snap. Please install it yourself.)
+else
+	sudo snap install gradle --classic
+endif
+endif
+
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup
+install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup install-gradle
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
@@ -241,13 +290,22 @@ endif
 .PHONY: install-lint-build-deps
 install-lint-build-deps:
 
+.PHONY: install-rustup
+install-rustup:
+ifneq ($(shell which rustup),)
+else ifeq ($(shell which snap),)
+	$(warning Cannot install rustup without snap. Install it yourself.)
+else
+	sudo snap install rustup --classic
+endif
+
 # A temporary override to the lint-docs directive to ignore the sphinx-docs-starter-pack git submodule.
 .PHONY: lint-docs
 lint-docs:  ##- Lint the documentation
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --ignore docs/sphinx-docs-starter-pack --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
+	uv run $(UV_DOCS_GROUPS) sphinx-lint --ignore docs/reference/commands --ignore docs/_build --ignore docs/sphinx-docs-starter-pack --enable all $(DOCS) -d line-too-long,missing-underscore-after-hyperlink,missing-space-in-hyperlink
 	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
@@ -263,14 +321,6 @@ else
 	sudo snap install dotnet --classic
 endif
 endif
-endif
-
-.PHONY: install-rustup
-install-rustup:
-ifeq ($(shell which snap),)
-	$(warning Cannot install rustup without snap.)
-else
-	sudo snap install rustup --classic
 endif
 
 .PHONY: _gh-runner-clean

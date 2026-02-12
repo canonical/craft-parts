@@ -77,6 +77,7 @@ docs/_static/
 docs/_templates/
 docs/spelling/
 docs/_linkcheck/
+docs/reference/gen
 
 # PyBuilder
 target/
@@ -166,3 +167,6 @@ prime/
 # .NET build directories
 **/bin/
 **/obj/
+
+# Ruby plugin artifacts
+ruby-install.tar.gz

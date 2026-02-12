@@ -1,0 +1,17 @@
+plugins {
+  id 'java-gradle-plugin'
+  id 'maven-publish'
+}
+
+group = 'org.starcraft'
+version = '1.0.0'
+
+gradlePlugin {
+  plugins {
+      helloPlugin {
+          id = 'org.starcraft.hello-plugin'
+          implementationClass = 'org.starcraft.HelloPlugin'
+      }
+  }
+}
+
