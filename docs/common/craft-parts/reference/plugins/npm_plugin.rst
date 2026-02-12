@@ -76,19 +76,17 @@ Attributes
 ----------
 
 This plugin supports the ``self-contained`` build attribute. Declaring this attribute
-enables offline builds by blocking npm registry access and installing dependencies from
+enables offline builds by blocking all npm registry access and installing dependencies from
 pre-cached tarballs.
 
 Parts that produce dependencies should set ``npm-publish-to-cache: true`` to publish their
 tarballs to the shared cache.
 
 
-.. note::
-
-    In self-contained builds, ``package-lock.json`` is ignored. Dependencies
-    are resolved at build time from cached tarballs produced by other parts.
-    The ``npm-include-node`` option is not supported with this build attribute.
-    Node.js must be provided by a build snap or build package.
+In self-contained builds, ``package-lock.json`` is ignored. Dependencies
+are resolved at build time from cached tarballs produced by other parts.
+The ``npm-include-node`` option is not supported with this build attribute.
+Node.js must be provided by a build snap or build package.
 
 
 Examples
