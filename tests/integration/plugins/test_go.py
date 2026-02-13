@@ -143,6 +143,7 @@ def test_go_use(new_dir, partitions):
           sys:
             source: https://go.googlesource.com/sys
             source-type: git
+            source-tag: v0.41.0
             plugin: go-use
           go-flags:
             source: https://github.com/jessevdk/go-flags.git
@@ -214,6 +215,7 @@ def test_go_use(new_dir, partitions):
               sys:
                 source: https://go.googlesource.com/sys
                 source-type: git
+                source-tag: v0.41.0
                 plugin: go-use
               go-flags:
                 source: https://github.com/jessevdk/go-flags.git
