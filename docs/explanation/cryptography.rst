@@ -55,8 +55,7 @@ Dependencies
 Downloading system packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-System dependencies are downloaded and verified using snapd,
-`Apt <https://wiki.debian.org/AptCLI>`_, `DNF <https://dnf.readthedocs.io>`_, and
+System dependencies are downloaded and verified using snapd, `DNF <https://dnf.readthedocs.io>`_, and
 `Yum <http://yum.baseurl.org>`_.
 
 Downloading build dependencies
