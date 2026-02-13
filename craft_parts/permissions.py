@@ -127,7 +127,7 @@ class Permissions(BaseModel):
             os.chmod(target, self.mode_octal)  # noqa: PTH101
 
         if self.owner is not None and self.group is not None:
-            os.chown(target, self.owner, self.group)
+            os.chown(target, self.owner, self.group, follow_symlinks=False)
 
 
 def filter_permissions(
