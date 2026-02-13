@@ -245,7 +245,9 @@ endif
 
 .PHONY: install-go
 install-go:
-ifneq ($(shell which go),)
+ifneq ($(wildcard /snap/go/),)
+	sudo snap refresh go || true
+else ifneq ($(shell which go),)
 else ifeq ($(shell which snap),)
 	$(warning Cannot install go without snap. Please install it yourself.)
 else
