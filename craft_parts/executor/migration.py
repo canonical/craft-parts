@@ -17,7 +17,6 @@
 """Handle the execution of built-in or user specified step commands."""
 
 import logging
-import os
 from collections.abc import Callable
 from pathlib import Path
 
@@ -32,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 def migrate_files(  # noqa: PLR0913
     *,
-    files: set[str],
-    dirs: set[str],
+    files: set[Path],
+    dirs: set[Path],
     srcdir: Path,
     destdir: Path,
     missing_ok: bool = False,
@@ -41,7 +40,7 @@ def migrate_files(  # noqa: PLR0913
     oci_translation: bool = False,
     fixup_func: Callable[..., None] = lambda *_args: None,
     permissions: list[Permissions] | None = None,
-) -> tuple[set[str], set[str]]:
+) -> tuple[set[Path], set[Path]]:
     """Copy or link files from a directory to another.
 
     Files and directories are migrated from one step to the next during
@@ -61,8 +60,8 @@ def migrate_files(  # noqa: PLR0913
 
     :returns: A tuple containing sets of migrated files and directories.
     """
-    migrated_files: set[str] = set()
-    migrated_dirs: set[str] = set()
+    migrated_files: set[Path] = set()
+    migrated_dirs: set[Path] = set()
     permissions = permissions or []
 
     for dirname in sorted(dirs):
@@ -76,7 +75,7 @@ def migrate_files(  # noqa: PLR0913
             dst = overlays.oci_whiteout(dst)
 
         file_utils.create_similar_directory(
-            str(src), str(dst), filter_permissions(dirname, permissions)
+            src, dst, filter_permissions(dirname, permissions)
         )
         migrated_dirs.add(dirname)
 
@@ -84,11 +83,11 @@ def migrate_files(  # noqa: PLR0913
         # directory marker file in destination and add it to the list of migrated
         # files so it can be removed when cleaning.
         if oci_translation and _is_opaque_dir(src):
-            oci_opaque_marker = overlays.oci_opaque_dir(Path(dirname))
-            oci_dst = Path(destdir, oci_opaque_marker)
+            oci_opaque_marker = overlays.oci_opaque_dir(dirname)
+            oci_dst = destdir / oci_opaque_marker
             logger.debug("create OCI opaque dir marker '%s'", str(oci_dst))
             oci_dst.touch()
-            migrated_files.add(str(oci_opaque_marker))
+            migrated_files.add(oci_opaque_marker)
 
     for filename in sorted(files):
         src = srcdir / filename
@@ -115,20 +114,20 @@ def migrate_files(  # noqa: PLR0913
         # in destination and add it to the list of migrated files so it can be removed
         # when cleaning.
         if oci_translation and _is_whiteout_file(src):
-            oci_whiteout = overlays.oci_whiteout(Path(filename))
-            oci_dst = Path(destdir, oci_whiteout)
+            oci_whiteout = overlays.oci_whiteout(filename)
+            oci_dst = destdir / oci_whiteout
             logger.debug("create OCI whiteout file '%s'", str(oci_dst))
             oci_dst.touch()
-            migrated_files.add(str(oci_whiteout))
+            migrated_files.add(oci_whiteout)
         else:
             file_utils.link_or_copy(
-                str(src),
-                str(dst),
+                src,
+                dst,
                 follow_symlinks=follow_symlinks,
                 permissions=filter_permissions(filename, permissions),
             )
-            fixup_func(str(dst))
-            migrated_files.add(str(filename))
+            fixup_func(dst)
+            migrated_files.add(filename)
 
     return migrated_files, migrated_dirs
 
@@ -162,8 +161,8 @@ def clean_shared_area(
         return
 
     state = part_states[part_name]
-    files: set[str] = set()
-    directories: set[str] = set()
+    files: set[Path] = set()
+    directories: set[Path] = set()
 
     partition_contents = state.contents(partition=partition)
 
@@ -235,8 +234,8 @@ def clean_shared_overlay(
     if not overlay_migration_state:
         return
 
-    files: set[str] = set()
-    directories: set[str] = set()
+    files: set[Path] = set()
+    directories: set[Path] = set()
 
     # This overlay migration state is coming from a partition, so content
     # is recorded in top-level files/directories keys, not in partition_contents key
@@ -258,7 +257,7 @@ def clean_shared_overlay(
     _clean_migrated_files(files, directories, shared_dir)
 
 
-def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> None:
+def _clean_migrated_files(files: set[Path], dirs: set[Path], directory: Path) -> None:
     """Remove files and directories migrated from part install to a common directory.
 
     :param files: A set of files to remove.
@@ -267,7 +266,7 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
     """
     for each_file in files:
         try:
-            Path(directory, each_file).unlink()
+            (directory / each_file).unlink()
         except FileNotFoundError:  # noqa: PERF203
             logger.warning(
                 "Attempted to remove file %r, but it didn't exist. Skipping...",
@@ -279,10 +278,10 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
     # we'll sort them in reverse here to get subdirectories before parents.
 
     for each_dir in sorted(dirs, reverse=True):
-        migrated_directory = os.path.join(directory, each_dir)  # noqa: PTH118
+        migrated_directory = directory / each_dir
         try:
-            if not os.listdir(migrated_directory):  # noqa: PTH208
-                os.rmdir(migrated_directory)  # noqa: PTH106
+            if not list(migrated_directory.iterdir()):
+                migrated_directory.rmdir()
         except FileNotFoundError:
             logger.warning(
                 "Attempted to remove directory '%s', but it didn't exist. Skipping...",
@@ -291,8 +290,8 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
 
 
 def filter_dangling_whiteouts(
-    files: set[str], dirs: set[str], *, base_dir: Path | None
-) -> set[str]:
+    files: set[Path], dirs: set[Path], *, base_dir: Path | None
+) -> set[Path]:
     """Remove dangling whiteout file and directory names.
 
     Names corresponding to dangling files and directories (i.e. without a
@@ -307,19 +306,19 @@ def filter_dangling_whiteouts(
     if not base_dir:
         return set()
 
-    whiteouts: set[str] = set()
+    whiteouts: set[Path] = set()
 
     # Remove whiteout files if no backing file exists in the base dir.
     for file in list(files):
-        if overlays.is_oci_whiteout_file(Path(file)):
-            backing_file = base_dir / overlays.oci_whited_out_file(Path(file))
+        if overlays.is_oci_whiteout_file(file):
+            backing_file = base_dir / overlays.oci_whited_out_file(file)
             if not backing_file.exists():
                 files.remove(file)
                 whiteouts.add(file)
 
     # Do the same for opaque directory markers
     for directory in list(dirs):
-        opaque_marker = str(overlays.oci_opaque_dir(Path(directory)))
+        opaque_marker = overlays.oci_opaque_dir(directory)
         if opaque_marker in files:
             backing_file = base_dir / directory
             if not backing_file.exists():
@@ -330,8 +329,8 @@ def filter_dangling_whiteouts(
 
 
 def filter_all_whiteouts(
-    files: set[str],
-) -> set[str]:
+    files: set[Path],
+) -> set[Path]:
     """List and filter all whiteout files.
 
     Found whiteout files are to be removed from the provided sets of files.
@@ -339,10 +338,10 @@ def filter_all_whiteouts(
     :param files: The set of files to be verified.
     :return: The set of filtered out whiteout files.
     """
-    whiteouts: set[str] = set()
+    whiteouts: set[Path] = set()
 
     for file in list(files):
-        if overlays.is_oci_whiteout(Path(file)):
+        if overlays.is_oci_whiteout(file):
             files.remove(file)
             whiteouts.add(file)
 

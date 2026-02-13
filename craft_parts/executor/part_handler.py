@@ -18,11 +18,9 @@
 
 import logging
 import os
-import os.path
 import shutil
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from glob import iglob
 from pathlib import Path
 from typing import Any, cast
 
@@ -92,7 +90,7 @@ class _UpdateHandler(Protocol):
 
 
 # map the source path to the destination path in the partition
-_MigratedContents = dict[str, str]
+_MigratedContents = dict[str, Path]
 
 
 class _Squasher:
@@ -197,11 +195,11 @@ class _Squasher:
             src_path = str(sub_path / f)
             self.migrated_directories[dst_partition][src_path] = f
 
-    def _filter_already_distributed(self, visible_contents: set[str]) -> set[str]:
+    def _filter_already_distributed(self, visible_contents: set[Path]) -> set[Path]:
         """Filter files in paths already distributed to other partitions."""
         if not self._distributed_paths:
             return visible_contents
-        contents: set[str] = set()
+        contents: set[Path] = set()
         for content in visible_contents:
             is_distributed = any(
                 migration.already_distributed(Path(content), distributed_path)
@@ -395,7 +393,7 @@ class PartHandler:
             destdir = self._part.part_layer_dir
             files, dirs = filesets.migratable_filesets(
                 overlay_fileset,
-                str(destdir),
+                destdir,
                 self._part_info.default_partition,
                 self._part_info.default_partition,
             )
@@ -1008,7 +1006,7 @@ class PartHandler:
                 state.write(step_overlay_state_path)
 
     def _clean_dangling_whiteouts(
-        self, prime_dir: Path, migrated_files: set[str], migrated_dirs: set[str]
+        self, prime_dir: Path, migrated_files: set[Path], migrated_dirs: set[Path]
     ) -> None:
         """Clean up dangling whiteout files with no backing files to white out."""
         dangling_whiteouts = migration.filter_dangling_whiteouts(
@@ -1016,12 +1014,12 @@ class PartHandler:
         )
         self._clean_whiteouts(prime_dir, dangling_whiteouts)
 
-    def _clean_all_whiteouts(self, prime_dir: Path, migrated_files: set[str]) -> None:
+    def _clean_all_whiteouts(self, prime_dir: Path, migrated_files: set[Path]) -> None:
         """Clean up all whiteout files."""
         all_whiteouts = migration.filter_all_whiteouts(migrated_files)
         self._clean_whiteouts(prime_dir, all_whiteouts)
 
-    def _clean_whiteouts(self, prime_dir: Path, whiteouts: set[str]) -> None:
+    def _clean_whiteouts(self, prime_dir: Path, whiteouts: set[Path]) -> None:
         """Clean up whiteout files."""
         for whiteout in whiteouts:
             primed_whiteout = prime_dir / whiteout
@@ -1239,7 +1237,7 @@ class PartHandler:
             *self._part.overlay_dirs.values(),
         ]
         for dir_name in dirs:
-            os.makedirs(dir_name, exist_ok=True)  # noqa: PTH103
+            dir_name.mkdir(parents=True, exist_ok=True)
 
         self._symlink_alias_to_default()
         self._create_usrmerge_scaffolding()
@@ -1330,7 +1328,7 @@ class PartHandler:
 
         logger.debug("Unpacking stage-snaps to %s", install_dir)
 
-        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))  # noqa: PTH118, PTH207
+        snap_files = snaps_dir.glob("*.snap")
         snap_sources = (
             sources.SnapSource(
                 source=s,
@@ -1359,7 +1357,7 @@ def _remove(filename: Path) -> None:
 
 
 def _apply_file_filter(
-    *, filter_files: set[str], filter_dirs: set[str], destdir: Path
+    *, filter_files: set[Path], filter_dirs: set[Path], destdir: Path
 ) -> None:
     """Remove files and directories from the filesystem.
 
@@ -1373,7 +1371,7 @@ def _apply_file_filter(
         for file_name in files:
             path = Path(root, file_name)
             relpath = path.relative_to(destdir)
-            if str(relpath) not in filter_files and not overlays.is_whiteout_file(path):
+            if relpath not in filter_files and not overlays.is_whiteout_file(path):
                 logger.debug("delete file: %s", relpath)
                 path.unlink()
 
@@ -1381,10 +1379,10 @@ def _apply_file_filter(
             path = Path(root, directory)
             relpath = path.relative_to(destdir)
             if path.is_symlink():
-                if str(relpath) not in filter_files:
+                if relpath not in filter_files:
                     logger.debug("delete symlink: %s", relpath)
                     path.unlink()
-            elif str(relpath) not in filter_dirs:
+            elif relpath not in filter_dirs:
                 logger.debug("delete dir: %s", relpath)
                 # Don't descend into this directory-- we'll just delete it
                 # entirely.
@@ -1507,7 +1505,7 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: list[Part]) -> list[Pa
 
 
 def _get_primed_stage_packages(
-    snap_files: set[str], *, prime_dirs: list[Path]
+    snap_files: set[Path], *, prime_dirs: list[Path]
 ) -> set[str]:
     primed_stage_packages: set[str] = set()
     for _snap_file in snap_files:
@@ -1515,7 +1513,7 @@ def _get_primed_stage_packages(
             snap_file = prime_dir / _snap_file
             if not snap_file.exists():
                 continue
-            stage_package = read_origin_stage_package(str(snap_file))
+            stage_package = read_origin_stage_package(snap_file)
             if stage_package:
                 primed_stage_packages.add(stage_package)
     return primed_stage_packages

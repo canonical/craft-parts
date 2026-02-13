@@ -16,6 +16,7 @@
 
 """State definitions for the stage step."""
 
+from pathlib import Path
 from typing import Annotated, Any
 
 import pydantic
@@ -26,11 +27,19 @@ from craft_parts.infos import ProjectOptions
 from .step_state import StepState, validate_hex_string
 
 
+def _serialize_path_set(value: set[Path]) -> set[str]:
+    return {v.as_posix() for v in value}
+
+
 class StageState(StepState):
     """Context information for the stage step."""
 
-    backstage_files: set[str] = set()
-    backstage_directories: set[str] = set()
+    backstage_files: Annotated[
+        set[Path], pydantic.PlainSerializer(_serialize_path_set)
+    ] = set()
+    backstage_directories: Annotated[
+        set[Path], pydantic.PlainSerializer(_serialize_path_set)
+    ] = set()
 
     overlay_hash: Annotated[
         str | None, pydantic.BeforeValidator(validate_hex_string)

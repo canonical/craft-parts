@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import subprocess
 import sys
 import textwrap
@@ -96,8 +95,8 @@ def test_uv_plugin_symlink(new_dir, partitions, uv_parts_simple):
 
     # In regular Ubuntu this would be /usr/bin/python3.* but in GH this can be
     # something like /opt/hostedtoolcache/Python/3.9.16/x64/bin/python3.9
-    assert os.path.isabs(python_link)  # noqa: PTH117
-    assert os.path.basename(python_link).startswith("python3")  # noqa: PTH119
+    assert python_link.is_absolute()
+    assert python_link.name.startswith("python3")
 
 
 def test_uv_plugin_override_get_system_interpreter(

@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import textwrap
+from pathlib import Path
 
 import craft_parts
 import pytest
@@ -96,13 +96,13 @@ def test_step_callback(new_dir, mocker, capfd, step):
             CRAFT_PART_SRC={new_dir}/parts/foo/src
             CRAFT_PART_SRC_WORK={new_dir}/parts/foo/src
             CRAFT_PRIME={new_dir}/prime
-            CRAFT_PROJECT_DIR={os.getcwd()}
+            CRAFT_PROJECT_DIR={Path.cwd().as_posix()}
             CRAFT_STAGE={new_dir}/stage
             CRAFT_STEP_NAME={Step(step).name}
             CRAFT_TARGET_ARCH=arm64
             TEST_OVERRIDE=bar
             TEST_STEP={step!s}
-            """  # noqa: PTH109
+            """
         )
     )
 
@@ -142,13 +142,13 @@ def test_prologue_callback(new_dir, capfd, mocker):
             CRAFT_PART_SRC={new_dir}/parts/foo/src
             CRAFT_PART_SRC_WORK={new_dir}/parts/foo/src
             CRAFT_PRIME={new_dir}/prime
-            CRAFT_PROJECT_DIR={os.getcwd()}
+            CRAFT_PROJECT_DIR={Path.cwd().as_posix()}
             CRAFT_STAGE={new_dir}/stage
             CRAFT_STEP_NAME=PULL
             CRAFT_TARGET_ARCH=arm64
             TEST_GLOBAL=prologue
             TEST_OVERRIDE=bar
-            """  # noqa: PTH109
+            """
         )
     )
 
@@ -214,7 +214,7 @@ def test_expand_environment_order(new_dir, mocker):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    with open(lf.project_info.prime_dir / "part-variables.txt") as file:  # noqa: PTH123
+    with (lf.project_info.prime_dir / "part-variables.txt").open() as file:
         data = file.read()
 
     assert data == textwrap.dedent(

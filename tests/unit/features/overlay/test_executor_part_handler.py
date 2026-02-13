@@ -145,14 +145,14 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         )
 
         self._mock_mount_overlayfs.assert_called_with(
-            f"{self._part_info.overlay_mount_dir}",
+            self._part_info.overlay_mount_dir,
             (
                 f"-olowerdir={self._part_info.overlay_packages_dir}:/base,"
                 f"upperdir={self._part.part_layer_dir},"
                 f"workdir={self._part_info.overlay_work_dir}"
             ),
         )
-        self._mock_umount.assert_called_with(f"{self._part_info.overlay_mount_dir}")
+        self._mock_umount.assert_called_with(self._part_info.overlay_mount_dir)
 
     def test_run_build_without_overlay_visibility(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
@@ -178,10 +178,10 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         default_partition = partitions[0] if partitions is not None else "default"
         mock_step_contents.partitions_contents[default_partition] = (
             StagePartitionContents(
-                files={"file"},
-                dirs={"dir"},
-                backstage_files={"back_file"},
-                backstage_dirs={"back_dir"},
+                files={Path("file")},
+                dirs={Path("dir")},
+                backstage_files={Path("back_file")},
+                backstage_dirs={Path("back_dir")},
             )
         )
         partitions_migration_contents = {}
@@ -207,11 +207,11 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
-            directories={"dir"},
+            files={Path("file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
-            backstage_files={"back_file"},
-            backstage_directories={"back_dir"},
+            backstage_files={Path("back_file")},
+            backstage_directories={Path("back_dir")},
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
 
@@ -563,14 +563,15 @@ class TestOverlayMigration:
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"),
+        [(Step.STAGE, Path("stage")), (Step.PRIME, Path("prime"))],
     )
     def test_migrate_overlay(self, step, step_dir):
         _run_step_migration(self._p1_handler, step)
-        assert Path(f"{step_dir}/dir1/foo").exists()
-        assert Path(f"{step_dir}/bar").exists()
-        assert Path(f"{step_dir}/dir1/baz").exists()
-        assert Path(f"overlay/{step_dir}_overlay").exists()
+        assert (step_dir / "dir1/foo").exists()
+        assert (step_dir / "bar").exists()
+        assert (step_dir / "dir1/baz").exists()
+        assert Path(f"overlay/{step_dir.name}_overlay").exists()
 
     @pytest.mark.parametrize(
         ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]

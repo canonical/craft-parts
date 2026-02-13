@@ -18,8 +18,8 @@
 
 import filecmp
 import os
-import pathlib
 from dataclasses import dataclass
+from pathlib import Path
 
 from craft_parts import errors, overlays, permissions
 from craft_parts.features import Features
@@ -68,9 +68,9 @@ class StageCandidate:
     # Name of the part that produced these files and directories
     part_name: str
     # The actual files and directories, relative to ``source_dir``
-    contents: set[str]
+    contents: set[Path]
     # The directory that contains ``contents``
-    source_dir: pathlib.Path
+    source_dir: Path
     # The permissions that apply to ``contents``
     permissions: list[Permissions]
     # Whether this set comes from a part's overlay (used for error reporting)
@@ -86,7 +86,7 @@ def _get_candidate_from_install_dir(
         return None
 
     stage_fileset = filesets.Fileset(stage_files, name="stage")
-    srcdir = str(part.part_install_dirs[partition])
+    srcdir = part.part_install_dirs[partition]
     part_files, part_directories = filesets.migratable_filesets(
         stage_fileset,
         srcdir,
@@ -104,28 +104,28 @@ def _get_candidate_from_install_dir(
     )
 
 
-def _get_overlay_layer_contents(source: pathlib.Path) -> tuple[set[str], set[str]]:
+def _get_overlay_layer_contents(source: Path) -> tuple[set[Path], set[Path]]:
     """Get the files and directories from a directory, relative to that directory."""
-    concrete_files: set[pathlib.Path] = set()
-    concrete_dirs: set[pathlib.Path] = set()
+    concrete_files: set[Path] = set()
+    concrete_dirs: set[Path] = set()
     for root, directories, files in os.walk(source, topdown=True):
         for file_name in files:
-            path = pathlib.Path(root, file_name)
+            path = Path(root, file_name)
             # A whiteout file means that the file is to be removed from the stack, and
             # so won't conflict with incoming files from install dirs.
             if not overlay_fs.is_whiteout_file(path):
                 concrete_files.add(path)
 
         for directory in directories:
-            path = pathlib.Path(root, directory)
+            path = Path(root, directory)
             if path.is_symlink():
                 concrete_files.add(path)
             else:
                 concrete_dirs.add(path)
 
     return (
-        {str(f.relative_to(source)) for f in concrete_files},
-        {str(d.relative_to(source)) for d in concrete_dirs},
+        {f.relative_to(source) for f in concrete_files},
+        {d.relative_to(source) for d in concrete_dirs},
     )
 
 
@@ -206,10 +206,10 @@ def _check_for_stage_collisions_per_partition(
             # Our files that are also in a different part.
             common = candidate.contents & other_candidate.contents
 
-            conflict_files: list[str] = []
+            conflict_files: list[Path] = []
             for item in common:
-                this = os.path.join(candidate.source_dir, item)  # noqa: PTH118
-                other = os.path.join(other_candidate.source_dir, item)  # noqa: PTH118
+                this = Path(candidate.source_dir, item)
+                other = Path(other_candidate.source_dir, item)
 
                 permissions_this = permissions.filter_permissions(
                     item, candidate.permissions
@@ -224,7 +224,7 @@ def _check_for_stage_collisions_per_partition(
                     other,
                     permissions_this,
                     permissions_other,
-                    rel_dirname=os.path.dirname(item),  # noqa: PTH120
+                    rel_dirname=item.parent,
                     path1_is_overlay=candidate.is_overlay,
                     path2_is_overlay=other_candidate.is_overlay,
                 ):
@@ -250,12 +250,12 @@ def _check_for_stage_collisions_per_partition(
 
 
 def paths_collide(
-    path1: str,
-    path2: str,
+    path1: Path,
+    path2: Path,
     permissions_path1: list[Permissions] | None = None,
     permissions_path2: list[Permissions] | None = None,
     *,
-    rel_dirname: str = "",
+    rel_dirname: Path = Path(),
     path1_is_overlay: bool = False,
     path2_is_overlay: bool = False,
 ) -> bool:
@@ -277,27 +277,27 @@ def paths_collide(
         return False
 
     # Paths collide if they're both symlinks, but pointing to different places.
-    path1_is_link = os.path.islink(path1)  # noqa: PTH114
-    path2_is_link = os.path.islink(path2)  # noqa: PTH114
+    path1_is_link = path1.is_symlink()
+    path2_is_link = path2.is_symlink()
     if path1_is_link and path2_is_link:
-        path1_target = os.readlink(path1)  # noqa: PTH115
-        path2_target = os.readlink(path2)  # noqa: PTH115
+        path1_target = path1.readlink()
+        path2_target = path2.readlink()
 
         # Symlinks targeting relative path must be normalized if they
         # are compared with symlinks from the overlay.
         if (
-            not os.path.isabs(path1_target)  # noqa: PTH117
-            and os.path.isabs(path2_target)  # noqa: PTH117
+            not path1_target.is_absolute()
+            and path2_target.is_absolute()
             and path2_is_overlay
         ):
             path1_target = normalize_symlink(path1_target, rel_dirname)
 
         if (
-            not os.path.isabs(path2_target)  # noqa: PTH117
-            and os.path.isabs(path1_target)  # noqa: PTH117
+            not path2_target.is_absolute()
+            and path1_target.is_absolute()
             and path1_is_overlay
         ):
-            path2_target = normalize_symlink(path2_target, rel_dirname)
+            path2_target = Path(normalize_symlink(path2_target, rel_dirname))
 
         return path1_target != path2_target
 
@@ -306,8 +306,8 @@ def paths_collide(
         return True
 
     # Paths collide if one is a directory, but not the other.
-    path1_is_dir = os.path.isdir(path1)  # noqa: PTH112
-    path2_is_dir = os.path.isdir(path2)  # noqa: PTH112
+    path1_is_dir = path1.is_dir()
+    path2_is_dir = path2.is_dir()
     if path1_is_dir != path2_is_dir:
         return True
 
@@ -320,12 +320,12 @@ def paths_collide(
     return not permissions_are_compatible(permissions_path1, permissions_path2)
 
 
-def _file_collides(file_this: str, file_other: str) -> bool:
-    if not file_this.endswith(".pc"):
+def _file_collides(file_this: Path, file_other: Path) -> bool:
+    if file_this.suffix != ".pc":
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
     # pkgconfig files need special handling, only prefix line may be different.
-    with open(file_this) as pc_file_1, open(file_other) as pc_file_2:  # noqa: PTH123
+    with file_this.open() as pc_file_1, file_other.open() as pc_file_2:
         for line_pc_1, line_pc_2 in zip(pc_file_1, pc_file_2):
             if line_pc_1.startswith("prefix=") and line_pc_2.startswith("prefix="):
                 continue
@@ -335,7 +335,7 @@ def _file_collides(file_this: str, file_other: str) -> bool:
     return False
 
 
-def normalize_symlink(path: str, rel_dirname: str) -> str:
+def normalize_symlink(path: Path, rel_dirname: Path) -> Path:
     """Simulate a symlink resolution (only one level).
 
     We do not want to really resolve the symlink with os.path.realpath() since it
@@ -345,4 +345,4 @@ def normalize_symlink(path: str, rel_dirname: str) -> str:
     root.
 
     """
-    return os.path.normpath(os.path.join("/", rel_dirname, path))  # noqa: PTH118
+    return Path(os.path.normpath(Path("/", rel_dirname, path)))

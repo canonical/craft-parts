@@ -20,13 +20,14 @@ import errno
 import logging
 import os
 import sys
+from pathlib import Path
 
 from craft_parts import errors
 
 logger = logging.getLogger(__name__)
 
 
-def read_xattr(path: str, key: str) -> str | None:
+def read_xattr(path: Path, key: str) -> str | None:
     """Get extended attribute metadata from a file.
 
     :param path: The file to get metadata from.
@@ -38,7 +39,7 @@ def read_xattr(path: str, key: str) -> str | None:
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
-    if os.path.islink(path):  # noqa: PTH114
+    if path.is_symlink():
         return None
 
     key = f"user.craft_parts.{key}"
@@ -59,7 +60,7 @@ def read_xattr(path: str, key: str) -> str | None:
     return value.decode().strip()
 
 
-def write_xattr(path: str, key: str, value: str) -> None:
+def write_xattr(path: Path, key: str, value: str) -> None:
     """Add extended attribute metadata to a file.
 
     :param path: The file to add metadata to.
@@ -70,7 +71,7 @@ def write_xattr(path: str, key: str, value: str) -> None:
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
-    if os.path.islink(path):  # noqa: PTH114
+    if path.is_symlink():
         return
 
     key = f"user.craft_parts.{key}"

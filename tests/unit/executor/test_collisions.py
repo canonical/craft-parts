@@ -197,7 +197,7 @@ class TestCollisions:
 
         assert raised.value.other_part_name == "part2"
         assert raised.value.part_name == "part3"
-        assert sorted(raised.value.conflicting_files) == ["1", "a/2"]
+        assert sorted(raised.value.conflicting_files) == [Path("1"), Path("a/2")]
 
     def test_collisions_checks_symlinks(self, part5, part6, partitions):
         """Symlinks point to different targets."""
@@ -206,7 +206,7 @@ class TestCollisions:
 
         assert raised.value.other_part_name == "part5"
         assert raised.value.part_name == "part6"
-        assert raised.value.conflicting_files == ["a"]
+        assert raised.value.conflicting_files == [Path("a")]
 
     def test_collisions_not_both_symlinks(self, part1, part5, partitions):
         """Same name for directory and symlink."""
@@ -215,7 +215,7 @@ class TestCollisions:
 
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part5"
-        assert raised.value.conflicting_files == ["a"]
+        assert raised.value.conflicting_files == [Path("a")]
 
     def test_collisions_between_two_parts_pc_files(self, part1, part4, partitions):
         """Pkg-config files have different entries that are not prefix."""
@@ -224,7 +224,7 @@ class TestCollisions:
 
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part4"
-        assert raised.value.conflicting_files == ["file.pc"]
+        assert raised.value.conflicting_files == [Path("file.pc")]
 
     def test_collision_with_part_not_built(self, tmpdir, partitions):
         part_built = Part(
@@ -297,7 +297,7 @@ class TestCollisions:
         # Therefore, only "2" should be marked as conflicting.
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part2"
-        assert raised.value.conflicting_files == ["2"]
+        assert raised.value.conflicting_files == [Path("2")]
 
     @pytest.fixture
     def overlay_part0(self, tmpdir, partitions) -> Part:

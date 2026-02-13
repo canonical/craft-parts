@@ -178,8 +178,8 @@ def is_inside_container() -> bool:
 
     :return: Whether the process is running inside a container.
     """
-    for path in ["/.dockerenv", "/run/.containerenv"]:
-        if os.path.exists(path):  # noqa: PTH110
+    for path in (Path("/.dockerenv"), Path("/run/.containerenv")):
+        if path.exists():
             logger.debug("application running in a docker or podman (OCI) container")
             return True
 
@@ -222,7 +222,7 @@ def get_system_info() -> str:
     return uname
 
 
-def mount(device: str, mountpoint: str, *args: str) -> None:
+def mount(device: Path, mountpoint: str, *args: str) -> None:
     """Mount a filesystem.
 
     :param device: The device to mount.
@@ -231,11 +231,13 @@ def mount(device: str, mountpoint: str, *args: str) -> None:
 
     :raises subprocess.CalledProcessError: on error.
     """
-    logger.debug("mount device=%r, mountpoint=%r, args=%r", device, mountpoint, args)
-    subprocess.check_call(["/bin/mount", *args, device, mountpoint])
+    logger.debug(
+        "mount device=%r, mountpoint=%r, args=%r", device.as_posix(), mountpoint, args
+    )
+    subprocess.check_call(["/bin/mount", *args, device.as_posix(), mountpoint])
 
 
-def mount_overlayfs(mountpoint: str, *args: str) -> None:
+def mount_overlayfs(mountpoint: Path, *args: str) -> None:
     """Mount an overlay filesystem using fuse-overlayfs.
 
     :param mountpoint: Where the device will be mounted.
@@ -243,25 +245,25 @@ def mount_overlayfs(mountpoint: str, *args: str) -> None:
 
     :raises subprocess.CalledProcessError: on error.
     """
-    logger.debug("fuse-overlayfs mountpoint=%r, args=%r", mountpoint, args)
-    subprocess.check_call(["fuse-overlayfs", *args, mountpoint])
+    logger.debug("fuse-overlayfs mountpoint=%r, args=%r", mountpoint.as_posix(), args)
+    subprocess.check_call(["fuse-overlayfs", *args, mountpoint.as_posix()])
 
 
 _UMOUNT_RETRIES = 5
 
 
-def umount(mountpoint: str, *args: str) -> None:
+def umount(mountpoint: Path, *args: str) -> None:
     """Unmount a filesystem.
 
     :param mountpoint: The mount point or device to unmount.
 
     :raises subprocess.CalledProcessError: on error.
     """
-    logger.debug("umount mountpoint=%r, args=%r", mountpoint, args)
+    logger.debug("umount mountpoint=%r, args=%r", mountpoint.as_posix(), args)
     attempt = 0
     while True:  # unmount in Github CI fails randomly and needs a retry
         try:
-            subprocess.check_call(["/bin/umount", *args, mountpoint])
+            subprocess.check_call(["/bin/umount", *args, mountpoint.as_posix()])
             break
         except subprocess.CalledProcessError:
             attempt += 1
@@ -270,7 +272,10 @@ def umount(mountpoint: str, *args: str) -> None:
 
             time.sleep(1)
             logger.debug(
-                "retry umount %r (%d/%d)", mountpoint, attempt, _UMOUNT_RETRIES
+                "retry umount %r (%d/%d)",
+                mountpoint.as_posix(),
+                attempt,
+                _UMOUNT_RETRIES,
             )
 
 
@@ -284,7 +289,7 @@ class OsRelease:
         """
         self._os_release: dict[str, str] = {}
         with contextlib.suppress(FileNotFoundError):
-            with open(os_release_file) as file:  # noqa: PTH123
+            with Path(os_release_file).open() as file:
                 for line in file:
                     entry = line.rstrip().split("=")
                     if len(entry) == 2:  # noqa: PLR2004

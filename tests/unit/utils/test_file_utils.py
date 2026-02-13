@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pathlib
 import stat
 from pathlib import Path
 
@@ -54,75 +53,77 @@ class TestLinkOrCopyTree:
     """Verify func:`link_or_copy_tree` usage scenarios."""
 
     def setup_method(self):
-        os.makedirs("foo/bar/baz")  # noqa: PTH103
-        open("1", "w").close()  # noqa: PTH123
-        open(os.path.join("foo", "2"), "w").close()  # noqa: PTH118, PTH123
-        open(os.path.join("foo", "bar", "3"), "w").close()  # noqa: PTH118, PTH123
-        open(os.path.join("foo", "bar", "baz", "4"), "w").close()  # noqa: PTH118, PTH123
+        Path("foo/bar/baz").mkdir(parents=True)
+        Path("1").touch()
+        Path("foo", "2").touch()
+        Path("foo", "bar", "3").touch()
+        Path("foo", "bar", "baz", "4").touch()
 
     def test_link_file_to_file_raises(self):
         with pytest.raises(errors.CopyTreeError) as raised:
-            file_utils.link_or_copy_tree("1", "qux")
+            file_utils.link_or_copy_tree(Path("1"), Path("qux"))
         assert raised.value.message == "'1' is not a directory"
 
     def test_link_file_into_directory(self):
-        os.mkdir("qux")  # noqa: PTH102
+        Path("qux").mkdir()
         with pytest.raises(errors.CopyTreeError) as raised:
-            file_utils.link_or_copy_tree("1", "qux")
+            file_utils.link_or_copy_tree(Path("1"), Path("qux"))
         assert raised.value.message == "'1' is not a directory"
 
     def test_link_directory_to_directory(self):
-        file_utils.link_or_copy_tree("foo", "qux")
-        assert os.path.isfile(os.path.join("qux", "2"))  # noqa: PTH113, PTH118
-        assert os.path.isfile(os.path.join("qux", "bar", "3"))  # noqa: PTH113, PTH118
-        assert os.path.isfile(os.path.join("qux", "bar", "baz", "4"))  # noqa: PTH113, PTH118
+        file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
+        assert Path("qux", "2").is_file()
+        assert Path("qux", "bar", "3").is_file()
+        assert Path("qux", "bar", "baz", "4").is_file()
 
     def test_link_directory_overwrite_file_raises(self):
-        open("qux", "w").close()  # noqa: PTH123
+        Path("qux").touch()
         with pytest.raises(errors.CopyTreeError) as raised:
-            file_utils.link_or_copy_tree("foo", "qux")
+            file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
         assert raised.value.message == (
             "cannot overwrite non-directory 'qux' with directory 'foo'"
         )
 
     def test_ignore(self):
-        file_utils.link_or_copy_tree("foo/bar", "qux", ignore=lambda x, y: ["3"])
-        assert not os.path.isfile(os.path.join("qux", "3"))  # noqa: PTH113, PTH118
-        assert os.path.isfile(os.path.join("qux", "baz", "4"))  # noqa: PTH113, PTH118
+        file_utils.link_or_copy_tree(
+            Path("foo/bar"), Path("qux"), ignore=lambda x, y: ["3"]
+        )
+        assert not Path("qux", "3").is_file()
+        assert Path("qux", "baz", "4").is_file()
 
     def test_link_subtree(self):
-        file_utils.link_or_copy_tree("foo/bar", "qux")
-        assert os.path.isfile(os.path.join("qux", "3"))  # noqa: PTH113, PTH118
-        assert os.path.isfile(os.path.join("qux", "baz", "4"))  # noqa: PTH113, PTH118
+        file_utils.link_or_copy_tree(Path("foo/bar"), Path("qux"))
+        assert Path("qux", "3").is_file()
+        assert Path("qux", "baz", "4").is_file()
 
     def test_link_symlink_to_file(self):
         # Create a symlink to a file
-        pathlib.Path("foo", "2-link").symlink_to("2")
-        file_utils.link_or_copy_tree("foo", "qux")
+        Path("foo", "2-link").symlink_to("2")
+        file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
         # Verify that the symlink remains a symlink
-        link = os.path.join("qux", "2-link")  # noqa: PTH118
-        assert os.path.islink(link)  # noqa: PTH114
-        assert os.readlink(link) == "2"  # noqa: PTH115
+        link = Path("qux", "2-link")
+        assert link.is_symlink()
+        assert link.readlink() == Path("2")
 
     def test_link_symlink_to_dir(self):
-        pathlib.Path("foo", "bar-link").symlink_to("bar")
-        file_utils.link_or_copy_tree("foo", "qux")
+        Path("foo", "bar-link").symlink_to("bar")
+        file_utils.link_or_copy_tree(Path("foo"), Path("qux"))
 
         # Verify that the symlink remains a symlink
-        link = os.path.join("qux", "bar-link")  # noqa: PTH118
-        assert os.path.islink(link)  # noqa: PTH114
-        assert os.readlink(link) == "bar"  # noqa: PTH115
+        link = Path("qux", "bar-link")
+        assert link.is_symlink()
+        assert link.readlink() == Path("bar")
 
 
 class TestLinkOrCopy:
     """Verify func:`link_or_copy` usage scenarios."""
 
     def setup_method(self):
-        os.makedirs("foo/bar/baz")  # noqa: PTH103
-        open("1", "w").close()  # noqa: PTH123
-        open(os.path.join("foo", "2"), "w").close()  # noqa: PTH118, PTH123
-        open(os.path.join("foo", "bar", "3"), "w").close()  # noqa: PTH118, PTH123
-        open(os.path.join("foo", "bar", "baz", "4"), "w").close()  # noqa: PTH118, PTH123
+        Path("foo/bar/baz").mkdir(parents=True)
+        Path("1").touch()
+        Path("foo", "2").touch()
+        Path("foo", "bar", "3").touch()
+        Path("foo", "bar", "baz", "4").touch()
 
     def test_link_file_soerror(self, mocker):
         orig_link = os.link
@@ -133,55 +134,55 @@ class TestLinkOrCopy:
 
         mocker.patch("os.link", side_effect=link_and_oserror)
 
-        file_utils.link_or_copy("1", "foo/1")
+        file_utils.link_or_copy(Path("1"), Path("foo/1"))
 
     def test_copy_nested_file(self):
-        file_utils.link_or_copy("foo/bar/baz/4", "foo2/bar/baz/4")
-        assert os.path.isfile("foo2/bar/baz/4")  # noqa: PTH113
+        file_utils.link_or_copy(Path("foo/bar/baz/4"), Path("foo2/bar/baz/4"))
+        assert Path("foo2/bar/baz/4").is_file()
 
     def test_destination_exists(self):
-        os.mkdir("qux")  # noqa: PTH102
-        open(os.path.join("qux", "2"), "w").close()  # noqa: PTH118, PTH123
-        assert os.stat("foo/2").st_ino != os.stat("qux/2").st_ino  # noqa: PTH116
+        Path("qux").mkdir()
+        Path("qux", "2").touch()
+        assert Path("foo/2").stat().st_ino != Path("qux/2").stat().st_ino
 
-        file_utils.link_or_copy("foo/2", "qux/2")
-        assert os.stat("foo/2").st_ino == os.stat("qux/2").st_ino  # noqa: PTH116
+        file_utils.link_or_copy(Path("foo/2"), Path("qux/2"))
+        assert Path("foo/2").stat().st_ino == Path("qux/2").stat().st_ino
 
     def test_with_permissions(self, mock_chown):
-        os.chmod("foo/2", mode=0o644)  # noqa: PTH101
+        Path("foo/2").chmod(mode=0o644)
 
         permissions = [
             Permissions(path="foo/*", mode="755"),
             Permissions(path="foo/2", owner=1111, group=2222),
         ]
 
-        os.mkdir("qux")  # noqa: PTH102
-        file_utils.link_or_copy("foo/2", "qux/2", permissions=permissions)
+        Path("qux").mkdir()
+        file_utils.link_or_copy(Path("foo/2"), Path("qux/2"), permissions=permissions)
 
         # Check that the copied file has the correct permission bits and ownership
-        assert stat.S_IMODE(os.stat("qux/2").st_mode) == 0o755  # noqa: PTH116
-        mock_call = mock_chown["qux/2"]
+        assert stat.S_IMODE(Path("qux/2").stat().st_mode) == 0o755
+        mock_call = mock_chown[Path("qux/2")]
         assert mock_call.owner == 1111
         assert mock_call.group == 2222
 
         # Check that the copied file is *not* a link
-        assert os.stat("foo/2").st_ino != os.stat("qux/2").st_ino  # noqa: PTH116
-        assert os.stat("qux/2").st_nlink == 1  # noqa: PTH116
+        assert Path("foo/2").stat().st_ino != Path("qux/2").stat().st_ino
+        assert Path("qux/2").stat().st_nlink == 1
 
 
 class TestCopy:
     """Verify func:`copy` usage scenarios."""
 
     def setup_method(self):
-        open("1", "w").close()  # noqa: PTH123
+        Path("1").touch()
 
     def test_copy(self):
-        file_utils.copy("1", "3")
-        assert os.path.isfile("3")  # noqa: PTH113
+        file_utils.copy(Path("1"), Path("3"))
+        assert Path("3").is_file()
 
     def test_file_not_found(self):
         with pytest.raises(errors.CopyFileNotFound) as raised:
-            file_utils.copy("2", "3")
+            file_utils.copy(Path("2"), Path("3"))
         assert raised.value.name == "2"
 
 
@@ -190,9 +191,9 @@ class TestMove:
 
     def test_move_simple(self):
         Path("foo").touch()
-        foo_stat = os.stat("foo")  # noqa: PTH116
-        file_utils.move("foo", "bar")
-        bar_stat = os.stat("bar")  # noqa: PTH116
+        foo_stat = Path("foo").stat()
+        file_utils.move(Path("foo"), Path("bar"))
+        bar_stat = Path("bar").stat()
 
         assert Path("foo").exists() is False
         assert Path("bar").is_file()
@@ -202,7 +203,7 @@ class TestMove:
     def test_move_symlink(self):
         Path("foo").symlink_to("baz")
         foo_stat = os.lstat("foo")
-        file_utils.move("foo", "bar")
+        file_utils.move(Path("foo"), Path("bar"))
         bar_stat = os.lstat("bar")
 
         assert Path("foo").exists() is False
@@ -213,9 +214,9 @@ class TestMove:
     @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
     def test_move_chardev(self):
         os.mknod("foo", 0o750 | stat.S_IFCHR, os.makedev(1, 5))
-        foo_stat = os.stat("foo")  # noqa: PTH116
-        file_utils.move("foo", "bar")
-        bar_stat = os.stat("bar")  # noqa: PTH116
+        foo_stat = Path("foo").stat()
+        file_utils.move(Path("foo"), Path("bar"))
+        bar_stat = Path("bar").stat()
 
         assert Path("foo").exists() is False
         assert Path("bar").exists()
@@ -227,9 +228,9 @@ class TestMove:
     @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
     def test_move_blockdev(self):
         os.mknod("foo", 0o750 | stat.S_IFBLK, os.makedev(7, 99))
-        foo_stat = os.stat("foo")  # noqa: PTH116
-        file_utils.move("foo", "bar")
-        bar_stat = os.stat("bar")  # noqa: PTH116
+        foo_stat = Path("foo").stat()
+        file_utils.move(Path("foo"), Path("bar"))
+        bar_stat = Path("bar").stat()
 
         assert Path("foo").exists() is False
         assert Path("bar").exists()
@@ -240,9 +241,9 @@ class TestMove:
 
     def test_move_fifo(self):
         os.mkfifo("foo")
-        foo_stat = os.stat("foo")  # noqa: PTH116
-        file_utils.move("foo", "bar")
-        bar_stat = os.stat("bar")  # noqa: PTH116
+        foo_stat = Path("foo").stat()
+        file_utils.move(Path("foo"), Path("bar"))
+        bar_stat = Path("bar").stat()
 
         assert Path("foo").exists() is False
         assert Path("bar").exists()
@@ -262,14 +263,14 @@ class TestMove:
 def test_create_similar_directory_permissions(tmp_path, mock_chown):
     source = tmp_path / "source"
     source.mkdir()
-    os.chmod(source, 0o644)  # noqa: PTH101
+    source.chmod(0o644)
     target = tmp_path / "target"
 
     permissions = [Permissions(mode="755", owner=1111, group=2222)]
 
     file_utils.create_similar_directory(source, target, permissions=permissions)
 
-    assert stat.S_IMODE(os.stat(target).st_mode) == 0o755  # noqa: PTH116
+    assert stat.S_IMODE(target.stat().st_mode) == 0o755
     mock_call = mock_chown[target]
     assert mock_call.owner == 1111
     assert mock_call.group == 2222

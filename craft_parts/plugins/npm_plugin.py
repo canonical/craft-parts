@@ -284,9 +284,9 @@ class NpmPlugin(Plugin):
 
             node_uri = f"https://nodejs.org/dist/{resolved_version}/{file_name}"
             checksum_uri = f"https://nodejs.org/dist/{resolved_version}/SHASUMS256.txt"
-            self._node_binary_path = os.path.join(  # noqa: PTH118
-                self._part_info.part_cache_dir, file_name
-            )
+            self._node_binary_path = (
+                self._part_info.part_cache_dir / file_name
+            ).as_posix()
             cmd += [
                 dedent(
                     f"""\
