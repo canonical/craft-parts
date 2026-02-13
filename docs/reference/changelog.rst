@@ -120,6 +120,9 @@ New features:
 - Validate that filesystem mounts are ordered in increasing ``mount`` nesting.
   A ``mount`` value cannot be a parent of any preceding ``mount`` values.
 
+- Support for mounting `/etc/apt` from the build environment to the overlay
+  root. This allows Ubuntu Pro enablement if available.
+
 Bug fixes:
 
 - When installing packages with ``overlay-packages``, the prepared

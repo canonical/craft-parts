@@ -16,14 +16,12 @@
 
 """Execute a callable in a chroot environment."""
 
-from __future__ import annotations
-
 import logging
 import multiprocessing
 import os
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from craft_parts.utils import os_utils
 
@@ -38,7 +36,13 @@ logger = logging.getLogger(__name__)
 _T = TypeVar("_T")
 
 
-def chroot(path: Path, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+def chroot(
+    path: Path,
+    target: Callable[..., _T],
+    mount_package_sources: bool = False,  # noqa: FBT001, FBT002
+    args: tuple[Any] = (),  # type: ignore  # noqa: PGH003
+    kwargs: Any = {},
+) -> Any:  # noqa: ANN401
     """Execute a callable in a chroot environment.
 
     :param path: The new filesystem root.
@@ -60,14 +64,14 @@ def chroot(path: Path, target: Callable[..., _T], *args: Any, **kwargs: Any) -> 
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
     )
     logger.debug("[pid=%d] set up chroot", os.getpid())
-    _setup_chroot(path)
+    _setup_chroot(path, mount_package_sources)
     try:
         child.start()
         res, err = parent_conn.recv()
         child.join()
     finally:
         logger.debug("[pid=%d] clean up chroot", os.getpid())
-        _cleanup_chroot(path)
+        _cleanup_chroot(path, mount_package_sources)
 
     if isinstance(err, str):
         raise errors.OverlayChrootExecutionError(err)
@@ -97,90 +101,260 @@ def _runner(
     conn.send((res, None))
 
 
-def _setup_chroot(path: Path) -> None:
+def _compare_os_release(host: os_utils.OsRelease, chroot: os_utils.OsRelease) -> None:
+    """Compare OsRelease objects from host and chroot for compatibility. See _host_compatible_chroot."""
+    if (host_val := host.id()) != (chroot_val := chroot.id()):
+        raise errors.IncompatibleChrootError("id", host_val, chroot_val)
+
+    if (host_val := host.version_id()) != (chroot_val := chroot.version_id()):
+        raise errors.IncompatibleChrootError("version_id", host_val, chroot_val)
+
+
+def _host_compatible_chroot(path: Path) -> None:
+    """Raise exception if host and chroot are not the same distribution and release."""
+    # Note: /etc/os-release is symlinked to /usr/lib/os-release
+    # This could cause an issue if /etc/os-release is removed at any point.
+    host_os_release = os_utils.OsRelease()
+    chroot_os_release = os_utils.OsRelease(
+        os_release_file=str(path / "/etc/os-release")
+    )
+    _compare_os_release(host_os_release, chroot_os_release)
+
+
+def _setup_chroot(path: Path, mount_package_sources: bool) -> None:  # noqa: FBT001
     """Prepare the chroot environment before executing the target function."""
     logger.debug("setup chroot: %r", path)
     if sys.platform == "linux":
-        _setup_chroot_linux(path)
+        # base configuration
+        _setup_chroot_mounts(path, _linux_mounts)
 
+        if mount_package_sources:
+            _host_compatible_chroot(path)
 
-def _cleanup_chroot(path: Path) -> None:
-    """Clean the chroot environment after executing the target function."""
-    logger.debug("cleanup chroot: %r", path)
-    if sys.platform == "linux":
-        _cleanup_chroot_linux(path)
-
-
-class _Mount(NamedTuple):
-    """Mount entry for chroot setup."""
-
-    fstype: str | None
-    src: str
-    mountpoint: str
-    options: list[str] | None
-
-
-# Essential filesystems to mount in order to have basic utilities and
-# name resolution working inside the chroot environment.
-_linux_mounts: list[_Mount] = [
-    _Mount(None, "/etc/resolv.conf", "/etc/resolv.conf", ["--bind"]),
-    _Mount("proc", "proc", "/proc", None),
-    _Mount("sysfs", "sysfs", "/sys", None),
-    # Device nodes require MS_REC to be bind mounted inside a container.
-    _Mount(None, "/dev", "/dev", ["--rbind", "--make-rprivate"]),
-]
-
-
-def _setup_chroot_linux(path: Path) -> None:
-    """Linux-specific chroot environment preparation."""
-    # Some images (such as cloudimgs) symlink ``/etc/resolv.conf`` to
-    # ``/run/systemd/resolve/stub-resolv.conf``. We want resolv.conf to be
-    # a regular file to bind-mount the host resolver configuration on.
-    #
-    # There's no need to restore the file to its original condition because
-    # this operation happens on a temporary filesystem layer.
-    resolv_conf = path / "etc/resolv.conf"
-    if resolv_conf.is_symlink():
-        resolv_conf.unlink()
-        resolv_conf.touch()
-    elif not resolv_conf.exists() and resolv_conf.parent.is_dir():
-        resolv_conf.touch()
-
-    pid = os.getpid()
-    for entry in _linux_mounts:
-        args = entry.options or []
-        if entry.fstype:
-            args.append(f"-t{entry.fstype}")
-
-        mountpoint = path / entry.mountpoint.lstrip("/")
-
-        # Only mount if mountpoint exists.
-        if mountpoint.exists():
-            logger.debug("[pid=%d] mount %r on chroot", pid, str(mountpoint))
-            os_utils.mount(entry.src, str(mountpoint), *args)
-        else:
-            logger.debug("[pid=%d] mountpoint %r does not exist", pid, str(mountpoint))
+            _setup_chroot_mounts(path, _ubuntu_apt_mounts)
 
     logger.debug("chroot setup complete")
 
 
-def _cleanup_chroot_linux(path: Path) -> None:
+def _cleanup_chroot(path: Path, mount_package_sources: bool) -> None:  # noqa: FBT001
+    """Clean the chroot environment after executing the target function."""
+    logger.debug("cleanup chroot: %r", path)
+    if sys.platform == "linux":
+        _cleanup_chroot_mounts(path, _linux_mounts)
+
+        if mount_package_sources:
+            # Note: no need to check if host is compatible since
+            # we already called _host_compatible_chroot in _setup_chroot
+            _cleanup_chroot_mounts(path, _ubuntu_apt_mounts)
+
+    logger.debug("chroot cleanup complete")
+
+
+class _Mount:
+    def __init__(
+        self,
+        src: str | Path,
+        dst: str | Path,
+        *args: str,
+        fstype: str | None = None,
+        skip_missing: bool = True,
+    ) -> None:
+        """Manage setup and clean up of chroot mounts.
+
+        :param src: Mount source. This can be a device or path on the file system.
+        :param dst: Point. Path to the mount point relative to the chroot mounted on.
+        :param args: Additional args to pass to mount command.
+        :param fstype: fstype arg to use when calling mount.
+        :param skip_missing: skip mounts when dst_exists returns False.
+        """
+        self.src = Path(src)
+        self.dst = Path(dst)
+        self.args = [*args]
+        self.skip_missing = skip_missing
+
+        if fstype is not None:
+            self.args.append(f"-t{fstype}")
+
+        logger.debug("[pid=%d] Mount Manager %s", os.getpid(), self)
+
+    def _mount(self, src: Path, chroot: Path, *args: str) -> None:
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        os_utils.mount(str(src), str(abs_dst), *args)
+
+    def _umount(self, chroot: Path, *args: str) -> None:
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        os_utils.umount(str(abs_dst), *args)
+
+    def get_abs_path(self, path: Path, chroot_path: Path) -> Path:
+        """Make `chroot_path` relative to host `path`."""
+        return path / str(chroot_path).lstrip("/")
+
+    def dst_exists(self, chroot: Path) -> bool:
+        """Return True if `self.dst` exists within `chroot`."""
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        return abs_dst.is_symlink() or abs_dst.exists()
+
+    def remove_dst(self, chroot: Path) -> None:
+        """Remove `self.dst` if present to prepare mountpoint `self.dst`."""
+        # Overriding this method is not required.
+
+    def create_dst(self, chroot: Path) -> None:
+        """Create mountpoint `self.dst` later used in mount call."""
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        abs_dst.parent.mkdir(parents=True, exist_ok=True)
+
+    def mount_to(self, chroot: Path, *args: str) -> None:
+        """Mount `self.src` to `self.dst` within chroot."""
+        logger.debug(f"Mounting {self.dst}")
+        if self.dst_exists(chroot):
+            self.remove_dst(chroot)
+        elif self.skip_missing:
+            abs_dst = self.get_abs_path(chroot, self.dst)
+            logger.warning(
+                "[pid=%d] mount: %r not found. Skipping", os.getpid(), abs_dst
+            )
+            return
+        self.create_dst(chroot)
+        self._mount(self.src, chroot, *self.args, *args)
+
+    def unmount_from(self, chroot: Path, *args: str) -> None:
+        """Unmount `self.dst` within chroot."""
+        logger.debug(f"Mounting {self.dst}")
+        if self.skip_missing and not self.dst_exists(chroot):
+            abs_dst = self.get_abs_path(chroot, self.dst)
+            logger.warning("[pid=%d] umount: %r not found!", os.getpid(), abs_dst)
+            return
+
+        self._umount(chroot, *args)
+
+
+class _BindMount(_Mount):
+    bind_type = "bind"
+
+    def __init__(
+        self,
+        src: str | Path,
+        dst: str | Path,
+        *args: str,
+        skip_missing: bool = True,
+    ) -> None:
+        """Manage setup and clean up of `--bind` mount chroot mounts.
+
+        This subclass of _Mount contains extra support for creating mount points for
+        individual files.
+        :param src: Mount source. This can be a device or path on the file system.
+        :param dst: Point. Path to the mount point relative to the chroot mounted on.
+        :param args: Additional args to pass to mount command.
+        :param skip_missing: skip mounts when dst_exists returns False.
+        """
+        super().__init__(
+            src, dst, f"--{self.bind_type}", *args, skip_missing=skip_missing
+        )
+
+    def dst_exists(self, chroot: Path) -> bool:
+        abs_dst = self.get_abs_path(chroot, self.dst)
+
+        if self.src.is_file():
+            return abs_dst.is_symlink() or abs_dst.exists() or abs_dst.parent.is_dir()
+
+        return abs_dst.is_symlink() or abs_dst.exists()
+
+    def create_dst(self, chroot: Path) -> None:
+        abs_dst = self.get_abs_path(chroot, self.dst)
+
+        if self.src.is_dir():
+            abs_dst.mkdir(parents=True, exist_ok=True)
+        elif self.src.is_file():
+            abs_dst.touch()
+
+    def remove_dst(self, chroot: Path) -> None:
+        abs_dst = self.get_abs_path(chroot, self.dst)
+
+        if abs_dst.is_symlink() or abs_dst.is_file():
+            abs_dst.unlink()
+
+    def _mount(self, src: Path, chroot: Path, *args: str) -> None:
+        if not src.exists():
+            raise FileNotFoundError(f"Path not found: {src}")
+
+        super()._mount(src, chroot, *args)
+
+
+class _RBindMount(_BindMount):
+    bind_type = "rbind"
+
+    def _umount(self, chroot: Path, *args: str) -> None:
+        super()._umount(chroot, "--recursive", "--lazy", *args)
+
+
+class _TempFSClone(_Mount):
+    def __init__(
+        self, src: str, dst: str, *args: str, skip_missing: bool = True
+    ) -> None:
+        """Manage setup and clean up of `--bind` mount chroot mounts.
+
+        This subclass of _Mount contains extra support for creating mount points for
+        individual files.
+        :param src: Mount source. This can be a device or path on the file system.
+        :param dst: Point. Path to the mount point relative to the chroot mounted on.
+        :param args: Additional args to pass to mount command.
+        :param skip_missing: skip mounts when dst_exists returns False.
+        """
+        super().__init__(src, dst, *args, fstype="tmpfs", skip_missing=skip_missing)
+
+    def _mount(self, src: Path, chroot: Path, *args: str) -> None:
+        if src.is_file():
+            raise NotADirectoryError(f"Path is a file: {src}")
+        if not src.exists():
+            raise FileNotFoundError(f"Path not found: {src}")
+
+        super()._mount(src, chroot, *args)
+
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        copytree(src, abs_dst, dirs_exist_ok=True)
+
+
+# Essential filesystems to mount in order to have basic utilities and
+# name resolution working inside the chroot environment.
+#
+# Some images (such as cloudimgs) symlink ``/etc/resolv.conf`` to
+# ``/run/systemd/resolve/stub-resolv.conf``. We want resolv.conf to be
+# a regular file to bind-mount the host resolver configuration on.
+#
+# There's no need to restore the file to its original condition because
+# this operation happens on a temporary filesystem layer.
+_linux_mounts: list[_Mount] = [
+    _BindMount("/etc/resolv.conf", "/etc/resolv.conf"),
+    _Mount("proc", "/proc", fstype="proc"),
+    _Mount("sysfs", "/sys", fstype="sysfs"),
+    # Device nodes require MS_REC to be bind mounted inside a container.
+    _RBindMount("/dev", "/dev", "--make-rprivate"),
+]
+
+# Mounts required to import host's Ubuntu Pro apt configuration to chroot
+# Improvement: parameterize this per linux distribution / package manager
+_ubuntu_apt_mounts = [
+    _TempFSClone("/etc/apt", "/etc/apt", skip_missing=False),
+    _BindMount(
+        "/usr/share/ca-certificates/",
+        "/usr/share/ca-certificates/",
+        skip_missing=False,
+    ),
+    _BindMount("/usr/share/keyrings/", "/usr/share/keyrings/", skip_missing=True),
+    _BindMount("/etc/ssl/certs/", "/etc/ssl/certs/", skip_missing=False),
+    _BindMount(
+        "/etc/ca-certificates.conf", "/etc/ca-certificates.conf", skip_missing=False
+    ),
+]
+
+
+def _setup_chroot_mounts(path: Path, mounts: list[_Mount]) -> None:
+    """Linux-specific chroot environment preparation."""
+    for entry in mounts:
+        entry.mount_to(path)
+
+
+def _cleanup_chroot_mounts(path: Path, mounts: list[_Mount]) -> None:
     """Linux-specific chroot environment cleanup."""
-    pid = os.getpid()
-    for entry in reversed(_linux_mounts):
-        mountpoint = path / entry.mountpoint.lstrip("/")
-
-        if mountpoint.exists():
-            logger.debug("[pid=%d] umount: %r", pid, str(mountpoint))
-            # The activity executed in the chroot can lead to additional mounts
-            # under those mounted to prepare the chroot.
-            # Remount as private to ease unmounting.
-            os_utils.mount(str(mountpoint), "--make-rprivate")
-
-            args: list[str] = ["--recursive"]
-            if entry.options and "--rbind" in entry.options:
-                # Mount points under /dev may be in use and make the bind mount
-                # unmountable. This may happen in destructive mode depending on
-                # the host environment, so use MNT_DETACH to defer unmounting.
-                args.append("--lazy")
-            os_utils.umount(str(mountpoint), *args)
+    for entry in reversed(mounts):
+        entry.unmount_from(path)
