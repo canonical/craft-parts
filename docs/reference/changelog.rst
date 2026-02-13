@@ -20,10 +20,15 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
-.. _release-2.29.1:
+.. _release-2.30.0:
 
-2.29.1 (Unreleased)
+2.30.0 (unreleased)
 -------------------
+
+New features:
+
+- Add support for the ``self-contained`` build attribute for parts using the
+  :ref:`craft_parts_npm_plugin`.
 
 Bug fixes:
 
