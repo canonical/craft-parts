@@ -274,31 +274,18 @@ def test_go_monorepo_with_replace_directives(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         f"""
         parts:
-          test-trace:
+          all-deps:
             source: {source_location}
             plugin: go-use
-          test-metric:
-            source: {source_location}
-            source-subdir: metric
-            plugin: go-use
-          test-sdk:
-            source: {source_location}
-            source-subdir: sdk
-            plugin: go-use
-          test-core:
-            source: {source_location}
-            source-subdir: core
-            plugin: go-use
-          test-root:
-            source: {source_location}
-            plugin: go-use
+            go-use-monorepo-subdir:
+            - trace
+            - sdk
+            - metric
+            - core
+            - .
           hello:
             after:
-            - test-trace
-            - test-metric
-            - test-sdk
-            - test-core
-            - test-root
+            - all-deps
             plugin: go
             source: .
             build-environment:

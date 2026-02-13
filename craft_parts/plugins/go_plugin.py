@@ -127,15 +127,17 @@ class GoPlugin(Plugin):
         # Matches go-use plugin expectation.
         dependencies_dir: pathlib.Path = self._part_info.backstage_dir / "go-use"
         if dependencies_dir.is_dir():
-            setup_cmds = [
-                "go work init .",
-                "go work use .",
-                *(
-                    f"go work use {os.path.realpath('{dependencies_dir}/{dep_part}')}"
-                    for dep_part in self._part_info.part_dependencies
-                    if (dependencies_dir / dep_part).exists()
-                ),
-            ]
+            setup_cmds = ["go work init .", "go work use ."]
+            for dep_part in self._part_info.part_dependencies:
+                setup_cmds.extend(
+                    f"go work use {os.path.realpath(subdir)}"
+                    for subdir in dependencies_dir.glob(f"{dep_part}_*")
+                    if subdir.is_dir()
+                )
+                if (dependencies_dir / dep_part).exists():
+                    setup_cmds.append(
+                        f"go work use '{os.path.realpath(f'{dependencies_dir}/{dep_part}')}'"
+                    )
         else:
             setup_cmds = ["go mod download all"]
 
