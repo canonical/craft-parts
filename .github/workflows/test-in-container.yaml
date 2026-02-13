@@ -1,0 +1,32 @@
+name: Test in a container
+on:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+        guest:
+          - ubuntu-minimal-daily:25.10
+          - ubuntu-minimal-daily:26.04
+        markers:
+          - java
+          - plugin
+          - python
+          - not java and not python and not plugin
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Minimise Ubuntu install
+        uses: lengau/pristine-ubuntu-action@v0
+      - name: Install LXD
+        uses: canonical/setup-lxd@v1
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup instance
+        run: |
+          make _setup-lxd LXD_IMAGE=${{ matrix.guest }}
+      - name: Run tests
+        run: |
+          make _run-test-in-lxd LXD_IMAGE=${{ matrix.guest }} PYTEST_ADDOPTS="-m '${{ matrix.markers }}'"

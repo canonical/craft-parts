@@ -195,12 +195,17 @@ endif
 ifeq ($(wildcard /usr/share/doc/bison/copyright),)
 APT_PACKAGES += bison
 endif
-# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
-# 22.04 -> 25.10 (and possibly 26.04).
+# We'll check for any dotnet SDK and install the release-relevant SDK
 # On focal, we'll get the snap instead.
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
-ifneq ($(UBUNTU_CODENAME),focal)
+ifeq ($(UBUNTU_CODENAME),jammy)
 APT_PACKAGES += dotnet-sdk-8.0
+else ifeq ($(UBUNTU_CODENAME),noble)
+APT_PACKAGES += dotnet-sdk-8.0
+else ifeq ($(UBUNTU_CODENAME),questing)
+APT_PACKAGES += dotnet-sdk-8.0
+else ifeq ($(UBUNTU_CODENAME),resolute)
+APT_PACKAGES += dotnet-sdk-10.0
 endif
 endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
@@ -341,3 +346,30 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# https://github.com/actions/runner-images/blob/6fd5896f04e572647774996a7b292b854e6e8bc0/images/ubuntu/scripts/build/install-java-tools.sh#L67
 	sudo rm -f /etc/apt/sources.list.d/adoptium.list
 endif
+
+
+INSTANCE := $(shell echo craft-parts-test-$(LXD_IMAGE) | tr :./ ---)
+.PHONY: _setup-lxd
+_setup-lxd:
+	lxc launch --ephemeral $(LXD_IMAGE) $(INSTANCE) --config raw.idmap='both $(shell id -u) 0'
+	lxc config device add $(INSTANCE) project_dir disk source=$(shell pwd) path=/root/project
+	lxc exec $(INSTANCE) --cwd /root/project -- apt-get update
+	lxc exec $(INSTANCE) --cwd /root/project -- apt-get --yes install make
+	lxc exec $(INSTANCE) --cwd /root/project --env CI=1 --env VIRTUAL_ENV=/root/.venv --env UV_EXTRA_ARGS=--active -- make -j setup-tests  # With CI=1 so apt doesn't wait, with a venv outside of the mounted project dir.
+
+.PHONY: _run-test-in-lxd
+_run-test-in-lxd:
+	lxc exec $(INSTANCE) --cwd /root/project --env CI=1 --env VIRTUAL_ENV=/root/.venv --env UV_EXTRA_ARGS=--active -- make test PYTEST_ADDOPTS="$(PYTEST_ADDOPTS)"
+
+.PHONY: setup-ubuntu-24.04
+setup-ubuntu-24.04:
+	make _setup-lxd LXD_IMAGE=ubuntu-minimal-daily:24.04
+
+.PHONY: test-ubuntu-24.04
+test-ubuntu-24.04:
+	make _run-test-in-lxd LXD_IMAGE=ubuntu-minimal-daily:24.04
+
+
+.PHONY: clean-lxd
+clean-lxd:
+	lxc list craft-parts-test- -f csv -cn | xargs lxc rm -f
