@@ -17,7 +17,7 @@
 """The Go Use plugin."""
 
 import logging
-from typing import Literal
+from typing import Literal, cast
 
 from typing_extensions import override
 
@@ -32,6 +32,8 @@ class GoUsePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Go Use plugin."""
 
     plugin: Literal["go-use"] = "go-use"
+
+    go_use_monorepo_subdir: list[str] = []
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -72,6 +74,26 @@ class GoUsePlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
+        # Cast to access plugin-specific properties
+        options = cast(GoUsePluginProperties, self._options)
+
+        if options.go_use_monorepo_subdir:
+            subdirs = options.go_use_monorepo_subdir
+            return_command: list[str] = []
+            for subdir in subdirs:
+                dest_dir = (
+                    self._part_info.part_export_dir
+                    / "go-use"
+                    / f"{self._part_info.part_name}_{subdir}"
+                )
+                return_command.extend(
+                    [
+                        f"mkdir -p '{dest_dir.parent}'",
+                        f"ln -sf '{self._part_info.part_src_dir}/{subdir}' '{dest_dir}'",
+                    ]
+                )
+            return return_command
+
         dest_dir = (
             self._part_info.part_export_dir / "go-use" / self._part_info.part_name
         )
