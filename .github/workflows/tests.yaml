@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.14"
       - name: Install python packages and dependencies
         run: |
           sudo snap install --no-wait ruff
@@ -199,7 +199,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "0.5.7"
+          version: "0.10.2"
       - name: specify node version
         uses: actions/setup-node@v4
         with:
