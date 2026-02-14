@@ -1,6 +1,6 @@
 .. _craft_parts_overlay_parameters:
 
-Overlay Parameters
+Overlay parameters
 ------------------
 
 A part has three parameters that can be used to adjust how the overlay step
