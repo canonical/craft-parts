@@ -1082,6 +1082,52 @@ def part_list_by_name(names: Sequence[str] | None, part_list: list[Part]) -> lis
     return selected_parts
 
 
+def _find_dependency_cycle(parts: list[Part]) -> list[str]:
+    """Find a cycle in the dependency graph.
+
+    :param parts: The list of parts with circular dependencies.
+
+    :returns: A list of part names forming a cycle.
+    """
+    # Build a dependency map for the remaining parts
+    part_names = {p.name for p in parts}
+    dep_map = {
+        p.name: [dep for dep in p.dependencies if dep in part_names] for p in parts
+    }
+
+    # Find a cycle using DFS
+    def find_cycle_from(
+        start: str, visited: set[str], path: list[str]
+    ) -> list[str] | None:
+        if start in path:
+            # Found a cycle, return the cycle portion
+            cycle_start = path.index(start)
+            return path[cycle_start:]
+
+        if start in visited:
+            return None
+
+        visited.add(start)
+        path.append(start)
+
+        for dep in dep_map.get(start, []):
+            cycle = find_cycle_from(dep, visited, path)
+            if cycle:
+                return cycle
+
+        path.pop()
+        return None
+
+    # Try to find a cycle starting from each part
+    for part in parts:
+        cycle = find_cycle_from(part.name, set(), [])
+        if cycle:
+            return cycle
+
+    # If no cycle found (shouldn't happen), return all part names
+    return [p.name for p in parts]
+
+
 def sort_parts(part_list: list[Part]) -> list[Part]:
     """Perform an inefficient but easy to follow sorting of parts.
 
@@ -1123,7 +1169,9 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
                 top_part = part
                 break
         if not top_part:
-            raise errors.PartDependencyCycle
+            # Found a circular dependency - identify the parts involved
+            cycle = _find_dependency_cycle(all_parts)
+            raise errors.PartDependencyCycle(part_names=cycle)
 
         sorted_parts = [top_part, *sorted_parts]
         all_parts.remove(top_part)

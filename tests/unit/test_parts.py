@@ -421,6 +421,48 @@ class TestPartOrdering:
         with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
 
+    def test_sort_parts_cycle_direct(self, partitions):
+        """Test direct circular dependency between two parts."""
+        p1 = Part("part-one", {"after": ["part-two"]}, partitions=partitions)
+        p2 = Part("part-two", {"after": ["part-one"]}, partitions=partitions)
+
+        with pytest.raises(errors.PartDependencyCycle) as raised:
+            parts.sort_parts([p1, p2])
+
+        error = raised.value
+        assert "part-one" in str(error)
+        assert "part-two" in str(error)
+
+    def test_sort_parts_cycle_three_parts(self, partitions):
+        """Test circular dependency with three parts forming a loop."""
+        p1 = Part("part-a", {"after": ["part-b"]}, partitions=partitions)
+        p2 = Part("part-b", {"after": ["part-c"]}, partitions=partitions)
+        p3 = Part("part-c", {"after": ["part-a"]}, partitions=partitions)
+
+        with pytest.raises(errors.PartDependencyCycle) as raised:
+            parts.sort_parts([p1, p2, p3])
+
+        error = raised.value
+        assert "part-a" in str(error)
+        assert "part-b" in str(error)
+        assert "part-c" in str(error)
+
+    def test_sort_parts_cycle_four_parts(self, partitions):
+        """Test circular dependency with four parts forming a loop."""
+        p1 = Part("part-w", {"after": ["part-x"]}, partitions=partitions)
+        p2 = Part("part-x", {"after": ["part-y"]}, partitions=partitions)
+        p3 = Part("part-y", {"after": ["part-z"]}, partitions=partitions)
+        p4 = Part("part-z", {"after": ["part-w"]}, partitions=partitions)
+
+        with pytest.raises(errors.PartDependencyCycle) as raised:
+            parts.sort_parts([p1, p2, p3, p4])
+
+        error = raised.value
+        assert "part-w" in str(error)
+        assert "part-x" in str(error)
+        assert "part-y" in str(error)
+        assert "part-z" in str(error)
+
 
 class TestPartUnmarshal:
     """Verify data unmarshaling on part creation."""
