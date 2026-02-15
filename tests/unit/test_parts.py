@@ -429,7 +429,6 @@ class TestPartOrdering:
         with pytest.raises(errors.PartDependencyCycle) as raised:
             parts.sort_parts([p1, p2])
 
-        # Verify the error message contains the part names
         error = raised.value
         assert "part-one" in str(error)
         assert "part-two" in str(error)
@@ -443,7 +442,6 @@ class TestPartOrdering:
         with pytest.raises(errors.PartDependencyCycle) as raised:
             parts.sort_parts([p1, p2, p3])
 
-        # Verify the error message contains all three part names
         error = raised.value
         assert "part-a" in str(error)
         assert "part-b" in str(error)
@@ -459,7 +457,6 @@ class TestPartOrdering:
         with pytest.raises(errors.PartDependencyCycle) as raised:
             parts.sort_parts([p1, p2, p3, p4])
 
-        # Verify the error message contains all four part names
         error = raised.value
         assert "part-w" in str(error)
         assert "part-x" in str(error)
