@@ -1096,7 +1096,9 @@ def _find_dependency_cycle(parts: list[Part]) -> list[str]:
     }
 
     # Find a cycle using DFS
-    def find_cycle_from(start: str, visited: set[str], path: list[str]) -> list[str] | None:
+    def find_cycle_from(
+        start: str, visited: set[str], path: list[str]
+    ) -> list[str] | None:
         if start in path:
             # Found a cycle, return the cycle portion
             cycle_start = path.index(start)
