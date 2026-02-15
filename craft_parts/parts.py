@@ -1097,19 +1097,23 @@ def _find_dependency_cycle(parts: list[Part]) -> list[str]:
 
     # Find a cycle using DFS
     def find_cycle_from(start: str, visited: set[str], path: list[str]) -> list[str] | None:
-        if start in visited:
+        if start in path:
             # Found a cycle, return the cycle portion
             cycle_start = path.index(start)
             return path[cycle_start:]
+
+        if start in visited:
+            return None
 
         visited.add(start)
         path.append(start)
 
         for dep in dep_map.get(start, []):
-            cycle = find_cycle_from(dep, visited.copy(), path.copy())
+            cycle = find_cycle_from(dep, visited, path)
             if cycle:
                 return cycle
 
+        path.pop()
         return None
 
     # Try to find a cycle starting from each part
