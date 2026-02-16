@@ -118,4 +118,4 @@ jobs:
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: with_sudo
-      test-command-prefix: sudo
+      test-command-prefix: sudo env "PATH=$PATH"
