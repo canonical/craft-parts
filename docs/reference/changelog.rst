@@ -20,17 +20,38 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
-.. _release-2.29.0:
+.. _release-2.30.0:
 
-2.29.0 (unreleased)
+2.30.0 (unreleased)
 -------------------
 
 New features:
 
+- Add support for the ``self-contained`` build attribute for parts using the
+  :ref:`craft_parts_npm_plugin`.
+
+Bug fixes:
+
+- Fix ``mark_packages`` failing with ``PackageNotFound`` when versioned packages
+  have interdependencies on each other. The method now sets all candidate
+  versions before calling ``mark_install``, so the resolver sees the correct
+  candidates for all dependencies.
+
+.. _release-2.29.0:
+
+2.29.0 (2026-02-03)
+-------------------
+
+New features:
+
+- Add support for mid-step callbacks.
+- Add a colcon plugin for building parts that use the colcon build tool. Requires
+  core24 or higher.
 - Add self-contained support for parts using the Gradle plugin.
 - The Gradle daemon is now disabled by default when using the Gradle plugin. You can
   control this behaviour with the new ``gradle-use-daemon`` key.
 
+For a complete list of commits, check out the `2.29.0`_ release on GitHub.
 
 .. _release-2.28.0:
 
@@ -1578,6 +1599,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.29.0: https://github.com/canonical/craft-parts/releases/tag/2.29.0
 .. _2.28.0: https://github.com/canonical/craft-parts/releases/tag/2.28.0
 .. _2.27.0: https://github.com/canonical/craft-parts/releases/tag/2.27.0
 .. _2.26.0: https://github.com/canonical/craft-parts/releases/tag/2.26.0

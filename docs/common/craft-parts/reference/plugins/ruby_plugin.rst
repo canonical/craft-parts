@@ -119,7 +119,7 @@ or any ``ruby-<gem_name>`` Ubuntu package, as a ``stage-package``.
 
 Alternatively, if ``ruby-flavor`` and ``ruby-version`` are declared, this plugin
 downloads and runs the `ruby-install
-<https://github.com/postmodern/ruby-install>` tool.
+<https://github.com/postmodern/ruby-install>`_ tool.
 
 If a special Ruby part named ``ruby-deps`` is defined, it
 creates a shared interpreter and shared gems that the other Ruby parts can use.
