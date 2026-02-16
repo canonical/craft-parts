@@ -60,8 +60,7 @@ class GitBaseTestCase:
         _call(["git", "config", "--local", "user.email", "dev@example.com"])
 
     def add_file(self, filename: Path, body: str, message: str):
-        with filename.open("w") as fp:
-            fp.write(body)
+        filename.write_text(body)
 
         _call(["git", "add", filename.as_posix()])
         _call(["git", "commit", "-am", message])
@@ -384,8 +383,7 @@ class TestGitDetails(GitBaseTestCase):
             if not message:
                 message = filename
 
-            with Path(filename).open("w") as fp:
-                fp.write(content)
+            Path(filename).write_text(content)
 
             _call(["git", "add", filename])
             _call(["git", "commit", "-am", message])

@@ -85,7 +85,7 @@ def migrate_files(  # noqa: PLR0913
         if oci_translation and _is_opaque_dir(src):
             oci_opaque_marker = overlays.oci_opaque_dir(dirname)
             oci_dst = destdir / oci_opaque_marker
-            logger.debug("create OCI opaque dir marker '%s'", str(oci_dst))
+            logger.debug("create OCI opaque dir marker '%s'", oci_dst)
             oci_dst.touch()
             migrated_files.add(oci_opaque_marker)
 
@@ -116,7 +116,7 @@ def migrate_files(  # noqa: PLR0913
         if oci_translation and _is_whiteout_file(src):
             oci_whiteout = overlays.oci_whiteout(filename)
             oci_dst = destdir / oci_whiteout
-            logger.debug("create OCI whiteout file '%s'", str(oci_dst))
+            logger.debug("create OCI whiteout file '%s'", oci_dst)
             oci_dst.touch()
             migrated_files.add(oci_whiteout)
         else:

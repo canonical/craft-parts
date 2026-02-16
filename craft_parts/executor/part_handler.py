@@ -1026,7 +1026,7 @@ class PartHandler:
             try:
                 primed_whiteout.unlink()
             except OSError as err:
-                logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
+                logger.debug("error unlinking '%s': %s", primed_whiteout, err)
 
     def clean_step(self, step: Step) -> None:
         """Remove the work files and the state of the given step.
@@ -1274,7 +1274,7 @@ class PartHandler:
             return None
 
         packages.snaps.download_snaps(
-            snaps_list=stage_snaps, directory=str(self._part.part_snaps_dir)
+            snaps_list=stage_snaps, directory=self._part.part_snaps_dir
         )
 
         return stage_snaps

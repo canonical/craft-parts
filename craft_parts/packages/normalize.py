@@ -45,7 +45,6 @@ def normalize(unpack_dir: Path, *, repository: "RepositoryType") -> None:
     :param unpack_dir: Directory containing unpacked files to normalize.
     :param repository: The package format handler.
     """
-    unpack_dir = Path(unpack_dir)
     _remove_useless_files(unpack_dir)
     _fix_artifacts(unpack_dir, repository)
     _fix_xml_tools(unpack_dir)
@@ -77,7 +76,7 @@ def _fix_artifacts(unpack_dir: Path, repository: "RepositoryType") -> None:
 
     :param unpack_dir: Directory containing unpacked files to normalize.
     """
-    logger.debug("fix artifacts: unpack_dir=%r", str(unpack_dir))
+    logger.debug("fix artifacts: unpack_dir=%r", unpack_dir)
 
     for root, dirs, files in os.walk(unpack_dir):
         # Symlinks to directories will be in dirs, while symlinks to
@@ -120,17 +119,17 @@ def _fix_symlink(
 ) -> None:
     logger.debug(
         "fix symlink: path=%r, unpack_dir=%r, root=%r",
-        str(path),
-        str(unpack_dir),
-        str(root),
+        path,
+        unpack_dir,
+        root,
     )
     host_target = path.readlink()
-    if str(host_target) in repository.get_package_libraries("libc6"):
-        logger.debug("Not fixing symlink %s: it's pointing to libc", str(host_target))
+    if host_target.as_posix() in repository.get_package_libraries("libc6"):
+        logger.debug("Not fixing symlink %s: it's pointing to libc", host_target)
         return
 
     target = unpack_dir / path.readlink().as_posix()[1:]
-    logger.debug("fix symlink: target=%r", str(target))
+    logger.debug("fix symlink: target=%r", target)
 
     if not target.exists() and not _try_copy_local(path, target):
         return

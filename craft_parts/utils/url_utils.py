@@ -39,7 +39,7 @@ def is_url(url: str) -> bool:
 
 def download_request(
     request: requests.Response,
-    destination: Path | str,
+    destination: Path,
     message: str | None = None,
     total_read: int = 0,
 ) -> None:
@@ -49,8 +49,6 @@ def download_request(
     :param destination: The destination file name.
     :param message: The message shown in the progress bar.
     """
-    destination = Path(destination)
-
     # Doing len(request.content) may defeat the purpose of a
     # progress bar
     total_length = 0
@@ -65,7 +63,7 @@ def download_request(
     if message:
         logger.debug(message)
     else:
-        logger.debug("Downloading %r", str(destination))
+        logger.debug("Downloading %r", destination)
 
     mode = "ab" if destination.exists() else "wb"
 

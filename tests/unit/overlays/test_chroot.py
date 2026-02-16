@@ -72,14 +72,14 @@ class TestChroot:
             )
         ]
         assert mock_mount.mock_calls == [
-            call(Path("/etc/resolv.conf"), f"{new_root}/etc/resolv.conf", "--bind"),
-            call(Path("proc"), f"{new_root}/proc", "-tproc"),
-            call(Path("sysfs"), f"{new_root}/sys", "-tsysfs"),
-            call(Path("/dev"), f"{new_root}/dev", "--rbind", "--make-rprivate"),
-            call(new_root / "dev", "--make-rprivate"),
-            call(new_root / "sys", "--make-rprivate"),
-            call(new_root / "proc", "--make-rprivate"),
-            call(new_root / "etc" / "resolv.conf", "--make-rprivate"),
+            call(Path("/etc/resolv.conf"), new_root / "etc" / "resolv.conf", "--bind"),
+            call(Path("proc"), new_root / "proc", "-tproc"),
+            call(Path("sysfs"), new_root / "sys", "-tsysfs"),
+            call(Path("/dev"), new_root / "dev", "--rbind", "--make-rprivate"),
+            call(new_root / "dev", None, "--make-rprivate"),
+            call(new_root / "sys", None, "--make-rprivate"),
+            call(new_root / "proc", None, "--make-rprivate"),
+            call(new_root / "etc" / "resolv.conf", None, "--make-rprivate"),
         ]
         assert mock_umount.mock_calls == [
             call(new_root / "dev", "--recursive", "--lazy"),
@@ -134,8 +134,8 @@ class TestChroot:
             )
         ]
         assert mock_mount.mock_calls == [
-            call(Path("/etc/resolv.conf"), f"{new_root}/etc/resolv.conf", "--bind"),
-            call(new_root / "etc" / "resolv.conf", "--make-rprivate"),
+            call(Path("/etc/resolv.conf"), new_root / "etc" / "resolv.conf", "--bind"),
+            call(new_root / "etc" / "resolv.conf", None, "--make-rprivate"),
         ]
         assert mock_umount.mock_calls == [
             call(new_root / "etc" / "resolv.conf", "--recursive"),
@@ -163,8 +163,8 @@ class TestChroot:
             )
         ]
         assert mock_mount.mock_calls == [
-            call(Path("/etc/resolv.conf"), f"{new_root}/etc/resolv.conf", "--bind"),
-            call(new_root / "etc" / "resolv.conf", "--make-rprivate"),
+            call(Path("/etc/resolv.conf"), new_root / "etc" / "resolv.conf", "--bind"),
+            call(new_root / "etc" / "resolv.conf", None, "--make-rprivate"),
         ]
         assert mock_umount.mock_calls == [
             call(new_root / "etc" / "resolv.conf", "--recursive"),

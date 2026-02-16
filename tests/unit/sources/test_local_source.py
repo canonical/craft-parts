@@ -387,8 +387,7 @@ class TestLocalUpdate:
 
         # Now update the file in source, and make sure it has a timestamp
         # later than our reference (this whole test happens too fast)
-        with Path(source, name).open("w") as f:
-            f.write("2")
+        Path(source, name).write_text("2")
 
         access_time = Path("reference").stat().st_atime
         modify_time = Path("reference").stat().st_mtime
@@ -411,8 +410,7 @@ class TestLocalUpdate:
         source.mkdir()
         destination.mkdir()
 
-        with Path(source, "file1").open("w") as f:
-            f.write("1")
+        Path(source, "file1").write_text("1")
 
         # Now make a reference file with a timestamp later than the file was
         # created. We'll ensure this by setting it ourselves
@@ -433,8 +431,7 @@ class TestLocalUpdate:
 
         # Now add a new file, and make sure it has a timestamp
         # later than our reference (this whole test happens too fast)
-        with Path(source, "file2").open("w") as f:
-            f.write("2")
+        Path(source, "file2").write_text("2")
 
         access_time = Path("reference").stat().st_atime
         modify_time = Path("reference").stat().st_mtime
@@ -453,8 +450,7 @@ class TestLocalUpdate:
         source_dir.mkdir(parents=True)
         destination.mkdir()
 
-        with Path(source_dir, "file1").open("w") as f:
-            f.write("1")
+        Path(source_dir, "file1").write_text("1")
 
         # Now make a reference file with a timestamp later than the file was
         # created. We'll ensure this by setting it ourselves
@@ -474,8 +470,7 @@ class TestLocalUpdate:
 
         # Now add a new file to the directory, and make sure it has a timestamp
         # later than our reference (this whole test happens too fast)
-        with Path(source_dir, "file2").open("w") as f:
-            f.write("2")
+        Path(source_dir, "file2").write_text("2")
 
         access_time = Path("reference").stat().st_atime
         modify_time = Path("reference").stat().st_mtime

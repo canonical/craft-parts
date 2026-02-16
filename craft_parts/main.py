@@ -79,7 +79,7 @@ def main() -> None:
 
 
 def _process_inputs(options: argparse.Namespace) -> None:
-    with Path(options.file).open() as opt_file:
+    with options.file.open() as opt_file:
         part_data = yaml.safe_load(opt_file)
 
     cache_dir = options.cache_dir
@@ -91,8 +91,8 @@ def _process_inputs(options: argparse.Namespace) -> None:
         # that remains constant for a given base. The CLI tool just uses the path
         # to the base for simplicity, but applications can (and probably should)
         # use a real digest.
-        base_layer_hash = options.overlay_base.encode()
-        overlay_base = Path(options.overlay_base)
+        base_layer_hash = options.overlay_base.as_posix().encode()
+        overlay_base = options.overlay_base
     else:
         base_layer_hash = b""
         overlay_base = None
@@ -101,7 +101,7 @@ def _process_inputs(options: argparse.Namespace) -> None:
 
     filesystem_mounts_data = None
     if options.filesystem_mounts:
-        with Path(options.filesystem_mounts).open() as opt_filesystem_mounts_file:
+        with options.filesystem_mounts.open() as opt_filesystem_mounts_file:
             filesystems_data: dict[str, Any] | list[dict[str, Any]] = yaml.safe_load(
                 opt_filesystem_mounts_file
             )
@@ -242,6 +242,7 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="filename",
         default="parts.yaml",
         help="The parts specification file. Default is 'parts.yaml'.",
+        type=Path,
     )
     parser.add_argument(
         "--refresh",
@@ -268,6 +269,7 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="dirname",
         default=".",
         help="Use the specified work directory. Defaults to current dir.",
+        type=Path,
     )
     parser.add_argument(
         "--application-name",
@@ -279,6 +281,7 @@ def _parse_arguments() -> argparse.Namespace:
         "--overlay-base",
         metavar="dirname",
         help="The overlay base directory",
+        type=Path,
     )
     parser.add_argument(
         "--base",
@@ -291,6 +294,7 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="dirname",
         default="",
         help="Set an alternate cache directory location.",
+        type=Path,
     )
     parser.add_argument(
         "--partitions",
@@ -302,6 +306,7 @@ def _parse_arguments() -> argparse.Namespace:
         "--filesystem-mounts",
         metavar="filesystem_mounts",
         help="The filesystem mounts file.",
+        type=Path,
     )
     parser.add_argument(
         "-v",

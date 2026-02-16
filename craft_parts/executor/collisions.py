@@ -255,7 +255,7 @@ def paths_collide(
     permissions_path1: list[Permissions] | None = None,
     permissions_path2: list[Permissions] | None = None,
     *,
-    rel_dirname: Path = Path(),
+    rel_dirname: Path | None = None,
     path1_is_overlay: bool = False,
     path2_is_overlay: bool = False,
 ) -> bool:
@@ -273,6 +273,9 @@ def paths_collide(
     :param path1_is_overlay: Indicates if path1 comes from the overlay.
     :param path2_is_overlay: Indicates if path2 comes from the overlay.
     """
+    if rel_dirname is None:
+        rel_dirname = Path()
+
     if not (os.path.lexists(path1) and os.path.lexists(path2)):
         return False
 

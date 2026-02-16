@@ -320,7 +320,7 @@ class FileSourceHandler(SourceHandler):
                 source=self.source,
             ) from err
 
-        url_utils.download_request(request, str(self._file))
+        url_utils.download_request(request, self._file)
 
         # if source_checksum is defined cache the file for future reuse
         if self.source_checksum:

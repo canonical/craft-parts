@@ -105,16 +105,13 @@ class TestGetName:
 
     def test_get_name(self):
         Path("meta").mkdir()
+        Path("meta", "snap.yaml").write_text("name: my-snap\n")
 
-        with Path("meta", "snap.yaml").open("w") as snap_yaml_file:
-            print("name: my-snap", file=snap_yaml_file)
         assert snap_source._get_snap_name("snap", Path()) == "my-snap"
 
     def test_no_name_yaml(self):
         Path("meta").mkdir()
-
-        with Path("meta", "snap.yaml").open("w") as snap_yaml_file:
-            print("summary: no name", file=snap_yaml_file)
+        Path("meta", "snap.yaml").write_text("summary: no name\n")
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:
             snap_source._get_snap_name("snap", Path())

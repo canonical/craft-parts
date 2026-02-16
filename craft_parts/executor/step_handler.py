@@ -201,8 +201,7 @@ class StepHandler:
             default_partition=self._step_info.default_partition,
         )
 
-        def pkgconfig_fixup(file_path: Path | str) -> None:
-            file_path = Path(file_path)
+        def pkgconfig_fixup(file_path: Path) -> None:
             if file_path.is_symlink():
                 return
             if file_path.suffix != ".pc":
@@ -557,16 +556,16 @@ def _create_and_run_script(
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:
-        print("#!/bin/bash", file=run_file)
-        print("set -euo pipefail", file=run_file)
+        run_file.write("#!/bin/bash\n")
+        run_file.write("set -euo pipefail\n")
 
         if environment_script_path:
-            print(f"source {environment_script_path}", file=run_file)
+            run_file.write(f"source {environment_script_path}\n")
 
-        print("set -x", file=run_file)
+        run_file.write("set -x\n")
 
         for cmd in commands:
-            print(cmd, file=run_file)
+            run_file.write(f"{cmd}\n")
 
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)

@@ -239,10 +239,9 @@ class TestTerminal:
 class TestOsRelease:
     """Verify os-release data retrieval."""
 
-    def _write_os_release(self, contents) -> str:
-        path = "os-release"
-        with Path(path).open("w") as f:
-            f.write(contents)
+    def _write_os_release(self, contents) -> Path:
+        path = Path("os-release")
+        path.write_text(contents)
         return path
 
     def test_blank_lines(self):
@@ -362,7 +361,7 @@ class TestMount:
 
     def test_mount(self, mocker):
         mock_call = mocker.patch("subprocess.check_call")
-        os_utils.mount(Path("/dev/node"), "/mountpoint", "some", "args")
+        os_utils.mount(Path("/dev/node"), Path("/mountpoint"), "some", "args")
         mock_call.assert_called_once_with(
             ["/bin/mount", "some", "args", "/dev/node", "/mountpoint"]
         )

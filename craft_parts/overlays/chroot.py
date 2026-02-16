@@ -157,7 +157,7 @@ def _setup_chroot_linux(path: Path) -> None:
         # Only mount if mountpoint exists.
         if mountpoint.exists():
             logger.debug("[pid=%d] mount %r on chroot", pid, mountpoint.as_posix())
-            os_utils.mount(Path(entry.src), mountpoint.as_posix(), *args)
+            os_utils.mount(Path(entry.src), mountpoint, *args)
         else:
             logger.debug(
                 "[pid=%d] mountpoint %r does not exist", pid, mountpoint.as_posix()
@@ -177,7 +177,7 @@ def _cleanup_chroot_linux(path: Path) -> None:
             # The activity executed in the chroot can lead to additional mounts
             # under those mounted to prepare the chroot.
             # Remount as private to ease unmounting.
-            os_utils.mount(mountpoint, "--make-rprivate")
+            os_utils.mount(mountpoint, None, "--make-rprivate")
 
             args: list[str] = ["--recursive"]
             if entry.options and "--rbind" in entry.options:

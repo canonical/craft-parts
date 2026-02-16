@@ -881,7 +881,7 @@ class TestPackages:
         assert result == ["word-salad"]
         mock_download_snaps.assert_called_once_with(
             snaps_list=["word-salad"],
-            directory=str(Path(new_dir, "parts/p1/stage_snaps")),
+            directory=Path(new_dir, "parts/p1/stage_snaps"),
         )
 
     def test_fetch_stage_snaps_none(self, mocker, new_dir, partitions):

@@ -222,7 +222,7 @@ def get_system_info() -> str:
     return uname
 
 
-def mount(device: Path, mountpoint: str, *args: str) -> None:
+def mount(device: Path, mountpoint: Path | None, *args: str) -> None:
     """Mount a filesystem.
 
     :param device: The device to mount.
@@ -234,7 +234,12 @@ def mount(device: Path, mountpoint: str, *args: str) -> None:
     logger.debug(
         "mount device=%r, mountpoint=%r, args=%r", device.as_posix(), mountpoint, args
     )
-    subprocess.check_call(["/bin/mount", *args, device.as_posix(), mountpoint])
+
+    call = ["/bin/mount", *args, device.as_posix()]
+    if mountpoint is not None:
+        call.append(mountpoint.as_posix())
+
+    subprocess.check_call(call)
 
 
 def mount_overlayfs(mountpoint: Path, *args: str) -> None:
@@ -282,14 +287,16 @@ def umount(mountpoint: Path, *args: str) -> None:
 class OsRelease:
     """A class to intelligently determine the OS on which we're running."""
 
-    def __init__(self, *, os_release_file: str = "/etc/os-release") -> None:
+    def __init__(self, *, os_release_file: Path | None = None) -> None:
         """Create a new OsRelease instance.
 
         :param os_release_file: Path to os-release file to be parsed.
         """
+        if os_release_file is None:
+            os_release_file = Path("/etc/os-release")
         self._os_release: dict[str, str] = {}
         with contextlib.suppress(FileNotFoundError):
-            with Path(os_release_file).open() as file:
+            with os_release_file.open() as file:
                 for line in file:
                     entry = line.rstrip().split("=")
                     if len(entry) == 2:  # noqa: PLR2004

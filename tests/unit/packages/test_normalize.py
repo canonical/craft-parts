@@ -140,7 +140,7 @@ def expected_pkg_config_content():
         ],
     ],
 )
-@pytest.mark.usefixtures("new_dir")
+@pytest.mark.usefixtures("new_path")
 class TestFixXmlTools:
     """Check the normalization of pathnames in XML tools."""
 
@@ -148,8 +148,7 @@ class TestFixXmlTools:
         for test_file in tc:
             path = Path(test_file["path"])
             path.parent.mkdir(parents=True, exist_ok=True)
-            with path.open("w") as f:
-                f.write(test_file["content"])
+            path.write_text(test_file["content"])
 
         normalize(Path("root"), repository=DummyRepository)
 
@@ -158,7 +157,7 @@ class TestFixXmlTools:
                 assert f.read() == test_file["expected"]
 
 
-@pytest.mark.usefixtures("new_dir")
+@pytest.mark.usefixtures("new_path")
 class TestFixShebang:
     """Check the normalization of script interpreter lines."""
 
@@ -217,8 +216,7 @@ class TestFixShebang:
         for _, data in self.scenarios:
             path = Path(data["file_path"])
             path.parent.mkdir(parents=True, exist_ok=True)
-            with path.open("w") as fd:
-                fd.write(data["content"])
+            path.write_text(data["content"])
 
         normalize(Path("root"), repository=DummyRepository)
 
@@ -227,33 +225,33 @@ class TestFixShebang:
                 assert fd.read() == data["expected"]
 
 
-@pytest.mark.usefixtures("new_dir")
+@pytest.mark.usefixtures("new_path")
 class TestRemoveUselessFiles:
     """Check the removal of unnecessary files."""
 
-    def create(self, file_path: str) -> str:
+    def create(self, file_path: Path) -> Path:
         path = Path("root", file_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.open("w").close()
+        path.touch()
 
-        return str(path)
+        return path
 
     def test_remove(self):
         paths = [
             self.create(p)
             for p in [
-                str(Path("usr", "lib", "python3.5", "sitecustomize.py")),
-                str(Path("usr", "lib", "python2.7", "sitecustomize.py")),
-                str(Path("usr", "lib", "python", "sitecustomize.py")),
+                Path("usr", "lib", "python3.5", "sitecustomize.py"),
+                Path("usr", "lib", "python2.7", "sitecustomize.py"),
+                Path("usr", "lib", "python", "sitecustomize.py"),
             ]
         ]
         normalize(Path("root"), repository=DummyRepository)
 
         for p in paths:
-            assert Path(p).exists() is False
+            assert p.exists() is False
 
     def test_no_remove(self):
-        path = Path(self.create(str(Path("opt", "python3.5", "sitecustomize.py"))))
+        path = self.create(Path("opt", "python3.5", "sitecustomize.py"))
         normalize(Path("root"), repository=DummyRepository)
 
         assert path.exists()
@@ -280,20 +278,20 @@ class TestFixPkgConfig:
     )
     def test_fix_pkg_config_trim_prefix_from_snap(
         self,
-        tmpdir,
+        tmp_path,
         prefix,
         fixed_prefix,
         pkg_config_file,
         expected_pkg_config_content,
     ):
         """Verify prefixes from snaps are trimmed."""
-        pc_file = tmpdir / "my-file.pc"
+        pc_file = tmp_path / "my-file.pc"
         pkg_config_file(pc_file, prefix)
 
-        fix_pkg_config(tmpdir, pc_file)
+        fix_pkg_config(tmp_path, pc_file)
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
-            f"{tmpdir}{fixed_prefix}"
+            f"{tmp_path}{fixed_prefix}"
         )
 
     @pytest.mark.parametrize(
@@ -354,36 +352,36 @@ class TestFixPkgConfig:
         )
 
     def test_normalize_fix_pkg_config(
-        self, tmpdir, pkg_config_file, expected_pkg_config_content
+        self, tmp_path, pkg_config_file, expected_pkg_config_content
     ):
         """Verify normalization fixes pkg-config files."""
-        pc_file = tmpdir / "my-file.pc"
+        pc_file = tmp_path / "my-file.pc"
         pkg_config_file(pc_file, "/root/stage/usr")
-        normalize(tmpdir, repository=DummyRepository)
+        normalize(tmp_path, repository=DummyRepository)
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
-            f"{tmpdir}/usr"
+            f"{tmp_path}/usr"
         )
 
     def test_normalize_fix_pkg_config_with_pcfiledir(
-        self, tmpdir, pkg_config_file, expected_pkg_config_content
+        self, tmp_path, pkg_config_file, expected_pkg_config_content
     ):
         """Verify normalization fixes pkg-config files."""
-        pc_file = tmpdir / "my-file.pc"
+        pc_file = tmp_path / "my-file.pc"
         pkg_config_file(pc_file, "${pcfiledir}/../../..")
-        normalize(tmpdir, repository=DummyRepository)
+        normalize(tmp_path, repository=DummyRepository)
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
             "${pcfiledir}/../../.."
         )
 
-    def test_fix_pkg_config_is_dir(self, tmpdir):
+    def test_fix_pkg_config_is_dir(self, tmp_path):
         """Verify directories ending in .pc do not raise an error."""
-        pc_file = tmpdir / "granite.pc"
+        pc_file = tmp_path / "granite.pc"
         pc_file.mkdir()
 
         # this shouldn't crash
-        normalize(tmpdir, repository=DummyRepository)
+        normalize(tmp_path, repository=DummyRepository)
 
 
 @pytest.mark.parametrize(
@@ -397,12 +395,12 @@ class TestFixPkgConfig:
 class TestFixSymlinks:
     """Check the normalization of symbolic links."""
 
-    def test_fix_symlinks(self, src, dst, result, new_dir):
+    def test_fix_symlinks(self, src, dst, result, new_path):
         Path("a").mkdir(parents=True)
         Path("1").touch()
 
         Path(dst).symlink_to(src)
-        normalize(new_dir, repository=DummyRepository)
+        normalize(new_path, repository=DummyRepository)
 
         assert Path(dst).readlink() == Path(result)
 
@@ -419,11 +417,11 @@ class TestFixSUID:
             ("suid_guid_sticky_file", 0o7744, 0o1744),
         ],
     )
-    def test_mode(self, key, test_mod, expected_mod, tmpdir):
-        f = Path(tmpdir, key)
+    def test_mode(self, key, test_mod, expected_mod, tmp_path):
+        f = Path(tmp_path, key)
         f.touch()
         f.chmod(test_mod)
 
-        normalize(tmpdir, repository=DummyRepository)
+        normalize(tmp_path, repository=DummyRepository)
 
         assert stat.S_IMODE(f.stat().st_mode) == expected_mod

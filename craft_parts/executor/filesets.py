@@ -120,10 +120,11 @@ class Fileset:
         :raises FilesetError: If `entries` contains an absolute filepath.
         """
         for entry in entries:
-            filepath = entry[1:] if entry[0] == "-" else entry
-            if Path(filepath).is_absolute():
+            _, filepath = _split_entry(entry)
+            if filepath.is_absolute():
                 raise errors.FilesetError(
-                    name=self.name, message=f"path {filepath!r} must be relative."
+                    name=self.name,
+                    message=f"path {filepath.as_posix()!r} must be relative.",
                 )
 
 
@@ -322,13 +323,19 @@ def normalize_entry(entry: str, default_partition: str) -> str:
     :returns: Normalized entry.
     """
     # split file into an optional prefix (a hyphen character) and the file
-    split_file = (entry[0], entry[1:]) if entry[0] == "-" else ("", entry)
+    split_file = _split_entry(entry)
 
     partition, inner_path = path_utils.get_partition_and_path(
-        Path(split_file[1]), default_partition
+        split_file[1], default_partition
     )
 
     if partition:
         return f"{split_file[0]}({partition})/{inner_path}"
 
     return entry
+
+
+def _split_entry(entry: str) -> tuple[str, Path]:
+    if entry[0] == "-":
+        return "-", Path(entry[1:])
+    return "", Path(entry)

@@ -87,7 +87,7 @@ class TestTarSource:
         # Create tar file for testing
         Path("src", "test_prefix").mkdir(parents=True)
         file_to_tar = Path("src", "test_prefix", "test.txt")
-        file_to_tar.open("w").close()
+        file_to_tar.touch()
         with tarfile.open(Path("src", "test.tar"), "w") as tar:
             tar.add(file_to_tar)
 
@@ -108,7 +108,7 @@ class TestTarSource:
         # Create tar file for testing
         Path("src", "test_prefix").mkdir(parents=True)
         file_to_tar = Path("src", "test_prefix", "test.txt")
-        file_to_tar.open("w").close()
+        file_to_tar.touch()
 
         file_to_link = Path("src", "test_prefix", "link.txt")
         file_to_link.symlink_to("./test.txt")
@@ -142,7 +142,7 @@ class TestTarSource:
         # Create tar file for testing
         Path("src", "test_prefix").mkdir(parents=True)
         file_to_tar = Path("src", "test_prefix", "test.txt")
-        file_to_tar.open("w").close()
+        file_to_tar.touch()
 
         file_to_link = Path("src", "test_prefix", "link.txt")
         file_to_link.hardlink_to(file_to_tar)

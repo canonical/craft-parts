@@ -181,7 +181,7 @@ def copy(
     try:
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
     except PermissionError as err:
-        logger.debug("Unable to chown %s: %s", str(destination), err)
+        logger.debug("Unable to chown %s: %s", destination, err)
 
     if permissions:
         apply_permissions(destination, permissions)
@@ -203,14 +203,14 @@ def link_or_copy_tree(
     :param copy_function: Callable that actually copies.
     """
     if not source_tree.is_dir():
-        raise errors.CopyTreeError(f"{str(source_tree)!r} is not a directory")
+        raise errors.CopyTreeError(f"{source_tree.as_posix()!r} is not a directory")
 
     if not destination_tree.is_dir() and (
         destination_tree.exists() or destination_tree.is_symlink()
     ):
         raise errors.CopyTreeError(
-            f"cannot overwrite non-directory {str(destination_tree)!r} with "
-            f"directory {str(source_tree)!r}"
+            f"cannot overwrite non-directory {destination_tree.as_posix()!r} with "
+            f"directory {source_tree.as_posix()!r}"
         )
 
     create_similar_directory(source_tree, destination_tree)
