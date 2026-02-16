@@ -380,7 +380,7 @@ class StepHandler:
         with tempfile.TemporaryDirectory() as tempdir:
             ctl_socket_path = Path(tempdir, "craftctl.socket")
             ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            ctl_socket.bind(str(ctl_socket_path))
+            ctl_socket.bind(ctl_socket_path.as_posix())
             ctl_socket.listen(1)
 
             selector = self._ctl_server_selector(step, scriptlet_name, ctl_socket)

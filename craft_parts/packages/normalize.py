@@ -76,7 +76,7 @@ def _fix_artifacts(unpack_dir: Path, repository: "RepositoryType") -> None:
 
     :param unpack_dir: Directory containing unpacked files to normalize.
     """
-    logger.debug("fix artifacts: unpack_dir=%r", unpack_dir)
+    logger.debug("fix artifacts: unpack_dir=%r", str(unpack_dir))
 
     for root, dirs, files in os.walk(unpack_dir):
         # Symlinks to directories will be in dirs, while symlinks to
@@ -119,9 +119,9 @@ def _fix_symlink(
 ) -> None:
     logger.debug(
         "fix symlink: path=%r, unpack_dir=%r, root=%r",
-        path,
-        unpack_dir,
-        root,
+        str(path),
+        str(unpack_dir),
+        str(root),
     )
     host_target = path.readlink()
     if host_target.as_posix() in repository.get_package_libraries("libc6"):

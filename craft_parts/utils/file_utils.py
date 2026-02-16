@@ -241,13 +241,13 @@ def link_or_copy_tree(
                 files.append(directory)
                 continue
 
-            destination = Path(destination_tree, os.path.relpath(source, source_tree))
+            destination = Path(destination_tree, source.relative_to(source_tree))
 
             create_similar_directory(source, destination)
 
         for file_name in set(files) - ignored:
             source = Path(root, file_name)
-            destination = Path(destination_tree, os.path.relpath(source, source_tree))
+            destination = Path(destination_tree, source.relative_to(source_tree))
 
             copy_function(source, destination)
 

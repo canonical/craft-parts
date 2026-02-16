@@ -78,7 +78,7 @@ class TestZipSource:
                     "7z",
                     "x",
                     f"-o{dest_dir}",
-                    str(Path(new_dir, dest_dir, source_file)),
+                    Path(new_dir, dest_dir, source_file).as_posix(),
                 ],
                 text=True,
             ),
@@ -111,7 +111,7 @@ class TestZipSource:
                     "7z",
                     "x",
                     f"-o{dest_dir}",
-                    str(Path(new_dir, dest_dir, source_file)),
+                    Path(new_dir, dest_dir, source_file).as_posix(),
                 ],
                 text=True,
             )

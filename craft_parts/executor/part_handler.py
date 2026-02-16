@@ -1026,7 +1026,7 @@ class PartHandler:
             try:
                 primed_whiteout.unlink()
             except OSError as err:
-                logger.debug("error unlinking '%s': %s", primed_whiteout, err)
+                logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
 
     def clean_step(self, step: Step) -> None:
         """Remove the work files and the state of the given step.

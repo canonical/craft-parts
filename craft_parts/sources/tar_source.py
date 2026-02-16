@@ -102,11 +102,11 @@ def _extract(tarball: Path, dst: Path) -> None:
 
 def _strip_prefix(common: str, member: tarfile.TarInfo) -> None:
     if Path(member.name).is_relative_to(common):
-        member.name = str(Path(member.name).relative_to(common))
+        member.name = Path(member.name).relative_to(common).as_posix()
     # strip leading '/', './' or '../' as many times as needed
     member.name = re.sub(r"^(\.{0,2}/)*", r"", member.name)
     # do the same for linkname if this is a hardlink
     if member.islnk() and not member.issym():
         if Path(member.linkname).is_relative_to(common):
-            member.linkname = str(Path(member.linkname).relative_to(common))
+            member.linkname = Path(member.linkname).relative_to(common).as_posix()
         member.linkname = re.sub(r"^(\.{0,2}/)*", r"", member.linkname)

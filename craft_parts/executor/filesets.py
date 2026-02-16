@@ -323,14 +323,12 @@ def normalize_entry(entry: str, default_partition: str) -> str:
     :returns: Normalized entry.
     """
     # split file into an optional prefix (a hyphen character) and the file
-    split_file = _split_entry(entry)
+    prefix, file = _split_entry(entry)
 
-    partition, inner_path = path_utils.get_partition_and_path(
-        split_file[1], default_partition
-    )
+    partition, inner_path = path_utils.get_partition_and_path(file, default_partition)
 
     if partition:
-        return f"{split_file[0]}({partition})/{inner_path}"
+        return f"{prefix}({partition})/{inner_path}"
 
     return entry
 

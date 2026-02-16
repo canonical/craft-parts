@@ -93,7 +93,7 @@ class TestTarSource:
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            str(Path("src", "test.tar")),
+            Path("src", "test.tar"),
             Path("dst"),
             cache_dir=new_dir,
             project_dirs=dirs,
@@ -126,7 +126,7 @@ class TestTarSource:
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            str(Path("src", "test.tar")),
+            Path("src", "test.tar"),
             Path("dst"),
             cache_dir=new_dir,
             project_dirs=dirs,
@@ -161,7 +161,7 @@ class TestTarSource:
 
         dirs = ProjectDirs(partitions=partitions)
         tar_source = sources.TarSource(
-            str(Path("src", "test.tar")),
+            Path("src", "test.tar"),
             Path("dst"),
             cache_dir=new_dir,
             project_dirs=dirs,

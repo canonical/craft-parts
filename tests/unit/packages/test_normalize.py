@@ -88,52 +88,52 @@ def expected_pkg_config_content():
     [
         [  # fix_xml2_config
             {
-                "path": str(Path("root", "usr", "bin", "xml2-config")),
+                "path": Path("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             }
         ],
         [  # no_fix_xml2_config
             {
-                "path": str(Path("root", "usr", "bin", "xml2-config")),
+                "path": Path("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             }
         ],
         [  # fix_xslt_config
             {
-                "path": str(Path("root", "usr", "bin", "xslt-config")),
+                "path": Path("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             }
         ],
         [  # no_fix_xslt_config
             {
-                "path": str(Path("root", "usr", "bin", "xslt-config")),
+                "path": Path("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             }
         ],
         [  # fix_xml2_xslt_config
             {
-                "path": str(Path("root", "usr", "bin", "xml2-config")),
+                "path": Path("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             },
             {
-                "path": str(Path("root", "usr", "bin", "xslt-config")),
+                "path": Path("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             },
         ],
         [  # no_fix_xml2_xslt_config
             {
-                "path": str(Path("root", "usr", "bin", "xml2-config")),
+                "path": Path("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             },
             {
-                "path": str(Path("root", "usr", "bin", "xslt-config")),
+                "path": Path("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             },
@@ -146,14 +146,14 @@ class TestFixXmlTools:
 
     def test_fix_xmltools(self, tc):
         for test_file in tc:
-            path = Path(test_file["path"])
+            path = test_file["path"]
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(test_file["content"])
 
         normalize(Path("root"), repository=DummyRepository)
 
         for test_file in tc:
-            with Path(test_file["path"]).open() as f:
+            with test_file["path"].open() as f:
                 assert f.read() == test_file["expected"]
 
 
@@ -165,7 +165,7 @@ class TestFixShebang:
         (
             "python bin dir",
             {
-                "file_path": str(Path("root", "bin", "a")),
+                "file_path": Path("root", "bin", "a"),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -173,7 +173,7 @@ class TestFixShebang:
         (
             "python3 bin dir",
             {
-                "file_path": str(Path("root", "bin", "d")),
+                "file_path": Path("root", "bin", "d"),
                 "content": "#!/usr/bin/python3\nimport this",
                 "expected": "#!/usr/bin/env python3\nimport this",
             },
@@ -181,7 +181,7 @@ class TestFixShebang:
         (
             "sbin dir",
             {
-                "file_path": str(Path("root", "sbin", "b")),
+                "file_path": Path("root", "sbin", "b"),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -189,7 +189,7 @@ class TestFixShebang:
         (
             "usr/bin dir",
             {
-                "file_path": str(Path("root", "usr", "bin", "c")),
+                "file_path": Path("root", "usr", "bin", "c"),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -197,7 +197,7 @@ class TestFixShebang:
         (
             "usr/sbin dir",
             {
-                "file_path": str(Path("root", "usr", "sbin", "d")),
+                "file_path": Path("root", "usr", "sbin", "d"),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -205,7 +205,7 @@ class TestFixShebang:
         (
             "opt/bin dir",
             {
-                "file_path": str(Path("root", "opt", "bin", "e")),
+                "file_path": Path("root", "opt", "bin", "e"),
                 "content": "#!/usr/bin/python\nraise Exception()",
                 "expected": "#!/usr/bin/env python\nraise Exception()",
             },
@@ -214,14 +214,14 @@ class TestFixShebang:
 
     def test_fix_shebang(self):
         for _, data in self.scenarios:
-            path = Path(data["file_path"])
+            path = data["file_path"]
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(data["content"])
 
         normalize(Path("root"), repository=DummyRepository)
 
         for _, data in self.scenarios:
-            with Path(data["file_path"]).open() as fd:
+            with data["file_path"].open() as fd:
                 assert fd.read() == data["expected"]
 
 

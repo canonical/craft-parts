@@ -163,8 +163,8 @@ from tests.unit.executor.test_organize import organize_and_assert
             "expected": [
                 (["dir"], ""),
                 (["dir1", "dir2"], "dir"),
-                (["foo"], str(Path("dir", "dir1"))),
-                (["bar"], str(Path("dir", "dir2"))),
+                (["foo"], Path("dir", "dir1")),
+                (["bar"], Path("dir", "dir2")),
             ],
         },
         # combined_*_with_file
@@ -179,8 +179,8 @@ from tests.unit.executor.test_organize import organize_and_assert
             "expected": [
                 (["bar", "dir"], ""),
                 (["dir1", "dir2"], "dir"),
-                (["foo"], str(Path("dir", "dir1"))),
-                (["bar"], str(Path("dir", "dir2"))),
+                (["foo"], Path("dir", "dir1")),
+                (["bar"], Path("dir", "dir2")),
             ],
         },
         # *_into_dir
@@ -195,7 +195,7 @@ from tests.unit.executor.test_organize import organize_and_assert
                 (["dir", "nested"], ""),
                 (["bar"], "dir"),
                 (["dir"], "nested"),
-                (["foo"], str(Path("nested", "dir"))),
+                (["foo"], Path("nested", "dir")),
             ],
         },
     ],
