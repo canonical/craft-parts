@@ -211,7 +211,6 @@ class TestMove:
         assert TestMove._has_same_attributes(foo_stat, bar_stat)
 
     @pytest.mark.with_sudo
-    @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
     def test_move_chardev(self):
         os.mknod("foo", 0o750 | stat.S_IFCHR, os.makedev(1, 5))
         foo_stat = os.stat("foo")  # noqa: PTH116
@@ -226,7 +225,6 @@ class TestMove:
         assert TestMove._has_same_attributes(foo_stat, bar_stat)
 
     @pytest.mark.with_sudo
-    @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
     def test_move_blockdev(self):
         os.mknod("foo", 0o750 | stat.S_IFBLK, os.makedev(7, 99))
         foo_stat = os.stat("foo")  # noqa: PTH116
