@@ -30,6 +30,7 @@ from .overlays import (
 )
 
 __all__ = [
+    "ChrootMount",
     "is_oci_opaque_dir",
     "is_oci_whiteout",
     "is_oci_whiteout_file",
