@@ -427,6 +427,7 @@ class TestPartOrdering:
         p1 = Part("part-one", {"after": ["part-two"]}, partitions=partitions)
         p2 = Part("part-two", {"after": ["part-one"]}, partitions=partitions)
 
+        # The actual dependency chain: part-one -> part-two
         cycle_parts = ["part-one", "part-two"]
         expected = f"Parts involved in the dependency cycle: {' -> '.join(cycle_parts)}"
         with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
@@ -438,6 +439,7 @@ class TestPartOrdering:
         p2 = Part("part-b", {"after": ["part-c"]}, partitions=partitions)
         p3 = Part("part-c", {"after": ["part-a"]}, partitions=partitions)
 
+        # The actual dependency chain: part-a -> part-b -> part-c
         cycle_parts = ["part-a", "part-b", "part-c"]
         expected = f"Parts involved in the dependency cycle: {' -> '.join(cycle_parts)}"
         with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
@@ -450,6 +452,7 @@ class TestPartOrdering:
         p3 = Part("part-y", {"after": ["part-z"]}, partitions=partitions)
         p4 = Part("part-z", {"after": ["part-w"]}, partitions=partitions)
 
+        # The actual dependency chain: part-w -> part-x -> part-y -> part-z
         cycle_parts = ["part-w", "part-x", "part-y", "part-z"]
         expected = f"Parts involved in the dependency cycle: {' -> '.join(cycle_parts)}"
         with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
@@ -464,10 +467,26 @@ class TestPartOrdering:
         # Add an independent part that should not appear in the error
         p4 = Part("independent-part", {}, partitions=partitions)
 
+        # The actual dependency chain: part-a -> part-b -> part-c
         cycle_parts = ["part-a", "part-b", "part-c"]
         expected = f"Parts involved in the dependency cycle: {' -> '.join(cycle_parts)}"
         with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
             parts.sort_parts([p1, p2, p3, p4])
+
+    def test_sort_parts_cycle_non_alphabetical(self, partitions):
+        """Test that the error shows the actual dependency chain, not alphabetical order."""
+        # Create a cycle where dependencies are NOT in alphabetical order:
+        # part-a -> part-c -> part-b -> part-a
+        p1 = Part("part-a", {"after": ["part-c"]}, partitions=partitions)
+        p2 = Part("part-b", {"after": ["part-a"]}, partitions=partitions)
+        p3 = Part("part-c", {"after": ["part-b"]}, partitions=partitions)
+
+        # The actual dependency chain: part-a -> part-c -> part-b
+        # (NOT alphabetical: part-a -> part-b -> part-c)
+        cycle_parts = ["part-a", "part-c", "part-b"]
+        expected = f"Parts involved in the dependency cycle: {' -> '.join(cycle_parts)}"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts([p1, p2, p3])
 
 
 class TestPartUnmarshal:
