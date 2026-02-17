@@ -431,7 +431,7 @@ class TestPartOrdering:
                     ("part-two", {"after": ["part-one"]}),
                 ],
                 "part-one -> part-two -> part-one",
-                id="direct_two_parts",
+                id="two_parts",
             ),
             pytest.param(
                 [
@@ -440,7 +440,7 @@ class TestPartOrdering:
                     ("part-c", {"after": ["part-a"]}),
                 ],
                 "part-a -> part-b -> part-c -> part-a",
-                id="three_parts_alphabetical",
+                id="three_parts",
             ),
             pytest.param(
                 [
