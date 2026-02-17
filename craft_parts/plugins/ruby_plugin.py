@@ -29,11 +29,13 @@ from .properties import PluginProperties
 logger = logging.getLogger(__name__)
 
 RUBY_PREFIX = "/usr"
+# Gem install location (see default search paths in `gem env`)
+GEM_PREFIX = "/var/lib/gems/all"
 
-# NOTE: To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
+# To update ruby-install version, go to https://github.com/postmodern/ruby-install/tags
 RUBY_INSTALL_VERSION = "0.10.1"
 
-# NOTE: To update SHA256 checksum, run the following command (with updated version) and copy the output (one line) here:
+# To update SHA256 checksum, run the following command (with updated version) and copy the output (one line) here:
 #   curl -L https://github.com/postmodern/ruby-install/archive/refs/tags/v0.10.1.tar.gz -o ruby-install.tar.gz && sha256sum --tag ruby-install.tar.gz
 RUBY_INSTALL_CHECKSUM = "SHA256 (ruby-install.tar.gz) = af09889b55865fc2a04e337fb4fe5632e365c0dce871556c22dfee7059c47a33"
 
@@ -94,9 +96,9 @@ class RubyPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     reason="ruby-deps cannot be used "
                     "when ruby-flavor and ruby-version are also specified",
                 )
-        else:
+        elif not has_ruby_deps:
             # Not building Ruby -- everything should already be present
-            for dependency in ["gem", "bundler"]:
+            for dependency in ["gem", "ruby"]:
                 self.validate_dependency(
                     dependency=dependency,
                     plugin_name="ruby",
@@ -179,16 +181,34 @@ class RubyPlugin(Plugin):
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         env = {
-            "PATH": f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin:${{PATH}}",
-            "GEM_HOME": "${CRAFT_PART_INSTALL}",
-            "GEM_PATH": "${CRAFT_PART_INSTALL}",
+            # Where to find ruby and gem binaries
+            # Prioritize staged executables
+            "PATH": (
+                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin:"
+                f"${{CRAFT_PART_INSTALL}}{GEM_PREFIX}/bin:"
+                f"${{CRAFT_STAGE}}{RUBY_PREFIX}/bin:"
+                f"${{CRAFT_STAGE}}{GEM_PREFIX}/bin:"
+                f"${{PATH}}"
+            ),
+            # Where to find libruby.so
+            "LD_LIBRARY_PATH": (
+                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}:"
+                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib:"
+                f"${{CRAFT_STAGE}}{RUBY_PREFIX}/lib/${{CRAFT_ARCH_TRIPLET}}:"
+                f"${{LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}}"
+            ),
+            # Where to look for installed gems
+            "GEM_PATH": f"${{CRAFT_PART_INSTALL}}{GEM_PREFIX}",
+            # Where to install new gems
+            "GEM_HOME": f"${{CRAFT_PART_INSTALL}}{GEM_PREFIX}",
+            # Tell "bundle install" to use same path as "gem install"
+            "BUNDLE_PATH__SYSTEM": "true",
         }
 
-        if self._options.ruby_shared:
-            # for finding ruby.so when running `gem` or `bundle`
-            env["LD_LIBRARY_PATH"] = (
-                f"${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/lib${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
-            )
+        # mruby shouldn't care about gems at all, but the installer
+        # fails to symlink with the GEM_HOME value above for some reason
+        if self._options.ruby_flavor == RubyFlavor.mruby:
+            env["GEM_HOME"] = "${CRAFT_PART_INSTALL}"
 
         return env
 
@@ -213,7 +233,7 @@ class RubyPlugin(Plugin):
         commands: list[str] = []
 
         if self._should_build_ruby():
-            # NOTE: Download and verify ruby-install tool (to be executed during build phase)
+            # Download and verify ruby-install tool (to be executed during build phase)
             commands.append(
                 f"curl -L --proto '=https' --tlsv1.2 https://github.com/postmodern/ruby-install/archive/refs/tags/v{RUBY_INSTALL_VERSION}.tar.gz -o ruby-install.tar.gz"
             )
@@ -240,7 +260,7 @@ class RubyPlugin(Plugin):
             if self._options.ruby_flavor == RubyFlavor.mruby:
                 commands.append("gem install --env-shebang --no-document rake")
 
-            # NOTE: Use ruby-install to download, compile, and install Ruby
+            # Use ruby-install to download, compile, and install Ruby
             commands.append("tar xfz ruby-install.tar.gz")
             commands.append(
                 f"ruby-install-{RUBY_INSTALL_VERSION}/bin/ruby-install"
@@ -251,19 +271,52 @@ class RubyPlugin(Plugin):
                 f" -- {configure_opts}"
             )
 
-        if self._options.ruby_use_bundler:
-            # Assume bundler is already provided if using prebuilt Ruby
-            if self._should_build_ruby():
-                # NOTE: Update bundler and avoid conflicts/prompts about replacing bundler
-                #       executables by removing them first.
-                commands.append(
-                    f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
+        # In self-contained mode, for parts without use-bundler, gems are
+        # built and saved backstage. Later, in a part with use-bundler,
+        # backstage serves as bundler's local gem cache.
+        if "self-contained" in self._part_info.build_attributes:
+            if not self._options.ruby_use_bundler:
+                # Build but don't install gem(s)
+                commands.extend(
+                    f"gem build {gemspec}"
+                    for gemspec in self._part_info.part_src_dir.glob("*.gemspec")
                 )
-                commands.append("gem install --env-shebang --no-document bundler")
 
-            commands.append("bundle config path ${CRAFT_PART_INSTALL}")
-            commands.append("bundle")
+                # Move freshly-built gem(s) to local cache
+                part_gem_cache_dir = self._part_info.part_export_dir / "gem_cache"
+                commands.append(f"mkdir -p {part_gem_cache_dir}")
+                commands.append(f"mv *.gem {part_gem_cache_dir}")
 
+            else:  # self_contained and use_bundler
+                # Move backstage gems to bundler-mandated vendor/cache/
+                backstage_gem_cache_dir = (
+                    self._part_info.project_info.dirs.backstage_dir / "gem_cache"
+                )
+                commands.append("mkdir -p vendor/cache")
+                commands.append(f"cp {backstage_gem_cache_dir}/*.gem vendor/cache/")
+
+                # Restrict bundler to using gems from vendor/cache/
+                commands.append("bundle install --local")
+
+        elif self._options.ruby_use_bundler:  # not self_contained
+            # Update bundler and avoid conflicts/prompts about replacing bundler
+            # executables by removing them first.
+            commands.append(
+                f"rm -f ${{CRAFT_PART_INSTALL}}{RUBY_PREFIX}/bin/{{bundle,bundler}}"
+            )
+            commands.append("gem install --env-shebang --no-document bundler")
+
+            commands.append("bundle install --standalone")
+
+            # If the source dir itself defines a gem, install it too
+            # (`bundle install` only installs dependencies)
+            for gemspec in self._part_info.part_src_dir.glob("*.gemspec"):
+                commands.append(f"gem build {gemspec} --output {gemspec}.gem")
+                commands.append(
+                    f"gem install --env-shebang --no-document {gemspec}.gem"
+                )
+
+        # Install any additional gems
         if self._options.ruby_gems:
             commands.append(
                 "gem install --env-shebang --no-document {}".format(
@@ -272,3 +325,9 @@ class RubyPlugin(Plugin):
             )
 
         return commands
+
+    @classmethod
+    @override
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports."""
+        return {"self-contained"}

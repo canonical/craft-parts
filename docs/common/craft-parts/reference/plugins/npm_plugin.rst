@@ -18,7 +18,7 @@ npm-include-node
 
 **Type:** boolean
 
-**Default:** False
+**Default:** false
 
 When set to ``true``, the plugin downloads and includes the Node.js binaries and its
 dependencies in the resulting package. If ``npm-include-node`` is ``true``, then
@@ -59,6 +59,34 @@ architecture.
     was merged back to Node.js circa. 2015. Using a very old ``iojs`` runtime poses a
     significant security hazard. If your project still requires a JavaScript runtime
     from nearly a decade ago, consider migrating to the modern Node.js runtime.
+
+npm-publish-to-cache
+~~~~~~~~~~~~~~~~~~~~
+
+**Type:** boolean
+
+**Default:** false
+
+When set to ``true``, the plugin packs the project as a tarball and publishes it to a
+shared cache directory instead of installing it globally. Requires the ``self-contained``
+build attribute.
+
+
+Attributes
+----------
+
+This plugin supports the ``self-contained`` build attribute. Declaring this attribute
+enables offline builds by blocking all npm registry access and installing dependencies from
+pre-cached tarballs.
+
+Parts that produce dependencies should set ``npm-publish-to-cache: true`` to publish their
+tarballs to the shared cache.
+
+
+In self-contained builds, ``package-lock.json`` is ignored. Dependencies
+are resolved at build time from cached tarballs produced by other parts.
+The ``npm-include-node`` option is not supported with this build attribute.
+Node.js must be provided by a build snap or build package.
 
 
 Examples
