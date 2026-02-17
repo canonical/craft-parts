@@ -292,7 +292,7 @@ def _parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--cache-dir",
         metavar="dirname",
-        default="",
+        default=None,
         help="Set an alternate cache directory location.",
         type=Path,
     )

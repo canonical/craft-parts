@@ -704,7 +704,7 @@ def test_main_strict(mocker):
         "filesystem_mounts": None,
         "partitions": None,
         "strict_mode": True,
-        "work_dir": ".",
+        "work_dir": Path(),
     }
 
 
@@ -726,7 +726,7 @@ def test_main_partitions(mocker):
         "filesystem_mounts": None,
         "partitions": ["default", "foo", "bar"],
         "strict_mode": False,
-        "work_dir": ".",
+        "work_dir": Path(),
     }
 
 
@@ -792,5 +792,5 @@ def test_main_filesystem_mounts(mocker):
         "partitions": ["default", "foo"],
         "filesystem_mounts": {"default": [{"mount": "/", "device": "foo"}]},
         "strict_mode": False,
-        "work_dir": ".",
+        "work_dir": Path(),
     }
