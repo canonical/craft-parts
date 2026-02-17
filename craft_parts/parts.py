@@ -1087,7 +1087,8 @@ def _find_dependency_cycle(parts: list[Part]) -> list[str]:
 
     :param parts: The list of parts with circular dependencies.
 
-    :returns: A list of part names showing the actual dependency chain in the cycle.
+    :returns: A list of part names showing the actual dependency chain in the cycle,
+             including the first part repeated at the end to show it's a cycle.
              The list starts with the alphabetically first part in the cycle for
              consistency across runs.
     """
@@ -1128,7 +1129,9 @@ def _find_dependency_cycle(parts: list[Part]) -> list[str]:
             # This ensures consistent ordering across runs
             min_part = min(cycle)
             min_index = cycle.index(min_part)
-            return cycle[min_index:] + cycle[:min_index]
+            normalized = cycle[min_index:] + cycle[:min_index]
+            # Append the first part at the end to show it's a cycle
+            return [*normalized, normalized[0]]
 
     # If no cycle found (shouldn't happen), return all part names sorted
     return sorted([p.name for p in parts])
