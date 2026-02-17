@@ -426,12 +426,10 @@ class TestPartOrdering:
         p1 = Part("part-one", {"after": ["part-two"]}, partitions=partitions)
         p2 = Part("part-two", {"after": ["part-one"]}, partitions=partitions)
 
-        with pytest.raises(errors.PartDependencyCycle) as raised:
+        with pytest.raises(
+            errors.PartDependencyCycle, match=r"part-one.*part-two|part-two.*part-one"
+        ):
             parts.sort_parts([p1, p2])
-
-        error = raised.value
-        assert "part-one" in str(error)
-        assert "part-two" in str(error)
 
     def test_sort_parts_cycle_three_parts(self, partitions):
         """Test circular dependency with three parts forming a loop."""
@@ -439,13 +437,13 @@ class TestPartOrdering:
         p2 = Part("part-b", {"after": ["part-c"]}, partitions=partitions)
         p3 = Part("part-c", {"after": ["part-a"]}, partitions=partitions)
 
-        with pytest.raises(errors.PartDependencyCycle) as raised:
+        with pytest.raises(errors.PartDependencyCycle, match=r"part-[abc]") as raised:
             parts.sort_parts([p1, p2, p3])
 
-        error = raised.value
-        assert "part-a" in str(error)
-        assert "part-b" in str(error)
-        assert "part-c" in str(error)
+        error_msg = str(raised.value)
+        assert "part-a" in error_msg
+        assert "part-b" in error_msg
+        assert "part-c" in error_msg
 
     def test_sort_parts_cycle_four_parts(self, partitions):
         """Test circular dependency with four parts forming a loop."""
@@ -454,14 +452,34 @@ class TestPartOrdering:
         p3 = Part("part-y", {"after": ["part-z"]}, partitions=partitions)
         p4 = Part("part-z", {"after": ["part-w"]}, partitions=partitions)
 
+        with pytest.raises(errors.PartDependencyCycle, match=r"part-[wxyz]") as raised:
+            parts.sort_parts([p1, p2, p3, p4])
+
+        error_msg = str(raised.value)
+        assert "part-w" in error_msg
+        assert "part-x" in error_msg
+        assert "part-y" in error_msg
+        assert "part-z" in error_msg
+
+    def test_sort_parts_cycle_with_independent_part(self, partitions):
+        """Test that error message only shows parts in the cycle, not independent parts."""
+        # Create a cycle between part-a, part-b, and part-c
+        p1 = Part("part-a", {"after": ["part-b"]}, partitions=partitions)
+        p2 = Part("part-b", {"after": ["part-c"]}, partitions=partitions)
+        p3 = Part("part-c", {"after": ["part-a"]}, partitions=partitions)
+        # Add an independent part that should not appear in the error
+        p4 = Part("independent-part", {}, partitions=partitions)
+
         with pytest.raises(errors.PartDependencyCycle) as raised:
             parts.sort_parts([p1, p2, p3, p4])
 
-        error = raised.value
-        assert "part-w" in str(error)
-        assert "part-x" in str(error)
-        assert "part-y" in str(error)
-        assert "part-z" in str(error)
+        error_msg = str(raised.value)
+        # Verify the cycle parts are in the error
+        assert "part-a" in error_msg
+        assert "part-b" in error_msg
+        assert "part-c" in error_msg
+        # Verify the independent part is NOT in the error
+        assert "independent-part" not in error_msg
 
 
 class TestPartUnmarshal:
