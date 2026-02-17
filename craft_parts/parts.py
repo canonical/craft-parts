@@ -1082,7 +1082,7 @@ def part_list_by_name(names: Sequence[str] | None, part_list: list[Part]) -> lis
     return selected_parts
 
 
-def _find_dependency_cycle(parts: list[Part]) -> list[str]:
+def _find_dependency_cycle(parts: list[Part]) -> list[str] | None:
     """Find a cycle in the dependency graph.
 
     :param parts: The list of parts with circular dependencies.
@@ -1090,7 +1090,7 @@ def _find_dependency_cycle(parts: list[Part]) -> list[str]:
     :returns: A list of part names showing the actual dependency chain in the cycle,
              including the first part repeated at the end to show it's a cycle.
              The list starts with the alphabetically first part in the cycle for
-             consistency across runs.
+             consistency across runs. Returns None if no cycle is found.
     """
     # Build a dependency map for the remaining parts
     part_names = {p.name for p in parts}
@@ -1133,8 +1133,8 @@ def _find_dependency_cycle(parts: list[Part]) -> list[str]:
             # Append the first part at the end to show it's a cycle
             return [*normalized, normalized[0]]
 
-    # If no cycle found (shouldn't happen), return all part names sorted
-    return sorted([p.name for p in parts])
+    # If no cycle found (shouldn't happen), return None
+    return None
 
 
 def sort_parts(part_list: list[Part]) -> list[Part]:

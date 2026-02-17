@@ -422,38 +422,56 @@ class TestPartOrdering:
         with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
 
-    def test_sort_parts_cycle_direct(self, partitions):
-        """Test direct circular dependency between two parts."""
-        p1 = Part("part-one", {"after": ["part-two"]}, partitions=partitions)
-        p2 = Part("part-two", {"after": ["part-one"]}, partitions=partitions)
+    @pytest.mark.parametrize(
+        ("parts_data", "expected_cycle"),
+        [
+            pytest.param(
+                [
+                    ("part-one", {"after": ["part-two"]}),
+                    ("part-two", {"after": ["part-one"]}),
+                ],
+                "part-one -> part-two -> part-one",
+                id="direct_two_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-a", {"after": ["part-b"]}),
+                    ("part-b", {"after": ["part-c"]}),
+                    ("part-c", {"after": ["part-a"]}),
+                ],
+                "part-a -> part-b -> part-c -> part-a",
+                id="three_parts_alphabetical",
+            ),
+            pytest.param(
+                [
+                    ("part-w", {"after": ["part-x"]}),
+                    ("part-x", {"after": ["part-y"]}),
+                    ("part-y", {"after": ["part-z"]}),
+                    ("part-z", {"after": ["part-w"]}),
+                ],
+                "part-w -> part-x -> part-y -> part-z -> part-w",
+                id="four_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-a", {"after": ["part-c"]}),
+                    ("part-b", {"after": ["part-a"]}),
+                    ("part-c", {"after": ["part-b"]}),
+                ],
+                "part-a -> part-c -> part-b -> part-a",
+                id="non_alphabetical_chain",
+            ),
+        ],
+    )
+    def test_sort_parts_cycle_detailed(self, partitions, parts_data, expected_cycle):
+        """Test circular dependency detection with various cycle configurations."""
+        part_list = [
+            Part(name, spec, partitions=partitions) for name, spec in parts_data
+        ]
 
-        # The actual dependency chain: part-one -> part-two -> part-one (showing the cycle)
-        expected = "Parts involved in the dependency cycle: part-one -> part-two -> part-one"
+        expected = f"Parts involved in the dependency cycle: {expected_cycle}"
         with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
-            parts.sort_parts([p1, p2])
-
-    def test_sort_parts_cycle_three_parts(self, partitions):
-        """Test circular dependency with three parts forming a loop."""
-        p1 = Part("part-a", {"after": ["part-b"]}, partitions=partitions)
-        p2 = Part("part-b", {"after": ["part-c"]}, partitions=partitions)
-        p3 = Part("part-c", {"after": ["part-a"]}, partitions=partitions)
-
-        # The actual dependency chain: part-a -> part-b -> part-c -> part-a (showing the cycle)
-        expected = "Parts involved in the dependency cycle: part-a -> part-b -> part-c -> part-a"
-        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
-            parts.sort_parts([p1, p2, p3])
-
-    def test_sort_parts_cycle_four_parts(self, partitions):
-        """Test circular dependency with four parts forming a loop."""
-        p1 = Part("part-w", {"after": ["part-x"]}, partitions=partitions)
-        p2 = Part("part-x", {"after": ["part-y"]}, partitions=partitions)
-        p3 = Part("part-y", {"after": ["part-z"]}, partitions=partitions)
-        p4 = Part("part-z", {"after": ["part-w"]}, partitions=partitions)
-
-        # The actual dependency chain: part-w -> part-x -> part-y -> part-z -> part-w (showing the cycle)
-        expected = "Parts involved in the dependency cycle: part-w -> part-x -> part-y -> part-z -> part-w"
-        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
-            parts.sort_parts([p1, p2, p3, p4])
+            parts.sort_parts(part_list)
 
     def test_sort_parts_cycle_with_independent_part(self, partitions):
         """Test that error message only shows parts in the cycle, not independent parts."""
@@ -468,20 +486,6 @@ class TestPartOrdering:
         expected = "Parts involved in the dependency cycle: part-a -> part-b -> part-c -> part-a"
         with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
             parts.sort_parts([p1, p2, p3, p4])
-
-    def test_sort_parts_cycle_non_alphabetical(self, partitions):
-        """Test that the error shows the actual dependency chain, not alphabetical order."""
-        # Create a cycle where dependencies are NOT in alphabetical order:
-        # part-a -> part-c -> part-b -> part-a
-        p1 = Part("part-a", {"after": ["part-c"]}, partitions=partitions)
-        p2 = Part("part-b", {"after": ["part-a"]}, partitions=partitions)
-        p3 = Part("part-c", {"after": ["part-b"]}, partitions=partitions)
-
-        # The actual dependency chain showing the full cycle
-        # (NOT alphabetical: part-a -> part-b -> part-c -> part-a)
-        expected = "Parts involved in the dependency cycle: part-a -> part-c -> part-b -> part-a"
-        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
-            parts.sort_parts([p1, p2, p3])
 
 
 class TestPartUnmarshal:

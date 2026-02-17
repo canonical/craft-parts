@@ -103,7 +103,7 @@ class PartDependencyCycle(PartsError):  # noqa: N818
                 f"Parts involved in the dependency cycle: {' -> '.join(part_names)}"
             )
         else:
-            details = None
+            details = "Unable to determine which parts are involved in the cycle."
 
         super().__init__(brief=brief, details=details, resolution=resolution)
 
