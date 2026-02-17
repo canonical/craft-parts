@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
@@ -426,9 +427,9 @@ class TestPartOrdering:
         p1 = Part("part-one", {"after": ["part-two"]}, partitions=partitions)
         p2 = Part("part-two", {"after": ["part-one"]}, partitions=partitions)
 
-        with pytest.raises(
-            errors.PartDependencyCycle, match=r"part-one.*part-two|part-two.*part-one"
-        ):
+        cycle_parts = ["part-one", "part-two"]
+        expected = f"Parts involved in the dependency cycle: {' -> '.join(cycle_parts)}"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
             parts.sort_parts([p1, p2])
 
     def test_sort_parts_cycle_three_parts(self, partitions):
@@ -437,13 +438,10 @@ class TestPartOrdering:
         p2 = Part("part-b", {"after": ["part-c"]}, partitions=partitions)
         p3 = Part("part-c", {"after": ["part-a"]}, partitions=partitions)
 
-        with pytest.raises(errors.PartDependencyCycle, match=r"part-[abc]") as raised:
+        cycle_parts = ["part-a", "part-b", "part-c"]
+        expected = f"Parts involved in the dependency cycle: {' -> '.join(cycle_parts)}"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
             parts.sort_parts([p1, p2, p3])
-
-        error_msg = str(raised.value)
-        assert "part-a" in error_msg
-        assert "part-b" in error_msg
-        assert "part-c" in error_msg
 
     def test_sort_parts_cycle_four_parts(self, partitions):
         """Test circular dependency with four parts forming a loop."""
@@ -452,14 +450,10 @@ class TestPartOrdering:
         p3 = Part("part-y", {"after": ["part-z"]}, partitions=partitions)
         p4 = Part("part-z", {"after": ["part-w"]}, partitions=partitions)
 
-        with pytest.raises(errors.PartDependencyCycle, match=r"part-[wxyz]") as raised:
+        cycle_parts = ["part-w", "part-x", "part-y", "part-z"]
+        expected = f"Parts involved in the dependency cycle: {' -> '.join(cycle_parts)}"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
             parts.sort_parts([p1, p2, p3, p4])
-
-        error_msg = str(raised.value)
-        assert "part-w" in error_msg
-        assert "part-x" in error_msg
-        assert "part-y" in error_msg
-        assert "part-z" in error_msg
 
     def test_sort_parts_cycle_with_independent_part(self, partitions):
         """Test that error message only shows parts in the cycle, not independent parts."""
@@ -470,16 +464,10 @@ class TestPartOrdering:
         # Add an independent part that should not appear in the error
         p4 = Part("independent-part", {}, partitions=partitions)
 
-        with pytest.raises(errors.PartDependencyCycle) as raised:
+        cycle_parts = ["part-a", "part-b", "part-c"]
+        expected = f"Parts involved in the dependency cycle: {' -> '.join(cycle_parts)}"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
             parts.sort_parts([p1, p2, p3, p4])
-
-        error_msg = str(raised.value)
-        # Verify the cycle parts are in the error
-        assert "part-a" in error_msg
-        assert "part-b" in error_msg
-        assert "part-c" in error_msg
-        # Verify the independent part is NOT in the error
-        assert "independent-part" not in error_msg
 
 
 class TestPartUnmarshal:

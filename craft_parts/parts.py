@@ -1087,7 +1087,7 @@ def _find_dependency_cycle(parts: list[Part]) -> list[str]:
 
     :param parts: The list of parts with circular dependencies.
 
-    :returns: A list of part names forming a cycle.
+    :returns: A sorted list of part names forming a cycle.
     """
     # Build a dependency map for the remaining parts
     part_names = {p.name for p in parts}
@@ -1122,10 +1122,11 @@ def _find_dependency_cycle(parts: list[Part]) -> list[str]:
     for part in parts:
         cycle = find_cycle_from(part.name, set(), [])
         if cycle:
-            return cycle
+            # Sort the cycle for consistent ordering across runs
+            return sorted(cycle)
 
-    # If no cycle found (shouldn't happen), return all part names
-    return [p.name for p in parts]
+    # If no cycle found (shouldn't happen), return all part names sorted
+    return sorted([p.name for p in parts])
 
 
 def sort_parts(part_list: list[Part]) -> list[Part]:
