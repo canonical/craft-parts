@@ -1,3 +1,6 @@
+.. meta::
+    :description: Reference for parts built with the Ruby plugin. Review the plugin's special configuration keys and see working examples of Ruby parts in YAML.
+
 .. _craft_parts_ruby_plugin:
 
 Ruby plugin
@@ -88,6 +91,20 @@ Extra arguments to pass to the ``configure`` script when building the Ruby
 interpreter.
 
 
+.. _ruby_self-contained_start:
+
+Attributes
+----------
+
+This plugin supports the ``self-contained`` build attribute. Declaring this attribute
+prevents access to remote repositories, such as rubygems.org. All dependencies,
+including plugins, must then be provided as packaged gems or in an earlier part.
+
+When used in conjunction with ``ruby-use-bundler``, the build phase invokes
+the ``bundle`` command with the ``--local`` argument.
+
+.. _ruby_self-contained_end:
+
 .. _ruby-details-begin:
 
 Dependencies
@@ -102,7 +119,7 @@ or any ``ruby-<gem_name>`` Ubuntu package, as a ``stage-package``.
 
 Alternatively, if ``ruby-flavor`` and ``ruby-version`` are declared, this plugin
 downloads and runs the `ruby-install
-<https://github.com/postmodern/ruby-install>` tool.
+<https://github.com/postmodern/ruby-install>`_ tool.
 
 If a special Ruby part named ``ruby-deps`` is defined, it
 creates a shared interpreter and shared gems that the other Ruby parts can use.

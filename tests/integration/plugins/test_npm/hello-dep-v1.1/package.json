@@ -1,0 +1,8 @@
+{
+  "name": "hello-dep",
+  "version": "1.1.0",
+  "main": "index.js",
+  "dependencies": {
+    "another-dep": "^2.0.0"
+  }
+}

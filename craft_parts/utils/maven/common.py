@@ -240,7 +240,17 @@ class MavenArtifact:
         except MavenXMLError:
             packaging = None
 
-        group_id = _get_element_text(_find_element(element, "groupId", namespaces))
+        try:
+            group_id = _get_element_text(_find_element(element, "groupId", namespaces))
+        except MavenXMLError:
+            # Attempt to recover by retrieving the groupId from a parent element.
+            # If the parent is malformed, this raises a different error blaming the parent instead.
+            parent = cls._get_parent(element, namespaces)
+            if parent:
+                group_id = parent.group_id
+            else:
+                raise
+
         artifact_id = _get_element_text(
             _find_element(element, "artifactId", namespaces)
         )
@@ -278,6 +288,17 @@ class MavenArtifact:
                 logger.debug(
                     f"{cls.field_name} {dep.artifact_id} has no available version, skipping."
                 )
+
+    @classmethod
+    def _get_parent(
+        cls, project: Element, namespaces: Namespaces
+    ) -> MavenParent | None:
+        try:
+            parent_ele = _find_element(project, "parent", namespaces)
+        except MavenXMLError:
+            return None
+
+        return MavenParent.from_element(parent_ele, namespaces)
 
 
 @dataclass(frozen=True)
@@ -320,7 +341,10 @@ class MavenPlugin(MavenArtifact):
         try:
             group_id_element = _find_element(element, "groupId", namespaces)
         except MavenXMLError:
-            group_id = "org.apache.maven.plugins"
+            # Attempt to recover by retrieving the groupId from a parent element.
+            # Otherwise, use the default groupId for plugins.
+            parent = cls._get_parent(element, namespaces)
+            group_id = parent.group_id if parent else "org.apache.maven.plugins"
         else:
             group_id = _get_element_text(group_id_element)
 
