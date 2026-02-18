@@ -856,8 +856,13 @@ class TestOverrideOverlayScriptWithMmdebstrap:
     """Validate override-overlay using mmdebstrap in pytest temp directory."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir):
+    def setup_method_fixture(self, new_dir, host_arch):
         (new_dir / "base").mkdir()
+        mirror = (
+            "http://archive.ubuntu.com/ubuntu"
+            if host_arch in ["amd64", "i386"]
+            else "http://ports.ubuntu.com/ubuntu-ports"
+        )
         # ----------------------------------------
         cmd = [
             "sudo",
@@ -868,7 +873,7 @@ class TestOverrideOverlayScriptWithMmdebstrap:
             "--include=apt",
             "noble",
             f"{new_dir}/base",
-            "http://archive.ubuntu.com/ubuntu/",
+            mirror,
         ]
 
         subprocess.run(cmd, check=True)
