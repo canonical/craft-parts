@@ -99,11 +99,9 @@ class PartDependencyCycle(PartsError):  # noqa: N818
         resolution = "Review the parts definition to remove dependency cycles."
 
         if part_names:
-            details = (
-                f"Parts involved in the dependency cycle: {' -> '.join(part_names)}"
-            )
+            details = f"Part processing order: {' -> '.join(part_names)}"
         else:
-            details = "Unable to determine which parts are involved in the cycle."
+            details = None
 
         super().__init__(brief=brief, details=details, resolution=resolution)
 

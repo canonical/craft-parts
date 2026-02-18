@@ -16,6 +16,7 @@
 
 """Definitions and helpers to handle parts."""
 
+import logging
 import re
 import textwrap
 import warnings
@@ -47,6 +48,8 @@ from craft_parts.utils.partition_utils import (
     get_partition_dir_map,
 )
 from craft_parts.utils.path_utils import get_partition_and_path
+
+logger = logging.getLogger(__name__)
 
 _T_validate = TypeVar("_T_validate")
 
@@ -1133,7 +1136,8 @@ def _find_dependency_cycle(parts: list[Part]) -> list[str] | None:
             # Append the first part at the end to show it's a cycle
             return [*normalized, normalized[0]]
 
-    # If no cycle found (shouldn't happen), return None
+    # If no cycle found (shouldn't happen), log debug message and return None
+    logger.debug("Unable to determine which parts are involved in the cycle.")
     return None
 
 

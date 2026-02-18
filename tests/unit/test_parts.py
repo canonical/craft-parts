@@ -469,7 +469,7 @@ class TestPartOrdering:
             Part(name, spec, partitions=partitions) for name, spec in parts_data
         ]
 
-        expected = f"Parts involved in the dependency cycle: {expected_cycle}"
+        expected = f"Part processing order: {expected_cycle}"
         with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
             parts.sort_parts(part_list)
 
@@ -483,9 +483,22 @@ class TestPartOrdering:
         p4 = Part("independent-part", {}, partitions=partitions)
 
         # The actual dependency chain: part-a -> part-b -> part-c -> part-a (showing the cycle)
-        expected = "Parts involved in the dependency cycle: part-a -> part-b -> part-c -> part-a"
+        expected = "Part processing order: part-a -> part-b -> part-c -> part-a"
         with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
             parts.sort_parts([p1, p2, p3, p4])
+
+    def test_sort_parts_cycle_self_dependency(self, partitions):
+        """Test circular dependency where a part depends on itself."""
+        p1 = Part("self-dep", {"after": ["self-dep"]}, partitions=partitions)
+
+        expected = "Part processing order: self-dep -> self-dep"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts([p1])
+
+    def test_sort_parts_empty_list(self, partitions):
+        """Test that sorting an empty list returns an empty list."""
+        result = parts.sort_parts([])
+        assert result == []
 
 
 class TestPartUnmarshal:
