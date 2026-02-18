@@ -15,8 +15,10 @@
 """Utility functions for NPM plugin."""
 
 import json
+import shlex
 from glob import escape
 from pathlib import Path
+from textwrap import dedent
 from typing import Any, cast
 
 
@@ -65,3 +67,53 @@ def write_pkg(pkg_path: Path, pkg: dict[str, Any]) -> None:
     """Write json file."""
     with pkg_path.open("w") as f:
         json.dump(pkg, f)
+
+
+def get_install_dependencies_commands(
+    dependencies: dict[str, Any], dev_dependencies: dict[str, Any], cache_dir: Path
+) -> list[str]:
+    """Return a list of commands to install dependencies required by self-contained builds."""
+    cmd: list[str] = []
+    if all_dependencies := {**dependencies, **dev_dependencies}:
+        deps_to_resolve = find_tarballs(all_dependencies, cache_dir=cache_dir)
+
+        cmd.append(
+            dedent(
+                """\
+                # find semver.js bundled with node
+                SEMVER_BIN=""
+                NODE_LIBS="$(dirname "$(dirname "$(realpath "$(command -v node)")")")/lib/node_modules"
+                if [ -f "$NODE_LIBS/npm/node_modules/semver/bin/semver.js" ]; then
+                    # semver.js path in snap
+                    SEMVER_BIN="$NODE_LIBS/npm/node_modules/semver/bin/semver.js"
+                elif [ -f "/usr/share/nodejs/semver/bin/semver.js" ]; then
+                    # semver.js path in deb pkg
+                    SEMVER_BIN="/usr/share/nodejs/semver/bin/semver.js"
+                fi
+
+                if [ -z "$SEMVER_BIN" ]; then
+                    echo "Error: semver.js not found" >&2
+                    exit 1
+                fi"""
+            )
+        )
+
+        cmd.append("TARBALLS=")
+        for dependency, specified_version, available_versions in deps_to_resolve:
+            cmd.append(
+                dedent(
+                    f"""\
+                    # find version that satisfies {dependency} ({specified_version})
+                    BEST_VERSION=$("$SEMVER_BIN" -r {shlex.quote(specified_version)} {" ".join(available_versions)} | tail -1)
+                    if [ -z "$BEST_VERSION" ]; then
+                        echo "Error: could not resolve dependency '{dependency} ({specified_version})'" >&2
+                        exit 1
+                    fi
+                    TARBALLS="$TARBALLS {cache_dir}/{dependency}-$BEST_VERSION.tgz\""""
+                )
+            )
+
+        # all tarballs need to be included in one command
+        # or npm will try to search registry
+        cmd.append("npm install --offline --include=dev --no-package-lock $TARBALLS")
+    return cmd

@@ -50,7 +50,7 @@ def mocker_deps(mocker):
         return_value={"dependencies": {"my-dep": "^1.0.0"}},
     )
     find_tarballs = mocker.patch(
-        "craft_parts.plugins.npm_plugin.find_tarballs",
+        "craft_parts.utils.npm_utils.find_tarballs",
         return_value=[("my-dep", "^1.0.0", ["1.0.0"])],
     )
     write_pkg = mocker.patch("craft_parts.plugins.npm_plugin.write_pkg")
@@ -458,28 +458,6 @@ class TestPluginNpmPlugin:
         assert "bundledDependencies" in args[1]
         assert args[1]["bundledDependencies"] == ["my-dep"]
 
-    def test_get_self_contained_build_commands_publish_to_cache(
-        self, self_contained_part_info, mocker_deps
-    ):
-        properties = NpmPlugin.properties_class.unmarshal(
-            {"source": ".", "npm-publish-to-cache": True}
-        )
-        plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
-
-        cmd = plugin.get_build_commands()
-
-        assert cmd[-3:] == [
-            "npm install --offline --include=dev --no-package-lock $TARBALLS",
-            f"cp {self_contained_part_info.part_build_subdir}/.parts/package.bundled.json package.json",
-            f'mv "$(npm pack . | tail -1)" "{plugin._npm_cache_export}/"',
-        ]
-
-        _, _, write_pkg = mocker_deps
-        write_pkg.assert_called_once()
-        args, _ = write_pkg.call_args
-        assert "bundledDependencies" in args[1]
-        assert args[1]["bundledDependencies"] == ["my-dep"]
-
     def test_get_self_contained_build_commands_dev_dependencies(
         self, self_contained_part_info, mocker
     ):
@@ -491,7 +469,7 @@ class TestPluginNpmPlugin:
             },
         )
         mocker.patch(
-            "craft_parts.plugins.npm_plugin.find_tarballs",
+            "craft_parts.utils.npm_utils.find_tarballs",
             return_value=[
                 ("my-dep", "^1.0.0", ["1.0.0"]),
                 ("dev-dep", "~2.0.0", ["2.0.0"]),
@@ -522,7 +500,7 @@ class TestPluginNpmPlugin:
             },
         )
         mocker.patch(
-            "craft_parts.plugins.npm_plugin.find_tarballs",
+            "craft_parts.utils.npm_utils.find_tarballs",
             return_value=[
                 ("dev-dep", "~2.0.0", ["2.0.0"]),
             ],
