@@ -862,7 +862,6 @@ class TestOverrideOverlayScriptWithMmdebstrap:
         cmd = [
             "sudo",
             "mmdebstrap",
-            "--arch=amd64",
             "--mode=root",
             "--format=dir",
             "--variant=minbase",

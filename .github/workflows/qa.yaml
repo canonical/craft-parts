@@ -114,7 +114,7 @@ jobs:
     with:
       fast-test-platforms: '["ubuntu-24.04"]'
       fast-test-python-versions: '["3.12"]'
-      slow-test-platforms: '["ubuntu-24.04"]'
+      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: with_sudo
