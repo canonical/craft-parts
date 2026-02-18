@@ -101,7 +101,7 @@ UV_LINK_MODE
 **Default:** "copy"
 
 The method to use when installing packages from the uv global cache. When uv's cache
-directory is mounted from the LXD host, hardlinking from the global cache (uv's default
+directory is mounted from a build host, hardlinking from the global cache (uv's default
 behavior) is not possible.
 
 .. _uv-details-begin:
