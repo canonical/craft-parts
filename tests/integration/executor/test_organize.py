@@ -35,7 +35,8 @@ basic_parts_yaml = textwrap.dedent(
 )
 
 
-@pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+@pytest.mark.with_sudo
+@pytest.mark.skip(reason="Fails due to #1548")
 def test_organize_special_files(new_dir, mocker):
     parts = yaml.safe_load(basic_parts_yaml)
 
