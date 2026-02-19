@@ -348,7 +348,7 @@ class NpmPlugin(Plugin):
         ]
         return cmd
 
-    def _get_self_contained_build_commands(self) -> list[str]:
+    def _get_install_and_overwrite_commands(self) -> list[str]:
         bundled_pkg_path = (
             self._part_info.part_build_subdir / ".parts" / "package.bundled.json"
         )
@@ -376,9 +376,12 @@ class NpmPlugin(Plugin):
         )
         if dependencies:
             cmd.append(f"cp {bundled_pkg_path} package.json")
+        return cmd
 
+    def _get_self_contained_build_commands(self) -> list[str]:
+        """Return a list of commands to run during self-contained build step."""
         return [
-            *cmd,
+            *self._get_install_and_overwrite_commands(),
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
         ]
 

@@ -20,12 +20,6 @@ from pathlib import Path
 
 from typing_extensions import override
 
-from craft_parts.utils.npm_utils import (
-    get_install_dependencies_commands,
-    read_pkg,
-    write_pkg,
-)
-
 from .npm_plugin import NpmPlugin
 
 
@@ -44,37 +38,9 @@ class NpmUsePlugin(NpmPlugin):
 
     @override
     def _get_self_contained_build_commands(self) -> list[str]:
-        """Return a list of commands to run during the build step."""
-        bundled_pkg_path = (
-            self._part_info.part_build_subdir / ".parts" / "package.bundled.json"
-        )
-        pkg = read_pkg(self._part_info.part_build_dir / "package.json")
-        dependencies = pkg.get("dependencies", {})
-        dev_dependencies = pkg.get("devDependencies", {})
-
-        # npm rewrites the deps in package.json as
-        # dependencies: { dep: file:tarball-path }
-        # on `npm install`, resulting in corrupted tarballs.
-        # overwrite package.json after install command and before packing
-        if dependencies := pkg.get("dependencies", {}):
-            # modify package.json to bundle all non-dev dependencies with tarball
-            pkg["bundledDependencies"] = list(
-                {*pkg.get("bundledDependencies", []), *dependencies}
-            )
-        bundled_pkg_path.parent.mkdir(parents=True, exist_ok=True)
-        write_pkg(bundled_pkg_path, pkg)
-
-        # get commands to install tarballs from local directory
-        cmd = get_install_dependencies_commands(
-            dependencies,
-            dev_dependencies,
-            cache_dir=self._npm_cache_backstage,
-        )
-        if dependencies:
-            cmd.append(f"cp {bundled_pkg_path} package.json")
-
+        """Return a list of commands to run during self-contained build step."""
         self._npm_cache_export.mkdir(parents=True, exist_ok=True)
         return [
-            *cmd,
+            *self._get_install_and_overwrite_commands(),
             f'mv "$(npm pack . | tail -1)" "{self._npm_cache_export}/"',
         ]
