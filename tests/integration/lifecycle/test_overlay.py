@@ -13,7 +13,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import os
+import subprocess
 import textwrap
 from pathlib import Path
 
@@ -848,6 +849,73 @@ class TestOverlaySpecScenarios:
             Action("B", Step.BUILD),
             Action("B", Step.STAGE),
         ]
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+class TestOverrideOverlayScriptWithMmdebstrap:
+    """Validate override-overlay using mmdebstrap in pytest temp directory."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, new_dir, host_arch):
+        (new_dir / "base").mkdir()
+        mirror = (
+            "http://archive.ubuntu.com/ubuntu"
+            if host_arch in ["amd64", "i386"]
+            else "http://ports.ubuntu.com/ubuntu-ports"
+        )
+        # ----------------------------------------
+        cmd = [
+            "sudo",
+            "mmdebstrap",
+            "--mode=root",
+            "--format=dir",
+            "--variant=minbase",
+            "--include=apt",
+            "noble",
+            f"{new_dir}/base",
+            mirror,
+        ]
+
+        subprocess.run(cmd, check=True)
+
+    def test_user_created(self, new_dir, partitions):
+        """Verify smith user exists after override-overlay."""
+
+        _parts_yaml = textwrap.dedent(
+            """\
+            parts:
+              hello:
+                plugin: nil
+                override-overlay: |
+                  useradd -M -U -r smith
+            """
+        )
+        parts = yaml.safe_load(_parts_yaml)
+
+        (new_dir / "work").mkdir()
+        (new_dir / "cache").mkdir()
+        lf = craft_parts.LifecycleManager(
+            parts,
+            application_name="test",
+            cache_dir=Path(new_dir / "cache"),
+            work_dir=Path(new_dir / "work"),
+            base_layer_dir=Path(new_dir / "base"),
+            base_layer_hash=str(Path(new_dir / "base")).encode(),
+        )
+
+        actions = lf.plan(Step.PRIME, ["hello"])
+
+        with lf.action_executor() as ctx:
+            ctx.execute(actions)
+
+        layer_shadow_file = new_dir / "work/parts/hello/layer/etc/shadow"
+        assert layer_shadow_file.exists(), "etc/shadow not found in layer!"
+        assert "smith:" in layer_shadow_file.read_text("utf-8")
+
+        base_shadow_file = new_dir / "base/etc/shadow"
+        assert base_shadow_file.exists(), "etc/shadow not found in basedir!"
+        assert "smith:" not in base_shadow_file.read_text("utf-8")
 
 
 def _filter_skip(actions: list[Action]) -> list[Action]:
