@@ -56,12 +56,22 @@ _NODE_ARCH_FROM_PLATFORM = {
 class NpmPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the npm plugin."""
 
-    plugin: Literal["npm"] = "npm"
+    plugin: Literal["npm", "npm-use"] = "npm"
 
     # part properties required by the plugin
     npm_include_node: bool = False
     npm_node_version: str | None = None
     source: str  # pyright: ignore[reportGeneralTypeIssues]
+    build_attributes: list[str] = []
+
+    @model_validator(mode="after")
+    def include_node_not_self_contained(self) -> Self:
+        """If npm-include-node is true, then self-contained must not be in build-attributes."""
+        if self.npm_include_node and "self-contained" in self.build_attributes:
+            raise ValueError(
+                "npm-include-node cannot be true if `self-contained` in build attributes"
+            )
+        return self
 
     @model_validator(mode="after")
     def node_version_defined(self) -> Self:
