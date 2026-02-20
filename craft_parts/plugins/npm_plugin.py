@@ -56,7 +56,7 @@ _NODE_ARCH_FROM_PLATFORM = {
 class NpmPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the npm plugin."""
 
-    plugin: Literal["npm", "npm-use"] = "npm"
+    plugin: Literal["npm"] = "npm"
 
     # part properties required by the plugin
     npm_include_node: bool = False
