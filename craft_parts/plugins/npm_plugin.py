@@ -29,11 +29,7 @@ from pydantic import model_validator
 from typing_extensions import Self, override
 
 from craft_parts.errors import InvalidArchitecture
-from craft_parts.utils.npm_utils import (
-    get_install_dependencies_commands,
-    read_pkg,
-    write_pkg,
-)
+from craft_parts.utils.npm_utils import get_install_from_local_tarballs_commands
 
 from . import validator
 from .base import Plugin
@@ -295,11 +291,11 @@ class NpmPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
+        if self._is_self_contained:
+            return self._get_offline_build_commands()
+
         cmd: list[str] = []
         options = cast(NpmPluginProperties, self._options)
-        if self._is_self_contained:
-            return self._get_self_contained_build_commands()
-
         if options.npm_include_node:
             arch = self._get_architecture()
             version = options.npm_node_version
@@ -346,42 +342,19 @@ class NpmPlugin(Plugin):
             """
             )
         ]
+
         return cmd
 
-    def _get_install_and_overwrite_commands(self) -> list[str]:
+    def _get_offline_build_commands(self) -> list[str]:
+        """Return a list of commands to run during self-contained build step."""
+        pkg_path = self._part_info.part_build_dir / "package.json"
         bundled_pkg_path = (
             self._part_info.part_build_subdir / ".parts" / "package.bundled.json"
         )
-        pkg = read_pkg(self._part_info.part_build_dir / "package.json")
-        dependencies = pkg.get("dependencies", {})
-        dev_dependencies = pkg.get("devDependencies", {})
-
-        # npm rewrites the deps in package.json as
-        # dependencies: { dep: file:tarball-path }
-        # on `npm install`, resulting in corrupted tarballs.
-        # overwrite package.json after install command and before packing
-        if dependencies := pkg.get("dependencies", {}):
-            # modify package.json to bundle all non-dev dependencies with tarball
-            pkg["bundledDependencies"] = list(
-                {*pkg.get("bundledDependencies", []), *dependencies}
-            )
-        bundled_pkg_path.parent.mkdir(parents=True, exist_ok=True)
-        write_pkg(bundled_pkg_path, pkg)
-
-        # get commands to install tarballs from local directory
-        cmd = get_install_dependencies_commands(
-            dependencies,
-            dev_dependencies,
-            cache_dir=self._npm_cache_backstage,
-        )
-        if dependencies:
-            cmd.append(f"cp {bundled_pkg_path} package.json")
-        return cmd
-
-    def _get_self_contained_build_commands(self) -> list[str]:
-        """Return a list of commands to run during self-contained build step."""
         return [
-            *self._get_install_and_overwrite_commands(),
+            *get_install_from_local_tarballs_commands(
+                pkg_path, bundled_pkg_path, self._npm_cache_backstage
+            ),
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
         ]
 

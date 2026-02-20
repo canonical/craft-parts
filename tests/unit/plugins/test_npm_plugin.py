@@ -46,14 +46,14 @@ def self_contained_part_info(new_dir):
 @pytest.fixture
 def mocker_deps(mocker):
     read_pkg = mocker.patch(
-        "craft_parts.plugins.npm_plugin.read_pkg",
+        "craft_parts.utils.npm_utils.read_pkg",
         return_value={"dependencies": {"my-dep": "^1.0.0"}},
     )
     find_tarballs = mocker.patch(
         "craft_parts.utils.npm_utils.find_tarballs",
         return_value=[("my-dep", "^1.0.0", ["1.0.0"])],
     )
-    write_pkg = mocker.patch("craft_parts.plugins.npm_plugin.write_pkg")
+    write_pkg = mocker.patch("craft_parts.utils.npm_utils.write_pkg")
     return read_pkg, find_tarballs, write_pkg
 
 
@@ -462,7 +462,7 @@ class TestPluginNpmPlugin:
         self, self_contained_part_info, mocker
     ):
         mocker.patch(
-            "craft_parts.plugins.npm_plugin.read_pkg",
+            "craft_parts.utils.npm_utils.read_pkg",
             return_value={
                 "dependencies": {"my-dep": "^1.0.0"},
                 "devDependencies": {"dev-dep": "~2.0.0"},
@@ -475,7 +475,7 @@ class TestPluginNpmPlugin:
                 ("dev-dep", "~2.0.0", ["2.0.0"]),
             ],
         )
-        write_pkg = mocker.patch("craft_parts.plugins.npm_plugin.write_pkg")
+        write_pkg = mocker.patch("craft_parts.utils.npm_utils.write_pkg")
 
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
@@ -494,7 +494,7 @@ class TestPluginNpmPlugin:
         self, self_contained_part_info, mocker
     ):
         mocker.patch(
-            "craft_parts.plugins.npm_plugin.read_pkg",
+            "craft_parts.utils.npm_utils.read_pkg",
             return_value={
                 "devDependencies": {"dev-dep": "~2.0.0"},
             },
@@ -505,7 +505,7 @@ class TestPluginNpmPlugin:
                 ("dev-dep", "~2.0.0", ["2.0.0"]),
             ],
         )
-        write_pkg = mocker.patch("craft_parts.plugins.npm_plugin.write_pkg")
+        write_pkg = mocker.patch("craft_parts.utils.npm_utils.write_pkg")
 
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
@@ -523,7 +523,7 @@ class TestPluginNpmPlugin:
         self, self_contained_part_info, mocker
     ):
         mocker.patch(
-            "craft_parts.plugins.npm_plugin.read_pkg",
+            "craft_parts.utils.npm_utils.read_pkg",
             return_value={"dependencies": {}},
         )
 
@@ -538,7 +538,7 @@ class TestPluginNpmPlugin:
         self, self_contained_part_info, mocker
     ):
         mocker.patch(
-            "craft_parts.plugins.npm_plugin.read_pkg",
+            "craft_parts.utils.npm_utils.read_pkg",
             return_value={"dependencies": {"missing-dep": "^1.0.0"}},
         )
 

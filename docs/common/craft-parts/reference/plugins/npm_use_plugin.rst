@@ -55,8 +55,8 @@ actions during the build step:
 #. Run ``npm pack`` to create a tarball of the package with bundled dependencies.
 #. Export the tarball to the shared cache directory.
 
-If the self-contained attribute is not present, the plugin behaves like the
-:ref:`craft_parts_npm_plugin`.
+If the self-contained attribute is not present, dependencies will be installed from the
+npm registry and the packed tarball will not contain bundled dependencies.
 
 Examples
 --------
