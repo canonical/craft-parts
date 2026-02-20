@@ -23,6 +23,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal, TypeVar, cast
 
+from typing_extensions import Self
+
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
@@ -236,7 +238,7 @@ class LayerMount:
         self._pkg_cache = pkg_cache
         self._pid = os.getpid()
 
-    def __enter__(self) -> "LayerMount":
+    def __enter__(self) -> Self:
         logger.debug("---- Enter layer mount context ----")
         self._overlay_manager.mount_layer(
             self._top_part,
@@ -298,10 +300,6 @@ class PackageCacheMount:
 
 class ChrootMount(LayerMount):
     """Context manager that mounts an overlay for step processing and runs code inside a chroot environment."""
-
-    def __enter__(self) -> "ChrootMount":
-        super().__enter__()
-        return self
 
     def __call__(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
         """Synthax sugar method to run within chroot."""
