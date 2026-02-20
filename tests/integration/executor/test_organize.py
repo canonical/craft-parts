@@ -36,7 +36,7 @@ basic_parts_yaml = textwrap.dedent(
 
 
 @pytest.mark.requires_root
-@pytest.mark.skip(reason="Fails due to #1548")
+@pytest.mark.skip(reason="Fails due to #1458")
 def test_organize_special_files(new_dir, mocker):
     parts = yaml.safe_load(basic_parts_yaml)
 
