@@ -20,6 +20,8 @@ import logging
 import shutil
 from pathlib import Path
 
+from typing_extensions import Self
+
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
@@ -329,7 +331,7 @@ class ExecutionContext:
     ) -> None:
         self._executor = executor
 
-    def __enter__(self) -> "ExecutionContext":
+    def __enter__(self) -> Self:
         self._executor.prologue()
         return self
 
