@@ -61,7 +61,7 @@ class NpmUsePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
 
 class NpmUsePlugin(Plugin):
-    """A plugin to pack npm packages for self-contained builds.
+    """A plugin to pack npm packages to a local shared cache.
 
     This plugin uses the common plugin keywords as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
