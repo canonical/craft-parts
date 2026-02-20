@@ -38,7 +38,7 @@ from .fake_snapd import FakeSnapd
 
 def pytest_runtest_setup(item: pytest.Item):
     """Configuration for tests."""
-    if item.get_closest_marker("with_sudo") and os.geteuid() != 0:
+    if item.get_closest_marker("requires_root") and os.geteuid() != 0:
         pytest.skip("requires root permissions")
 
 

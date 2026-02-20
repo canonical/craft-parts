@@ -110,7 +110,7 @@ jobs:
       pytest-markers: plugin
       setup-vars: NO_JAVA=1 NO_PYTHON=1
 
-  test-with-sudo:
+  test-requires-root:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: '["ubuntu-24.04"]'
@@ -118,5 +118,5 @@ jobs:
       slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
-      pytest-markers: with_sudo
+      pytest-markers: requires_root
       test-command-prefix: sudo env "PATH=$PATH"
