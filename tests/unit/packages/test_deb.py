@@ -995,6 +995,99 @@ def test_chown_stage_packages(
     assert message.format(deb_cache_dir) in caplog.text
 
 
+def test_refresh_called_before_mark(mocker: MockerFixture) -> None:
+    """Refresh the apt index before packages are marked for installation."""
+    call_order: list[str] = []
+
+    def record_refresh() -> None:
+        call_order.append("refresh")
+
+    def record_mark(_package_names: list[str]) -> list[tuple[str, str]]:
+        call_order.append("mark")
+        return []
+
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_check_if_all_packages_installed",
+        return_value=False,
+    )
+    mocker.patch.object(
+        deb.Ubuntu,
+        "refresh_packages_list",
+        side_effect=record_refresh,
+    )
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_get_packages_marked_for_installation",
+        side_effect=record_mark,
+    )
+    mocker.patch.object(deb.Ubuntu, "_install_packages")
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_get_installed_package_versions",
+        return_value=[],
+    )
+
+    deb.Ubuntu.install_packages(["foo"])
+
+    assert call_order == ["refresh", "mark"]
+
+
+def test_refresh_not_called_when_disabled(mocker: MockerFixture) -> None:
+    """Do not refresh the apt index when cache refresh is disabled."""
+    mock_refresh = mocker.patch.object(deb.Ubuntu, "refresh_packages_list")
+
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_check_if_all_packages_installed",
+        return_value=False,
+    )
+    mock_mark = mocker.patch.object(
+        deb.Ubuntu,
+        "_get_packages_marked_for_installation",
+        return_value=[],
+    )
+    mocker.patch.object(deb.Ubuntu, "_install_packages")
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_get_installed_package_versions",
+        return_value=[],
+    )
+
+    deb.Ubuntu.install_packages(["foo"], refresh_package_cache=False)
+
+    mock_refresh.assert_not_called()
+    mock_mark.assert_called_once_with(["foo"])
+
+
+def test_refresh_not_called_when_listing_only(mocker: MockerFixture) -> None:
+    """Do not refresh the apt index when only listing packages."""
+    mock_refresh = mocker.patch.object(deb.Ubuntu, "refresh_packages_list")
+    mock_install = mocker.patch.object(deb.Ubuntu, "_install_packages")
+
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_check_if_all_packages_installed",
+        return_value=False,
+    )
+    mock_mark = mocker.patch.object(
+        deb.Ubuntu,
+        "_get_packages_marked_for_installation",
+        return_value=[],
+    )
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_get_installed_package_versions",
+        return_value=[],
+    )
+
+    deb.Ubuntu.install_packages(["foo"], list_only=True)
+
+    mock_refresh.assert_not_called()
+    mock_mark.assert_called_once_with(["foo"])
+    mock_install.assert_not_called()
+
+
 class TestIncludeRecommends:
     def test_download_with_recommends(self, fake_deb_run):
         deb.Ubuntu.download_packages(["pkg"], include_recommends=True)

@@ -641,13 +641,16 @@ class Ubuntu(BaseRepository):
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
+        # Refresh before marking packages, because marking depends on the
+        # current apt package index.
+        if not list_only and refresh_package_cache and install_required:
+            cls.refresh_packages_list()
+
         # Collect the list of marked packages to later construct a manifest
         marked_packages = cls._get_packages_marked_for_installation(package_names)
         marked_package_names = [name for name, _ in sorted(marked_packages)]
 
         if not list_only:
-            if refresh_package_cache and install_required:
-                cls.refresh_packages_list()
             if install_required:
                 cls._install_packages(
                     package_names, include_recommends=include_recommends
