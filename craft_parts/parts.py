@@ -16,6 +16,7 @@
 
 """Definitions and helpers to handle parts."""
 
+import logging
 import re
 import textwrap
 import warnings
@@ -47,6 +48,8 @@ from craft_parts.utils.partition_utils import (
     get_partition_dir_map,
 )
 from craft_parts.utils.path_utils import get_partition_and_path
+
+logger = logging.getLogger(__name__)
 
 _T_validate = TypeVar("_T_validate")
 
@@ -1082,6 +1085,62 @@ def part_list_by_name(names: Sequence[str] | None, part_list: list[Part]) -> lis
     return selected_parts
 
 
+def _find_dependency_cycle(parts: list[Part]) -> list[str] | None:
+    """Find a cycle in the dependency graph.
+
+    :param parts: The list of parts with circular dependencies.
+
+    :returns: A list of part names showing the actual dependency chain in the cycle,
+             including the first part repeated at the end to show it's a cycle.
+             The list starts with the alphabetically first part in the cycle for
+             consistency across runs. Returns None if no cycle is found.
+    """
+    # Build a dependency map for the remaining parts
+    part_names = {p.name for p in parts}
+    dep_map = {
+        p.name: [dep for dep in p.dependencies if dep in part_names] for p in parts
+    }
+
+    # Find a cycle using DFS
+    def find_cycle_from(
+        start: str, visited: set[str], path: list[str]
+    ) -> list[str] | None:
+        if start in path:
+            # Found a cycle, return the cycle portion
+            cycle_start = path.index(start)
+            return path[cycle_start:]
+
+        if start in visited:
+            return None
+
+        visited.add(start)
+        path.append(start)
+
+        for dep in dep_map.get(start, []):
+            cycle = find_cycle_from(dep, visited, path)
+            if cycle:
+                return cycle
+
+        path.pop()
+        return None
+
+    # Try to find a cycle starting from each part
+    for part in parts:
+        cycle = find_cycle_from(part.name, set(), [])
+        if cycle:
+            # Normalize the cycle to start from the alphabetically first part
+            # This ensures consistent ordering across runs
+            min_part = min(cycle)
+            min_index = cycle.index(min_part)
+            normalized = cycle[min_index:] + cycle[:min_index]
+            # Append the first part at the end to show it's a cycle
+            return [*normalized, normalized[0]]
+
+    # If no cycle found (shouldn't happen), log debug message and return None
+    logger.debug("Unable to determine which parts are involved in the cycle.")
+    return None
+
+
 def sort_parts(part_list: list[Part]) -> list[Part]:
     """Perform an inefficient but easy to follow sorting of parts.
 
@@ -1123,7 +1182,9 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
                 top_part = part
                 break
         if not top_part:
-            raise errors.PartDependencyCycle
+            # Found a circular dependency - identify the parts involved
+            cycle = _find_dependency_cycle(all_parts)
+            raise errors.PartDependencyCycle(part_names=cycle)
 
         sorted_parts = [top_part, *sorted_parts]
         all_parts.remove(top_part)
