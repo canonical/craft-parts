@@ -302,5 +302,5 @@ class ChrootMount(LayerMount):
     """Context manager that mounts an overlay for step processing and runs code inside a chroot environment."""
 
     def __call__(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
-        """Synthax sugar method to run within chroot."""
+        """Syntactic sugar method to run within chroot."""
         return self._overlay_manager.run(target, *args, **kwargs)

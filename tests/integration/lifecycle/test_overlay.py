@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
 import subprocess
 import textwrap
 from pathlib import Path
@@ -852,7 +851,7 @@ class TestOverlaySpecScenarios:
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+@pytest.mark.requires_root
 class TestOverrideOverlayScriptWithMmdebstrap:
     """Validate override-overlay using mmdebstrap in pytest temp directory."""
 
