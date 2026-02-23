@@ -36,6 +36,12 @@ from .fake_snap_command import FakeSnapCommand
 from .fake_snapd import FakeSnapd
 
 
+def pytest_runtest_setup(item: pytest.Item):
+    """Configuration for tests."""
+    if item.get_closest_marker("requires_root") and os.geteuid() != 0:
+        pytest.skip("requires root permissions")
+
+
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     """Use collection hook to mark all integration tests as slow"""
     for item in items:

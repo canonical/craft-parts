@@ -210,7 +210,7 @@ class TestMove:
         assert Path("bar").readlink() == Path("baz")
         assert TestMove._has_same_attributes(foo_stat, bar_stat)
 
-    @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+    @pytest.mark.requires_root
     def test_move_chardev(self):
         os.mknod("foo", 0o750 | stat.S_IFCHR, os.makedev(1, 5))
         foo_stat = os.stat("foo")  # noqa: PTH116
@@ -224,7 +224,7 @@ class TestMove:
         assert os.minor(bar_stat.st_rdev) == 5
         assert TestMove._has_same_attributes(foo_stat, bar_stat)
 
-    @pytest.mark.skipif(os.geteuid() != 0, reason="requires root permissions")
+    @pytest.mark.requires_root
     def test_move_blockdev(self):
         os.mknod("foo", 0o750 | stat.S_IFBLK, os.makedev(7, 99))
         foo_stat = os.stat("foo")  # noqa: PTH116

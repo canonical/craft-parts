@@ -23,6 +23,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal, TypeVar, cast
 
+from typing_extensions import Self
+
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
@@ -237,7 +239,7 @@ class LayerMount:
         self._pkg_cache = pkg_cache
         self._pid = os.getpid()
 
-    def __enter__(self) -> "LayerMount":
+    def __enter__(self) -> Self:
         logger.debug("---- Enter layer mount context ----")
         self._overlay_manager.mount_layer(
             self._top_part,
@@ -272,7 +274,7 @@ class PackageCacheMount:
         self._overlay_manager.mkdirs()
         self._pid = os.getpid()
 
-    def __enter__(self) -> "PackageCacheMount":
+    def __enter__(self) -> Self:
         logger.debug("---- Enter package cache mount context ----")
         self._overlay_manager.mount_pkg_cache()
         return self
