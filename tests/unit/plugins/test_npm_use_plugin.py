@@ -19,8 +19,6 @@ from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.npm_use_plugin import NpmUsePlugin
 
-# pylint: disable=too-many-public-methods
-
 
 @pytest.fixture
 def part_info(new_dir):
