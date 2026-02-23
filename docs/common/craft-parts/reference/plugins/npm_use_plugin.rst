@@ -4,9 +4,7 @@ Npm Use plugin
 ================
 
 The NPM Use plugin packages `npm`_-based projects and, unlike the
-:ref:`craft_parts_npm_plugin`, exports artifacts to a shared local cache.
-From this cache, the artifacts can be accessed by any other parts
-using the NPM or NPM Use plugins.
+:ref:`craft_parts_npm_plugin`, exports artifacts to a shared local directory.
 
 
 Keys
@@ -25,7 +23,7 @@ prevents access to any npm registries. All dependencies must then be provided in
 earlier part using the NPM Use plugin.
 
 When this attribute is declared, NPM Use resolves dependency versions from what is
-locally available in the cache.
+locally available in the shared directory.
 
 .. _npm_use_self-contained_end:
 
@@ -55,8 +53,8 @@ actions during the build step:
 #. Run ``npm pack`` to create a tarball of the package with bundled dependencies.
 #. Export the tarball to the shared cache directory.
 
-If the self-contained attribute is not present, dependencies will be installed from the
-npm registry and the packed tarball will not contain bundled dependencies.
+If the self-contained attribute is not present, ``npm pack`` is run to create a tarball
+of the package without bundled dependencies.
 
 Examples
 --------
