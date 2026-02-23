@@ -93,6 +93,17 @@ UV_PYTHON_PREFERENCE
 Whether uv should prefer (or exclusively use) system or uv-managed Python versions.
 
 
+UV_LINK_MODE
+~~~~~~~~~~~~
+
+**Type:** ``clone``, ``copy``, ``hardlink``, or ``symlink``
+
+**Default:** "copy"
+
+The method to use when installing packages from the uv global cache. When uv's cache
+directory is mounted from a build host, hard-linking from the global cache (uv's default
+behavior) is not possible.
+
 .. _uv-details-begin:
 
 Dependencies

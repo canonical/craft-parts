@@ -29,6 +29,7 @@ New features:
 
 - Add support for the ``self-contained`` build attribute for parts using the
   :ref:`craft_parts_npm_plugin`.
+- Set ``UV_LINK_MODE=copy`` for the uv plugin to enable shared uv cache between LXD containers (see `craft-providers#900 <https://github.com/canonical/craft-providers/pull/900>`__)
 
 Bug fixes:
 
