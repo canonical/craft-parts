@@ -302,7 +302,7 @@ class NpmPlugin(Plugin):
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         if self._is_self_contained:
-            return self._get_offline_build_commands()
+            return self._get_self_contained_build_commands()
 
         cmd: list[str] = []
         options = cast(NpmPluginProperties, self._options)
@@ -355,7 +355,7 @@ class NpmPlugin(Plugin):
 
         return cmd
 
-    def _get_offline_build_commands(self) -> list[str]:
+    def _get_self_contained_build_commands(self) -> list[str]:
         """Return a list of commands to run during self-contained build step."""
         pkg_path = self._part_info.part_build_dir / "package.json"
         bundled_pkg_path = (
