@@ -36,20 +36,6 @@ def self_contained_part_info(new_dir):
     )
 
 
-@pytest.fixture
-def mocker_deps(mocker):
-    read_pkg = mocker.patch(
-        "craft_parts.utils.npm_utils.read_pkg",
-        return_value={"dependencies": {"my-dep": "^1.0.0"}},
-    )
-    find_tarballs = mocker.patch(
-        "craft_parts.utils.npm_utils.find_tarballs",
-        return_value=[("my-dep", "^1.0.0", ["1.0.0"])],
-    )
-    write_pkg = mocker.patch("craft_parts.utils.npm_utils.write_pkg")
-    return read_pkg, find_tarballs, write_pkg
-
-
 class TestPluginNpmUsePlugin:
     """Npm-Use plugin tests."""
 
