@@ -192,12 +192,7 @@ class OverlayManager:
 
         :param package_names: The list of packages to download.
         """
-        if not self._overlay_fs:
-            raise RuntimeError("overlay filesystem not mounted")
-
-        mount_dir = self._project_info.overlay_mount_dir
-        chroot.chroot(
-            mount_dir,
+        self.run(
             _defer_evaluation(packages.Repository.download_packages),
             package_names,
         )
@@ -207,15 +202,19 @@ class OverlayManager:
 
         :param package_names: The list of packages to install.
         """
-        if not self._overlay_fs:
-            raise RuntimeError("overlay filesystem not mounted")
-
-        mount_dir = self._project_info.overlay_mount_dir
-        chroot.chroot(
-            mount_dir,
+        self.run(
             _defer_evaluation(packages.Repository.install_packages),
             package_names,
             refresh_package_cache=False,
+        )
+
+    def run(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+        """Run the given callable inside the chroot environment."""
+        if not self._overlay_fs:
+            raise RuntimeError("overlay filesystem not mounted")
+
+        return chroot.chroot(
+            self._project_info.overlay_mount_dir, target, *args, **kwargs
         )
 
 
@@ -297,3 +296,11 @@ class PackageCacheMount:
         :param package_names: The list of packages to download.
         """
         self._overlay_manager.download_packages(package_names)
+
+
+class ChrootMount(LayerMount):
+    """Context manager that mounts an overlay for step processing and runs code inside a chroot environment."""
+
+    def __call__(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+        """Synthax sugar method to run within chroot."""
+        return self._overlay_manager.run(target, *args, **kwargs)

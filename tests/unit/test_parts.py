@@ -72,7 +72,7 @@ class TestPartSpecs:
         data_copy["overlay"] = ["*"]
         data_copy["overlay-packages"] = []
         data_copy["overlay-script"] = None
-
+        data_copy["override-overlay"] = None
         spec = PartSpec.unmarshal(data)
         assert spec.marshal() == data_copy
 
