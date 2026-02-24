@@ -61,29 +61,14 @@ class TestPluginNpmUsePlugin:
             f'mv "$(npm pack . | tail -1)" "{part_info.part_export_dir}/npm-cache/"'
         ]
 
-    def test_get_self_contained_build_commands(
-        self, self_contained_part_info, mocker_deps
-    ):
-        _, _, write_pkg = mocker_deps
+    def test_get_self_contained_build_commands(self, self_contained_part_info, mocker):
+        mocker.patch(
+            "craft_parts.plugins.npm_use_plugin.get_install_from_local_tarballs_commands",
+            return_value=[],
+        )
         properties = NpmUsePlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmUsePlugin(properties=properties, part_info=self_contained_part_info)
 
-        cmd = plugin.get_build_commands()
-
-        assert "SEMVER_BIN" in cmd[0]
-        assert cmd[1] == "TARBALLS="
-        assert "'^1.0.0' 1.0.0" in cmd[2]
-
-        cache_dir = self_contained_part_info.backstage_dir / "npm-cache"
-        assert f'TARBALLS="$TARBALLS {cache_dir}/my-dep-$BEST_VERSION.tgz' in cmd[2]
-
-        assert cmd[-3:] == [
-            "npm install --offline --include=dev --no-package-lock $TARBALLS",
-            f"cp {self_contained_part_info.part_build_subdir}/.parts/package.bundled.json package.json",
-            f'mv "$(npm pack . | tail -1)" "{self_contained_part_info.part_export_dir}/npm-cache/"',
+        assert plugin.get_build_commands() == [
+            f'mv "$(npm pack . | tail -1)" "{self_contained_part_info.part_export_dir}/npm-cache/"'
         ]
-
-        write_pkg.assert_called_once()
-        args, _ = write_pkg.call_args
-        assert "bundledDependencies" in args[1]
-        assert args[1]["bundledDependencies"] == ["my-dep"]

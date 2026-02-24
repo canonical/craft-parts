@@ -31,7 +31,7 @@ def _get_npm_basename(pkg_name: str) -> str:
     return pkg_name
 
 
-def find_tarballs(
+def _find_tarballs(
     dependencies: dict[str, str], cache_dir: Path
 ) -> list[tuple[str, str, list[str]]]:
     """Find tarballs in cache directory.
@@ -55,7 +55,7 @@ def find_tarballs(
     return found
 
 
-def read_pkg(pkg_path: Path) -> dict[str, Any]:
+def _read_pkg(pkg_path: Path) -> dict[str, Any]:
     """Read and return contents of json file."""
     if not pkg_path.exists():
         raise RuntimeError(f"Error: could not find '{pkg_path}'.")
@@ -63,7 +63,7 @@ def read_pkg(pkg_path: Path) -> dict[str, Any]:
         return cast(dict[str, Any], json.load(f))
 
 
-def write_pkg(pkg_path: Path, pkg: dict[str, Any]) -> None:
+def _write_pkg(pkg_path: Path, pkg: dict[str, Any]) -> None:
     """Write json file."""
     with pkg_path.open("w") as f:
         json.dump(pkg, f)
@@ -72,7 +72,7 @@ def write_pkg(pkg_path: Path, pkg: dict[str, Any]) -> None:
 def _get_install_dependencies_commands(
     dependencies: dict[str, Any], cache_dir: Path
 ) -> list[str]:
-    deps_to_resolve = find_tarballs(dependencies, cache_dir=cache_dir)
+    deps_to_resolve = _find_tarballs(dependencies, cache_dir=cache_dir)
     cmd: list[str] = [
         dedent(
             """\
@@ -119,7 +119,7 @@ def get_install_from_local_tarballs_commands(
     pkg_path: Path, bundled_pkg_path: Path, cache_dir: Path
 ) -> list[str]:
     """Return a list of commands to install dependencies required by self-contained builds."""
-    pkg = read_pkg(pkg_path)
+    pkg = _read_pkg(pkg_path)
     dependencies = pkg.get("dependencies", {})
     dev_dependencies = pkg.get("devDependencies", {})
 
@@ -137,7 +137,7 @@ def get_install_from_local_tarballs_commands(
             )
         # write a copy of package.json without tarball paths and with bundled dependencies
         bundled_pkg_path.parent.mkdir(parents=True, exist_ok=True)
-        write_pkg(bundled_pkg_path, pkg)
+        _write_pkg(bundled_pkg_path, pkg)
 
         # get commands to install tarballs from local directory
         cmd = _get_install_dependencies_commands(
