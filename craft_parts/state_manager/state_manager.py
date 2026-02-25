@@ -16,21 +16,26 @@
 
 """Part crafter step state management."""
 
+from __future__ import annotations
+
 import contextlib
 import itertools
 import logging
 from dataclasses import dataclass
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from craft_parts import parts, sources, steps
 from craft_parts.features import Features
-from craft_parts.infos import ProjectInfo, ProjectVar
-from craft_parts.parts import Part
-from craft_parts.sources import SourceHandler
+from craft_parts.infos import ProjectInfo, ProjectOptions, ProjectVarInfo
 from craft_parts.steps import Step
 
 from .reports import Dependency, DirtyReport, OutdatedReport
 from .states import PullState, StepState, get_step_state_path, load_step_state
+
+if TYPE_CHECKING:
+    from craft_parts.parts import Part
+    from craft_parts.sources import SourceHandler
+    from craft_parts.state_manager import build_state, stage_state
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +53,7 @@ class _StateWrapper:
     serial: int
     step_updated: bool = False
 
-    def is_newer_than(self, other: "_StateWrapper") -> bool:
+    def is_newer_than(self, other: _StateWrapper) -> bool:
         """Verify if this state is newer than the specified state.
 
         :param other: The wrapped state to compare this state to.
@@ -262,7 +267,7 @@ class StateManager:
 
         return False
 
-    def project_vars(self, part: Part, step: Step) -> dict[str, ProjectVar] | None:
+    def project_vars(self, part: Part, step: Step) -> ProjectVarInfo | None:
         """Obtain the project variables for a given part and step.
 
         :param part: The part corresponding to the state to retrieve.
@@ -272,9 +277,9 @@ class StateManager:
         """
         stw = self._state_db.get(part_name=part.name, step=step)
         if not stw:
-            return {}
+            return ProjectVarInfo()
 
-        return stw.state.project_options.get("project_vars") or None
+        return stw.state.project_options.project_vars or None
 
     def check_if_outdated(self, part: Part, step: Step) -> OutdatedReport | None:
         """Verify whether a step is outdated.
@@ -381,7 +386,7 @@ class StateManager:
             part_properties, also_compare=plugin_properties_to_check
         )
         options = state.diff_project_options_of_interest(
-            self._project_info.project_options
+            ProjectOptions.from_project_info(self._project_info)
         )
 
         if properties or options:
@@ -445,7 +450,7 @@ class StateManager:
         :returns: The hash value for the layer corresponding to the part
             being processed.
         """
-        if step not in [Step.BUILD, Step.STAGE]:
+        if step not in (Step.BUILD, Step.STAGE):
             raise ValueError("only BUILD and STAGE states have overlay hash")
 
         stw = self._state_db.get(part_name=part.name, step=step)
@@ -453,7 +458,8 @@ class StateManager:
             # step didn't run yet
             return b""
 
-        overlay_hash = stw.state.overlay_hash  # type: ignore[reportGeneralTypeIssues, attr-defined]
+        state = cast("stage_state.StageState | build_state.BuildState", stw.state)
+        overlay_hash = state.overlay_hash
         if not overlay_hash:
             return b""
 

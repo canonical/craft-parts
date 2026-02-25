@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023-2024 Canonical Ltd.
+# Copyright 2023-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -71,11 +71,11 @@ def test_remove(entries, remove, expected):
     assert fs.entries == expected
 
 
-@pytest.mark.xfail(strict=True, reason="combine function is not partition-aware")
 @pytest.mark.parametrize(
     ("fs1", "fs2", "result"),
     [
-        (["foo"], ["bar", "*"], ["foo", "bar"]),
+        (["foo"], ["bar", "*"], ["(default)/foo", "(default)/bar"]),
+        (["*"], ["-(default)/foo"], ["(default)/*", "-(default)/foo"]),
     ],
 )
 def test_combine(fs1, fs2, result):
@@ -95,7 +95,9 @@ def test_combine(fs1, fs2, result):
 def test_fileset_only_includes(partition, expected_includes):
     stage_set = filesets.Fileset(["a", "(default)/b", "(foo)/c"])
 
-    includes, excludes = filesets._get_file_list(stage_set, partition=partition)
+    includes, excludes = filesets._get_file_list(
+        stage_set, partition=partition, default_partition="default"
+    )
 
     assert includes == expected_includes
     assert excludes == []
@@ -111,7 +113,9 @@ def test_fileset_only_includes(partition, expected_includes):
 def test_fileset_only_excludes(partition, expected_excludes):
     stage_set = filesets.Fileset(["-a", "-(default)/b", "-(foo)/c"])
 
-    includes, excludes = filesets._get_file_list(stage_set, partition=partition)
+    includes, excludes = filesets._get_file_list(
+        stage_set, partition=partition, default_partition="default"
+    )
 
     assert includes == ["*"]
     assert excludes == expected_excludes
@@ -127,7 +131,9 @@ def test_fileset_only_excludes(partition, expected_excludes):
 def test_filesets_excludes_without_relative_paths(abs_entry, abs_filepath):
     with pytest.raises(FilesetError) as raised:
         filesets._get_file_list(
-            filesets.Fileset(["rel", abs_entry], name="test"), partition="default"
+            filesets.Fileset(["rel", abs_entry], name="test"),
+            partition="default",
+            default_partition="default",
         )
     assert raised.value.name == "test"
     assert raised.value.message == f"path {abs_filepath!r} must be relative."
@@ -138,6 +144,7 @@ def test_filesets_excludes_without_relative_paths(abs_entry, abs_filepath):
     [
         ([], [], []),
         (["*"], ["(default)/*"], []),
+        (["(default)/*"], ["(default)/*"], []),
         (["foo", "-bar"], ["(default)/foo"], ["(default)/bar"]),
         (["(foo)/bar", "-baz"], ["(foo)/bar"], ["(default)/baz"]),
         (["(foo)/file1", "-file1"], ["(foo)/file1"], ["(default)/file1"]),
@@ -193,7 +200,9 @@ def test_get_file_list_with_partitions(partition, entries, includes, excludes):
     """Test that partitions are correctly applied to fileset include and excludes."""
     fs = filesets.Fileset(entries)
 
-    actual_includes, actual_excludes = filesets._get_file_list(fs, partition=partition)
+    actual_includes, actual_excludes = filesets._get_file_list(
+        fs, partition=partition, default_partition="default"
+    )
 
     assert includes == actual_includes
     assert excludes == actual_excludes

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,11 @@
 import logging
 import os
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal, TypeVar, cast
+
+from typing_extensions import Self
 
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
@@ -31,6 +34,28 @@ from .overlay_fs import OverlayFS
 
 logger = logging.getLogger(__name__)
 
+_T = TypeVar("_T")
+
+
+def _defer_evaluation(method: Callable[..., _T]) -> Callable[..., _T]:
+    """Wrap methods to defer evaluation.
+
+    Defer evaluation of proxied class methods to happen at execution time.
+    Used to pass repositories to chroot environments in a way that the
+    repository type will only be evaluated inside the chroot environment.
+    """
+    method_name = getattr(method, "__name__", None)
+    instance = getattr(method, "__self__", None)
+
+    if instance is None or method_name is None:
+        raise TypeError("Only bound methods can be deferred")
+
+    def _thunk(*args: Any, **kwargs: Any) -> _T:
+        method = cast(Callable[..., _T], getattr(instance, method_name))
+        return method(*args, **kwargs)
+
+    return _thunk
+
 
 class OverlayManager:
     """Execution time overlay mounting and package installation.
@@ -39,6 +64,8 @@ class OverlayManager:
     :param part_list: A list of all parts in the project.
     :param base_layer_dir: The directory containing the overlay base, or None
         if the project doesn't use overlay parameters.
+    :param cache_level: The number of part layers to be mounted before the
+        package cache.
     :param use_host_sources: Configure chroot to use package sources from
         the the host environment.
     """
@@ -49,6 +76,7 @@ class OverlayManager:
         project_info: ProjectInfo,
         part_list: list[Part],
         base_layer_dir: Path | None,
+        cache_level: int,
         use_host_sources: bool = False,
     ) -> None:
         self._project_info = project_info
@@ -56,12 +84,18 @@ class OverlayManager:
         self._layer_dirs = [p.part_layer_dir for p in part_list]
         self._overlay_fs: OverlayFS | None = None
         self._base_layer_dir = base_layer_dir
+        self._cache_level = cache_level
         self._use_host_sources = use_host_sources
 
     @property
     def base_layer_dir(self) -> Path | None:
         """Return the path to the base layer, if any."""
         return self._base_layer_dir
+
+    @property
+    def cache_level(self) -> int:
+        """The cache layer index above the base layer."""
+        return self._cache_level
 
     def mount_layer(self, part: Part, *, pkg_cache: bool = False) -> None:
         """Mount the overlay step layer stack up to the given part.
@@ -72,13 +106,24 @@ class OverlayManager:
         if not self._base_layer_dir:
             raise RuntimeError("request to mount overlay without a base layer")
 
-        lowers = [self._base_layer_dir]
-
-        if pkg_cache:
-            lowers.append(self._project_info.overlay_packages_dir)
-
+        # The top layer index.
         index = self._part_list.index(part)
+
+        # Lower layers without the cache layer.
+        lowers = [self._base_layer_dir]
         lowers.extend(self._layer_dirs[0:index])
+
+        # Insert the cache layer at the appropriate level. If the layer is 0,
+        # it will be placed immediately above the base layer.
+        if pkg_cache and index >= self._cache_level:
+            level = self._cache_level + 1
+            lowers = [
+                *lowers[0:level],
+                self._project_info.overlay_packages_dir,
+                *lowers[level : index + 1],
+            ]
+
+        # The top layer.
         upper = self._layer_dirs[index]
 
         # lower dirs are stacked from right to left
@@ -99,11 +144,19 @@ class OverlayManager:
                 "request to mount the overlay package cache without a base layer"
             )
 
+        lowers = [self._base_layer_dir]
+        lowers.extend(self._layer_dirs[0 : self._cache_level])
+
+        # Lower dirs are stacked from right to left.
+        lowers.reverse()
+
         self._overlay_fs = OverlayFS(
-            lower_dirs=[self._base_layer_dir],
+            lower_dirs=lowers,
             upper_dir=self._project_info.overlay_packages_dir,
             work_dir=self._project_info.overlay_work_dir,
         )
+
+        logger.debug("Mount cache layer %d", self._cache_level)
 
         self._overlay_fs.mount(self._project_info.overlay_mount_dir)
 
@@ -129,12 +182,14 @@ class OverlayManager:
         if not self._overlay_fs:
             raise RuntimeError("overlay filesystem not mounted")
 
+        logger.debug("Refreshing packages list in overlay")
+
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
         packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
         chroot.chroot(
             mount_dir,
-            packages.Repository.refresh_packages_list,
+            _defer_evaluation(packages.Repository.refresh_packages_list),
             use_host_sources=self._use_host_sources,
         )
 
@@ -143,14 +198,9 @@ class OverlayManager:
 
         :param package_names: The list of packages to download.
         """
-        if not self._overlay_fs:
-            raise RuntimeError("overlay filesystem not mounted")
-
-        mount_dir = self._project_info.overlay_mount_dir
-        chroot.chroot(
-            mount_dir,
-            packages.Repository.download_packages,
-            args=(package_names,),
+        self.run(
+            _defer_evaluation(packages.Repository.download_packages),
+            package_names,
             use_host_sources=self._use_host_sources,
         )
 
@@ -159,16 +209,20 @@ class OverlayManager:
 
         :param package_names: The list of packages to install.
         """
+        self.run(
+            _defer_evaluation(packages.Repository.install_packages),
+            package_names,
+            refresh_package_cache=False,
+            use_host_sources=self._use_host_sources,
+        )
+
+    def run(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+        """Run the given callable inside the chroot environment."""
         if not self._overlay_fs:
             raise RuntimeError("overlay filesystem not mounted")
 
-        mount_dir = self._project_info.overlay_mount_dir
-        chroot.chroot(
-            mount_dir,
-            packages.Repository.install_packages,
-            args=(package_names,),
-            use_host_sources=self._use_host_sources,
-            kwargs={"refresh_package_cache": False},
+        return chroot.chroot(
+            self._project_info.overlay_mount_dir, target, *args, **kwargs
         )
 
 
@@ -192,7 +246,8 @@ class LayerMount:
         self._pkg_cache = pkg_cache
         self._pid = os.getpid()
 
-    def __enter__(self) -> "LayerMount":
+    def __enter__(self) -> Self:
+        logger.debug("---- Enter layer mount context ----")
         self._overlay_manager.mount_layer(
             self._top_part,
             pkg_cache=self._pkg_cache,
@@ -204,6 +259,7 @@ class LayerMount:
         if os.getpid() != self._pid:
             sys.exit()
         self._overlay_manager.unmount()
+        logger.debug("---- Exit layer mount context ----")
         return False
 
     def install_packages(self, package_names: list[str]) -> None:
@@ -225,7 +281,8 @@ class PackageCacheMount:
         self._overlay_manager.mkdirs()
         self._pid = os.getpid()
 
-    def __enter__(self) -> "PackageCacheMount":
+    def __enter__(self) -> Self:
+        logger.debug("---- Enter package cache mount context ----")
         self._overlay_manager.mount_pkg_cache()
         return self
 
@@ -234,6 +291,7 @@ class PackageCacheMount:
         if os.getpid() != self._pid:
             sys.exit()
         self._overlay_manager.unmount()
+        logger.debug("---- Exit package cache mount context ----")
         return False
 
     def refresh_packages_list(self) -> None:
@@ -246,3 +304,11 @@ class PackageCacheMount:
         :param package_names: The list of packages to download.
         """
         self._overlay_manager.download_packages(package_names)
+
+
+class ChrootMount(LayerMount):
+    """Context manager that mounts an overlay for step processing and runs code inside a chroot environment."""
+
+    def __call__(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+        """Synthax sugar method to run within chroot."""
+        return self._overlay_manager.run(target, *args, **kwargs)

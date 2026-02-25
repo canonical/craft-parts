@@ -66,7 +66,7 @@ class OutdatedReport:
 
         :return: Short summary of why the step is outdated.
         """
-        reasons = []
+        reasons: list[str] = []
 
         if self.previous_step_modified:
             reasons.append(f"{self.previous_step_modified.name!r} step")
@@ -77,7 +77,7 @@ class OutdatedReport:
         if not reasons:
             return ""
 
-        return f'{formatting_utils.humanize_list(reasons, "and", "{}")} changed'
+        return f"{formatting_utils.humanize_list(reasons, 'and', '{}')} changed"
 
 
 class DirtyReport:
@@ -109,12 +109,12 @@ class DirtyReport:
         self.changed_dependencies = changed_dependencies
 
     # pylint: disable=too-many-branches
-    def reason(self) -> str:
+    def reason(self) -> str:  # noqa: PLR0912
         """Get summarized report.
 
         :return: Short summary of why the part is dirty.
         """
-        reasons = []
+        reasons: list[str] = []
 
         reasons_count = 0
         if self.dirty_properties:
@@ -153,6 +153,6 @@ class DirtyReport:
         if not reasons:
             return ""
 
-        return f'{formatting_utils.humanize_list(reasons, "and", "{}")} changed'
+        return f"{formatting_utils.humanize_list(reasons, 'and', '{}')} changed"
 
     # pylint: enable=too-many-branches

@@ -18,12 +18,31 @@
 
 from .layers import LayerHash, LayerStateManager
 from .overlay_fs import is_opaque_dir, is_whiteout_file
-from .overlay_manager import LayerMount, OverlayManager, PackageCacheMount
+from .overlay_manager import LayerMount, OverlayManager, PackageCacheMount, ChrootMount
 from .overlays import (
     is_oci_opaque_dir,
+    is_oci_whiteout,
     is_oci_whiteout_file,
     oci_opaque_dir,
     oci_whited_out_file,
     oci_whiteout,
     visible_in_layer,
 )
+
+__all__ = [
+    "ChrootMount",
+    "is_oci_opaque_dir",
+    "is_oci_whiteout",
+    "is_oci_whiteout_file",
+    "is_opaque_dir",
+    "is_whiteout_file",
+    "LayerHash",
+    "LayerMount",
+    "LayerStateManager",
+    "oci_opaque_dir",
+    "oci_whiteout",
+    "oci_whited_out_file",
+    "OverlayManager",
+    "PackageCacheMount",
+    "visible_in_layer",
+]

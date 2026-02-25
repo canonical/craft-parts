@@ -16,30 +16,38 @@
 
 """Execute a callable in a chroot environment."""
 
+from __future__ import annotations
+
 import logging
 import multiprocessing
 import os
 import sys
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from multiprocessing.connection import Connection
 from pathlib import Path
 from shutil import copytree
-from typing import Any
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 from craft_parts.utils import os_utils
 
 from . import errors
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from multiprocessing.connection import Connection
+
 logger = logging.getLogger(__name__)
+
+_T = TypeVar("_T")
 
 
 def chroot(
     path: Path,
-    target: Callable,
-    use_host_sources: bool = False,  # noqa: FBT001, FBT002
-    args: tuple[Any] = (),  # type: ignore  # noqa: PGH003
-    kwargs: Mapping[str, Any] = {},
-) -> Any:  # noqa: ANN401
+    target: Callable[..., _T],
+    *args: Any,
+    use_host_sources: bool = False,
+    **kwargs: Any,
+) -> _T:
     """Execute a callable in a chroot environment.
 
     :param path: The new filesystem root.
@@ -50,6 +58,12 @@ def chroot(
     :returns: The target function return value.
     """
     logger.debug("[pid=%d] parent process", os.getpid())
+
+    # This typehint technically should be "Connection[Any, tuple[_T, None] | tuple[None, str]]"
+    # However, types surrounding multiprocessing are finnicky at best and the way we handle the
+    # result here makes the typehint effectively true, since we don't attempt to access the first
+    # field of the tuple unless the second field is None.
+    parent_conn: Connection[Any, tuple[_T, str | None]]
     parent_conn, child_conn = multiprocessing.Pipe()
     child = multiprocessing.Process(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
@@ -72,10 +86,10 @@ def chroot(
 
 def _runner(
     path: Path,
-    conn: Connection,
-    target: Callable,
-    args: tuple,
-    kwargs: dict,
+    conn: Connection[tuple[_T, str | None], Any],
+    target: Callable[..., _T],
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
 ) -> None:
     """Chroot to the execution directory and call the target function."""
     logger.debug("[pid=%d] child process: target=%r", os.getpid(), target)
@@ -85,7 +99,8 @@ def _runner(
         os.chroot(path)
         res = target(*args, **kwargs)
     except Exception as exc:  # noqa: BLE001
-        conn.send((None, str(exc)))
+        # Just send None for data since it won't be accessed anyways
+        conn.send((None, str(exc)))  # type: ignore[arg-type]
         return
 
     conn.send((res, None))
@@ -120,8 +135,47 @@ def _setup_chroot(path: Path, use_host_sources: bool) -> None:  # noqa: FBT001
 
         if use_host_sources:
             _host_compatible_chroot(path)
-
             _setup_chroot_mounts(path, _ubuntu_apt_mounts)
+
+
+class _Mount(NamedTuple):
+    """Mount entry for chroot setup."""
+
+    fstype: str | None
+    src: str
+    mountpoint: str
+    options: list[str] | None
+
+
+def _setup_chroot_linux(path: Path) -> None:
+    """Linux-specific chroot environment preparation."""
+    # Some images (such as cloudimgs) symlink ``/etc/resolv.conf`` to
+    # ``/run/systemd/resolve/stub-resolv.conf``. We want resolv.conf to be
+    # a regular file to bind-mount the host resolver configuration on.
+    #
+    # There's no need to restore the file to its original condition because
+    # this operation happens on a temporary filesystem layer.
+    resolv_conf = path / "etc/resolv.conf"
+    if resolv_conf.is_symlink():
+        resolv_conf.unlink()
+        resolv_conf.touch()
+    elif not resolv_conf.exists() and resolv_conf.parent.is_dir():
+        resolv_conf.touch()
+
+    pid = os.getpid()
+    for entry in _linux_mounts:
+        args = entry.options or []
+        if entry.fstype:
+            args.append(f"-t{entry.fstype}")
+
+        mountpoint = path / entry.mountpoint.lstrip("/")
+
+        # Only mount if mountpoint exists.
+        if mountpoint.exists():
+            logger.debug("[pid=%d] mount %r on chroot", pid, str(mountpoint))
+            os_utils.mount(entry.src, str(mountpoint), *args)
+        else:
+            logger.debug("[pid=%d] mountpoint %r does not exist", pid, str(mountpoint))
 
     logger.debug("chroot setup complete")
 
@@ -174,7 +228,7 @@ class _Mount:
 
     def _umount(self, chroot: Path, *args: str) -> None:
         abs_dst = self.get_abs_path(chroot, self.dst)
-        os_utils.umount(str(abs_dst), *args)
+        os_utils.umount(str(abs_dst), "--recursive", *args)
 
     def get_abs_path(self, path: Path, chroot_path: Path) -> Path:
         """Make `chroot_path` relative to host `path`."""
@@ -216,6 +270,12 @@ class _Mount:
             abs_dst = self.get_abs_path(chroot, self.dst)
             logger.warning("[pid=%d] umount: %r not found!", os.getpid(), abs_dst)
             return
+
+        # The activity executed in the chroot can lead to additional mounts
+        # under those mounted to prepare the chroot.
+        # Remount as private to ease unmounting.
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        os_utils.mount(str(abs_dst), "--make-rprivate")
 
         self._umount(chroot, *args)
 
@@ -276,7 +336,7 @@ class _RBindMount(_BindMount):
     bind_type = "rbind"
 
     def _umount(self, chroot: Path, *args: str) -> None:
-        super()._umount(chroot, "--recursive", "--lazy", *args)
+        super()._umount(chroot, *args, "--lazy")
 
 
 class _TempFSClone(_Mount):

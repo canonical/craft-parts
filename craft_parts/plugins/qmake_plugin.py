@@ -20,7 +20,7 @@
 
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 from .properties import PluginProperties

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2024 Canonical Ltd.
+# Copyright 2016-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -32,7 +32,9 @@ class TestFileMigrationErrors:
     def test_migratable_filesets_partition_not_defined_error(self):
         """Error if the partition feature is enabled and a partition is not provided."""
         with pytest.raises(errors.FeatureError) as raised:
-            filesets.migratable_filesets(Fileset(["*"]), "install", partition=None)
+            filesets.migratable_filesets(
+                Fileset(["*"]), "install", default_partition="default", partition=None
+            )
 
         assert features.Features().enable_partitions
         assert (

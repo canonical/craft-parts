@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,12 +16,14 @@
 
 """Definitions and helpers to handle parts."""
 
+import logging
 import re
+import textwrap
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import (
     BaseModel,
@@ -31,6 +33,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from typing_extensions import Self
 
 from craft_parts import errors, plugins
 from craft_parts.constraints import RelativePathStr
@@ -40,47 +43,511 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
-from craft_parts.utils.partition_utils import get_partition_dir_map
+from craft_parts.utils.partition_utils import (
+    DEFAULT_PARTITION,
+    OVERLAY_PARTITION,
+    get_partition_dir_map,
+)
 from craft_parts.utils.path_utils import get_partition_and_path
+
+logger = logging.getLogger(__name__)
+
+_T_validate = TypeVar("_T_validate")
 
 
 class PartSpec(BaseModel):
     """The part specification data."""
 
-    plugin: str | None = None
-    source: str | None = None
-    source_checksum: str = ""
+    plugin: str | None = Field(
+        default=None,
+        description="The plugin to build the part with.",
+        examples=["python", "dump"],
+    )
+    """The plugin to build the part with.
+
+    During the build step, the plugin prepares the part's files with the build system
+    of its language or framework.
+    """
+
+    source: str | None = Field(
+        default=None,
+        description="The location of the source files for the part.",
+        examples=[".", "https://github.com/canonical/dqlite"],
+    )
+    """The location of the source files for the part.
+
+    During the pull step, these files are placed in the part's build environment.
+
+    Enter either an HTTP/HTTPS URL or the path to the local project directory.
+    """
+
+    source_checksum: str = Field(
+        default="",
+        description="The checksum of the downloaded source, to ensure integrity.",
+        examples=[
+            "sha256/1451d01ee3a21100340aed867d0b799f46f0b1749680028d38c3f5d0128fb8a7"
+        ],
+    )
+    """The checksum of the downloaded source, to ensure integrity.
+
+    During the pull step, the part compares the checksum against that of the downloaded
+    files.
+
+    Checksums can be generated with any of the hashing algorithms supported by Python's
+    `hashlib
+    <https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available>`_.
+    """
+
     source_channel: str | None = None
-    source_branch: str = ""
-    source_commit: str = ""
-    source_depth: int = 0
-    source_subdir: str = ""
-    source_submodules: list[str] | None = None
-    source_tag: str = ""
-    source_type: str = ""
-    disable_parallel: bool = False
-    after: list[str] = []
-    overlay_packages: list[str] = []
-    stage_snaps: list[str] = []
-    stage_packages: list[str] = []
-    build_snaps: list[str] = []
-    build_packages: list[str] = []
-    build_environment: list[dict[str, str]] = []
-    build_attributes: list[str] = []
-    organize_files: dict[str, str] = Field(default_factory=dict, alias="organize")
-    overlay_files: list[str] = Field(default_factory=lambda: ["*"], alias="overlay")
+
+    source_branch: str = Field(
+        default="",
+        description="The target branch for Git sources.",
+        examples=["main", "hotfix/2.10"],
+    )
+    """If the source is a Git repository, this key specifies the target branch.
+
+    During the pull step, the part fetches the repository from the earliest
+    available commit up to the tip of this branch.
+
+    The commit history can be truncated by specifying a ``source-depth``.
+
+    This key is mutually incompatible with ``source-commit`` and ``source-tag``.
+    """
+
+    source_commit: str = Field(
+        default="",
+        description="The target commit for Git sources.",
+        examples=["36086af03fc4941a8ac219648ce77401743f3ae0"],
+    )
+    """If the source is a Git repository, this key specifies the target commit.
+    Both short and long SHA hashes are supported.
+
+    During the pull step, the part fetches the repository from the earliest available
+    commit up to this commit.
+
+    The commit history can be truncated by specifying a ``source-depth``.
+
+    This key is mutually incompatible with ``source-branch`` and ``source-tag``.
+    """
+
+    source_depth: int = Field(
+        default=0,
+        description="The commit depth to fetch for Git sources.",
+        examples=["1"],
+    )
+    """If the source is a Git repository, this key specifies how far back in the
+    commit history to fetch.
+
+    During the pull step, the part fetches the repository from the specified commit
+    up to the target commit, the target tag, or the tip of the target branch.
+
+    Equivalent to the
+    :literalref:`--depth<https://git-scm.com/docs/git-pull#Documentation/git-pull.txt---depthdepth>`
+    parameter of ``git fetch``.
+
+    If unset, the part fetches the full repository history up to the target commit, the
+    target tag, or the tip of the target branch.
+    """
+
+    source_subdir: str = Field(
+        default="",
+        description="The subdirectory of the unpacked source where the build will occur.",
+        examples=["src", "demo_nodes_cpp"],
+    )
+    """The subdirectory of the unpacked source where the build will occur.
+
+    During the build step, build commands are restricted to the specified path.
+
+    If unset, the build can access the entire file tree of the source.
+
+    This key does not affect commands specified with ``override-build``.
+    """
+
+    source_submodules: list[str] | None = Field(
+        default=None,
+        description="The registered submodules to fetch from Git sources.",
+        examples=["[third_party/googletest, third_party/jsoncpp]", "[libbpf]"],
+    )
+    """If the source is a Git repository, this key specifies the registered Git
+    submodules that the project also needs.
+
+    During the pull step, the part fetches these submodules.
+
+    Equivalent to the
+    :literalref:`--recurse-submodules<https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---recurse-submodulespathspec>`
+    parameter of ``git clone``.
+
+    If unset, the part will fetch all of the repository's submodules.
+    """
+
+    source_tag: str = Field(
+        default="",
+        description="The target tag for Git sources.",
+        examples=["1.0.1"],
+    )
+    """If the source is a Git repository, this key specifies the target tag.
+
+    During the pull step, the part fetches the repository from the earliest available
+    commit up to the commit with this tag.
+
+    The commit history can be truncated by specifying a ``source-depth``.
+
+    This key is mutually incompatible with ``source-branch`` and ``source-commit``.
+    """
+
+    source_type: str = Field(
+        default="",
+        description="The format of the part's source.",
+        examples=["git", "local"],
+    )
+    """The format of the part's source.
+
+    During the pull step, the part expects the source to behave like the specified
+    format.
+
+    If unset, the part attempts to auto-detect the format.
+
+    Supported formats include container types like ``.tar`` files and Debian packages,
+    version-controlled directories like Git repositories, and local files.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``deb``
+          - Debian package
+        * - ``git``
+          - Git repository
+        * - ``rpm``
+          - Red Hat package
+        * - ``snap``
+          - Snap container format
+        * - ``tar``
+          - Tarball archive
+        * - ``zip``
+          - ZIP file
+        * - ``local``
+          - Local directory or file in the project directory
+        * - ``file``
+          - A "plain" file retrieved from the internet
+
+    """
+
+    disable_parallel: bool = Field(
+        default=False,
+        description="Whether to disable CPU multithreading during the build step.",
+        examples=["true"],
+    )
+    """Whether to disable CPU multithreading during the build step.
+
+    If unset, the build defaults to multithreading.
+    """
+
+    after: list[str] = Field(
+        default=[],
+        description="The parts to process before starting this part's build.",
+        examples=["[build-deps, daemon]"],
+    )
+    """The parts to process before starting this part's build.
+
+    During the build step, this part waits for all of the listed parts to reach the
+    stage step before it begins building.
+
+    The purpose of this key is to stagger the part processing order so that
+    interrelated parts can provide data to each other.
+
+    When this key is set, the part queue follows modified rules during the lifecycle:
+
+    * Parts are processed alphabetically by name.
+    * When the build reaches a part that another depends on, the dependent part will
+      only start its build and stage steps after the initial part finishes its stage
+      step.
+    * After the string of dependent parts completes their lifecycles, the queue
+      continues to the next part in alphabetical order.
+
+    """
+
+    overlay_packages: list[str] = Field(
+        default=[],
+        description="The packages to install in the part's layer.",
+        examples=["[ed]"],
+    )
+    """The packages to install in the part's layer.
+
+    During the overlay step, these packages are installed into the part's layer
+    using the base layer's package manager.
+    """
+
+    stage_snaps: list[str] = Field(
+        default=[],
+        description="The snaps to include in the stage environment.",
+        examples=["[go/1.17, chisel/latest/candidate, mir-kiosk-x11]"],
+    )
+    """During the stage step, these snaps are included in the stage environment.
+
+    Entries can be in one of three formats:
+
+    * ``<snap-name>``
+    * ``<snap-name>/<channel-name>``
+    * ``<snap-name>/<channel-name>/<version-name>``
+
+    If an entry contains no version or channel, ``latest/stable`` is used.
+    """
+
+    stage_packages: list[str] = Field(
+        default=[],
+        description="The packages or Chisel slices to include in the stage environment.",
+        examples=["[curl, libxml2]"],
+    )
+    """During the stage step, these packages are included in the stage environment
+    alongside the build artifacts.
+
+    Chisel slices can be listed using the ``<package-name>_<slice-name>`` syntax.
+
+    Listing both packages and slices in the same ``stage-packages`` key is not
+    currently supported.
+    """
+
+    build_snaps: list[str] = Field(
+        default=[],
+        description="The snaps to install in the build environment.",
+        examples=["[go/latest/stable, node/stable]"],
+    )
+    """The snaps to install during the build step, before the build starts. The part
+    makes them available in the build environment.
+
+    Entries can be listed in one of three formats.
+
+    * ``<snap-name>``
+    * ``<snap-name>/<channel-name>``
+    * ``<snap-name>/<channel-name>/<version-name>``
+
+    If no version or channel is provided, ``latest/stable`` is used.
+    """
+
+    build_packages: list[str] = Field(
+        default=[],
+        description="The packages to install in the build environment.",
+        examples=["[git, libffi-dev, libssl-dev]"],
+    )
+    """The packages to install during the build step, before the build starts. The part
+    installs them into the build environment using the host's native package manager.
+
+    Build packages must be listed by their name on the host system.
+    """
+
+    build_environment: list[dict[str, str]] = Field(
+        default=[],
+        description="The environment variables to define for the build step, as key-value pairs.",
+        examples=['[{MESSAGE: "Hello world!"}, {NAME: "Craft Parts"}]'],
+    )
+
+    build_attributes: list[str] = Field(
+        default=[],
+        description="Identifiers that control specific behaviors during the build.",
+        examples=["[enable-usrmerge]", "[disable-usrmerge]"],
+    )
+    """Special identifiers that change some features and behaviors during the build.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``enable-usrmerge``
+          - Fills the ``${CRAFT_PART_INSTALL}`` directory with a merged ``/usr``
+            directory before running the part's build step.
+        * - ``disable-usrmerge``
+          - Prevents a merged ``/usr`` directory from being assembled for the build
+            step. Available in lifecycles in which the directory would be merged by
+            default.
+    """
+
+    organize_files: dict[str, str] = Field(
+        default_factory=dict,
+        alias="organize",
+        description="A map of files from the build directory to their destinations in the stage directory.",
+        examples=["{hello.py: bin/hello}"],
+    )
+    """A map of files from the build directory to their destinations in the stage
+    directory.
+
+    Each pair of source and destination paths is represented as a nested key of the form
+    ``<source-path>: <destination-path>``.
+
+    At the end of the build step, the files at the source paths are copied to
+    their destination paths in the stage directory.
+    """
+
+    overlay_files: list[str] = Field(
+        default_factory=lambda: ["*"],
+        alias="overlay",
+        description="The files to copy from the part's layer to the stage directory.",
+        examples=["[bin, usr/bin]", "[-etc/cloud/cloud.cfg.d/90_dpkg.cfg]"],
+    )
+    """The files to copy from the part's layer to the stage directory.
+
+    During the overlay step, files listed under this key are kept in the
+    part's layer unless prefixed with ``-``, which removes them. Any
+    files left in the part's layer are copied to the stage directory during
+    the stage step.
+
+    This operation only applies to files that are present in the part's layer
+    -- files in lower layers aren't affected. If a file is removed and a lower
+    layer contains a file with the same path, the latter will be copied to
+    the stage directory.
+
+    Paths support wildcards (``*``) and must be relative to the working
+    directory where they will be used.
+    """
+
     stage_files: list[RelativePathStr] = Field(
-        default_factory=lambda: ["*"], alias="stage"
+        default_factory=lambda: ["*"],
+        alias="stage",
+        description="The files to copy from the build directory to the stage directory.",
+        examples=["[usr/bin/*, usr/share]", "[-usr, zfsutils-linux]"],
     )
+    """During the stage step, any specified files are copied from the build directory to
+    the stage directory.
+
+    Paths support wildcards (``*``) and must be relative to the working directory where
+    they will be used.
+    """
+
     prime_files: list[RelativePathStr] = Field(
-        default_factory=lambda: ["*"], alias="prime"
+        default_factory=lambda: ["*"],
+        alias="prime",
+        description="",
+        examples=["[usr/lib/*/qt6/plugins/tls/*, -usr/share/thumbnailers]"],
     )
-    override_pull: str | None = None
-    overlay_script: str | None = None
-    override_build: str | None = None
-    override_stage: str | None = None
-    override_prime: str | None = None
-    permissions: list[Permissions] = []
+    """During the prime step, any specified files are copied from the stage directory
+    to the final payload.
+
+    Paths support wildcards (``*``) and must be relative to the working directory where
+    they will be used.
+    """
+
+    override_pull: str | None = Field(
+        default=None,
+        description="The commands to run instead of the default behavior of the pull step.",
+        examples=[
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  rm $CRAFT_PART_SRC/pyproject.toml"""
+            )
+        ],
+    )
+    """The commands to run instead of the default behavior of the pull step.
+
+    The standard pull step actions can be performed by calling ``craftctl default``.
+    """
+
+    overlay_script: str | None = Field(
+        default=None,
+        description="The commands to run after the part's overlay packages are installed.",
+        examples=[
+            textwrap.dedent(
+                """\
+                |
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/vi ${CRAFT_OVERLAY}/usr/bin/vim*
+                  rm -f ${CRAFT_OVERLAY}/usr/bin/emacs*
+                  rm -f ${CRAFT_OVERLAY}/bin/nano"""
+            )
+        ],
+    )
+    """The commands to run after the part's overlay packages are installed.
+
+    If unset, the part's layer will only contain the packages specified
+    in ``overlay-packages``.
+    """
+
+    override_overlay: str | None = Field(
+        default=None,
+        description="Shell script to run inside the overlay chroot after mounting.",
+        examples=["echo 'hello from chroot' > /root/test.txt"],
+    )
+    """A shell script that runs inside the part's overlay chroot.
+
+    This is executed inside the overlay mount namespace using a chroot.
+    """
+
+    override_build: str | None = Field(
+        default=None,
+        description="The commands to run instead of the default behavior of the build step.",
+        examples=[
+            textwrap.dedent(
+                """\
+                |
+                  cd cmd/webhook
+                  mkdir $CRAFT_PART_INSTALL/ko-app
+                  go build -o $CRAFT_PART_INSTALL/ko-app/webhook -a ."""
+            ),
+        ],
+    )
+    """The commands to run instead of the default behavior of the build step.
+
+    The standard build step actions can be performed by calling ``craftctl default``.
+
+    Excluding ``craftctl default``, these commands don't respect the ``source-subdir``
+    value and are executed on the source's root directory.
+    """
+
+    override_stage: str | None = Field(
+        default=None,
+        description="The commands to run instead of the default behavior of the stage step.",
+        examples=[
+            textwrap.dedent(
+                '''\
+                |
+                  craftctl default
+                  chown -R 499 "${CRAFT_PART_INSTALL}/entrypoint.sh"'''
+            )
+        ],
+    )
+    """The commands to run instead of the default behavior of the stage step.
+
+    The standard stage step actions can be performed by calling ``craftctl default``.
+    """
+
+    override_prime: str | None = Field(
+        default=None,
+        description="The commands to run instead of the default behavior of the prime step.",
+        examples=[
+            textwrap.dedent(
+                """\
+                |
+                  craftctl default
+                  mkdir -p $CRAFT_PRIME/var/lib/mysql
+                  mkdir -p $CRAFT_PRIME/var/lib/mysqld"""
+            )
+        ],
+    )
+    """The commands to run instead of the default behavior of the prime step.
+
+    The standard prime step actions can be performed by calling ``craftctl default``.
+    """
+
+    permissions: list[Permissions] = Field(
+        default=[],
+        description="The ownership and permission settings for a set of files in the part's prime directory.",
+        examples=[
+            '[{owner: 2000, group: 2000}, {path: srv/indico/start-indico.sh, mode: "544"}, {path: etc/, mode: "755"}]'
+        ],
+    )
+    """The ownership and permission settings for a set of files in the part's prime
+    directory.
+
+    The files at ``path`` will be assigned an ``owner`` and a ``group``, with the read,
+    write, and execute permissions of each being determined by the value of ``mode``.
+    """
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -90,13 +557,24 @@ class PartSpec(BaseModel):
         coerce_numbers_to_str=True,
     )
 
-    @field_validator("overlay_packages", "overlay_files", "overlay_script")
+    @field_validator(
+        "overlay_packages", "overlay_files", "overlay_script", "override_overlay"
+    )
     @classmethod
-    def validate_overlay_feature(cls, item: Any) -> Any:  # noqa: ANN401
+    def validate_overlay_feature(cls, item: _T_validate) -> _T_validate:
         """Check if overlay attributes specified when feature is disabled."""
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")
         return item
+
+    @model_validator(mode="after")
+    def validate_overlay_mutually_exclusive(self) -> Self:
+        """Check that override-overlay and overlay-script are not both defined."""
+        if self.override_overlay is not None and self.overlay_script is not None:
+            raise ValueError(
+                "override-overlay and overlay-script cannot both be defined"
+            )
+        return self
 
     @model_validator(mode="before")
     @classmethod
@@ -134,7 +612,7 @@ class PartSpec(BaseModel):
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):
+        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("part data is not a dictionary")
 
         return PartSpec(**data)
@@ -157,7 +635,7 @@ class PartSpec(BaseModel):
         if step == Step.PULL:
             return self.override_pull
         if step == Step.OVERLAY:
-            return self.overlay_script
+            return self.overlay_script or self.override_overlay
         if step == Step.BUILD:
             return self.override_build
         if step == Step.STAGE:
@@ -172,9 +650,22 @@ class PartSpec(BaseModel):
         """Return whether this spec declares overlay content."""
         return bool(
             self.overlay_packages
+            or self.override_overlay is not None
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
+            # Don't include organize to overlay in this verification.
         )
+
+    @property
+    def organizes_to_overlay(self) -> bool:
+        """Return whether the part organizes file to the overlay."""
+        if not Features().enable_partitions or not Features().enable_overlay:
+            return False
+        for dest in self.organize_files.values():
+            partition, _ = get_partition_and_path(dest, DEFAULT_PARTITION)
+            if partition == OVERLAY_PARTITION:
+                return True
+        return False
 
     @property
     def has_slices(self) -> bool:
@@ -221,7 +712,7 @@ class Part:
         partitions: Sequence[str] | None = None,
     ) -> None:
         self._partitions = partitions
-        if not isinstance(data, dict):
+        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise errors.PartSpecificationError(
                 part_name=name, message="part data is not a dictionary"
             )
@@ -302,18 +793,24 @@ class Part:
         return self._part_dir / "install"
 
     @property
+    def part_export_dir(self) -> Path:
+        """Return the subdirectory to install internal part build artifacts."""
+        return self._part_dir / "export"
+
+    @property
     def part_install_dirs(self) -> Mapping[str | None, Path]:
         """Return a mapping of partition names to install directories.
 
         With partitions disabled, the only partition name is ``None``
         """
-        return MappingProxyType(
-            get_partition_dir_map(
-                base_dir=self.dirs.work_dir,
-                partitions=self._partitions,
-                suffix=f"parts/{self.name}/install",
-            )
+        dir_map = get_partition_dir_map(
+            base_dir=self.dirs.work_dir,
+            partitions=self._partitions,
+            suffix=f"parts/{self.name}/install",
         )
+        if self.organizes_to_overlay:
+            dir_map[OVERLAY_PARTITION] = self.dirs.overlay_mount_dir
+        return MappingProxyType(dir_map)
 
     @property
     def part_state_dir(self) -> Path:
@@ -346,9 +843,36 @@ class Part:
         return self._part_dir / "layer"
 
     @property
+    def part_layer_dirs(self) -> Mapping[str | None, Path]:
+        """Return a mapping of partition names to layer directories.
+
+        With partitions disabled, the only partition name is ``None``
+        """
+        return MappingProxyType(
+            get_partition_dir_map(
+                base_dir=self.dirs.work_dir,
+                partitions=self._partitions,
+                suffix=f"parts/{self.name}/layer",
+            )
+        )
+
+    @property
     def overlay_dir(self) -> Path:
         """Return the overlay directory."""
         return self.dirs.overlay_dir
+
+    @property
+    def overlay_dirs(self) -> Mapping[str | None, Path]:
+        """A mapping of partition name to partition overlay directory.
+
+        If partitions are disabled, the only key is ``None``.
+        """
+        return self.dirs.overlay_dirs
+
+    @property
+    def backstage_dir(self) -> Path:
+        """Return the backstage area containing internal artifacts from all parts."""
+        return self.dirs.backstage_dir
 
     @property
     def stage_dir(self) -> Path:
@@ -395,6 +919,11 @@ class Part:
         return self.spec.has_overlay
 
     @property
+    def organizes_to_overlay(self) -> bool:
+        """Return whether this part organizes files to overlay."""
+        return self.spec.organizes_to_overlay
+
+    @property
     def has_slices(self) -> bool:
         """Return whether this part has slices in its stage-packages."""
         return self.spec.has_slices
@@ -403,6 +932,13 @@ class Part:
     def has_chisel_as_build_snap(self) -> bool:
         """Return whether this part has chisel in its build-snaps."""
         return self.spec.has_chisel_as_build_snap
+
+    @property
+    def default_partition(self) -> str:
+        """Get the "default" partition from a partition list."""
+        if self._partitions:
+            return self._partitions[0]
+        return DEFAULT_PARTITION
 
     def _check_partition_feature(self) -> None:
         """Check if the partitions feature is properly used.
@@ -498,7 +1034,10 @@ class Part:
             match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if str(partition) not in self._partitions:
+                if str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
+                    # If overlays are enabled we can organize to (overlay)
+                    pass
+                elif str(partition) not in self._partitions:
                     error_list.append(
                         f"    unknown partition {partition!r} in {filepath!r}"
                     )
@@ -512,7 +1051,7 @@ class Part:
                         )
 
             if require_inner_path:
-                _, inner_path = get_partition_and_path(filepath)
+                _, inner_path = get_partition_and_path(filepath, self.default_partition)
                 if not inner_path:
                     error_list.append(
                         f"    no path specified after partition in {filepath!r}"
@@ -569,6 +1108,62 @@ def part_list_by_name(names: Sequence[str] | None, part_list: list[Part]) -> lis
     return selected_parts
 
 
+def _find_dependency_cycle(parts: list[Part]) -> list[str] | None:
+    """Find a cycle in the dependency graph.
+
+    :param parts: The list of parts with circular dependencies.
+
+    :returns: A list of part names showing the actual dependency chain in the cycle,
+             including the first part repeated at the end to show it's a cycle.
+             The list starts with the alphabetically first part in the cycle for
+             consistency across runs. Returns None if no cycle is found.
+    """
+    # Build a dependency map for the remaining parts
+    part_names = {p.name for p in parts}
+    dep_map = {
+        p.name: [dep for dep in p.dependencies if dep in part_names] for p in parts
+    }
+
+    # Find a cycle using DFS
+    def find_cycle_from(
+        start: str, visited: set[str], path: list[str]
+    ) -> list[str] | None:
+        if start in path:
+            # Found a cycle, return the cycle portion
+            cycle_start = path.index(start)
+            return path[cycle_start:]
+
+        if start in visited:
+            return None
+
+        visited.add(start)
+        path.append(start)
+
+        for dep in dep_map.get(start, []):
+            cycle = find_cycle_from(dep, visited, path)
+            if cycle:
+                return cycle
+
+        path.pop()
+        return None
+
+    # Try to find a cycle starting from each part
+    for part in parts:
+        cycle = find_cycle_from(part.name, set(), [])
+        if cycle:
+            # Normalize the cycle to start from the alphabetically first part
+            # This ensures consistent ordering across runs
+            min_part = min(cycle)
+            min_index = cycle.index(min_part)
+            normalized = cycle[min_index:] + cycle[:min_index]
+            # Append the first part at the end to show it's a cycle
+            return [*normalized, normalized[0]]
+
+    # If no cycle found (shouldn't happen), log debug message and return None
+    logger.debug("Unable to determine which parts are involved in the cycle.")
+    return None
+
+
 def sort_parts(part_list: list[Part]) -> list[Part]:
     """Perform an inefficient but easy to follow sorting of parts.
 
@@ -584,6 +1179,19 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
     # simplest way to do this is to sort them by name.
     all_parts = sorted(part_list, key=lambda part: part.name, reverse=True)
 
+    # Change the implicit order so that parts that organize to them
+    # are at the end of the list (because the order is reversed).
+    organize_to_overlay_parts: list[Part] = []
+    other_parts: list[Part] = []
+    for part in all_parts:
+        if part.organizes_to_overlay:
+            organize_to_overlay_parts.append(part)
+        else:
+            other_parts.append(part)
+
+    all_parts = [*other_parts, *organize_to_overlay_parts]
+
+    # Process explicit ordering set using the "after" key.
     while all_parts:
         top_part = None
 
@@ -597,7 +1205,9 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
                 top_part = part
                 break
         if not top_part:
-            raise errors.PartDependencyCycle
+            # Found a circular dependency - identify the parts involved
+            cycle = _find_dependency_cycle(all_parts)
+            raise errors.PartDependencyCycle(part_names=cycle)
 
         sorted_parts = [top_part, *sorted_parts]
         all_parts.remove(top_part)
@@ -664,7 +1274,7 @@ def get_parts_with_overlay(*, part_list: list[Part]) -> list[Part]:
 
     :return: A list of parts with overlay parameters.
     """
-    return [p for p in part_list if p.has_overlay]
+    return [p for p in part_list if p.has_overlay or p.organizes_to_overlay]
 
 
 def validate_part(data: dict[str, Any]) -> None:
@@ -706,7 +1316,7 @@ def part_has_chisel_as_build_snap(data: dict[str, Any]) -> bool:
 
 
 def _get_part_spec(data: dict[str, Any]) -> PartSpec:
-    if not isinstance(data, dict):
+    if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise TypeError("value must be a dictionary")
 
     # copy the original data, we'll modify it
@@ -722,5 +1332,6 @@ def _get_part_spec(data: dict[str, Any]) -> PartSpec:
     plugin_class.properties_class.unmarshal(spec)
 
     # validate common part properties
-    part_spec = plugins.extract_part_properties(spec, plugin_name=plugin_name)
+    part_spec = plugins.validate_and_extract(spec, plugin_name=plugin_name)
+
     return PartSpec(**part_spec)

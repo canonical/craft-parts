@@ -41,9 +41,7 @@ class YUMRepository(BaseRepository):
         )
 
     @classmethod
-    def get_package_libraries(
-        cls, package_name: str
-    ) -> set[str]:  # pylint: disable=unused-argument
+    def get_package_libraries(cls, package_name: str) -> set[str]:  # pylint: disable=unused-argument
         """Return a list of libraries in package_name.
 
         XXX: method left out of YUMRepository's MVP; cannot return a sane default so
@@ -54,25 +52,27 @@ class YUMRepository(BaseRepository):
     @classmethod
     def get_packages_for_source_type(cls, source_type: str) -> set[str]:
         """Return a list of packages required to work with source_type."""
-        if source_type == "bzr":
-            packages = {"bzr"}
-        elif source_type == "git":
-            packages = {"git"}
-        elif source_type == "tar":
-            packages = {"tar"}
-        elif source_type in ["hg", "mercurial"]:
-            packages = {"mercurial"}
-        elif source_type in ["svn", "subversion"]:
-            packages = {"subversion"}
-        elif source_type in ["rpm2cpio", "rpm"]:
-            # installed by default in CentOS systems by the rpm package
-            packages = set()
-        elif source_type == "7zip":
-            packages = {"p7zip"}
-        elif source_type == "deb":
-            raise NotImplementedError("Deb files not yet supported on this base.")
-        else:
-            packages = set()
+        packages: set[str]
+        match source_type:
+            case "bzr":
+                packages = {"bzr"}
+            case "git":
+                packages = {"git"}
+            case "tar":
+                packages = {"tar"}
+            case "hg" | "mercurial":
+                packages = {"mercurial"}
+            case "svn" | "subversion":
+                packages = {"subversion"}
+            case "rpm2cpio" | "rpm":
+                # installed by default in CentOS systems by the rpm package
+                packages = set()
+            case "7zip":
+                packages = {"p7zip"}
+            case "deb":
+                raise NotImplementedError("Deb files not yet supported on this base.")
+            case _:
+                packages = set()
 
         return packages
 
@@ -141,10 +141,6 @@ class YUMRepository(BaseRepository):
             else:
                 logger.debug("Requested packages already installed: %s", package_names)
 
-        # XXX Facundo 2023-02-07: the information returned by this method is not used
-        # anywhere, so we should clean it up and just return None (here, and in the
-        # Ubuntu repository too, where a further cleaning should be done) -- related
-        # to this, `list_only` should go away.
         return []
 
     @classmethod

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021,2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,6 @@
 
 from collections.abc import Sequence
 from pathlib import Path
-from types import MappingProxyType
 
 from craft_parts.errors import PartitionNotFound, PartitionUsageError
 from craft_parts.utils import partition_utils
@@ -56,6 +55,7 @@ class ProjectDirs:
         self.overlay_packages_dir = self.overlay_dir / "packages"
         self.overlay_work_dir = self.overlay_dir / "work"
         self.stage_dir = self.work_dir / "stage"
+        self.backstage_dir = self.work_dir / "backstage"
         self.prime_dir = self.work_dir / "prime"
         if partitions:
             self._partitions: Sequence[str] | None = partitions
@@ -64,15 +64,15 @@ class ProjectDirs:
             self._partitions = None
             self.partition_dir = None
 
-        self.stage_dirs = MappingProxyType(
-            partition_utils.get_partition_dir_map(
-                base_dir=self.work_dir, partitions=partitions, suffix="stage"
-            )
-        )
-        self.prime_dirs = MappingProxyType(
-            partition_utils.get_partition_dir_map(
-                base_dir=self.work_dir, partitions=partitions, suffix="prime"
-            )
+        self.overlay_dirs = self._get_partition_dirs(partitions, "overlay")
+        self.stage_dirs = self._get_partition_dirs(partitions, "stage")
+        self.prime_dirs = self._get_partition_dirs(partitions, "prime")
+
+    def _get_partition_dirs(
+        self, partitions: Sequence[str] | None, dirname: str
+    ) -> dict[str | None, Path]:
+        return partition_utils.get_partition_dir_map(
+            base_dir=self.work_dir, partitions=partitions, suffix=dirname
         )
 
     def _validate_requested_partition(

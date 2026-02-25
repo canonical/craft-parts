@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,11 @@ from collections.abc import Iterator
 import pytest
 from craft_parts import Action, Step
 from craft_parts.executor import filesets, part_handler
+from craft_parts.executor.errors import EnvironmentChangedError
+from craft_parts.executor.part_handler import PartHandler
+from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.overlays import OverlayManager
+from craft_parts.parts import Part
 
 from tests.unit.executor import test_part_handler
 
@@ -138,7 +143,7 @@ class TestFileFilter(test_part_handler.TestFileFilter):
 
         for partition in partitions:
             files, dirs = filesets.migratable_filesets(
-                fileset, str(self._destdir / partition), partition
+                fileset, str(self._destdir / partition), "default", partition
             )
             part_handler._apply_file_filter(
                 filter_files=files, filter_dirs=dirs, destdir=self._destdir / partition
@@ -151,3 +156,60 @@ class TestFileFilter(test_part_handler.TestFileFilter):
 @pytest.mark.usefixtures("new_dir")
 class TestHelpers(test_part_handler.TestHelpers):
     """Test helpers with partitions enabled."""
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestDirs(test_part_handler.TestDirs):
+    """Test project dirs handling."""
+
+    def test_makedirs_swap_partitions(self, new_dir):
+        partitions = ["mypart", "yourpart", "our/special-part"]
+
+        def setup_handler(partitions) -> PartHandler:
+            part = Part(
+                "foo",
+                {
+                    "plugin": "nil",
+                    "source": ".",
+                },
+                partitions=partitions,
+            )
+            info = ProjectInfo(
+                application_name="test", cache_dir=new_dir, partitions=partitions
+            )
+            part_info = PartInfo(info, part)
+            ovmgr = OverlayManager(
+                project_info=info,
+                part_list=[part],
+                base_layer_dir=None,
+                cache_level=0,
+            )
+            return PartHandler(
+                part,
+                part_info=part_info,
+                part_list=[part],
+                overlay_manager=ovmgr,
+            )
+
+        handler = setup_handler(partitions)
+        handler._make_dirs()
+
+        # swap first 2 partitions
+        partitions = ["yourpart", "mypart", "our/special-part"]
+        handler = setup_handler(partitions)
+
+        with pytest.raises(EnvironmentChangedError):
+            handler._make_dirs()
+
+    def test_makedirs_usrmerged_partitions(self, new_dir):
+        """Test the behavior when 'usrmerged_by_default' is True and we have partitions."""
+        partitions = ["one", "two", "three"]
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True, new_dir=new_dir, partitions=partitions
+        )
+        handler._make_dirs()
+
+        # The default partition gets usrmerged; the others don't.
+        self._assert_usrmerged(part.part_install_dirs["one"])
+        assert list(part.part_install_dirs["two"].iterdir()) == []
+        assert list(part.part_install_dirs["three"].iterdir()) == []

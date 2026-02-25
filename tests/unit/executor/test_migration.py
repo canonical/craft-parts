@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2024 Canonical Ltd.
+# Copyright 2016-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -48,7 +48,10 @@ class TestFileMigration:
         Path(install_dir, "foo").write_text("installed")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -59,9 +62,9 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the staged file is the one that was staged last
-        assert (
-            Path(stage_dir, "foo").read_text() == "installed"
-        ), "Expected staging to allow overwriting of already-staged files"
+        assert Path(stage_dir, "foo").read_text() == "installed", (
+            "Expected staging to allow overwriting of already-staged files"
+        )
 
     def test_migrate_files_supports_no_follow_symlinks(self, partitions):
         install_dir = Path("install")
@@ -74,7 +77,10 @@ class TestFileMigration:
         Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
@@ -89,13 +95,13 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlink was preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to still be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to still be a symlink."
+        )
 
-        assert (
-            os.readlink(os.path.join(stage_dir, "bar")) == "foo"
-        ), "Expected migrated 'bar' to point to 'foo'"
+        assert os.readlink(os.path.join(stage_dir, "bar")) == "foo", (  # noqa: PTH115, PTH118
+            "Expected migrated 'bar' to point to 'foo'"
+        )
 
     def test_migrate_files_preserves_symlink_file(self, partitions):
         install_dir = Path("install")
@@ -108,7 +114,10 @@ class TestFileMigration:
         Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -119,9 +128,9 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
 
     def test_migrate_files_no_follow_symlinks(self, partitions):
         install_dir = Path("install")
@@ -136,7 +145,10 @@ class TestFileMigration:
         Path("install", bin_path).symlink_to("usr/bin")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["-usr"]), "install", partition
+            Fileset(["-usr"]),
+            "install",
+            default_partition="default",
+            partition=partition,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -165,6 +177,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -176,12 +189,12 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
-        assert Path(
-            stage_dir, "a/bar"
-        ).is_symlink(), "Expected migrated 'a/bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
+        assert Path(stage_dir, "a/bar").is_symlink(), (
+            "Expected migrated 'a/bar' to be a symlink."
+        )
 
     def test_migrate_files_preserves_symlink_empty_dir(self, partitions):
         install_dir = Path("install")
@@ -195,6 +208,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -206,9 +220,9 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
 
     def test_migrate_files_preserves_symlink_nonempty_dir(self, partitions):
         install_dir = Path("install")
@@ -224,6 +238,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
@@ -235,9 +250,9 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
 
     def test_migrate_files_preserves_symlink_nested_dir(self, partitions):
         install_dir = Path("install")
@@ -252,7 +267,10 @@ class TestFileMigration:
         Path(install_dir, "a/b/xfile").write_text("installed")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -263,13 +281,13 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert Path(
-            stage_dir, "bar"
-        ).is_symlink(), "Expected migrated 'bar' to be a symlink."
+        assert Path(stage_dir, "bar").is_symlink(), (
+            "Expected migrated 'bar' to be a symlink."
+        )
 
-        assert os.path.islink(
-            os.path.join("stage", "a", "bar")
-        ), "Expected migrated 'a/bar' to be a symlink."
+        assert os.path.islink(os.path.join("stage", "a", "bar")), (  # noqa: PTH114, PTH118
+            "Expected migrated 'a/bar' to be a symlink."
+        )
 
     def test_migrate_files_supports_follow_symlinks(self, partitions):
         install_dir = Path("install")
@@ -282,7 +300,10 @@ class TestFileMigration:
         Path(install_dir, "bar").symlink_to("foo")
 
         files, dirs = filesets.migratable_filesets(
-            Fileset(["*"]), "install", partition="default" if partitions else None
+            Fileset(["*"]),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
@@ -297,12 +318,12 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlink was preserved
-        assert (
-            Path(stage_dir, "bar").is_symlink() is False
-        ), "Expected migrated 'bar' to no longer be a symlink."
-        assert (
-            Path(stage_dir, "bar").read_text() == "installed"
-        ), "Expected migrated 'bar' to be a copy of 'foo'"
+        assert Path(stage_dir, "bar").is_symlink() is False, (
+            "Expected migrated 'bar' to no longer be a symlink."
+        )
+        assert Path(stage_dir, "bar").read_text() == "installed", (
+            "Expected migrated 'bar' to be a copy of 'foo'"
+        )
 
     def test_migrate_files_preserves_file_mode(self, partitions):
         install_dir = Path("install")
@@ -323,6 +344,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migration.migrate_files(
@@ -334,8 +356,6 @@ class TestFileMigration:
         )
 
         assert new_mode == stat.S_IMODE(Path(stage_dir, "foo").stat().st_mode)
-
-    # TODO: add test_migrate_files_preserves_file_mode_chown_permissions
 
     def test_migrate_files_preserves_directory_mode(self, partitions):
         install_dir = Path("install")
@@ -357,6 +377,7 @@ class TestFileMigration:
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
             "install",
+            default_partition="default",
             partition="default" if partitions else None,
         )
         migration.migrate_files(
@@ -382,8 +403,8 @@ class TestFileMigration:
         (source / "baz/qux").mkdir()
         (source / "baz/qux/4.txt").touch()
 
-        os.chmod(source / "1.txt", 0o644)
-        os.chmod(source / "bar/2.txt", 0o555)
+        os.chmod(source / "1.txt", 0o644)  # noqa: PTH101
+        os.chmod(source / "bar/2.txt", 0o555)  # noqa: PTH101
 
         target = Path("target")
         target.mkdir()
@@ -402,8 +423,8 @@ class TestFileMigration:
             permissions=permissions,
         )
 
-        assert stat.S_IMODE(os.stat(target / "1.txt").st_mode) == 0o755
-        assert stat.S_IMODE(os.stat(target / "bar/2.txt").st_mode) == 0o444
+        assert stat.S_IMODE(os.stat(target / "1.txt").st_mode) == 0o755  # noqa: PTH116
+        assert stat.S_IMODE(os.stat(target / "bar/2.txt").st_mode) == 0o444  # noqa: PTH116
 
         paths_with_chown = [
             "target/baz/3.txt",
@@ -415,13 +436,68 @@ class TestFileMigration:
             assert call.owner == 1111
             assert call.group == 2222
 
+    @pytest.mark.parametrize(
+        ("filters", "filemap"),
+        [
+            (
+                ["*"],
+                {
+                    ".foo": False,
+                    ".bar/foo": False,
+                    "bar/.foo": True,
+                },
+            ),
+            (
+                ["*", ".*"],
+                {
+                    ".foo": True,
+                    ".bar/foo": True,
+                    "bar/.foo": True,
+                },
+            ),
+        ],
+    )
+    def test_migrate_hidden_files(self, partitions, filters, filemap):
+        install_dir = Path("install")
+        stage_dir = Path("stage")
+
+        install_dir.mkdir()
+        stage_dir.mkdir()
+
+        for file in filemap:
+            filepath = Path(install_dir, file)
+            filepath.parent.mkdir(exist_ok=True)
+            filepath.touch()
+
+        files, dirs = filesets.migratable_filesets(
+            Fileset(filters),
+            "install",
+            default_partition="default",
+            partition="default" if partitions else None,
+        )
+        migration.migrate_files(
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
+            follow_symlinks=True,
+        )
+
+        for file, exists in filemap.items():
+            assert Path(stage_dir, file).exists() == exists
+
 
 @pytest.mark.usefixtures("new_dir")
 class TestFileMigrationErrors:
     def test_migratable_filesets_partition_defined_error(self):
         """Error if the partition feature is disabled and a partition is provided."""
         with pytest.raises(errors.FeatureError) as raised:
-            filesets.migratable_filesets(Fileset(["*"]), "install", partition="default")
+            filesets.migratable_filesets(
+                Fileset(["*"]),
+                "install",
+                default_partition="default",
+                partition="default",
+            )
 
         assert features.Features().enable_partitions is False
         assert (
@@ -433,6 +509,7 @@ class TestFileMigrationErrors:
 class TestHelpers:
     """Verify helper functions."""
 
+    @pytest.mark.slow
     def test_clean_shared_area(self, new_dir, partitions):
         p1 = Part("p1", {"plugin": "dump", "source": "subdir1"}, partitions=partitions)
         Path("subdir1").mkdir()
@@ -451,7 +528,7 @@ class TestHelpers:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         ovmgr = OverlayManager(
-            project_info=info, part_list=[p1, p2], base_layer_dir=None
+            project_info=info, part_list=[p1, p2], base_layer_dir=None, cache_level=0
         )
 
         handler1 = part_handler.PartHandler(
@@ -472,28 +549,32 @@ class TestHelpers:
             handler2.run_action(Action("p2", step))
 
         part_states = part_handler._load_part_states(Step.STAGE, part_list=[p1, p2])
+        print(f"partitions: {partitions}")
+        print(f"part_states: {part_states}")
 
         assert foo_path.is_file()
         assert bar_path.is_file()
 
-        # TODO: also test files shared with overlay
-
-        migration.clean_shared_area(
-            part_name="p1",
-            shared_dir=p1.stage_dir,
-            part_states=part_states,
-            overlay_migration_state=None,
-        )
+        for partition in partitions or (None,):
+            migration.clean_shared_area(
+                part_name="p1",
+                shared_dir=p1.stage_dir,
+                part_states=part_states,
+                overlay_migration_state=None,
+                partition=partition,
+            )
 
         assert foo_path.is_file()  # remains, it's shared with p2
         assert bar_path.is_file()
 
-        migration.clean_shared_area(
-            part_name="p2",
-            shared_dir=p2.stage_dir,
-            part_states=part_states,
-            overlay_migration_state=None,
-        )
+        for partition in partitions or (None,):
+            migration.clean_shared_area(
+                part_name="p2",
+                shared_dir=p2.stage_dir,
+                part_states=part_states,
+                overlay_migration_state=None,
+                partition=partition,
+            )
 
         assert not foo_path.exists()
         assert not bar_path.exists()
@@ -512,7 +593,9 @@ class TestHelpers:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         part_info = PartInfo(info, part=p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = part_handler.PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -537,7 +620,9 @@ class TestHelpers:
             application_name="test", cache_dir=new_dir, partitions=partitions
         )
         part_info = PartInfo(info, part=p1)
-        ovmgr = OverlayManager(project_info=info, part_list=[p1], base_layer_dir=None)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=None, cache_level=0
+        )
         handler = part_handler.PartHandler(
             p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
         )
@@ -597,6 +682,7 @@ class TestFilterWhiteouts:
             "a/.wh.bar.txt",
             "b/baz.txt",
             "b/.wh..wh..opq",
+            ".wh..wh..opq",
         }
         dirs = {"a", "b", "c"}
 
@@ -611,5 +697,34 @@ class TestFilterWhiteouts:
             "a/.wh.bar.txt",
             "b/baz.txt",
             "b/.wh..wh..opq",
+            ".wh..wh..opq",
         }
         assert dirs == {"a", "b", "c"}
+
+    def test_filter_all_whiteouts(self):
+        """Expect all whiteout files to be removed."""
+        files = {
+            "f1",
+            "f2",
+            "f3",
+            ".wh.foo.txt",
+            "a/.wh.bar.txt",
+            "b/baz.txt",
+            "b/.wh..wh..opq",
+            ".wh..wh..opq",
+        }
+
+        whiteouts = migration.filter_all_whiteouts(files)
+
+        assert files == {
+            "f1",
+            "f2",
+            "f3",
+            "b/baz.txt",
+        }
+        assert whiteouts == {
+            ".wh.foo.txt",
+            "a/.wh.bar.txt",
+            "b/.wh..wh..opq",
+            ".wh..wh..opq",
+        }

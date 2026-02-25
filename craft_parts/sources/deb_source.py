@@ -53,7 +53,7 @@ class DebSource(FileSourceHandler):
         src: Path | None = None,
     ) -> None:
         """Extract deb file contents to the part source dir."""
-        deb_file = src if src else self.part_src_dir / os.path.basename(self.source)
+        deb_file = src if src else self.part_src_dir / os.path.basename(self.source)  # noqa: PTH119
 
         deb_utils.extract_deb(deb_file, dst, logger.debug)
 

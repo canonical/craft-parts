@@ -17,6 +17,7 @@
 """Source handler error definitions."""
 
 from collections.abc import Sequence
+from pathlib import Path
 
 from craft_parts import errors
 from craft_parts.utils import formatting_utils
@@ -26,7 +27,7 @@ class SourceError(errors.PartsError):
     """Base class for source handler errors."""
 
 
-class InvalidSourceType(SourceError):
+class InvalidSourceType(SourceError):  # noqa: N818
     """Failed to determine a source type.
 
     :param source: The source defined for the part.
@@ -44,7 +45,7 @@ class InvalidSourceType(SourceError):
         super().__init__(brief=f"Failed to pull source: {message}")
 
 
-class InvalidSourceOption(SourceError):
+class InvalidSourceOption(SourceError):  # noqa: N818
     """A source option is not allowed for the given source type.
 
     :param source_type: The part's source type.
@@ -63,8 +64,7 @@ class InvalidSourceOption(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-# TODO: Merge this with InvalidSourceOption above
-class InvalidSourceOptions(SourceError):
+class InvalidSourceOptions(SourceError):  # noqa: N818
     """A source option is not allowed for the given source type.
 
     :param source_type: The part's source type.
@@ -84,7 +84,7 @@ class InvalidSourceOptions(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class IncompatibleSourceOptions(SourceError):
+class IncompatibleSourceOptions(SourceError):  # noqa: N818
     """Source specified options that cannot be used at the same time.
 
     :param source_type: The part's source type.
@@ -104,7 +104,7 @@ class IncompatibleSourceOptions(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class ChecksumMismatch(SourceError):
+class ChecksumMismatch(SourceError):  # noqa: N818
     """A checksum doesn't match the expected value.
 
     :param expected: The expected checksum.
@@ -119,7 +119,7 @@ class ChecksumMismatch(SourceError):
         super().__init__(brief=brief)
 
 
-class SourceUpdateUnsupported(SourceError):
+class SourceUpdateUnsupported(SourceError):  # noqa: N818
     """The source handler doesn't support updating.
 
     :param name: The source type.
@@ -167,7 +167,7 @@ class HttpRequestError(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class SourceNotFound(SourceError):
+class SourceNotFound(SourceError):  # noqa: N818
     """Failed to retrieve a source.
 
     :param source: The source defined for the part.
@@ -181,7 +181,7 @@ class SourceNotFound(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidSnapPackage(SourceError):
+class InvalidSnapPackage(SourceError):  # noqa: N818
     """A snap package is invalid.
 
     :param snap_file: The snap file name.
@@ -195,7 +195,7 @@ class InvalidSnapPackage(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidRpmPackage(SourceError):
+class InvalidRpmPackage(SourceError):  # noqa: N818
     """An rpm package is invalid.
 
     :param rpm_file: The filename.
@@ -216,13 +216,19 @@ class PullError(SourceError):
     :param exit_code: The command exit code.
     """
 
-    def __init__(self, *, command: Sequence, exit_code: int) -> None:
+    def __init__(
+        self,
+        *,
+        command: Sequence[str | Path],
+        exit_code: int,
+        resolution: str | None = None,
+    ) -> None:
         self.command = command
         self.exit_code = exit_code
         brief = (
             f"Failed to pull source: command {command!r} exited with code {exit_code}."
         )
-        resolution = "Make sure sources are correctly specified."
+        resolution = resolution or "Make sure sources are correctly specified."
 
         super().__init__(brief=brief, resolution=resolution)
 
@@ -230,8 +236,8 @@ class PullError(SourceError):
 class VCSError(SourceError):
     """A version control system command failed."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, resolution: str | None = None) -> None:
         self.message = message
         brief = message
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, resolution=resolution)

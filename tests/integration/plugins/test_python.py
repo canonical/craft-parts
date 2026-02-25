@@ -23,7 +23,9 @@ import craft_parts.plugins.plugins
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
-from overrides import override
+from typing_extensions import override
+
+pytestmark = [pytest.mark.python]
 
 
 def setup_function():
@@ -116,8 +118,8 @@ def test_python_plugin_symlink(new_dir, partitions):
 
     # In regular Ubuntu this would be /usr/bin/python3.* but in GH this can be
     # something like /opt/hostedtoolcache/Python/3.9.16/x64/bin/python3.9
-    assert os.path.isabs(python_link)
-    assert os.path.basename(python_link).startswith("python3")
+    assert os.path.isabs(python_link)  # noqa: PTH117
+    assert os.path.basename(python_link).startswith("python3")  # noqa: PTH119
 
 
 def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
@@ -150,12 +152,14 @@ def test_python_plugin_override_get_system_interpreter(new_dir, partitions):
 
     python_link = Path(lf.project_info.prime_dir, "bin", "python3")
     assert python_link.is_symlink()
-    assert os.readlink(python_link) == "use-this-python"
+    assert os.readlink(python_link) == "use-this-python"  # noqa: PTH115
 
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
 def test_python_plugin_no_system_interpreter(
-    new_dir, partitions, remove_symlinks: bool  # noqa: FBT001
+    new_dir,
+    partitions,
+    remove_symlinks: bool,
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""
 
@@ -321,20 +325,38 @@ def test_find_payload_python_bad_version(new_dir, partitions):
     )
     actions = lf.plan(Step.PRIME)
 
+    expected_error_text = textwrap.dedent(
+        """\
+        + '[' -z '' ']'
+        + echo 'No suitable Python interpreter found, giving up.'
+        No suitable Python interpreter found, giving up.
+        + exit 1
+        """
+    )
+
     out = Path("out.txt")
-    with out.open(mode="w") as outfile, pytest.raises(errors.PluginBuildError):
+    err = Path("err.txt")
+    with (
+        out.open(mode="w") as outfile,
+        err.open(mode="w") as errfile,
+        pytest.raises(errors.PluginBuildError) as exc_info,
+    ):
         with lf.action_executor() as ctx:
-            ctx.execute(actions, stdout=outfile)
+            ctx.execute(actions, stdout=outfile, stderr=errfile)
+
+    assert exc_info.value.stderr is not None
+    assert expected_error_text in exc_info.value.stderr.decode()
 
     output = out.read_text()
     expected_text = textwrap.dedent(
         f"""\
         Looking for a Python interpreter called "{real_basename}" in the payload...
-        Python interpreter not found in payload.
-        No suitable Python interpreter found, giving up.
         """
     )
     assert expected_text in output
+
+    output = err.read_text()
+    assert expected_error_text in output
 
 
 def test_find_payload_python_good_version(new_dir, partitions):

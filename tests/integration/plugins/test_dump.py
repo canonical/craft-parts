@@ -22,6 +22,8 @@ import pytest
 import yaml
 from craft_parts import Action, Step
 
+pytestmark = [pytest.mark.plugin]
+
 
 @pytest.fixture
 def install_dir():

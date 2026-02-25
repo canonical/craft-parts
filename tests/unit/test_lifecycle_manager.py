@@ -16,18 +16,21 @@
 
 """Unit tests for the lifecycle manager."""
 
+from __future__ import annotations
+
 import sys
 import textwrap
+import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import ANY, call
 
 import craft_parts
-import craft_parts.utils.partition_utils
 import pytest
 import yaml
 from craft_parts import errors, lifecycle_manager
 from craft_parts.plugins import nil_plugin
+from craft_parts.plugins.make_plugin import MakePluginProperties
 from craft_parts.state_manager import states
 
 from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
@@ -36,7 +39,7 @@ from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
 @pytest.fixture
 def mock_available_plugins(monkeypatch):
     available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
-    monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
+    monkeypatch.setattr(craft_parts.plugins.plugins, "_plugins", available)
 
 
 def create_data(part_name: str, plugin_name: str) -> dict[str, Any]:
@@ -150,6 +153,7 @@ class TestLifecycleManager:
             application_name="test_manager",
             cache_dir=new_dir,
             ignore_local_sources=["foo.*"],
+            ignore_outdated=["bar.*"],
             **self._lcm_kwargs,
         )
 
@@ -163,7 +167,7 @@ class TestLifecycleManager:
         mock_seq.assert_called_once_with(
             part_list=lf._part_list,
             project_info=lf.project_info,
-            ignore_outdated=["foo.*"],
+            ignore_outdated=["bar.*", "foo.*"],
             base_layer_hash=None,
         )
 
@@ -175,6 +179,7 @@ class TestLifecycleManager:
             application_name="test_manager",
             cache_dir=new_dir,
             ignore_local_sources=["ign1", "ign2"],
+            ignore_outdated=["ign3"],
             custom="foo",
             **self._lcm_kwargs,
         )
@@ -183,7 +188,7 @@ class TestLifecycleManager:
             call(
                 part_list=[ANY],
                 project_info=ANY,
-                ignore_outdated=["ign1", "ign2"],
+                ignore_outdated=["ign3", "ign1", "ign2"],
                 base_layer_hash=None,
             )
         ]
@@ -199,6 +204,7 @@ class TestLifecycleManager:
             extra_build_packages=["pkg1", "pkg2"],
             extra_build_snaps=["snap1", "snap2"],
             ignore_local_sources=["ign1", "ign2"],
+            ignore_outdated=["ign3"],
             custom="foo",
             **self._lcm_kwargs,
         )
@@ -289,6 +295,48 @@ class TestLifecycleManager:
             )
         assert "p1" in str(exc.value)
 
+    def test_get_prime_state_timestamp(self, new_dir, mock_available_plugins):
+        data = {
+            "parts": {
+                "foo": {"plugin": "strict"},
+                "bar": {"plugin": "strict"},
+            },
+        }
+        lf = lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            strict_mode=True,
+            **self._lcm_kwargs,
+        )
+
+        state = states.PrimeState()
+        state.write(Path(new_dir, "parts/foo/state/prime"))
+        time.sleep(0.5)
+        state.write(Path(new_dir, "parts/bar/state/prime"))
+        expected_time = Path("parts/bar/state/prime").stat().st_mtime_ns
+
+        actual_time = lf.get_prime_state_timestamp()
+        assert actual_time == expected_time
+
+    def test_get_prime_state_timestamp_no_files(self, new_dir, mock_available_plugins):
+        data = {
+            "parts": {
+                "foo": {"plugin": "strict"},
+                "bar": {"plugin": "strict"},
+            },
+        }
+        lf = lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            strict_mode=True,
+            **self._lcm_kwargs,
+        )
+
+        actual_time = lf.get_prime_state_timestamp()
+        assert actual_time is None
+
 
 class TestOverlayDisabled:
     """Overlays only supported in linux and must run as root."""
@@ -365,7 +413,9 @@ class TestPluginProperties:
 
         assert len(lf._part_list) == 1
         part = lf._part_list[0]
-        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
+        assert cast(MakePluginProperties, part.plugin_properties).make_parameters == [
+            "-DTEST_PARAMETER"
+        ]
 
     def test_fallback_plugin_name(self, new_dir, mocker):
         mocker.patch("craft_parts.sequencer.Sequencer")
@@ -384,7 +434,9 @@ class TestPluginProperties:
 
         assert len(lf._part_list) == 1
         part = lf._part_list[0]
-        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
+        assert cast(MakePluginProperties, part.plugin_properties).make_parameters == [
+            "-DTEST_PARAMETER"
+        ]
 
     def test_invalid_plugin_name(self, new_dir):
         with pytest.raises(errors.InvalidPlugin) as raised:
@@ -417,3 +469,14 @@ class TestPluginProperties:
                 },
             )
         assert raised.value.part_name == "bar"
+
+    def test_unsupported_build_attributes(self, new_dir):
+        with pytest.raises(errors.UnsupportedBuildAttributesError):
+            self._get_manager(
+                new_dir,
+                all_parts={
+                    "parts": {
+                        "bar": {"plugin": "nil", "build-attributes": ["self-contained"]}
+                    }
+                },
+            )

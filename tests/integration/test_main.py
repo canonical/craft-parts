@@ -35,6 +35,15 @@ parts_yaml = textwrap.dedent(
 """
 )
 
+filesystem_mounts_yaml = textwrap.dedent(
+    """
+    filesystems:
+      default:
+      - mount: "/"
+        device: "foo"
+"""
+)
+
 plan_steps = [
     "Pull foo\nPull bar\n",
     "Overlay foo\nOverlay bar\n",
@@ -205,10 +214,10 @@ def test_main_alternative_work_dir(mocker, capfd):
     assert Path("work_dir/prime").is_dir()
 
     # no new entries in the current dir
-    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
+    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]  # noqa: PTH208
 
 
-@pytest.mark.parametrize("opt", ["--f", "--file"])
+@pytest.mark.parametrize("opt", ["-f", "--file"])
 def test_main_alternative_parts_file(mocker, capfd, opt):
     Path("other.yaml").write_text(parts_yaml)
 
@@ -508,7 +517,7 @@ def test_main_clean_workdir(mocker, capfd):
     assert Path("work_dir/stage").is_dir()
     assert Path("work_dir/prime").is_dir()
 
-    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
+    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]  # noqa: PTH208
 
     # clean the existing work dirs
     mocker.patch.object(sys, "argv", ["cmd", "--work-dir", "work_dir", "clean"])
@@ -524,7 +533,7 @@ def test_main_clean_workdir(mocker, capfd):
     assert Path("work_dir/stage").is_dir() is False
     assert Path("work_dir/prime").is_dir() is False
 
-    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]
+    assert sorted(os.listdir(".")) == [".cache", "parts.yaml", "work_dir"]  # noqa: PTH208
 
 
 def test_main_clean_dry_run(mocker, capfd):
@@ -540,7 +549,7 @@ def test_main_clean_dry_run(mocker, capfd):
     assert raised.value.code is None
 
     # work dirs are not removed
-    assert set(os.listdir(".")).issuperset({"parts", "prime", "stage"})
+    assert set(os.listdir(".")).issuperset({"parts", "prime", "stage"})  # noqa: PTH208
 
 
 def test_main_clean_part(mocker, capfd):
@@ -679,6 +688,96 @@ def test_main_strict(mocker):
         "base_layer_dir": None,
         "base_layer_hash": b"",
         "cache_dir": mocker.ANY,
+        "filesystem_mounts": None,
+        "partitions": None,
         "strict_mode": True,
+        "work_dir": ".",
+    }
+
+
+def test_main_partitions(mocker):
+    """Test passing "--partitions" on the command line."""
+    Path("parts.yaml").write_text(parts_yaml)
+    mocker.patch.object(sys, "argv", ["cmd", "--partitions", "default,foo,bar"])
+
+    spied_lcm = mocker.spy(craft_parts.LifecycleManager, name="__init__")
+    main.main()
+
+    kwargs = spied_lcm.call_args[1]
+    assert kwargs == {
+        "application_name": "craft_parts",
+        "base": "",
+        "base_layer_dir": None,
+        "base_layer_hash": b"",
+        "cache_dir": mocker.ANY,
+        "filesystem_mounts": None,
+        "partitions": ["default", "foo", "bar"],
+        "strict_mode": False,
+        "work_dir": ".",
+    }
+
+
+def test_main_unreadable_filesystem_mounts_file(mocker, capfd):
+    Path("parts.yaml").write_text(parts_yaml)
+    Path("filesystem_mounts.yaml").touch()
+    Path("filesystem_mounts.yaml").chmod(0o111)
+
+    mocker.patch.object(
+        sys, "argv", ["cmd", "--filesystem-mounts", "filesystem_mounts.yaml"]
+    )
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code == 1
+
+    out, err = capfd.readouterr()
+    assert err == "Error: filesystem_mounts.yaml: Permission denied.\n"
+    assert out == ""
+
+
+def test_main_invalid_filesystem_mounts_file(mocker, capfd):
+    Path("parts.yaml").write_text(parts_yaml)
+    Path("filesystem_mounts.yaml").write_text("not yaml data")
+
+    mocker.patch.object(
+        sys, "argv", ["cmd", "--filesystem-mounts", "filesystem_mounts.yaml"]
+    )
+    with pytest.raises(SystemExit) as raised:
+        main.main()
+    assert raised.value.code == 4
+
+    out, err = capfd.readouterr()
+    assert err == "Error: filesystem_mounts definition must be a dictionary\n"
+    assert out == ""
+
+
+def test_main_filesystem_mounts(mocker):
+    """Test passing "--filesystem-mounts" on the command line."""
+    Path("parts.yaml").write_text(parts_yaml)
+    Path("filesystem_mounts.yaml").write_text(filesystem_mounts_yaml)
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "cmd",
+            "--partitions",
+            "default,foo",
+            "--filesystem-mounts",
+            "filesystem_mounts.yaml",
+        ],
+    )
+
+    spied_lcm = mocker.spy(craft_parts.LifecycleManager, name="__init__")
+    main.main()
+
+    kwargs = spied_lcm.call_args[1]
+    assert kwargs == {
+        "application_name": "craft_parts",
+        "base": "",
+        "base_layer_dir": None,
+        "base_layer_hash": b"",
+        "cache_dir": mocker.ANY,
+        "partitions": ["default", "foo"],
+        "filesystem_mounts": {"default": [{"mount": "/", "device": "foo"}]},
+        "strict_mode": False,
         "work_dir": ".",
     }

@@ -24,6 +24,8 @@ from collections.abc import Iterable
 from contextlib import ContextDecorator
 from pathlib import Path
 
+from typing_extensions import Self
+
 try:
     import apt
     import apt.cache
@@ -92,7 +94,7 @@ class AptCache(ContextDecorator):
         self.progress: LogProgress | None = None
 
     # pylint: disable=attribute-defined-outside-init
-    def __enter__(self) -> "AptCache":
+    def __enter__(self) -> Self:
         if self.stage_cache is not None:
             self.progress = LogProgress()
             self._populate_stage_cache_dir()
@@ -122,18 +124,18 @@ class AptCache(ContextDecorator):
         if (
             os_utils.is_snap(application_package_name)
             and snap_dir
-            and os.path.exists(snap_dir)
+            and os.path.exists(snap_dir)  # noqa: PTH110
         ):
-            apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
+            apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")  # noqa: PTH118
             apt_pkg.config.set("Dir", apt_dir)
             # yes apt is broken like that we need to append os.path.sep
-            methods_dir = os.path.join(apt_dir, "methods")
+            methods_dir = os.path.join(apt_dir, "methods")  # noqa: PTH118
             apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
-            solvers_dir = os.path.join(apt_dir, "solvers")
+            solvers_dir = os.path.join(apt_dir, "solvers")  # noqa: PTH118
             apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
-            apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")
+            apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")  # noqa: PTH118
             apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
-            gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")
+            gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")  # noqa: PTH118
             apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
 
         apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
@@ -183,7 +185,7 @@ class AptCache(ContextDecorator):
             destination = Path(self.stage_cache, dpkg_path[1:])
             if not destination.exists():
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                os.symlink(dpkg_path, destination)
+                destination.symlink_to(dpkg_path)
         else:
             logger.warning("Cannot find 'dpkg' command needed to support multiarch")
 
@@ -240,7 +242,7 @@ class AptCache(ContextDecorator):
 
         :return: A list of (<package-name>, <package-version>, <dl-path>) tuples.
         """
-        downloaded = []
+        downloaded: list[tuple[str, str, Path]] = []
         for package in self.cache.get_changes():
             if package.candidate is None:
                 continue
@@ -253,7 +255,7 @@ class AptCache(ContextDecorator):
             except apt.package.FetchError as err:
                 raise errors.PackageFetchError(str(err)) from err
 
-            if package.candidate is None:
+            if package.candidate is None:  # type: ignore[reportUnnecessaryComparison] # this appears to be possible after `fetch_binary`
                 raise errors.PackageNotFound(package.name)
 
             downloaded.append((package.name, package.candidate.version, Path(dl_path)))
@@ -292,8 +294,15 @@ class AptCache(ContextDecorator):
     def mark_packages(self, package_names: set[str]) -> None:
         """Mark the given package names to be fetched from the repository.
 
+        Two-pass fix: set all candidate versions before marking any packages.
+        This fixes versioned interdependencies where package A=v1 depends on
+        package B (= v1), but B's default candidate is v2. By setting all
+        candidates first, mark_install can resolve dependencies correctly.
+
         :param package_names: The set of package names to be marked.
         """
+        # First pass: resolve names and set candidate versions
+        resolved: list[apt.package.Package] = []
         for _name in package_names:
             name = _name[:-4] if _name.endswith(":any") else _name
 
@@ -311,7 +320,10 @@ class AptCache(ContextDecorator):
                 _set_pkg_version(package, version)
 
             logger.debug("package: %s", package)
+            resolved.append(package)
 
+        # Second pass: mark all packages for install
+        for package in resolved:
             # Disable automatic resolving of broken packages here
             # because if that fails it raises a SystemError and the
             # API doesn't expose enough information about the problem.
@@ -332,8 +344,8 @@ class AptCache(ContextDecorator):
 
         :param unmark_names: The names of the packages to unmark.
         """
-        skipped_essential = set()
-        skipped_filtered = set()
+        skipped_essential: set[str] = set()
+        skipped_filtered: set[str] = set()
 
         for package in self.cache.get_changes():
             if package.candidate is None:
@@ -376,9 +388,9 @@ def _verify_marked_install(package: apt.package.Package) -> None:
 
     broken_deps: list[str] = []
     for package_dependencies in package.candidate.dependencies:
-        for dep in package_dependencies:
-            if not dep.target_versions:
-                broken_deps.append(dep.name)  # noqa: PERF401
+        broken_deps.extend(
+            dep.name for dep in package_dependencies if not dep.target_versions
+        )
     raise errors.PackageBroken(package.name, deps=broken_deps)
 
 
@@ -400,7 +412,7 @@ def _ignore_unreadable_files(
     fail on any unreadable files.
     """
     path = Path(path)
-    skip = []
+    skip: list[str] = []
     for name in names:
         child_path = path / name
         if not child_path.is_file():

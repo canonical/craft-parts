@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023-2024 Canonical Ltd.
+# Copyright 2023-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for the lifecycle manager with the partitions feature."""
+
 import sys
 import textwrap
 from string import ascii_lowercase, digits
@@ -165,26 +166,17 @@ class TestPartitionsSupport:
 
         pytest_check.equal(info.partitions, partitions)
 
-    @pytest.mark.parametrize(
-        "partitions",
-        [
-            ["defaultbad"],
-            ["kernel"],
-            ["kernel", "kernel"],
-            ["kernel", "default"],
-        ],
-    )
-    def test_partitions_default_not_first(self, new_dir, parts_data, partitions):
-        """Raise an error if the first partition is not 'default'."""
+    def test_partitions_default_not_first(self, new_dir, parts_data):
+        """Raise an error if the a partition other than the first one is named 'default'."""
         with pytest.raises(errors.FeatureError) as raised:
             lifecycle_manager.LifecycleManager(
                 parts_data,
                 application_name="test_manager",
                 cache_dir=new_dir,
-                partitions=partitions,
+                partitions=["kernel", "foo", "default"],
             )
 
-        assert raised.value.brief == "First partition must be 'default'."
+        assert raised.value.brief == "Only the first partition can be named 'default'."
 
     @pytest.mark.parametrize(
         "partitions",
@@ -295,8 +287,7 @@ class TestPartitionsSupport:
         with pytest.raises(
             errors.FeatureError,
             match=(
-                r"Partition '[\w-]*' conflicts with the "
-                r"namespace of partition '[\w/-]*'.*"
+                r"Partition name conflicts:\n[\w\s/\-,']*\nHyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.\nThis operation cannot be executed"
             ),
         ):
             lifecycle_manager.LifecycleManager(

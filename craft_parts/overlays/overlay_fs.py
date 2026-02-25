@@ -92,7 +92,7 @@ def is_whiteout_file(path: Path) -> bool:
     if not path.is_char_device() or path.is_symlink():
         return False
 
-    rdev = os.stat(path).st_rdev
+    rdev = os.stat(path).st_rdev  # noqa: PTH116
 
     return os.major(rdev) == 0 and os.minor(rdev) == 0
 

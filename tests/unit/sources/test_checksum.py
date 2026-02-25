@@ -39,9 +39,8 @@ def test_split_checksum_happy(tc_checksum, tc_algorithm, tc_digest):
 
 @pytest.mark.parametrize("tc_checksum", ["", "something"])
 def test_split_checksum_error(tc_checksum):
-    with pytest.raises(ValueError) as raised:  # noqa: PT011
+    with pytest.raises(ValueError, match=f"invalid checksum format: {tc_checksum!r}"):
         checksum.split_checksum(tc_checksum)
-    assert str(raised.value) == f"invalid checksum format: '{tc_checksum}'"
 
 
 @pytest.mark.parametrize(
@@ -60,23 +59,24 @@ def test_verify_checksum_happy(tc_checksum, tc_checkfile):
 @pytest.mark.usefixtures("new_dir")
 def test_verify_checksum_invalid_algorithm():
     Path("checkfile").write_text("content")
-    with pytest.raises(ValueError) as raised:  # noqa: PT011
+    with pytest.raises(ValueError, match="^unsupported algorithm 'invalid'$"):
         checksum.verify_checksum("invalid/digest", Path("checkfile"))
-    assert str(raised.value) == "unsupported algorithm 'invalid'"
 
 
 @pytest.mark.usefixtures("new_dir")
 def test_verify_checksum_value_error():
     Path("checkfile").write_text("content")
-    with pytest.raises(ValueError) as raised:  # noqa: PT011
+    with pytest.raises(ValueError, match="^invalid checksum format: 'invalid'$"):
         checksum.verify_checksum("invalid", Path("checkfile"))
-    assert str(raised.value) == "invalid checksum format: 'invalid'"
 
 
 @pytest.mark.usefixtures("new_dir")
 def test_verify_checksum_digest_error():
     Path("checkfile").write_text("content")
-    with pytest.raises(errors.ChecksumMismatch) as raised:
+    expected_digest = "digest"
+    actual_digest = "9a0364b9e99bb480dd25e1f0284c8555"
+    with pytest.raises(
+        errors.ChecksumMismatch,
+        match=rf"^Expected digest {expected_digest}, obtained {actual_digest}\.$",
+    ):
         checksum.verify_checksum("md5/digest", Path("checkfile"))
-    assert raised.value.expected == "digest"
-    assert raised.value.obtained == "9a0364b9e99bb480dd25e1f0284c8555"
