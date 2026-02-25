@@ -19,6 +19,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+2.28.1 (2026-02-25)
+-------------------
+
+Bug fixes:
+
+- Setting ``source-commit`` with a full-length commit hash would force a shallow
+  clone, regardless of the value of ``source-depth``. Parts will now only pull
+  a shallow clone if ``source-depth`` is non-zero.
+
 
 .. _release-2.28.0:
 
