@@ -1,6 +1,6 @@
 .. _craft_parts_npm_use_plugin:
 
-Npm Use plugin
+npm Use plugin
 ================
 
 The NPM Use plugin packages `npm`_-based projects and, unlike the
