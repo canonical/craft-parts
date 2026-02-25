@@ -121,8 +121,19 @@ Alternatively, if ``ruby-flavor`` and ``ruby-version`` are declared, this plugin
 downloads and runs the `ruby-install
 <https://github.com/postmodern/ruby-install>`_ tool.
 
+.. code-block:: yaml
+
+  parts:
+    my-part:
+      plugin: ruby
+      source: .
+      ruby-flavor: ruby
+      ruby-version: "3.2.0"
+      ruby-gems:
+        - rackup
+
 If a special Ruby part named ``ruby-deps`` is defined, it
-creates a shared interpreter and shared gems that the other Ruby parts can use.
+creates a shared interpreter that the other Ruby parts can use.
 For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
 ``after`` key.
 
@@ -130,16 +141,16 @@ For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
 
   parts:
     ruby-deps:
-      plugin: ruby
-      ruby-flavor: mruby
-      ruby-version: "3.4"
-      ruby-gems:
-        - bundler
-        - rackup
+      plugin: nil
+      source: .
+      stage-packages:
+        - ruby-bundler
     my-project:
       plugin: ruby
       source: .
       ruby-use-bundler: true
+      ruby-gems:
+        - rackup
       after: [ruby-deps]
 
 .. _ruby-details-end:
