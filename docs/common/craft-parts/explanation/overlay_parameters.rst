@@ -8,7 +8,9 @@ works: ``overlay-packages``, ``overlay-script``, ``override-overlay`` and ``over
 ``overlay-packages`` and ``overlay`` (the overlay-files parameter) behave much the
 same way as the related parameters on the ``STAGE`` step. The ``overlay-script`` and
 ``override-overlay`` keys both behave similarly to ``override-stage`` and are mutually
-incompatible. The ``override-overlay`` key is unique in that it runs the script in a
+incompatible.
+
+The ``override-overlay`` key is unique in that it runs the script in a
 chroot environment. This is useful for scripts that need to execute within the target
 filesystem as opposed to the host.
 

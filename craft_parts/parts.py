@@ -467,6 +467,8 @@ class PartSpec(BaseModel):
 
     If unset, the part's layer will only contain the packages specified
     in ``overlay-packages``.
+
+    This key is mutually incompatible with ``override-overlay``.
     """
 
     override_overlay: str | None = Field(
