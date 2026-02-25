@@ -39,6 +39,7 @@ from .maven_use_plugin import MavenUsePlugin
 from .meson_plugin import MesonPlugin
 from .nil_plugin import NilPlugin
 from .npm_plugin import NpmPlugin
+from .npm_use_plugin import NpmUsePlugin
 from .poetry_plugin import PoetryPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
@@ -85,6 +86,7 @@ class PluginGroup(enum.Enum):
         "maven-use": MavenUsePlugin,
         "meson": MesonPlugin,
         "npm": NpmPlugin,
+        "npm-use": NpmUsePlugin,
         "poetry": PoetryPlugin,
         "python": PythonPlugin,
         "qmake": QmakePlugin,
