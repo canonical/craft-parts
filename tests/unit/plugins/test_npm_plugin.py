@@ -410,4 +410,4 @@ class TestPluginNpmPlugin:
         properties = NpmPlugin.properties_class.unmarshal(spec)
         part = Part("my-part", spec, plugin_properties=properties)
 
-        assert part.plugin_properties.build_attributes == part.spec.build_attributes
+        assert part.plugin_properties.build_attributes == part.spec.build_attributes  # type: ignore[reportAttributeAccessIssue]
