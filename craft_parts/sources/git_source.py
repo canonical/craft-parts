@@ -277,7 +277,7 @@ class GitSource(SourceHandler):
         # version shipped on LTS that supports this.
         # In the case that this does not succeed, the only impact will be that a deep fetch
         # must be performed instead - nothing will break, it will just be less efficient
-        if self.source_commit and git_version >= (2, 34, 1):
+        if self.source_depth and self.source_commit and git_version >= (2, 34, 1):
             try:
                 self._clone_at_commit()
             except ShallowFetchError:
@@ -359,9 +359,14 @@ class GitSource(SourceHandler):
             )
 
         # Fetch the specific commit
-        command = [*command_prefix, "fetch", "origin", full_commit]
-        if self.source_depth:
-            command.extend(["--depth", str(self.source_depth)])
+        command = [
+            *command_prefix,
+            "fetch",
+            "origin",
+            full_commit,
+            "--depth",
+            str(self.source_depth),
+        ]
         logger.debug("Executing: %s", " ".join([str(i) for i in command]))
         self._run(command)
 

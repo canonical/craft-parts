@@ -138,6 +138,8 @@ class PartSpec(BaseModel):
     During the pull step, the part fetches the repository from the specified commit
     up to the target commit, the target tag, or the tip of the target branch.
 
+    In conjunction with ``source-commit``, setting this key allows for a shallow clone.
+
     Equivalent to the
     :literalref:`--depth<https://git-scm.com/docs/git-pull#Documentation/git-pull.txt---depthdepth>`
     parameter of ``git fetch``.
