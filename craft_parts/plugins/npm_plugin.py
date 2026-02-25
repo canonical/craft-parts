@@ -20,7 +20,6 @@ import logging
 import os
 import platform
 import re
-import shlex
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
@@ -30,11 +29,7 @@ from pydantic import model_validator
 from typing_extensions import Self, override
 
 from craft_parts.errors import InvalidArchitecture
-from craft_parts.utils.npm_utils import (
-    find_tarballs,
-    read_pkg,
-    write_pkg,
-)
+from craft_parts.utils.npm_utils import get_install_from_local_tarballs_commands
 
 from . import validator
 from .base import Plugin
@@ -61,13 +56,22 @@ _NODE_ARCH_FROM_PLATFORM = {
 class NpmPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the npm plugin."""
 
-    plugin: Literal["npm"] = "npm"
+    plugin: Literal["npm", "npm-use"] = "npm"
 
     # part properties required by the plugin
     npm_include_node: bool = False
     npm_node_version: str | None = None
-    npm_publish_to_cache: bool = False
     source: str  # pyright: ignore[reportGeneralTypeIssues]
+    build_attributes: list[str] = []
+
+    @model_validator(mode="after")
+    def include_node_not_self_contained(self) -> Self:
+        """If npm-include-node is true, then self-contained must not be in build-attributes."""
+        if self.npm_include_node and "self-contained" in self.build_attributes:
+            raise ValueError(
+                "npm-include-node cannot be true if `self-contained` in build attributes"
+            )
+        return self
 
     @model_validator(mode="after")
     def node_version_defined(self) -> Self:
@@ -134,10 +138,6 @@ class NpmPlugin(Plugin):
             * latest mainline version ("node")
 
           Note that "system" and "iojs" options are not supported.
-
-        - npm-publish-to-cache
-          (bool; default: False)
-          If true, publish a tarball to the shared cache for self-contained builds.
     """
 
     properties_class = NpmPluginProperties
@@ -150,11 +150,6 @@ class NpmPlugin(Plugin):
     @property
     def _is_self_contained(self) -> bool:
         return "self-contained" in self._part_info.build_attributes
-
-    @property
-    def _npm_cache_export(self) -> Path:
-        """Path to npm pack destination."""
-        return self._part_info.part_export_dir / "npm-cache"
 
     @property
     def _npm_cache_backstage(self) -> Path:
@@ -306,11 +301,11 @@ class NpmPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
+        if self._is_self_contained:
+            return self._get_self_contained_build_commands()
+
         cmd: list[str] = []
         options = cast(NpmPluginProperties, self._options)
-        if self._is_self_contained:
-            return self._get_self_contained_build_commands(options)
-
         if options.npm_include_node:
             arch = self._get_architecture()
             version = options.npm_node_version
@@ -357,86 +352,19 @@ class NpmPlugin(Plugin):
             """
             )
         ]
+
         return cmd
 
-    def _get_self_contained_build_commands(
-        self, options: NpmPluginProperties
-    ) -> list[str]:
-        cmd: list[str] = []
+    def _get_self_contained_build_commands(self) -> list[str]:
+        """Return a list of commands to run during self-contained build step."""
         pkg_path = self._part_info.part_build_dir / "package.json"
-        pkg = read_pkg(pkg_path)
-        dependencies = pkg.get("dependencies", {})
-        dev_dependencies = pkg.get("devDependencies", {})
-        if all_dependencies := {**dependencies, **dev_dependencies}:
-            deps_to_resolve = find_tarballs(
-                all_dependencies, cache_dir=self._npm_cache_backstage
-            )
-
-            cmd.append(
-                dedent(
-                    """\
-                    # find semver.js bundled with node
-                    SEMVER_BIN=""
-                    NODE_LIBS="$(dirname "$(dirname "$(realpath "$(command -v node)")")")/lib/node_modules"
-                    if [ -f "$NODE_LIBS/npm/node_modules/semver/bin/semver.js" ]; then
-                        # semver.js path in snap
-                        SEMVER_BIN="$NODE_LIBS/npm/node_modules/semver/bin/semver.js"
-                    elif [ -f "/usr/share/nodejs/semver/bin/semver.js" ]; then
-                        # semver.js path in deb pkg
-                        SEMVER_BIN="/usr/share/nodejs/semver/bin/semver.js"
-                    fi
-
-                    if [ -z "$SEMVER_BIN" ]; then
-                        echo "Error: semver.js not found" >&2
-                        exit 1
-                    fi"""
-                )
-            )
-
-            cmd.append("TARBALLS=")
-            for dependency, specified_version, available_versions in deps_to_resolve:
-                cmd.append(
-                    dedent(
-                        f"""\
-                        # find version that satisfies {dependency} ({specified_version})
-                        BEST_VERSION=$("$SEMVER_BIN" -r {shlex.quote(specified_version)} {" ".join(available_versions)} | tail -1)
-                        if [ -z "$BEST_VERSION" ]; then
-                            echo "Error: could not resolve dependency '{dependency} ({specified_version})'" >&2
-                            exit 1
-                        fi
-                        TARBALLS="$TARBALLS {self._npm_cache_backstage}/{dependency}-$BEST_VERSION.tgz\""""
-                    )
-                )
-
-            # all tarballs need to be included in one command
-            # or npm will try to search registry
-            cmd.append(
-                "npm install --offline --include=dev --no-package-lock $TARBALLS"
-            )
-
-            # modify package.json to bundle all non-dev dependencies with tarball
-            if dependencies:
-                pkg["bundledDependencies"] = list(
-                    {*pkg.get("bundledDependencies", []), *dependencies}
-                )
-
-            # npm rewrites the deps in package.json as
-            # dependencies: { dep: file:tarball-path }
-            # on `npm install`, resulting in corrupted tarballs.
-            # overwrite package.json after install command and before packing
-            bundled_pkg_path = (
-                self._part_info.part_build_subdir / ".parts" / "package.bundled.json"
-            )
-            bundled_pkg_path.parent.mkdir(parents=True, exist_ok=True)
-            write_pkg(bundled_pkg_path, pkg)
-            cmd.append(f"cp {bundled_pkg_path} package.json")
-
-        if options.npm_publish_to_cache:
-            self._npm_cache_export.mkdir(parents=True, exist_ok=True)
-            return [*cmd, f'mv "$(npm pack . | tail -1)" "{self._npm_cache_export}/"']
-
+        bundled_pkg_path = (
+            self._part_info.part_build_subdir / ".parts" / "package.bundled.json"
+        )
         return [
-            *cmd,
+            *get_install_from_local_tarballs_commands(
+                pkg_path, bundled_pkg_path, self._npm_cache_backstage
+            ),
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
         ]
 

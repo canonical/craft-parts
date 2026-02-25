@@ -29,6 +29,10 @@ New features:
 
 - Add support for the ``self-contained`` build attribute for parts using the
   :ref:`craft_parts_npm_plugin`.
+- Circular dependency errors now show the actual part processing order,
+  making it easier to identify and fix dependency cycles in complex projects.
+- Add :ref:`craft_parts_npm_use_plugin` to export npm dependencies to a
+  shared local cache for ``self-contained`` builds.
 
 Bug fixes:
 

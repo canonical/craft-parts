@@ -16,6 +16,7 @@
 
 """Definitions and helpers to handle parts."""
 
+import logging
 import re
 import textwrap
 import warnings
@@ -32,6 +33,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from typing_extensions import Self
 
 from craft_parts import errors, plugins
 from craft_parts.constraints import RelativePathStr
@@ -47,6 +49,8 @@ from craft_parts.utils.partition_utils import (
     get_partition_dir_map,
 )
 from craft_parts.utils.path_utils import get_partition_and_path
+
+logger = logging.getLogger(__name__)
 
 _T_validate = TypeVar("_T_validate")
 
@@ -465,6 +469,16 @@ class PartSpec(BaseModel):
     in ``overlay-packages``.
     """
 
+    override_overlay: str | None = Field(
+        default=None,
+        description="Shell script to run inside the overlay chroot after mounting.",
+        examples=["echo 'hello from chroot' > /root/test.txt"],
+    )
+    """A shell script that runs inside the part's overlay chroot.
+
+    This is executed inside the overlay mount namespace using a chroot.
+    """
+
     override_build: str | None = Field(
         default=None,
         description="The commands to run instead of the default behavior of the build step.",
@@ -543,13 +557,24 @@ class PartSpec(BaseModel):
         coerce_numbers_to_str=True,
     )
 
-    @field_validator("overlay_packages", "overlay_files", "overlay_script")
+    @field_validator(
+        "overlay_packages", "overlay_files", "overlay_script", "override_overlay"
+    )
     @classmethod
     def validate_overlay_feature(cls, item: _T_validate) -> _T_validate:
         """Check if overlay attributes specified when feature is disabled."""
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")
         return item
+
+    @model_validator(mode="after")
+    def validate_overlay_mutually_exclusive(self) -> Self:
+        """Check that override-overlay and overlay-script are not both defined."""
+        if self.override_overlay is not None and self.overlay_script is not None:
+            raise ValueError(
+                "override-overlay and overlay-script cannot both be defined"
+            )
+        return self
 
     @model_validator(mode="before")
     @classmethod
@@ -610,7 +635,7 @@ class PartSpec(BaseModel):
         if step == Step.PULL:
             return self.override_pull
         if step == Step.OVERLAY:
-            return self.overlay_script
+            return self.overlay_script or self.override_overlay
         if step == Step.BUILD:
             return self.override_build
         if step == Step.STAGE:
@@ -625,6 +650,7 @@ class PartSpec(BaseModel):
         """Return whether this spec declares overlay content."""
         return bool(
             self.overlay_packages
+            or self.override_overlay is not None
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
             # Don't include organize to overlay in this verification.
@@ -1082,6 +1108,62 @@ def part_list_by_name(names: Sequence[str] | None, part_list: list[Part]) -> lis
     return selected_parts
 
 
+def _find_dependency_cycle(parts: list[Part]) -> list[str] | None:
+    """Find a cycle in the dependency graph.
+
+    :param parts: The list of parts with circular dependencies.
+
+    :returns: A list of part names showing the actual dependency chain in the cycle,
+             including the first part repeated at the end to show it's a cycle.
+             The list starts with the alphabetically first part in the cycle for
+             consistency across runs. Returns None if no cycle is found.
+    """
+    # Build a dependency map for the remaining parts
+    part_names = {p.name for p in parts}
+    dep_map = {
+        p.name: [dep for dep in p.dependencies if dep in part_names] for p in parts
+    }
+
+    # Find a cycle using DFS
+    def find_cycle_from(
+        start: str, visited: set[str], path: list[str]
+    ) -> list[str] | None:
+        if start in path:
+            # Found a cycle, return the cycle portion
+            cycle_start = path.index(start)
+            return path[cycle_start:]
+
+        if start in visited:
+            return None
+
+        visited.add(start)
+        path.append(start)
+
+        for dep in dep_map.get(start, []):
+            cycle = find_cycle_from(dep, visited, path)
+            if cycle:
+                return cycle
+
+        path.pop()
+        return None
+
+    # Try to find a cycle starting from each part
+    for part in parts:
+        cycle = find_cycle_from(part.name, set(), [])
+        if cycle:
+            # Normalize the cycle to start from the alphabetically first part
+            # This ensures consistent ordering across runs
+            min_part = min(cycle)
+            min_index = cycle.index(min_part)
+            normalized = cycle[min_index:] + cycle[:min_index]
+            # Append the first part at the end to show it's a cycle
+            return [*normalized, normalized[0]]
+
+    # If no cycle found (shouldn't happen), log debug message and return None
+    logger.debug("Unable to determine which parts are involved in the cycle.")
+    return None
+
+
 def sort_parts(part_list: list[Part]) -> list[Part]:
     """Perform an inefficient but easy to follow sorting of parts.
 
@@ -1123,7 +1205,9 @@ def sort_parts(part_list: list[Part]) -> list[Part]:
                 top_part = part
                 break
         if not top_part:
-            raise errors.PartDependencyCycle
+            # Found a circular dependency - identify the parts involved
+            cycle = _find_dependency_cycle(all_parts)
+            raise errors.PartDependencyCycle(part_names=cycle)
 
         sorted_parts = [top_part, *sorted_parts]
         all_parts.remove(top_part)

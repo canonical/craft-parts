@@ -48,7 +48,7 @@ dev = [
     "pytest-cov~=7.0",
     "pytest-mock~=3.12",
     "pytest-rerunfailures>=16.0.1",
-    "mypy[reports]~=1.18.2",
+    "mypy[reports]~=1.19.1",
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
@@ -185,6 +185,7 @@ testpaths = "tests"
 xfail_strict = true
 addopts = "--ignore=tests/spread"
 markers = [
+    "requires_root: tests that require root permissions",
     "slow: slow tests",
     "java: tests that require the Java build tools to be installed (includes maven, gradle, etc.)",
     "python: tests that require the Python build tools (poetry, uv, pip)",
