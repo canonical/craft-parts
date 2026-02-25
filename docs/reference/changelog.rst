@@ -25,8 +25,8 @@ Changelog
 Bug fixes:
 
 - Setting ``source-commit`` with a full-length commit hash would force a shallow
-  commit, regardless of the value of ``source-depth``. Parts will now only perform
-  a shallow fetch if ``source-depth`` is non-zero.
+  clone, regardless of the value of ``source-depth``. Parts will now only pull
+  a shallow clone if ``source-depth`` is non-zero.
 
 
 .. _release-2.28.0:
