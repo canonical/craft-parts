@@ -399,3 +399,15 @@ class TestPluginNpmPlugin:
         assert plugin.get_build_commands() == [
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"'
         ]
+
+    def test_part_properties_build_attributes_match(self):
+        spec = {
+            "plugin": "npm",
+            "source": ".",
+            "build-attributes": ["self-contained"],
+        }
+
+        properties = NpmPlugin.properties_class.unmarshal(spec)
+        part = Part("my-part", spec, plugin_properties=properties)
+
+        assert part.plugin_properties.build_attributes == part.spec.build_attributes
