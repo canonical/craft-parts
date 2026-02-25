@@ -31,7 +31,7 @@ New features:
   :ref:`craft_parts_npm_plugin`.
 - Circular dependency errors now show the actual part processing order,
   making it easier to identify and fix dependency cycles in complex projects.
-- Add support for the ``override-overlay`` part keyword, which runs a script
+- Add support for the ``override-overlay`` key, which runs a script
   inside a chroot environment during the overlay step.
 
 Bug fixes:

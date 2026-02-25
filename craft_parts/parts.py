@@ -477,6 +477,8 @@ class PartSpec(BaseModel):
     """A shell script that runs inside the part's overlay chroot.
 
     This is executed inside the overlay mount namespace using a chroot.
+
+    This key is mutually incompatible with ``overlay-script``.
     """
 
     override_build: str | None = Field(

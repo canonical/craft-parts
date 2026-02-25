@@ -6,10 +6,11 @@ Overlay Parameters
 A part has four parameters that can be used to adjust how the overlay step
 works: ``overlay-packages``, ``overlay-script``, ``override-overlay`` and ``overlay``.
 ``overlay-packages`` and ``overlay`` (the overlay-files parameter) behave much the
-same way as the related parameters on the ``STAGE`` step. ``overlay-script``
-likewise behaves similarly to ``override-stage``, including having access to
-the ``craftctl`` command. ``override-overlay`` is a mutually-exclusive alternative to
-``overlay-script`` that runs the script inside a chroot environment.
+same way as the related parameters on the ``STAGE`` step. The ``overlay-script`` and
+``override-overlay`` keys both behave similarly to ``override-stage`` and are mutually
+incompatible. The ``override-overlay`` key is unique in that it runs the script in a
+chroot environment. This is useful for scripts that need to execute within the target
+filesystem as opposed to the host.
 
 An example of a parts section with overlay parameters looks as follows:
 
