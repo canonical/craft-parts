@@ -121,6 +121,21 @@ Alternatively, if ``ruby-flavor`` and ``ruby-version`` are declared, this plugin
 downloads and runs the `ruby-install
 <https://github.com/postmodern/ruby-install>`_ tool.
 
+If a special Ruby part named ``ruby-deps`` is defined, it
+creates a shared interpreter that the other Ruby parts can use.
+For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
+``after`` key.
+
+.. _ruby-details-end:
+
+
+Examples
+--------
+
+The following example compiles version 3.2.0 of the Ruby interpreter from
+source, installs the rackup gem, and finally builds the project directory as a
+Ruby project.
+
 .. code-block:: yaml
 
   parts:
@@ -132,10 +147,10 @@ downloads and runs the `ruby-install
       ruby-gems:
         - rackup
 
-If a special Ruby part named ``ruby-deps`` is defined, it
-creates a shared interpreter that the other Ruby parts can use.
-For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
-``after`` key.
+The following example shows how to use a shared Ruby interpreter provided by an
+earlier part. Because the ``ruby-deps`` part specifies ``ruby-bundler`` as a
+stage package, both the Bundler and Ruby executables from the Ubuntu archive
+are included in the output artifact.
 
 .. code-block:: yaml
 
@@ -152,5 +167,3 @@ For a Ruby part to use these shared files, it must list ``ruby-deps`` in its
       ruby-gems:
         - rackup
       after: [ruby-deps]
-
-.. _ruby-details-end:
