@@ -305,18 +305,6 @@ else
 	sudo snap install rustup --classic
 endif
 
-# A temporary override to the lint-docs directive to ignore the sphinx-docs-starter-pack git submodule.
-.PHONY: lint-docs
-lint-docs:  ##- Lint the documentation
-ifneq ($(CI),)
-	@echo ::group::$@
-endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --ignore docs/reference/commands --ignore docs/_build --ignore docs/sphinx-docs-starter-pack --enable all $(DOCS) -d line-too-long,missing-underscore-after-hyperlink,missing-space-in-hyperlink
-	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
-ifneq ($(CI),)
-	@echo ::endgroup::
-endif
-
 .PHONY: install-dotnet
 install-dotnet:
 ifeq ($(UBUNTU_CODENAME),focal)
