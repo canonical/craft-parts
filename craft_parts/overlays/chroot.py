@@ -21,19 +21,19 @@ from __future__ import annotations
 import logging
 import multiprocessing
 import os
+import shutil
 import sys
 from collections.abc import Callable
 from multiprocessing.connection import Connection
 from pathlib import Path
-from shutil import copytree
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from craft_parts.utils import os_utils
 
 from . import errors
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
     from multiprocessing.connection import Connection
 
 logger = logging.getLogger(__name__)
@@ -54,6 +54,8 @@ def chroot(
     :param target: The callable to run in the chroot environment.
     :param args: Arguments for target.
     :param kwargs: Keyword arguments for target.
+    :param use_host_sources: Whether overlay steps should also include the repository
+      sources defined on the host.
 
     :returns: The target function return value.
     """
@@ -69,14 +71,14 @@ def chroot(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
     )
     logger.debug("[pid=%d] set up chroot", os.getpid())
-    _setup_chroot(path, use_host_sources)
+    _setup_chroot(path, use_host_sources=use_host_sources)
     try:
         child.start()
         res, err = parent_conn.recv()
         child.join()
     finally:
         logger.debug("[pid=%d] clean up chroot", os.getpid())
-        _cleanup_chroot(path, use_host_sources)
+        _cleanup_chroot(path, use_host_sources=use_host_sources)
 
     if isinstance(err, str):
         raise errors.OverlayChrootExecutionError(err)
@@ -126,7 +128,7 @@ def _host_compatible_chroot(path: Path) -> None:
     _compare_os_release(host_os_release, chroot_os_release)
 
 
-def _setup_chroot(path: Path, use_host_sources: bool) -> None:  # noqa: FBT001
+def _setup_chroot(path: Path, *, use_host_sources: bool) -> None:
     """Prepare the chroot environment before executing the target function."""
     logger.debug("setup chroot: %r", path)
     if sys.platform == "linux":
@@ -138,49 +140,7 @@ def _setup_chroot(path: Path, use_host_sources: bool) -> None:  # noqa: FBT001
             _setup_chroot_mounts(path, _ubuntu_apt_mounts)
 
 
-class _Mount(NamedTuple):
-    """Mount entry for chroot setup."""
-
-    fstype: str | None
-    src: str
-    mountpoint: str
-    options: list[str] | None
-
-
-def _setup_chroot_linux(path: Path) -> None:
-    """Linux-specific chroot environment preparation."""
-    # Some images (such as cloudimgs) symlink ``/etc/resolv.conf`` to
-    # ``/run/systemd/resolve/stub-resolv.conf``. We want resolv.conf to be
-    # a regular file to bind-mount the host resolver configuration on.
-    #
-    # There's no need to restore the file to its original condition because
-    # this operation happens on a temporary filesystem layer.
-    resolv_conf = path / "etc/resolv.conf"
-    if resolv_conf.is_symlink():
-        resolv_conf.unlink()
-        resolv_conf.touch()
-    elif not resolv_conf.exists() and resolv_conf.parent.is_dir():
-        resolv_conf.touch()
-
-    pid = os.getpid()
-    for entry in _linux_mounts:
-        args = entry.options or []
-        if entry.fstype:
-            args.append(f"-t{entry.fstype}")
-
-        mountpoint = path / entry.mountpoint.lstrip("/")
-
-        # Only mount if mountpoint exists.
-        if mountpoint.exists():
-            logger.debug("[pid=%d] mount %r on chroot", pid, str(mountpoint))
-            os_utils.mount(entry.src, str(mountpoint), *args)
-        else:
-            logger.debug("[pid=%d] mountpoint %r does not exist", pid, str(mountpoint))
-
-    logger.debug("chroot setup complete")
-
-
-def _cleanup_chroot(path: Path, use_host_sources: bool) -> None:  # noqa: FBT001
+def _cleanup_chroot(path: Path, *, use_host_sources: bool) -> None:
     """Clean the chroot environment after executing the target function."""
     logger.debug("cleanup chroot: %r", path)
     if sys.platform == "linux":
@@ -194,7 +154,6 @@ def _cleanup_chroot(path: Path, use_host_sources: bool) -> None:  # noqa: FBT001
     logger.debug("chroot cleanup complete")
 
 
-# TODO: refactor as to not call _Mount.get_abs_path repeatedly
 class _Mount:
     def __init__(
         self,
@@ -242,7 +201,6 @@ class _Mount:
     def remove_dst(self, chroot: Path) -> None:
         """Remove `self.dst` if present to prepare mountpoint `self.dst`."""
         # This is not required for the base class
-        # TODO: consider using abc
 
     def create_dst(self, chroot: Path) -> None:
         """Create mountpoint `self.dst` later used in mount call."""
@@ -363,7 +321,7 @@ class _TempFSClone(_Mount):
         super()._mount(src, chroot, *args)
 
         abs_dst = self.get_abs_path(chroot, self.dst)
-        copytree(src, abs_dst, dirs_exist_ok=True)
+        shutil.copytree(src, abs_dst, dirs_exist_ok=True)
 
 
 # Essential filesystems to mount in order to have basic utilities and
@@ -375,7 +333,7 @@ class _TempFSClone(_Mount):
 #
 # There's no need to restore the file to its original condition because
 # this operation happens on a temporary filesystem layer.
-_linux_mounts: list[_Mount] = [
+_linux_mounts: Sequence[_Mount] = [
     _BindMount("/etc/resolv.conf", "/etc/resolv.conf"),
     _Mount("proc", "/proc", fstype="proc"),
     _Mount("sysfs", "/sys", fstype="sysfs"),
@@ -384,8 +342,7 @@ _linux_mounts: list[_Mount] = [
 ]
 
 # Mounts required to import host's Ubuntu Pro apt configuration to chroot
-# TODO: parameterize this per linux distribution / package manager
-_ubuntu_apt_mounts = [
+_ubuntu_apt_mounts: Sequence[_Mount] = [
     _TempFSClone("/etc/apt", "/etc/apt", skip_missing=False),
     _BindMount(
         "/usr/share/ca-certificates/",
@@ -400,13 +357,13 @@ _ubuntu_apt_mounts = [
 ]
 
 
-def _setup_chroot_mounts(path: Path, mounts: list[_Mount]) -> None:
+def _setup_chroot_mounts(path: Path, mounts: Sequence[_Mount]) -> None:
     """Linux-specific chroot environment preparation."""
     for entry in mounts:
         entry.mount_to(path)
 
 
-def _cleanup_chroot_mounts(path: Path, mounts: list[_Mount]) -> None:
+def _cleanup_chroot_mounts(path: Path, mounts: Sequence[_Mount]) -> None:
     """Linux-specific chroot environment cleanup."""
     for entry in reversed(mounts):
         entry.unmount_from(path)

@@ -41,7 +41,7 @@ class CraftCtl:
 
         :raises RuntimeError: If the command is not handled.
         """
-        if cmd in ["default", "set", "chroot"]:
+        if cmd in ["default", "set"]:
             _client(cmd, args)
             return None
 
