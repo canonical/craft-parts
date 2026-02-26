@@ -32,5 +32,5 @@ An example of a parts section with overlay parameters looks as follows:
           - usr/bin
 
 After running this part, the overlay layer (and the final package) will only
-contain ed as an editor, with vi/vim, emacs, and nano all having been
+contain ed as an editor, with vi, Vim, Emacs, and nano all having been
 removed.
