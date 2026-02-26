@@ -88,6 +88,8 @@ class LifecycleManager:
     :param filesystem_mounts: A dict of filesystem_mounts to apply when migrating files.
     :param usrmerged_by_default: Whether the parts' install dirs should be filled with
         usrmerge-safe directories and symlinks prior to a part's build.
+    :param use_host_sources: Whether overlay steps should also include the repository
+      sources defined on the host.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """

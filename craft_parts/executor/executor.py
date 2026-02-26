@@ -53,6 +53,8 @@ class Executor:
     :param extra_build_packages: Additional packages to install on the host system.
     :param extra_build_snaps: Additional snaps to install on the host system.
     :param ignore_patterns: File patterns to ignore when pulling local sources.
+    :param use_host_sources: Whether overlay steps should also include the repository
+      sources defined on the host.
     """
 
     def __init__(  # noqa: PLR0913

@@ -67,7 +67,7 @@ class OverlayManager:
     :param cache_level: The number of part layers to be mounted before the
         package cache.
     :param use_host_sources: Configure chroot to use package sources from
-        the the host environment.
+        the host environment.
     """
 
     def __init__(
