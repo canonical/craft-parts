@@ -23,6 +23,7 @@ from pathlib import Path
 
 from craft_parts import overlays
 from craft_parts.permissions import Permissions, filter_permissions
+from craft_parts.state_manager.stage_state import StageState
 from craft_parts.state_manager.states import MigrationState, StepState
 from craft_parts.utils import file_utils
 
@@ -146,6 +147,7 @@ def clean_shared_area(
     shared_dir: Path,
     part_states: dict[str, StepState],
     overlay_migration_state: MigrationState | None,
+    partition: str | None,
 ) -> None:
     """Clean files added by a part to a shared directory.
 
@@ -160,8 +162,48 @@ def clean_shared_area(
         return
 
     state = part_states[part_name]
-    files = state.files
-    directories = state.directories
+    files: set[str] = set()
+    directories: set[str] = set()
+
+    partition_contents = state.contents(partition=partition)
+
+    if partition_contents:
+        files, directories = partition_contents
+
+    # We want to make sure we don't remove a file or directory that's
+    # being used by another part. So we'll examine the state for all parts
+    # in the project and leave any files or directories found to be in
+    # common.
+    for other_name, other_state in part_states.items():
+        other_partition_contents = other_state.contents(partition=partition)
+
+        if other_state and other_name != part_name and other_partition_contents:
+            other_files, other_directories = other_partition_contents
+            files -= other_files
+            directories -= other_directories
+
+    # If overlay has been migrated, also take overlay files into account
+    if overlay_migration_state:
+        overlay_contents = overlay_migration_state.contents(partition=partition)
+        if overlay_migration_state and overlay_contents:
+            overlay_files, overlay_directories = overlay_contents
+            files -= overlay_files
+            directories -= overlay_directories
+
+    # Finally, clean the files and directories that are specific to this
+    # part.
+    _clean_migrated_files(files, directories, shared_dir)
+
+
+def clean_backstage(
+    *, part_name: str, shared_dir: Path, part_states: dict[str, StageState]
+) -> None:
+    """Clean files added by a part to the backstage directory."""
+    if part_name not in part_states:
+        return
+
+    files = part_states[part_name].backstage_files
+    directories = part_states[part_name].backstage_directories
 
     # We want to make sure we don't remove a file or directory that's
     # being used by another part. So we'll examine the state for all parts
@@ -169,16 +211,9 @@ def clean_shared_area(
     # common.
     for other_name, other_state in part_states.items():
         if other_state and other_name != part_name:
-            files -= other_state.files
-            directories -= other_state.directories
+            files -= other_state.backstage_files
+            directories -= other_state.backstage_directories
 
-    # If overlay has been migrated, also take overlay files into account
-    if overlay_migration_state:
-        files -= overlay_migration_state.files
-        directories -= overlay_migration_state.directories
-
-    # Finally, clean the files and directories that are specific to this
-    # part.
     _clean_migrated_files(files, directories, shared_dir)
 
 
@@ -187,6 +222,7 @@ def clean_shared_overlay(
     shared_dir: Path,
     part_states: dict[str, StepState],
     overlay_migration_state: MigrationState | None,
+    partition: str | None,
 ) -> None:
     """Remove migrated overlay files from a shared directory.
 
@@ -199,14 +235,25 @@ def clean_shared_overlay(
     if not overlay_migration_state:
         return
 
-    files = overlay_migration_state.files
-    directories = overlay_migration_state.directories
+    files: set[str] = set()
+    directories: set[str] = set()
 
-    # Don't remove entries that also belong to a part.
+    # This overlay migration state is coming from a partition, so content
+    # is recorded in top-level files/directories keys, not in partition_contents key
+    overlay_contents = overlay_migration_state.contents(partition=None)
+
+    if overlay_contents:
+        files, directories = overlay_contents
+
+    # Don't remove entries that also belong to a part in this partition
     for other_state in part_states.values():
-        if other_state:
-            files -= other_state.files
-            directories -= other_state.directories
+        if not other_state:
+            continue
+        other_contents = other_state.contents(partition=partition)
+        if other_contents:
+            other_part_files, other_part_directories = other_contents
+            files -= other_part_files
+            directories -= other_part_directories
 
     _clean_migrated_files(files, directories, shared_dir)
 
@@ -232,14 +279,13 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
     # we'll sort them in reverse here to get subdirectories before parents.
 
     for each_dir in sorted(dirs, reverse=True):
-        migrated_directory = os.path.join(directory, each_dir)
+        migrated_directory = os.path.join(directory, each_dir)  # noqa: PTH118
         try:
-            if not os.listdir(migrated_directory):
-                os.rmdir(migrated_directory)
+            if not os.listdir(migrated_directory):  # noqa: PTH208
+                os.rmdir(migrated_directory)  # noqa: PTH106
         except FileNotFoundError:
             logger.warning(
-                "Attempted to remove directory '%s', but it didn't exist. "
-                "Skipping...",
+                "Attempted to remove directory '%s', but it didn't exist. Skipping...",
                 each_dir,
             )
 
@@ -268,7 +314,6 @@ def filter_dangling_whiteouts(
         if overlays.is_oci_whiteout_file(Path(file)):
             backing_file = base_dir / overlays.oci_whited_out_file(Path(file))
             if not backing_file.exists():
-                logger.debug("filter whiteout file '%s'", file)
                 files.remove(file)
                 whiteouts.add(file)
 
@@ -278,8 +323,32 @@ def filter_dangling_whiteouts(
         if opaque_marker in files:
             backing_file = base_dir / directory
             if not backing_file.exists():
-                logger.debug("filter whiteout file '%s'", opaque_marker)
                 files.remove(opaque_marker)
                 whiteouts.add(opaque_marker)
 
     return whiteouts
+
+
+def filter_all_whiteouts(
+    files: set[str],
+) -> set[str]:
+    """List and filter all whiteout files.
+
+    Found whiteout files are to be removed from the provided sets of files.
+
+    :param files: The set of files to be verified.
+    :return: The set of filtered out whiteout files.
+    """
+    whiteouts: set[str] = set()
+
+    for file in list(files):
+        if overlays.is_oci_whiteout(Path(file)):
+            files.remove(file)
+            whiteouts.add(file)
+
+    return whiteouts
+
+
+def already_distributed(item: Path, sub_path: Path) -> bool:
+    """Check if a file/dir is or is under a subpath already distributed to another partition."""
+    return item.is_relative_to(sub_path) and item != sub_path

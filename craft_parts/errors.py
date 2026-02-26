@@ -16,17 +16,22 @@
 
 """Craft parts errors."""
 
+from __future__ import annotations
+
 import abc
 import contextlib
-import pathlib
-from collections.abc import Iterable
 from io import StringIO
 from typing import TYPE_CHECKING
 
-from overrides import override
+from typing_extensions import override
+
+from craft_parts.utils.formatting_utils import humanize_list
 
 if TYPE_CHECKING:
-    from pydantic.error_wrappers import ErrorDict, Loc
+    import pathlib
+    from collections.abc import Iterable
+
+    from pydantic_core import ErrorDetails
 
 
 class PartsError(Exception):
@@ -83,17 +88,25 @@ class FeatureError(PartsError):
         super().__init__(brief=brief, details=details, resolution=resolution)
 
 
-class PartDependencyCycle(PartsError):
-    """A dependency cycle has been detected in the parts definition."""
+class PartDependencyCycle(PartsError):  # noqa: N818
+    """A dependency cycle has been detected in the parts definition.
 
-    def __init__(self) -> None:
+    :param part_names: The names of the parts involved in the cycle.
+    """
+
+    def __init__(self, *, part_names: list[str] | None = None) -> None:
         brief = "A circular dependency chain was detected."
         resolution = "Review the parts definition to remove dependency cycles."
 
-        super().__init__(brief=brief, resolution=resolution)
+        if part_names:
+            details = f"Part processing order: {' -> '.join(part_names)}"
+        else:
+            details = None
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
 
 
-class InvalidApplicationName(PartsError):
+class InvalidApplicationName(PartsError):  # noqa: N818
     """The application name contains invalid characters.
 
     :param name: The invalid application name.
@@ -110,7 +123,7 @@ class InvalidApplicationName(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidPartName(PartsError):
+class InvalidPartName(PartsError):  # noqa: N818
     """An operation was requested on a part that's not in the parts specification.
 
     :param part_name: The invalid part name.
@@ -124,7 +137,7 @@ class InvalidPartName(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidArchitecture(PartsError):
+class InvalidArchitecture(PartsError):  # noqa: N818
     """The machine architecture is not supported.
 
     :param arch_name: The unsupported architecture name.
@@ -156,8 +169,8 @@ class PartSpecificationError(PartsError):
 
     @classmethod
     def from_validation_error(
-        cls, *, part_name: str, error_list: list["ErrorDict"]
-    ) -> "PartSpecificationError":
+        cls, *, part_name: str, error_list: list[ErrorDetails]
+    ) -> PartSpecificationError:
         """Create a PartSpecificationError from a pydantic error list.
 
         :param part_name: The name of the part being processed.
@@ -166,10 +179,10 @@ class PartSpecificationError(PartsError):
         formatted_errors: list[str] = []
 
         for error in error_list:
-            loc = error.get("loc")
-            msg = error.get("msg")
+            loc = error["loc"]
+            msg = error["msg"]
 
-            if not (loc and msg) or not isinstance(loc, tuple):
+            if not loc or not msg:
                 continue
 
             field = cls._format_loc(loc)
@@ -183,19 +196,17 @@ class PartSpecificationError(PartsError):
         return cls(part_name=part_name, message="\n".join(formatted_errors))
 
     @classmethod
-    def _format_loc(cls, loc: "Loc") -> str:
+    def _format_loc(cls, loc: tuple[int | str, ...]) -> str:
         """Format location."""
-        loc_parts = []
+        loc_parts: list[str] = []
         for loc_part in loc:
             if isinstance(loc_part, str):
                 loc_parts.append(loc_part)
-            elif isinstance(loc_part, int):
+            else:
                 # Integer indicates an index. Go back and fix up previous part.
                 previous_part = loc_parts.pop()
                 previous_part += f"[{loc_part}]"
                 loc_parts.append(previous_part)
-            else:
-                raise TypeError(f"unhandled loc: {loc_part}")
 
         loc_str = ".".join(loc_parts)
 
@@ -217,7 +228,7 @@ class CopyTreeError(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class CopyFileNotFound(PartsError):
+class CopyFileNotFound(PartsError):  # noqa: N818
     """An attempt was made to copy a file that doesn't exist.
 
     :param name: The file name.
@@ -240,7 +251,11 @@ class XAttributeError(PartsError):
     """
 
     def __init__(
-        self, key: str, path: str, is_write: bool = False  # noqa: FBT001, FBT002
+        self,
+        key: str,
+        path: str,
+        *,
+        is_write: bool = False,
     ) -> None:
         self.key = key
         self.path = path
@@ -253,7 +268,7 @@ class XAttributeError(PartsError):
         super().__init__(brief=brief, details=details, resolution=resolution)
 
 
-class XAttributeTooLong(PartsError):
+class XAttributeTooLong(PartsError):  # noqa: N818
     """Failed to write an extended attribute because key and/or value is too long.
 
     :param key: The extended attribute key.
@@ -271,7 +286,7 @@ class XAttributeTooLong(PartsError):
         super().__init__(brief=brief, details=details)
 
 
-class UndefinedPlugin(PartsError):
+class UndefinedPlugin(PartsError):  # noqa: N818
     """The part didn't define a plugin and the part name is not a valid plugin name.
 
     :param part_name: The name of the part with no plugin definition.
@@ -285,7 +300,7 @@ class UndefinedPlugin(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidPlugin(PartsError):
+class InvalidPlugin(PartsError):  # noqa: N818
     """A request was made to use a plugin that's not registered.
 
     :param plugin_name: The invalid plugin name."
@@ -301,7 +316,7 @@ class InvalidPlugin(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class PluginNotStrict(PartsError):
+class PluginNotStrict(PartsError):  # noqa: N818
     """A request was made to use a plugin that's not strict.
 
     :param plugin_name: The plugin name.
@@ -371,7 +386,7 @@ class FilesetError(PartsError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class FilesetConflict(PartsError):
+class FilesetConflict(PartsError):  # noqa: N818
     """Inconsistent stage to prime filtering.
 
     :param conflicting_files: A set containing the conflicting file names.
@@ -406,7 +421,7 @@ class FileOrganizeError(PartsError):
         super().__init__(brief=brief)
 
 
-class PartFilesConflict(PartsError):
+class PartFilesConflict(PartsError):  # noqa: N818
     """Different parts list the same files with different contents.
 
     :param part_name: The name of the part being processed.
@@ -444,7 +459,39 @@ class PartFilesConflict(PartsError):
         super().__init__(brief=brief, details=details)
 
 
-class StageFilesConflict(PartsError):
+class OverlayStageConflict(PartsError):  # noqa: N818
+    """A conflict between contents to be staged from the overlay and from the build step."""
+
+    def __init__(
+        self,
+        *,
+        part_name: str,
+        overlay_part_name: str,
+        conflicting_files: list[str],
+        partition: str | None = None,
+    ) -> None:
+        self.part_name = part_name
+        self.overlay_part_name = overlay_part_name
+        self.conflicting_files = conflicting_files
+        self.partition = partition
+
+        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
+        file_paths = "\n".join(sorted(indented_conflicting_files))
+        partition_info = f" for the {partition!r} partition" if partition else ""
+        brief = (
+            "Failed to stage: parts list the same file or directory "
+            "with different contents or permissions."
+        )
+        details = (
+            f"Part {part_name!r} and the overlay of part {overlay_part_name!r} list the following "
+            f"files{partition_info}, but with different contents or permissions:\n"
+            f"{file_paths}"
+        )
+
+        super().__init__(brief=brief, details=details)
+
+
+class StageFilesConflict(PartsError):  # noqa: N818
     """Files from a part conflict with files already being staged.
 
     :param part_name: The name of the part being processed.
@@ -505,7 +552,7 @@ class UserExecutionError(PartsError, abc.ABC):
     ) -> None:
         self.stderr = stderr
         super().__init__(
-            brief=brief, resolution=resolution, doc_slug="/reference/plugins.html"
+            brief=brief, resolution=resolution, doc_slug="/reference/plugins/"
         )
 
     @property
@@ -513,27 +560,28 @@ class UserExecutionError(PartsError, abc.ABC):
     def details(self) -> str | None:
         """Further details on the error.
 
-        Discards all trace lines that come before the last-executed script line
+        Displays the last three trace lines from the error output.
         """
-        with contextlib.closing(StringIO()) as details_io:
-            if self.stderr is None:
-                return None
+        if self.stderr is None:
+            return None
 
-            stderr = self.stderr.decode("utf-8", errors="replace")
-            stderr_lines = stderr.split("\n")
-            # Find the final command captured in the logs
-            last_command = None
-            for idx, line in enumerate(reversed(stderr_lines)):
-                if line.startswith("+"):
-                    last_command = len(stderr_lines) - idx - 1
+        stderr = self.stderr.decode("utf-8", errors="replace")
+        stderr_lines = list(filter(lambda x: x, stderr.split("\n")))
+
+        # Find the third trace output line
+        anchor_line = 0
+        traced_lines_to_display = 3
+        count = 0
+        for idx, line in enumerate(reversed(stderr_lines)):
+            if line.startswith("+"):
+                count += 1
+                if count > traced_lines_to_display:
+                    anchor_line = -idx
                     break
-            else:
-                # Fallback to printing the whole log
-                last_command = 0
 
-            for line in stderr_lines[last_command:]:
-                if line:
-                    details_io.write(f"\n:: {line}")
+        with contextlib.closing(StringIO()) as details_io:
+            for line in stderr_lines[anchor_line:]:
+                details_io.write(f"\n:: {line}")
 
             return details_io.getvalue()
 
@@ -570,7 +618,7 @@ class PluginCleanError(PartsError):
         super().__init__(brief=brief)
 
 
-class InvalidControlAPICall(PartsError):
+class InvalidControlAPICall(PartsError):  # noqa: N818
     """A control API call was made with invalid parameters.
 
     :param part_name: The name of the part being processed.
@@ -632,7 +680,7 @@ class CallbackRegistrationError(PartsError):
         super().__init__(brief=brief)
 
 
-class StagePackageNotFound(PartsError):
+class StagePackageNotFound(PartsError):  # noqa: N818
     """Failed to install a stage package.
 
     :param part_name: The name of the part being processed.
@@ -647,7 +695,7 @@ class StagePackageNotFound(PartsError):
         super().__init__(brief=brief)
 
 
-class OverlayPackageNotFound(PartsError):
+class OverlayPackageNotFound(PartsError):  # noqa: N818
     """Failed to install an overlay package.
 
     :param part_name: The name of the part being processed.
@@ -662,7 +710,7 @@ class OverlayPackageNotFound(PartsError):
         super().__init__(brief=brief)
 
 
-class InvalidAction(PartsError):
+class InvalidAction(PartsError):  # noqa: N818
     """An attempt was made to execute an action with invalid parameters.
 
     :param message: The error message.
@@ -746,7 +794,7 @@ class PartitionUsageError(PartitionError):
         )
 
 
-class PartitionUsageWarning(PartitionError, Warning):
+class PartitionUsageWarning(PartitionError, Warning):  # noqa: N818
     """Warnings for possibly invalid usages of partitions.
 
     :param warning_list: Iterable of strings describing the misuses.
@@ -768,7 +816,7 @@ class PartitionUsageWarning(PartitionError, Warning):
         Warning.__init__(self)
 
 
-class PartitionNotFound(PartitionUsageError):
+class PartitionNotFound(PartitionUsageError):  # noqa: N818
     """A partition has been specified that does not exist.
 
     :param partition_name: The name of the partition that does not exist.
@@ -782,4 +830,78 @@ class PartitionNotFound(PartitionUsageError):
             brief=f"Requested partition does not exist: {partition_name!r}",
             partitions=partitions,
             error_list=[],
+        )
+
+
+class FilesystemMountError(PartsError):
+    """Errors related to filesystem mounts."""
+
+    def __init__(
+        self,
+        brief: str,
+        *,
+        details: str | None = None,
+        resolution: str | None = None,
+    ) -> None:
+        super().__init__(brief=brief, details=details, resolution=resolution)
+
+    @classmethod
+    def from_validation_error(
+        cls, *, error_list: list[ErrorDetails]
+    ) -> FilesystemMountError:
+        """Create a FilesystemMountError from a pydantic error list.
+
+        :param error_list: A list of dictionaries containing pydantic error definitions.
+        """
+        formatted_errors: list[str] = []
+
+        for error in error_list:
+            loc = error["loc"]
+            msg = error["msg"]
+
+            if not msg:
+                continue
+
+            field = cls._format_loc(loc)
+            if msg == "field required":
+                formatted_errors.append(f"- field {field!r} is required")
+            elif msg == "extra fields not permitted":
+                formatted_errors.append(f"- extra field {field!r} not permitted")
+            else:
+                formatted_errors.append(f"- {msg} in field {field!r}")
+
+        return cls(
+            brief="Filesystem validation failed.", details="\n".join(formatted_errors)
+        )
+
+    @classmethod
+    def _format_loc(cls, loc: tuple[int | str, ...]) -> str:
+        """Format location."""
+        loc_parts: list[str] = []
+        for loc_part in loc:
+            if isinstance(loc_part, str):
+                loc_parts.append(loc_part)
+            else:
+                # Integer indicates an index. Go back and fix up previous part.
+                previous_part = loc_parts.pop()
+                previous_part += f"[{loc_part}]"
+                loc_parts.append(previous_part)
+
+        loc_str = ".".join(loc_parts)
+
+        # Filter out internal __root__ detail.
+        return loc_str.replace(".__root__", "")
+
+
+class UnsupportedBuildAttributesError(PartsError):
+    """Use of build-attributes that a plugin does not support."""
+
+    def __init__(self, unsupported: set[str], plugin_name: str) -> None:
+        noun = "build attribute" if len(unsupported) == 1 else "build attributes"
+        humanized = humanize_list(unsupported, "and")
+        message = f"Plugin {plugin_name!r} does not support the {humanized} {noun}."
+
+        super().__init__(
+            brief=message,
+            resolution=f"Remove the {noun}, or use a different plugin.",
         )

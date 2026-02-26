@@ -35,6 +35,7 @@ from craft_parts.plugins import Plugin
 from craft_parts.sources.local_source import SourceHandler
 from craft_parts.steps import Step
 from craft_parts.utils import process
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 from . import filesets
 from .filesets import Fileset
@@ -46,11 +47,44 @@ Stream = TextIO | int | None
 
 
 @dataclasses.dataclass(frozen=True)
-class StepContents:
+class StepPartitionContents:
     """Files and directories to be added to the step's state."""
 
-    files: set[str] = dataclasses.field(default_factory=set)
-    dirs: set[str] = dataclasses.field(default_factory=set)
+    files: set[str] = dataclasses.field(default_factory=set[str])
+    dirs: set[str] = dataclasses.field(default_factory=set[str])
+
+
+@dataclasses.dataclass(frozen=True)
+class StagePartitionContents(StepPartitionContents):
+    """Files and directories for both stage and backstage in the step's state."""
+
+    backstage_files: set[str] = dataclasses.field(default_factory=set[str])
+    backstage_dirs: set[str] = dataclasses.field(default_factory=set[str])
+
+
+@dataclasses.dataclass(init=False)
+class StepContents:
+    """Contents mapped to partitions."""
+
+    partitions_contents: dict[str, StepPartitionContents | StagePartitionContents] = (
+        dataclasses.field(
+            default_factory=dict[str, StepPartitionContents | StagePartitionContents]
+        )
+    )
+
+    def __init__(
+        self, *, partitions: list[str] | None = None, stage: bool = False
+    ) -> None:
+        if partitions is None or len(partitions) == 0:
+            partitions = [DEFAULT_PARTITION]
+        if stage:
+            self.partitions_contents = {
+                partition: StagePartitionContents() for partition in partitions
+            }
+            return
+        self.partitions_contents = {
+            partition: StepPartitionContents() for partition in partitions
+        }
 
 
 class StepHandler:
@@ -75,7 +109,7 @@ class StepHandler:
         env: str,
         stdout: Stream = None,
         stderr: Stream = None,
-        partitions: set[str] | None = None,
+        partitions: list[str] | None = None,
     ) -> None:
         self._part = part
         self._step_info = step_info
@@ -163,10 +197,14 @@ class StepHandler:
         return StepContents()
 
     def _builtin_stage(self) -> StepContents:
-        stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
+        stage_fileset = Fileset(
+            self._part.spec.stage_files,
+            name="stage",
+            default_partition=self._step_info.default_partition,
+        )
 
         def pkgconfig_fixup(file_path: str) -> None:
-            if os.path.islink(file_path):
+            if os.path.islink(file_path):  # noqa: PTH114
                 return
             if not file_path.endswith(".pc"):
                 return
@@ -176,13 +214,24 @@ class StepHandler:
                 prefix_trim=self._part.part_install_dir,
             )
 
+        step_contents = StepContents(stage=True)
+
         if self._partitions:
-            files: set[str] = set()
-            dirs: set[str] = set()
+            backstage_files, backstage_dirs = filesets.migratable_filesets(
+                Fileset(
+                    [f"({self._step_info.default_partition})/*"],
+                    name="backstage",
+                    default_partition=self._step_info.default_partition,
+                ),
+                str(self._part.part_export_dir),
+                self._step_info.default_partition,
+                self._step_info.default_partition,
+            )
             for partition in self._partitions:
                 partition_files, partition_dirs = filesets.migratable_filesets(
                     stage_fileset,
                     str(self._part.part_install_dirs[partition]),
+                    self._step_info.default_partition,
                     partition,
                 )
                 partition_files, partition_dirs = migrate_files(
@@ -192,12 +241,33 @@ class StepHandler:
                     destdir=self._part.dirs.get_stage_dir(partition),
                     fixup_func=pkgconfig_fixup,
                 )
-
-                files.update(partition_files)
-                dirs.update(partition_dirs)
+                # Backstage content is managed only in the default partition
+                if partition == self._step_info.default_partition:
+                    backstage_files, backstage_dirs = migrate_files(
+                        files=backstage_files,
+                        dirs=backstage_dirs,
+                        srcdir=self._part.part_export_dir,
+                        destdir=self._part.backstage_dir,
+                    )
+                    step_contents.partitions_contents[partition] = (
+                        StagePartitionContents(
+                            files=partition_files,
+                            dirs=partition_dirs,
+                            backstage_files=backstage_files,
+                            backstage_dirs=backstage_dirs,
+                        )
+                    )
+                else:
+                    step_contents.partitions_contents[partition] = (
+                        StagePartitionContents(
+                            files=partition_files, dirs=partition_dirs
+                        )
+                    )
         else:
             files, dirs = filesets.migratable_filesets(
-                stage_fileset, str(self._part.part_install_dir)
+                stage_fileset,
+                str(self._part.part_install_dir),
+                DEFAULT_PARTITION,
             )
             files, dirs = migrate_files(
                 files=files,
@@ -206,25 +276,59 @@ class StepHandler:
                 destdir=self._part.stage_dir,
                 fixup_func=pkgconfig_fixup,
             )
+            backstage_files, backstage_dirs = filesets.migratable_filesets(
+                Fileset(["*"], name="backstage"),
+                str(self._part.part_export_dir),
+                DEFAULT_PARTITION,
+            )
+            backstage_files, backstage_dirs = migrate_files(
+                files=backstage_files,
+                dirs=backstage_dirs,
+                srcdir=self._part.part_export_dir,
+                destdir=self._part.backstage_dir,
+            )
+            step_contents.partitions_contents[DEFAULT_PARTITION] = (
+                StagePartitionContents(
+                    files=files,
+                    dirs=dirs,
+                    backstage_files=backstage_files,
+                    backstage_dirs=backstage_dirs,
+                )
+            )
 
-        return StepContents(files, dirs)
+        return step_contents
 
     def _builtin_prime(self) -> StepContents:
-        prime_fileset = Fileset(self._part.spec.prime_files, name="prime")
+        prime_fileset = Fileset(
+            self._part.spec.prime_files,
+            name="prime",
+            default_partition=self._step_info.default_partition,
+        )
 
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
-        if prime_fileset.entries == ["*"] or len(prime_fileset.includes) == 0:
-            stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
+        wildcard_default = filesets.normalize_entry(
+            "*", self._step_info.default_partition
+        )
+        if (
+            prime_fileset.entries == [wildcard_default]
+            or len(prime_fileset.includes) == 0
+        ):
+            stage_fileset = Fileset(
+                self._part.spec.stage_files,
+                name="stage",
+                default_partition=self._step_info.default_partition,
+            )
             prime_fileset.combine(stage_fileset)
 
+        step_contents = StepContents()
+
         if self._partitions:
-            files: set[str] = set()
-            dirs: set[str] = set()
             for partition in self._partitions:
                 partition_files, partition_dirs = filesets.migratable_filesets(
                     prime_fileset,
                     str(self._part.part_install_dirs[partition]),
+                    self._step_info.default_partition,
                     partition,
                 )
 
@@ -239,12 +343,15 @@ class StepHandler:
                     permissions=self._part.spec.permissions,
                 )
 
-                files.update(partition_files)
-                dirs.update(partition_dirs)
+                step_contents.partitions_contents[partition] = StepPartitionContents(
+                    files=partition_files, dirs=partition_dirs
+                )
 
         else:
             files, dirs = filesets.migratable_filesets(
-                prime_fileset, str(self._part.part_install_dir)
+                prime_fileset,
+                str(self._part.part_install_dir),
+                DEFAULT_PARTITION,
             )
             files, dirs = migrate_files(
                 files=files,
@@ -253,8 +360,11 @@ class StepHandler:
                 destdir=self._part.prime_dir,
                 permissions=self._part.spec.permissions,
             )
+            step_contents.partitions_contents[DEFAULT_PARTITION] = (
+                StepPartitionContents(files=files, dirs=dirs)
+            )
 
-        return StepContents(files, dirs)
+        return step_contents
 
     def run_scriptlet(
         self,
@@ -270,7 +380,7 @@ class StepHandler:
         :param work_dir: the directory where the script will be executed.
         """
         with tempfile.TemporaryDirectory() as tempdir:
-            ctl_socket_path = os.path.join(tempdir, "craftctl.socket")
+            ctl_socket_path = os.path.join(tempdir, "craftctl.socket")  # noqa: PTH118
             ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             ctl_socket.bind(ctl_socket_path)
             ctl_socket.listen(1)
@@ -308,7 +418,7 @@ class StepHandler:
         selector = selectors.SelectSelector()
 
         def accept(sock: socket.socket, _mask: int) -> None:
-            conn, addr = sock.accept()
+            conn, _ = sock.accept()
             selector.register(conn, selectors.EVENT_READ, read)
 
         def read(conn: socket.socket, _mask: int) -> None:
@@ -340,7 +450,7 @@ class StepHandler:
         """Parse the command message received from the client."""
         try:
             function_json = json.loads(function_call)
-        except json.decoder.JSONDecodeError as err:
+        except json.JSONDecodeError as err:
             raise RuntimeError(
                 f"{scriptlet_name!r} scriptlet called a function with invalid json: "
                 f"{function_call}"

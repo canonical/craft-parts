@@ -18,8 +18,11 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
+
+pytestmark = [pytest.mark.java]
 
 
 def run_build(new_dir, partitions, application):

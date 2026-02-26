@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,32 +15,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for partition utilities."""
 
+import itertools
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 
 from craft_parts import errors, features
 
-VALID_PARTITION_REGEX = re.compile(r"(?!-)[a-z0-9-]+(?<!-)", re.ASCII)
-VALID_NAMESPACE_REGEX = re.compile(r"[a-z0-9]+", re.ASCII)
+# Allow alphanumeric characters, hyphens and slashes, not starting or ending
+# with a hyphen or a slash
+VALID_PARTITION_REGEX = re.compile(r"(?!-|/)[a-z0-9-/]+(?<!-|/)", re.ASCII)
 VALID_NAMESPACED_PARTITION_REGEX = re.compile(
-    VALID_NAMESPACE_REGEX.pattern + r"/" + VALID_PARTITION_REGEX.pattern, re.ASCII
+    r"[a-z0-9]+/" + VALID_PARTITION_REGEX.pattern, re.ASCII
 )
 
 PARTITION_INVALID_MSG = (
     "Partitions must only contain lowercase letters, numbers,"
-    "and hyphens, and may not begin or end with a hyphen."
+    "hyphens and slashes, and may not begin or end with a hyphen or a slash."
 )
+
+DEFAULT_PARTITION = "default"
+OVERLAY_PARTITION = "overlay"  # Pseudo-partition targeting the overlay
 
 
 def validate_partition_names(partitions: Sequence[str] | None) -> None:
     """Validate the partition feature set.
 
     If the partition feature is enabled, then:
-      - the first partition must be "default"
       - each partition name must contain only lowercase alphanumeric characters
-        and hyphens, but not begin or end with a hyphen
+        hyphens and slashes, but not begin or end with a hyphen or a slash
       - partitions are unique
+      - only the first partition can be named "default"
 
     Namespaced partitions can also be validated in addition to regular (or
     'non-namespaced') partitions. The format is `<namespace>/<partition>`.
@@ -64,15 +69,19 @@ def validate_partition_names(partitions: Sequence[str] | None) -> None:
             "Partition feature is enabled but no partitions are defined."
         )
 
-    if partitions[0] != "default":
-        raise errors.FeatureError("First partition must be 'default'.")
-
     if len(partitions) != len(set(partitions)):
         raise errors.FeatureError("Partitions must be unique.")
 
-    _validate_partition_naming_convention(partitions)
+    if DEFAULT_PARTITION in partitions[1:]:
+        raise errors.FeatureError("Only the first partition can be named 'default'.")
 
-    _validate_namespace_conflicts(partitions)
+    if OVERLAY_PARTITION in partitions:
+        raise errors.FeatureError(
+            "Reserved name 'overlay' cannot be used to name a partition."
+        )
+
+    _validate_partition_naming_convention(partitions)
+    _validate_partitions_conflicts(partitions)
 
 
 def _is_valid_partition_name(partition: str) -> bool:
@@ -103,9 +112,7 @@ def _validate_partition_naming_convention(partitions: Sequence[str]) -> None:
     :raises FeatureError: if a partition name is not valid
     """
     for partition in partitions:
-        if _is_valid_partition_name(partition) or _is_valid_namespaced_partition_name(
-            partition
-        ):
+        if _is_valid_namespaced_partition_name(partition):
             continue
 
         if "/" in partition:
@@ -118,62 +125,102 @@ def _validate_partition_naming_convention(partitions: Sequence[str]) -> None:
                 ),
             )
 
+        if _is_valid_partition_name(partition):
+            continue
         raise errors.FeatureError(
             message=f"Partition {partition!r} is invalid.",
             details=PARTITION_INVALID_MSG,
         )
 
 
-def _validate_namespace_conflicts(partitions: Sequence[str]) -> None:
-    """Validate conflicts between regular partitions and namespaces.
+def _validate_partitions_conflicts(partitions: Sequence[str]) -> None:
+    """Validate conflicts between partitions.
 
-    For example, `foo` conflicts in ['default', 'foo', 'foo/bar'].
-    Assumes partition names are valid.
+    Assumes partition names are valid and unique.
 
-    :raises FeatureError: for namespace conflicts
+    :raises FeatureError: for conflicts
     """
-    namespaced_partitions: set[str] = set()
-    regular_partitions: set[str] = set()
+    conflicting_partitions = _detect_conflicts(partitions)
 
-    # sort partitions
-    for partition in partitions:
-        if _is_valid_partition_name(partition):
-            regular_partitions.add(partition)
-        else:
-            namespaced_partitions.add(partition)
+    if not conflicting_partitions:
+        return
 
-    for regular_partition in regular_partitions:
-        for namespaced_partition in namespaced_partitions:
-            if namespaced_partition.startswith(regular_partition + "/"):
-                raise errors.FeatureError(
-                    f"Partition {regular_partition!r} conflicts with the namespace of "
-                    f"partition {namespaced_partition!r}"
-                )
+    # Raise the full list of conflicts
+    lines: list[str] = []
+    for conflicts in conflicting_partitions:
+        conflict_list = list(conflicts)
+        conflict_list.sort()
+        lines.append(f"- {str(conflict_list)[1:-1]}")
 
-    # At this point we know that any remaining conflicts will be overlaps
-    # caused by hyphens and namespaces.  For example, "foo-bar" and "foo/bar"
-    # would both result in environment variable FOO_BAR.
-    underscored_partitions = {}
-    for partition in partitions:
-        underscored = partition.replace("-", "_").replace("/", "_")
-        if underscored not in underscored_partitions:
-            underscored_partitions[underscored] = partition
-            continue
+    msg = "\n".join(lines)
 
-        # Collision.  Figure out which is which so we can raise a good error message.
-        namespaced_partition = underscored_partitions[underscored]
-        hyphenated_partition = partition
-        if "/" in partition:
-            namespaced_partition = partition
-            hyphenated_partition = underscored_partitions[underscored]
-        raise errors.FeatureError(
-            f"Namespaced partition {namespaced_partition!r} conflicts with hyphenated "
-            f"partition {hyphenated_partition!r}."
-        )
+    raise errors.FeatureError(
+        message=f"Partition name conflicts:\n{msg}",
+        details="Hyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.",
+    )
+
+
+def _detect_conflicts(partitions: Sequence[str]) -> list[set[str]]:
+    """Detect and return every conflicts between partitions.
+
+    Rules:
+      1: partition name must not conflict with namespace (or sub-namespace) names
+        - `foo` and 'foo/bar' conflict
+        - `foo/bar` and 'foo/bar/baz' conflict
+      2: environment variables derived from partition names must not conflicts
+        - `foo/bar-baz` and `foo/bar/baz` conflict (would be converted to FOO_BAR_BAZ)
+        - `foo/bar/baz-qux` and `foo/bar-baz/qux` conflict (would be converted to FOO_BAR_BAZ_QUX)
+
+    """
+    conflict_sets: list[set[str]] = []
+    env_var_translation = {ord("-"): "_", ord("/"): "_"}
+
+    for candidate_partition, partition in itertools.combinations(partitions, 2):
+        candidate_underscored = candidate_partition.translate(env_var_translation)
+        underscored = partition.translate(env_var_translation)
+
+        if (
+            _namespace_conflicts(candidate_partition, partition)
+            or candidate_underscored == underscored
+        ):
+            _register_conflict(conflict_sets, partition, candidate_partition)
+
+    return conflict_sets
+
+
+def _register_conflict(
+    conflict_sets: list[set[str]], partition: str, candidate_partition: str
+) -> None:
+    """Register the conflict, avoiding duplicates.
+
+    If the partition or the one it conflicts with is already in a known set of
+    conflicts, expand this set.
+    Otherwise, add a new set in the conflicts list.
+    """
+    new_conflict_set = {partition, candidate_partition}
+
+    for conflict_set in conflict_sets:
+        if partition in conflict_set or candidate_partition in conflict_set:
+            conflict_set.update(new_conflict_set)
+            break
+    else:
+        conflict_sets.append(new_conflict_set)
+
+
+def _namespace_conflicts(a: str, b: str) -> bool:
+    """Split candidates with slashes and check if the shorter one is a subset of the other."""
+    separator = "/"
+    a_list = a.split(separator)
+    b_list = b.split(separator)
+
+    if len(a_list) > len(b_list):
+        return a_list[: len(b_list)] == b_list
+
+    return b_list[: len(a_list)] == a_list
 
 
 def get_partition_dir_map(
-    base_dir: Path, partitions: Iterable[str] | None, suffix: str = ""
+    base_dir: Path, partitions: Sequence[str] | None, suffix: str = ""
 ) -> dict[str | None, Path]:
     """Return a mapping of partition directories.
 
@@ -191,12 +238,23 @@ def get_partition_dir_map(
     """
     if partitions:
         return {
-            "default": base_dir / suffix,
+            partitions[0]: base_dir / suffix,
             **{
                 partition: base_dir / "partitions" / partition / suffix
-                for partition in partitions
-                if partition != "default"
+                for partition in partitions[1:]
             },
         }
 
     return {None: base_dir / suffix}
+
+
+def is_default_partition(partitions: list[str] | None, partition: str | None) -> bool:
+    """Check if given partition is the default one in the given partition list."""
+    if partition == DEFAULT_PARTITION:
+        return True
+    if partitions is None and partition is None:
+        return True
+    if partitions is not None:
+        return partition == partitions[0]
+
+    return False

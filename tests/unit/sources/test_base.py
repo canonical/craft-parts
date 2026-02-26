@@ -27,7 +27,7 @@ from craft_parts.sources.base import (
     FileSourceHandler,
     SourceHandler,
 )
-from overrides import overrides
+from typing_extensions import override
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -94,11 +94,11 @@ class BarFileSource(FileSourceHandler):
 
     source_model = BarFileSourceModel
 
-    @overrides
+    @override
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
+        keep: bool = False,
         src: Path | None = None,
     ) -> None:
         """Extract source payload."""

@@ -23,7 +23,7 @@ import os
 import subprocess
 import tempfile
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 
@@ -45,12 +45,12 @@ class JavaPlugin(Plugin):
                         System.out.println(System.getProperty("java.specification.version"));
                     }
                 }"""
-            with open(f"{tempdir}/Test.java", "w") as file:
+            with open(f"{tempdir}/Test.java", "w") as file:  # noqa: PTH123
                 file.write(test_class)
 
             try:
                 subprocess.call([javac, "-d", tempdir, f"{tempdir}/Test.java"])
-                java_home = os.path.dirname(os.path.dirname(javac))
+                java_home = os.path.dirname(os.path.dirname(javac))  # noqa: PTH120
                 spec_version = subprocess.check_output(
                     [java_home + "/bin/java", "-cp", tempdir, "Test"], text=True
                 )
@@ -78,8 +78,8 @@ class JavaPlugin(Plugin):
     @override
     def get_build_environment(self) -> dict[str, str]:
         """Override JAVA_HOME in the build environment."""
-        env = {}
-        candidate_java = {}
+        env: dict[str, str] = {}
+        candidate_java: dict[int, str] = {}
         for javac in self._find_javac():
             spec, home = self._check_java(javac)
             if spec is not None:
@@ -103,10 +103,16 @@ class JavaPlugin(Plugin):
     def _get_jar_link_commands(self) -> list[str]:
         """Get the bash commands to provide ${CRAFT_STAGE}/jars."""
         # pylint: disable=line-too-long
+        # Don't use the jars downloaded by Maven in the local repository
+        exclude = self._part_info.part_build_subdir / ".parts"
         return [
             "# Find all the generated jars and hardlink them inside CRAFT_PART_INSTALL/jar/",
             "mkdir -p ${CRAFT_PART_INSTALL}/jar",
-            r'find ${CRAFT_PART_BUILD}/ -iname "*.jar" -exec ln {} ${CRAFT_PART_INSTALL}/jar \;',
+            (
+                r'find "${CRAFT_PART_BUILD}/" -iname "*.jar" '
+                f'-not -path "{exclude}/*" '
+                r'-exec ln {} "${CRAFT_PART_INSTALL}/jar" \;'
+            ),
         ]
         # pylint: enable=line-too-long
 
@@ -122,3 +128,6 @@ class JavaPlugin(Plugin):
             ${CRAFT_PART_INSTALL}/jar.
         """
         return self._get_java_link_commands() + self._get_jar_link_commands()
+
+    def _is_self_contained(self) -> bool:
+        return "self-contained" in self._part_info.build_attributes

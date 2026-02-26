@@ -1,6 +1,5 @@
-*******
 Actions
-*******
+=======
 
 Actions are the execution units needed to move the project state to
 a given step through the parts lifecycle. The action behavior is

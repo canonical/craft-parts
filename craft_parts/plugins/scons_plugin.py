@@ -18,7 +18,7 @@
 
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from craft_parts import errors
 

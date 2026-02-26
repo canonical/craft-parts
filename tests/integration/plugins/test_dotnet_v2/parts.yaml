@@ -1,0 +1,7 @@
+parts:
+  foo:
+    source: .
+    plugin: dotnet
+    dotnet-self-contained: true
+    dotnet-configuration: "Release"
+    dotnet-verbosity: "minimal"

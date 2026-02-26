@@ -44,7 +44,12 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[str], set[st
     visible_files: set[str] = set()
     visible_dirs: set[str] = set()
 
-    logger.debug("check layer visibility in %s", lower_dir)
+    logger.debug("check layer visibility in %s, compared to %s", lower_dir, upper_dir)
+
+    # If the upper dir is opaque everything is hidden
+    if is_oci_opaque_dir(upper_dir):
+        return visible_files, visible_dirs
+
     for root, directories, files in os.walk(lower_dir, topdown=True):
         for file_name in files:
             path = Path(root, file_name)
@@ -73,7 +78,6 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[str], set[st
                 # Don't descend into this directory, overridden by opaque
                 directories.remove(directory)
 
-    logger.debug("layer visibility files=%r, dirs=%r", visible_files, visible_dirs)
     return visible_files, visible_dirs
 
 
@@ -85,11 +89,10 @@ def _is_path_visible(root: Path, relpath: Path) -> bool:
 
     :returns: Whether the final element of the path is visible.
     """
-    logger.debug("check if path is visible: root=%s, relpath=%s", root, relpath)
     levels = len(relpath.parts)
 
     for level in range(levels):
-        path = Path(root, os.path.join(*relpath.parts[: level + 1]))
+        path = Path(root, os.path.join(*relpath.parts[: level + 1]))  # noqa: PTH118
         if oci_whiteout(path).exists() or is_oci_opaque_dir(path):
             logger.debug("is whiteout or opaque: %s", path)
             return False
@@ -110,14 +113,24 @@ def is_oci_opaque_dir(path: Path) -> bool:
     return oci_opaque_dir(path).exists()
 
 
-def is_oci_whiteout_file(path: Path) -> bool:
+def is_oci_whiteout(path: Path) -> bool:
     """Verify if the given path corresponds to an OCI whiteout file.
 
     :param path: The path of the file to verify.
 
     :returns: Whether the given path is an OCI whiteout file.
     """
-    return path.name.startswith(".wh.") and path.name != ".wh..wh..opq"
+    return path.name.startswith(".wh.")
+
+
+def is_oci_whiteout_file(path: Path) -> bool:
+    """Verify if the given path corresponds to an OCI whiteout file hiding a file.
+
+    :param path: The path of the file to verify.
+
+    :returns: Whether the given path is an OCI whiteout file hiding a file.
+    """
+    return is_oci_whiteout(path) and path.name != ".wh..wh..opq"
 
 
 def oci_whiteout(path: Path) -> Path:

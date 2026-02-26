@@ -69,6 +69,8 @@ class LayerHash:
         hasher.update(digest)
         if part.spec.overlay_script:
             hasher.update(part.spec.overlay_script.encode())
+        if part.spec.override_overlay:
+            hasher.update(part.spec.override_overlay.encode())
         return cls(hasher.digest())
 
     @classmethod
@@ -84,7 +86,7 @@ class LayerHash:
         if not hash_file.exists():
             return None
 
-        with open(hash_file) as file:
+        with open(hash_file) as file:  # noqa: PTH123
             hex_string = file.readline()
 
         return cls(bytes.fromhex(hex_string))

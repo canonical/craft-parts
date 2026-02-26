@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2024 Canonical Ltd.
+# Copyright 2020-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,21 +19,22 @@
 from __future__ import annotations
 
 import abc
-import pathlib
 import textwrap
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from overrides import override
+from typing_extensions import override
 
-from craft_parts.actions import ActionProperties
-
-from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
+    import pathlib
+
     from craft_parts import infos
+    from craft_parts.actions import ActionProperties
+
+    from .properties import PluginProperties
 
 
 class Plugin(abc.ABC):
@@ -90,6 +91,15 @@ class Plugin(abc.ABC):
         :param action_properties: The properties to store.
         """
         self._action_properties = deepcopy(action_properties)
+
+    @classmethod
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports.
+
+        By default, a plugin supports no build attributes at all. Subclasses must
+        override this to declare support for specific attributes.
+        """
+        return set()
 
 
 class BasePythonPlugin(Plugin):
@@ -164,7 +174,7 @@ class BasePythonPlugin(Plugin):
             # look for python3.10
             basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
             echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
-            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null || true)
 
             if [ -n "$payload_python" ]; then
                 # We found a provisioned interpreter, use it.
@@ -179,12 +189,12 @@ class BasePythonPlugin(Plugin):
                 fi
             else
                 # Otherwise use what _get_system_python_interpreter() told us.
-                echo "Python interpreter not found in payload."
+                echo "Python interpreter not found in payload." >&2
                 symlink_target="{python_interpreter}"
             fi
 
             if [ -z "$symlink_target" ]; then
-                echo "No suitable Python interpreter found, giving up."
+                echo "No suitable Python interpreter found, giving up." >&2
                 exit 1
             fi
 

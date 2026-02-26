@@ -66,11 +66,13 @@ SourceModel = Annotated[
 
 
 __all__ = [
+    "BaseFileSourceModel",
     "errors",
     "DebSource",
     "DebSourceModel",
     "FileSource",
     "FileSourceModel",
+    "get_source_handler",
     "GitSource",
     "GitSourceModel",
     "LocalSource",
@@ -81,6 +83,7 @@ __all__ = [
     "SevenzipSourceModel",
     "SnapSource",
     "SnapSourceModel",
+    "SourceHandler",
     "TarSource",
     "TarSourceModel",
     "ZipSource",

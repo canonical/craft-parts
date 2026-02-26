@@ -126,7 +126,6 @@ def test_part_schema_implicit_source_type(validator, plugin_data, source_data):
 
 @pytest.mark.parametrize("part_data", INVALID_PART_DATAS)
 def test_invalid_part_data(validator, part_data):
-
     with pytest.raises(jsonschema.ValidationError):
         validator.validate(part_data)
 

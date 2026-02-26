@@ -1,0 +1,5 @@
+parts:
+  my-part:
+    plugin: dump
+    source: hello.sh
+    source-type: file

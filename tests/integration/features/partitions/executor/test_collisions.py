@@ -20,6 +20,7 @@ from typing import Any
 import pytest
 from craft_parts import LifecycleManager, Step
 from craft_parts.errors import PartFilesConflict
+
 from tests.integration.executor import test_collisions
 
 

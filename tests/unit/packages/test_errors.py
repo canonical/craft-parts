@@ -121,8 +121,7 @@ def test_snap_unavailable():
         "'word-salad' does not exist or is not available on channel 'stable'."
     )
     assert err.resolution == (
-        "Use `snap info word-salad` to get a list of channels the snap "
-        "is available on."
+        "Use `snap info word-salad` to get a list of channels the snap is available on."
     )
 
 

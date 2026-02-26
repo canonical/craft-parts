@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from copy import deepcopy
 from functools import partial
+from pathlib import Path
 
 import pydantic
 import pytest
@@ -70,14 +72,13 @@ class TestPartSpecs:
         data_copy["overlay"] = ["*"]
         data_copy["overlay-packages"] = []
         data_copy["overlay-script"] = None
-
+        data_copy["override-overlay"] = None
         spec = PartSpec.unmarshal(data)
         assert spec.marshal() == data_copy
 
     def test_unmarshal_not_dict(self, partitions):
-        with pytest.raises(TypeError) as raised:
-            PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-        assert str(raised.value) == "part data is not a dictionary"
+        with pytest.raises(TypeError, match="^part data is not a dictionary$"):
+            PartSpec.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
 
     def test_unmarshal_mix_packages_slices(self, mocker):
         """
@@ -153,6 +154,7 @@ class TestPartData:
         assert p.part_run_dir == new_dir / "parts/foo/run"
         assert p.part_layer_dir == new_dir / "parts/foo/layer"
         assert p.part_cache_dir == new_dir / "parts/foo/cache"
+        assert p.backstage_dir == new_dir / "backstage"
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
@@ -174,6 +176,7 @@ class TestPartData:
         assert p.part_snaps_dir == new_dir / "foobar/parts/foo/stage_snaps"
         assert p.part_run_dir == new_dir / "foobar/parts/foo/run"
         assert p.part_layer_dir == new_dir / "foobar/parts/foo/layer"
+        assert p.backstage_dir == new_dir / "foobar/backstage"
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 
@@ -337,6 +340,23 @@ class TestPartData:
         assert p.has_overlay is False
 
     @pytest.mark.parametrize(
+        ("organize", "result"),
+        [
+            ({}, False),
+            ({"this": "that"}, False),
+        ],
+    )
+    def test_part_organizes_to_overlay(self, partitions, organize, result):
+        p = Part("foo", {"organize": organize}, partitions=partitions)
+        assert p.organizes_to_overlay == result
+
+    def test_part_install_dirs(self, new_dir):
+        p = Part("foo", {"organize": {"foo": "bar"}})
+        assert p.part_install_dirs == {
+            None: Path(new_dir / "parts/foo/install"),
+        }
+
+    @pytest.mark.parametrize(
         ("tc_spec", "tc_result"),
         [
             ({}, False),
@@ -402,6 +422,84 @@ class TestPartOrdering:
         with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
 
+    @pytest.mark.parametrize(
+        ("parts_data", "expected_cycle"),
+        [
+            pytest.param(
+                [
+                    ("part-one", {"after": ["part-two"]}),
+                    ("part-two", {"after": ["part-one"]}),
+                ],
+                "part-one -> part-two -> part-one",
+                id="two_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-a", {"after": ["part-b"]}),
+                    ("part-b", {"after": ["part-c"]}),
+                    ("part-c", {"after": ["part-a"]}),
+                ],
+                "part-a -> part-b -> part-c -> part-a",
+                id="three_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-w", {"after": ["part-x"]}),
+                    ("part-x", {"after": ["part-y"]}),
+                    ("part-y", {"after": ["part-z"]}),
+                    ("part-z", {"after": ["part-w"]}),
+                ],
+                "part-w -> part-x -> part-y -> part-z -> part-w",
+                id="four_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-a", {"after": ["part-c"]}),
+                    ("part-b", {"after": ["part-a"]}),
+                    ("part-c", {"after": ["part-b"]}),
+                ],
+                "part-a -> part-c -> part-b -> part-a",
+                id="non_alphabetical_chain",
+            ),
+        ],
+    )
+    def test_sort_parts_cycle_detailed(self, partitions, parts_data, expected_cycle):
+        """Test circular dependency detection with various cycle configurations."""
+        part_list = [
+            Part(name, spec, partitions=partitions) for name, spec in parts_data
+        ]
+
+        expected = f"Part processing order: {expected_cycle}"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts(part_list)
+
+    def test_sort_parts_cycle_with_independent_part(self, partitions):
+        """Test that error message only shows parts in the cycle, not independent parts."""
+        # Create a cycle between part-a, part-b, and part-c
+        p1 = Part("part-a", {"after": ["part-b"]}, partitions=partitions)
+        p2 = Part("part-b", {"after": ["part-c"]}, partitions=partitions)
+        p3 = Part("part-c", {"after": ["part-a"]}, partitions=partitions)
+        # Add an independent part that should not appear in the error
+        p4 = Part("independent-part", {}, partitions=partitions)
+
+        # The actual dependency chain: part-a -> part-b -> part-c -> part-a (showing the cycle)
+        expected = "Part processing order: part-a -> part-b -> part-c -> part-a"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts([p1, p2, p3, p4])
+
+    def test_sort_parts_cycle_self_dependency(self, partitions):
+        """Test circular dependency where a part depends on itself."""
+        p1 = Part("self-dep", {"after": ["self-dep"]}, partitions=partitions)
+
+        expected = "Part processing order: self-dep -> self-dep"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts([p1])
+
+    def test_sort_parts_empty_list(self, partitions):
+        """Test that sorting an empty list returns an empty list."""
+        result = parts.sort_parts([])
+        assert result == []
+
 
 class TestPartUnmarshal:
     """Verify data unmarshaling on part creation."""
@@ -423,7 +521,7 @@ class TestPartUnmarshal:
 
     def test_part_spec_not_dict(self, partitions):
         with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", False, partitions=partitions)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
+            Part("foo", None, partitions=partitions)  # type: ignore[reportGeneralTypeIssues]
         assert raised.value.part_name == "foo"
         assert raised.value.message == "part data is not a dictionary"
 
@@ -572,3 +670,9 @@ class TestPartValidation:
     def test_part_coerces_numbers(self, partitions):
         data = {"plugin": "nil", "build-environment": [{"CGO_ENABLED": 0}]}
         parts.validate_part(data)
+
+    def test_part_validate_build_attributes(self, partitions):
+        data = {"plugin": "nil", "build-attributes": ["self-contained"]}
+
+        with pytest.raises(errors.UnsupportedBuildAttributesError):
+            parts.validate_part(data)

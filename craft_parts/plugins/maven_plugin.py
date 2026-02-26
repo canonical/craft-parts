@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2023,2024 Canonical Ltd.
+# Copyright 2015-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,16 +16,14 @@
 
 """The maven plugin."""
 
-import os
+import pathlib
 import re
-import xml.etree.ElementTree as ET
-from pathlib import Path
 from typing import Literal, cast
-from urllib.parse import urlparse
 
-from overrides import override
+from typing_extensions import override
 
 from craft_parts import errors
+from craft_parts.utils.maven import create_maven_settings, update_pom
 
 from . import validator
 from .java_plugin import JavaPlugin
@@ -38,6 +36,7 @@ class MavenPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["maven"] = "maven"
 
     maven_parameters: list[str] = []
+    maven_use_wrapper: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -61,6 +60,9 @@ class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :raises PluginEnvironmentValidationError: If maven is invalid
           and there are no parts named maven-deps.
         """
+        options = cast(MavenPluginProperties, self._options)
+        if options.maven_use_wrapper:
+            return
         version = self.validate_dependency(
             dependency="mvn",
             plugin_name="maven",
@@ -90,7 +92,9 @@ class MavenPlugin(JavaPlugin):
     - maven-parameters:
       (list of strings)
       Flags to pass to the build using the maven semantics for parameters.
-
+    - maven-use-wrapper:
+      (boolean)
+      Whether to use project's Maven wrapper (mvnw) to execute the build.
     """
 
     properties_class = MavenPluginProperties
@@ -106,86 +110,74 @@ class MavenPlugin(JavaPlugin):
         """Return a set of required packages to install in the build environment."""
         return set()
 
+    @property
+    def _maven_executable(self) -> str:
+        """Return the maven executable to be used for build."""
+        options = cast(MavenPluginProperties, self._options)
+        return "${CRAFT_PART_BUILD_WORK}/mvnw" if options.maven_use_wrapper else "mvn"
+
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         options = cast(MavenPluginProperties, self._options)
 
-        mvn_cmd = ["mvn", "package"]
-        if self._use_proxy():
-            settings_path = self._part_info.part_build_dir / ".parts/.m2/settings.xml"
-            _create_settings(settings_path)
-            mvn_cmd += ["-s", str(settings_path)]
+        mvn_cmd = [self._maven_executable, "package"]
+
+        self_contained = self._is_self_contained()
+
+        settings_path = create_maven_settings(
+            part_info=self._part_info, set_mirror=self_contained
+        )
+        mvn_cmd.extend(["-s", str(settings_path)])
+
+        if self_contained:
+            update_pom(
+                part_info=self._part_info,
+                deploy_to=self._get_deploy_dir(),
+                self_contained=True,
+            )
 
         return [
+            *self._get_mvnw_validation_commands(options=options),
             " ".join(mvn_cmd + options.maven_parameters),
+            *self._get_extra_maven_commands(settings_path),
             *self._get_java_post_build_commands(),
         ]
 
-    def _use_proxy(self) -> bool:
-        return any(k in os.environ for k in ("http_proxy", "https_proxy"))
-
-
-def _create_settings(settings_path: Path) -> None:
-    """Create a Maven configuration file.
-
-    The settings file contains additional configuration for Maven, such
-    as proxy parameters.
-
-    :param settings_path: the location the settings file will be created.
-    """
-    settings = ET.Element(
-        "settings",
-        attrib={
-            "xmlns": "http://maven.apache.org/SETTINGS/1.0.0",
-            "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-            "xsi:schemaLocation": (
-                "http://maven.apache.org/SETTINGS/1.0.0 "
-                "http://maven.apache.org/xsd/settings-1.0.0.xsd"
-            ),
-        },
-    )
-    element = ET.Element("interactiveMode")
-    element.text = "false"
-    settings.append(element)
-    proxies = ET.Element("proxies")
-
-    for protocol in ("http", "https"):
-        env_name = f"{protocol}_proxy"
-        if env_name not in os.environ:
-            continue
-
-        proxy_url = urlparse(os.environ[env_name])
-        proxy = ET.Element("proxy")
-        proxy_tags = [
-            ("id", env_name),
-            ("active", "true"),
-            ("protocol", protocol),
-            ("host", proxy_url.hostname),
-            ("port", str(proxy_url.port)),
+    def _get_mvnw_validation_commands(
+        self, options: MavenPluginProperties
+    ) -> list[str]:
+        """Validate mvnw file before execution."""
+        if not options.maven_use_wrapper:
+            return []
+        return [
+            """[ -e ${CRAFT_PART_BUILD_WORK}/mvnw ] || {
+>&2 echo 'mvnw file not found, refer to plugin documentation: \
+https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
+common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
+}"""
         ]
-        if proxy_url.username is not None:
-            proxy_tags.extend(
-                [("username", proxy_url.username), ("password", proxy_url.password)]
-            )
-        proxy_tags.append(("nonProxyHosts", _get_no_proxy_string()))
 
-        for tag, text in proxy_tags:
-            element = ET.Element(tag)
-            element.text = text
-            proxy.append(element)
+    def _get_deploy_dir(self) -> pathlib.Path | None:
+        """Get the path that "mvn deploy" should write to.
 
-        proxies.append(proxy)
+        The default implementation returns None, which means that no deploying should
+        happen.
+        """
+        return None
 
-    settings.append(proxies)
-    tree = ET.ElementTree(settings)
-    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+    def _get_extra_maven_commands(self, settings_path: pathlib.Path) -> list[str]:  # noqa: ARG002
+        """Get the commands that should be executed after "mvn package".
 
-    with settings_path.open("w") as file:
-        tree.write(file, encoding="unicode")
-        file.write("\n")
+        The default implementation is empty - this method is provided as a "hook" for
+        subclasses.
 
+        :param settings_path: The settings file that Maven commands should use.
+        """
+        return []
 
-def _get_no_proxy_string() -> str:
-    no_proxy = [k.strip() for k in os.environ.get("no_proxy", "localhost").split(",")]
-    return "|".join(no_proxy)
+    @classmethod
+    @override
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports."""
+        return {"self-contained"}

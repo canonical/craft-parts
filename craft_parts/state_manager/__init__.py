@@ -17,4 +17,11 @@
 """Part state management."""
 
 from .state_manager import StateManager
-from .step_state import MigrationState, StepState
+from .step_state import MigrationState, StepState, MigrationContents
+
+__all__ = [
+    "MigrationContents",
+    "MigrationState",
+    "StateManager",
+    "StepState",
+]

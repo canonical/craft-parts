@@ -100,7 +100,7 @@ class FakeSnapCommand:
 
         if cmd == "download":
             if self.fake_download:
-                dest = os.path.join(kwargs["cwd"], params[0] + ".snap")
+                dest = os.path.join(kwargs["cwd"], params[0] + ".snap")  # noqa: PTH118
                 shutil.copyfile(self.fake_download, dest)
             return b"Downloaded  "
 

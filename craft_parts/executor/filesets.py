@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021,2024 Canonical Ltd.
+# Copyright 2015-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ from glob import iglob
 
 from craft_parts import errors, features
 from craft_parts.utils import path_utils
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 
 class Fileset:
@@ -30,7 +31,13 @@ class Fileset:
     Filepaths to exclude begin with a hyphen.
     """
 
-    def __init__(self, entries: list[str], *, name: str = "") -> None:
+    def __init__(
+        self,
+        entries: list[str],
+        *,
+        name: str = "",
+        default_partition: str = DEFAULT_PARTITION,
+    ) -> None:
         """Initialize a fileset.
 
         If the partition feature is enabled, files in the default partition are
@@ -44,7 +51,10 @@ class Fileset:
         """
         self._name = name
         self._validate_entries(entries)
-        self._list: list[str] = [_normalize_entry(entry) for entry in entries]
+        self._default_partition = default_partition
+        self._list: list[str] = [
+            normalize_entry(entry, self._default_partition) for entry in entries
+        ]
 
     def __repr__(self) -> str:
         return f"Fileset({self._list!r}, name={self._name!r})"
@@ -74,7 +84,7 @@ class Fileset:
 
         :param item: The item to remove.
         """
-        self._list.remove(_normalize_entry(item))
+        self._list.remove(normalize_entry(item, self._default_partition))
 
     def combine(self, other: "Fileset") -> None:
         """Combine the entries in this fileset with entries from another fileset.
@@ -83,14 +93,15 @@ class Fileset:
         """
         to_combine = False
         # combine if the fileset has a wildcard
-        if "*" in self.entries:
+        wildcard = normalize_entry("*", self._default_partition)
+        if wildcard in self.entries:
             to_combine = True
-            self.remove("*")
+            self.remove(wildcard)
 
         other_excludes = set(other.excludes)
         my_includes = set(self.includes)
 
-        contradicting_set = set.intersection(other_excludes, my_includes)
+        contradicting_set = other_excludes & my_includes
         if contradicting_set:
             raise errors.FilesetConflict(contradicting_set)
 
@@ -110,14 +121,17 @@ class Fileset:
         """
         for entry in entries:
             filepath = entry[1:] if entry[0] == "-" else entry
-            if os.path.isabs(filepath):
+            if os.path.isabs(filepath):  # noqa: PTH117
                 raise errors.FilesetError(
                     name=self.name, message=f"path {filepath!r} must be relative."
                 )
 
 
 def migratable_filesets(
-    fileset: Fileset, srcdir: str, partition: str | None = None
+    fileset: Fileset,
+    srcdir: str,
+    default_partition: str,
+    partition: str | None = None,
 ) -> tuple[set[str], set[str]]:
     """Determine the files to migrate from a directory based on a fileset.
 
@@ -127,7 +141,7 @@ def migratable_filesets(
 
     :return: A tuple containing the set of files and the set of directories to migrate.
     """
-    includes, excludes = _get_file_list(fileset, partition)
+    includes, excludes = _get_file_list(fileset, partition, default_partition)
 
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
@@ -140,8 +154,8 @@ def migratable_filesets(
     dirs = {
         x
         for x in files
-        if os.path.isdir(os.path.join(srcdir, x))
-        and not os.path.islink(os.path.join(srcdir, x))
+        if os.path.isdir(os.path.join(srcdir, x))  # noqa: PTH112, PTH118
+        and not os.path.islink(os.path.join(srcdir, x))  # noqa: PTH114, PTH118
     }
 
     # Remove dirs from files.
@@ -150,25 +164,20 @@ def migratable_filesets(
     # Include (resolved) parent directories for each selected file.
     for _filename in files:
         filename = _get_resolved_relative_path(_filename, srcdir)
-        dirname = os.path.dirname(filename)
+        dirname = os.path.dirname(filename)  # noqa: PTH120
         while dirname:
             dirs.add(dirname)
-            dirname = os.path.dirname(dirname)
+            dirname = os.path.dirname(dirname)  # noqa: PTH120
 
     # Resolve parent paths for dirs and files.
-    resolved_dirs = set()
-    for dirname in dirs:
-        resolved_dirs.add(_get_resolved_relative_path(dirname, srcdir))
-
-    resolved_files = set()
-    for filename in files:
-        resolved_files.add(_get_resolved_relative_path(filename, srcdir))
+    resolved_dirs = {_get_resolved_relative_path(dirname, srcdir) for dirname in dirs}
+    resolved_files = {_get_resolved_relative_path(name, srcdir) for name in files}
 
     return resolved_files, resolved_dirs
 
 
 def _get_file_list(
-    fileset: Fileset, partition: str | None
+    fileset: Fileset, partition: str | None, default_partition: str
 ) -> tuple[list[str], list[str]]:
     """Split a fileset to obtain include and exclude file filters.
 
@@ -215,14 +224,18 @@ def _get_file_list(
     # only include files for the partition
     processed_includes: list[str] = []
     for file in includes:
-        file_partition, file_inner_path = path_utils.get_partition_and_path(file)
+        file_partition, file_inner_path = path_utils.get_partition_and_path(
+            file, default_partition
+        )
         if file_partition == partition:
             processed_includes.append(str(file_inner_path))
 
     # only exclude files for the partition
     processed_excludes: list[str] = []
     for file in excludes:
-        file_partition, file_inner_path = path_utils.get_partition_and_path(file)
+        file_partition, file_inner_path = path_utils.get_partition_and_path(
+            file, default_partition
+        )
         if file_partition == partition:
             processed_excludes.append(str(file_inner_path))
 
@@ -237,18 +250,20 @@ def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
 
     :return: The set of files to include.
     """
-    include_files = set()
+    include_files: set[str] = set()
 
     for include in includes:
         if "*" in include:
-            pattern = os.path.join(directory, include)
-            matches = iglob(pattern, recursive=True)
+            pattern = os.path.join(directory, include)  # noqa: PTH118
+            matches = iglob(pattern, recursive=True)  # noqa: PTH207
             include_files |= set(matches)
         else:
-            include_files |= {os.path.join(directory, include)}
+            include_files |= {os.path.join(directory, include)}  # noqa: PTH118
 
     include_dirs = [
-        x for x in include_files if os.path.isdir(x) and not os.path.islink(x)
+        x
+        for x in include_files
+        if os.path.isdir(x) and not os.path.islink(x)  # noqa: PTH112, PTH114
     ]
     include_files = {os.path.relpath(x, directory) for x in include_files}
 
@@ -257,10 +272,12 @@ def _generate_include_set(directory: str, includes: list[str]) -> set[str]:
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
             include_files |= {
-                os.path.relpath(os.path.join(root, d), directory) for d in dirs
+                os.path.relpath(os.path.join(root, d), directory)  # noqa: PTH118
+                for d in dirs
             }
             include_files |= {
-                os.path.relpath(os.path.join(root, f), directory) for f in files
+                os.path.relpath(os.path.join(root, f), directory)  # noqa: PTH118
+                for f in files
             }
 
     return include_files
@@ -275,15 +292,17 @@ def _generate_exclude_set(
 
     :return: The set of files to exclude.
     """
-    exclude_files = set()
+    exclude_files: set[str] = set()
 
     for exclude in excludes:
-        pattern = os.path.join(directory, exclude)
-        matches = iglob(pattern, recursive=True)
+        pattern = os.path.join(directory, exclude)  # noqa: PTH118
+        matches = iglob(pattern, recursive=True)  # noqa: PTH207
         exclude_files |= set(matches)
 
     exclude_dirs = {
-        os.path.relpath(x, directory) for x in exclude_files if os.path.isdir(x)
+        os.path.relpath(x, directory)
+        for x in exclude_files
+        if os.path.isdir(x)  # noqa: PTH112
     }
     exclude_files = {os.path.relpath(x, directory) for x in exclude_files}
 
@@ -303,13 +322,14 @@ def _get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     :return: Resolved path, relative to base_directory.
     """
     parent_relpath, filename = os.path.split(relative_path)
-    parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))
+    parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))  # noqa: PTH118
 
-    filename_abspath = os.path.join(parent_abspath, filename)
-    return os.path.relpath(filename_abspath, base_directory)
+    filename_abspath = os.path.join(parent_abspath, filename)  # noqa: PTH118
+    #  https://github.com/astral-sh/ty/issues/405
+    return os.path.relpath(filename_abspath, base_directory)  # ty: ignore[invalid-return-type]
 
 
-def _normalize_entry(entry: str) -> str:
+def normalize_entry(entry: str, default_partition: str) -> str:
     """Normalize an entry to begin with a partition, if partitions are enabled.
 
     If partitions are enabled, `foo` will be normalized to `(default)/foo`.
@@ -322,7 +342,9 @@ def _normalize_entry(entry: str) -> str:
     # split file into an optional prefix (a hyphen character) and the file
     split_file = (entry[0], entry[1:]) if entry[0] == "-" else ("", entry)
 
-    partition, inner_path = path_utils.get_partition_and_path(split_file[1])
+    partition, inner_path = path_utils.get_partition_and_path(
+        split_file[1], default_partition
+    )
 
     if partition:
         return f"{split_file[0]}({partition})/{inner_path}"

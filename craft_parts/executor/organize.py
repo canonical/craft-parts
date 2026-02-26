@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021,2024 Canonical Ltd.
+# Copyright 2015-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,27 +22,36 @@ the key represents the path of a file inside the part and the value
 represents how the file is going to be staged.
 """
 
+from __future__ import annotations
+
 import contextlib
 import os
 import shutil
-from collections.abc import Mapping
 from glob import iglob
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from pathlib import Path
 
 
-def organize_files(
+def organize_files(  # noqa: PLR0912
     *,
     part_name: str,
     file_map: dict[str, str],
     install_dir_map: Mapping[str | None, Path],
     overwrite: bool,
+    default_partition: str,
 ) -> None:
     """Rearrange files for part staging.
 
     If partitions are enabled, source filepaths must be in the default partition.
+    The default partition can be referenced by the provided default_partition name
+    or by the DEFAULT_PARTITION value.
 
     :param part_name: The name of the part to organize files for.
     :param file_map: A mapping of source filepaths to destination filepaths.
@@ -57,34 +66,12 @@ def organize_files(
         the default partition.
     """
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
-        src_partition, src_inner_path = path_utils.get_partition_and_path(key)
-
-        if src_partition and src_partition != "default":
-            raise errors.FileOrganizeError(
-                part_name=part_name,
-                message=(
-                    f"Cannot organize files from {src_partition!r} partition. "
-                    "Files can only be organized from the 'default' partition"
-                ),
-            )
-
-        src = os.path.join(install_dir_map[src_partition], src_inner_path)
-
-        # Remove the leading slash so the path actually joins
-        # Also trailing slash is significant, be careful if using pathlib!
-        dst_partition, dst_inner_path = path_utils.get_partition_and_path(
-            file_map[key].lstrip("/")
+        src = get_src_path(key, part_name, install_dir_map, default_partition)
+        dst, dst_string = get_dst_path(
+            key, file_map, install_dir_map, default_partition
         )
 
-        dst = os.path.join(install_dir_map[dst_partition], dst_inner_path)
-
-        # prefix the partition to the log-friendly version of the destination
-        if dst_partition and dst_partition != "default":
-            dst_string = f"({dst_partition})/{dst_inner_path}"
-        else:
-            dst_string = str(dst_inner_path)
-
-        sources = iglob(src, recursive=True)
+        sources = iglob(src, recursive=True)  # noqa: PTH207
 
         # Keep track of the number of glob expansions so we can properly error if more
         # than one tries to organize to the same file
@@ -92,15 +79,20 @@ def organize_files(
         for src in sources:
             src_count += 1
 
-            if os.path.isdir(src) and "*" not in key:
+            # Organize a dir to a dir
+            if os.path.isdir(src) and "*" not in key:  # noqa: PTH112
                 file_utils.link_or_copy_tree(src, dst)
                 shutil.rmtree(src)
                 continue
 
-            if os.path.isfile(dst):
+            # Organize a "not dir" (file, character device, etc.) to a "not dir"
+            if os.path.isfile(dst):  # noqa: PTH113
+                if os.path.abspath(dst) == os.path.abspath(src):  # noqa: PTH100
+                    # Trying to organize a file to the same place, skipping
+                    continue
                 if overwrite and src_count <= 1:
                     with contextlib.suppress(FileNotFoundError):
-                        os.remove(dst)
+                        os.remove(dst)  # noqa: PTH107
                 elif src_count > 1:
                     raise errors.FileOrganizeError(
                         part_name=part_name,
@@ -120,13 +112,86 @@ def organize_files(
                         ),
                     )
 
-            if os.path.isdir(dst) and overwrite:
-                real_dst = os.path.join(dst, os.path.basename(src))
-                if os.path.isdir(real_dst):
-                    shutil.rmtree(real_dst)
-                else:
-                    with contextlib.suppress(FileNotFoundError):
-                        os.remove(real_dst)
+            # Organize a "not dir" to a dir
+            if os.path.isdir(dst):  # noqa: PTH112
+                real_dst = os.path.join(dst, os.path.basename(src))  # noqa: PTH118, PTH119
+                if os.path.abspath(real_dst) == os.path.abspath(src):  # noqa: PTH100
+                    # Trying to organize a file to the same place, skipping
+                    continue
+                if overwrite:
+                    if os.path.isdir(real_dst):  # noqa: PTH112
+                        shutil.rmtree(real_dst)
+                    else:
+                        with contextlib.suppress(FileNotFoundError):
+                            os.remove(real_dst)  # noqa: PTH107
+                elif os.path.exists(real_dst):  # noqa: PTH110
+                    rel_dst_string = os.path.join(dst_string, os.path.basename(src))  # noqa: PTH118, PTH119
+                    raise errors.FileOrganizeError(
+                        part_name=part_name,
+                        message=(
+                            f"trying to organize {key!r} to "
+                            f"{file_map[key]!r}, but "
+                            f"{rel_dst_string!r} already exists"
+                        ),
+                    )
 
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.move(src, dst)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)  # noqa: PTH103, PTH120
+            file_utils.move(src, dst)
+
+
+def get_src_path(
+    key: str,
+    part_name: str,
+    install_dir_map: Mapping[str | None, Path],
+    default_partition: str,
+) -> str:
+    """Return the full path for a relative source."""
+    src_partition, src_inner_path = path_utils.get_partition_and_path(
+        key, default_partition
+    )
+
+    if src_partition and src_partition not in [
+        default_partition,
+        DEFAULT_PARTITION,
+    ]:
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"Cannot organize files from {src_partition!r} partition. "
+                f"Files can only be organized from the {default_partition!r} partition"
+            ),
+        )
+    # Replace default partition default name with alias name to allow
+    # using (default) in paths even with aliased default partition
+    if src_partition == DEFAULT_PARTITION:
+        src_partition = default_partition
+
+    return os.path.join(install_dir_map[src_partition], src_inner_path)  # noqa: PTH118
+
+
+def get_dst_path(
+    key: str,
+    file_map: dict[str, str],
+    install_dir_map: Mapping[str | None, Path],
+    default_partition: str,
+) -> tuple[str, str]:
+    """Return the full destination path and log-friendly representation of a destination."""
+    # Remove the leading slash so the path actually joins
+    # Also trailing slash is significant, be careful if using pathlib!
+    dst_partition, dst_inner_path = path_utils.get_partition_and_path(
+        file_map[key].lstrip("/"),
+        default_partition,
+    )
+
+    # Replace default partition default name with alias name to allow
+    # using (default) in paths even with aliased default partition
+    if dst_partition == DEFAULT_PARTITION:
+        dst_partition = default_partition
+
+    # prefix the partition to the log-friendly version of the destination
+    if dst_partition and dst_partition != default_partition:
+        dst_string = f"({dst_partition})/{dst_inner_path}"
+    else:
+        dst_string = str(dst_inner_path)
+
+    return os.path.join(install_dir_map[dst_partition], dst_inner_path), dst_string  # noqa: PTH118

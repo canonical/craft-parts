@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from textwrap import dedent, indent
 
 import pytest
@@ -94,6 +95,13 @@ class TestPartData(test_parts.TestPartData):
                 suffix="parts/foo/install",
             ),
         )
+
+    def test_part_install_dirs(self, new_dir):
+        p = Part("foo", {"organize": {"foo": "bar"}}, partitions=["mypart", "yourpart"])
+        assert p.part_install_dirs == {
+            "mypart": Path(new_dir / "parts/foo/install"),  # aliased default part
+            "yourpart": Path(new_dir / "partitions/yourpart/parts/foo/install"),
+        }
 
 
 class TestPartOrdering(test_parts.TestPartOrdering):
@@ -289,7 +297,7 @@ class TestPartPartitionUsage:
             "prime": misused_fileset,
         }
 
-        with pytest.warns(Warning) as warning:
+        with pytest.warns(errors.PartitionUsageWarning) as warning:
             Part("a", part_data, partitions=partition_list)
 
         partition_warning = warning.list[0].message
@@ -328,7 +336,7 @@ class TestPartPartitionUsage:
             "prime": misused_fileset,
         }
 
-        with pytest.warns(Warning) as warning:
+        with pytest.warns(errors.PartitionUsageWarning) as warning:
             Part("a", part_data, partitions=partition_list)
 
         partition_warning = warning.list[0].message
@@ -448,7 +456,9 @@ class TestPartPartitionUsage:
             no path specified after partition in '(foo/bar-baz)/'
             unknown partition 'foo/bar-baz' in '(foo/bar-baz)/test'
             unknown partition 'foo-bar/baz' in '(foo-bar/baz)'
+            no path specified after partition in '(foo-bar/baz)'
             unknown partition 'foo-bar/baz' in '(foo-bar/baz)/'
+            no path specified after partition in '(foo-bar/baz)/'
             unknown partition 'foo-bar/baz' in '(foo-bar/baz)/test'
             unknown partition '123' in '(123)/test'
             unknown partition '123' in '(123)/test/(456)'

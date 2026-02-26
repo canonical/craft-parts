@@ -1,0 +1,72 @@
+name: Release
+on:
+  push:
+    tags:
+      # These tags should be protected, remember to enable the rule:
+      # https://github.com/canonical/starbase/settings/tag_protection
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  source-wheel:
+    runs-on: [self-hosted]
+    steps:
+      - name: Install uv
+        run: |
+          sudo snap install --classic astral-uv
+          sudo apt --yes install python3-venv
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Fetch tag annotations
+        run: |
+          # Note: we fetch the tags here instead of using actions/checkout's "fetch-tags"
+          # because of https://github.com/actions/checkout/issues/1467
+          git fetch --force --tags --depth 1
+          git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'
+      - name: Build packages
+        run: |
+          uv venv --no-managed-python
+          uv pip install build twine
+          uv run -m build
+          uv run twine check dist/*
+      - name: Upload pypi packages artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: pypi-packages
+          path: dist/
+  pypi:
+    needs: ["source-wheel"]
+    runs-on: [self-hosted, amd64]
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    steps:
+      - name: Get packages
+        uses: actions/download-artifact@v6
+        with:
+          name: pypi-packages
+          path: dist/
+      - name: Publish to pypi
+        # Note: this action uses PyPI's support for Trusted Publishers
+        # It needs a configuration on the PyPI project - see:
+        # https://docs.pypi.org/trusted-publishers/adding-a-publisher/#github-actions
+        uses: pypa/gh-action-pypi-publish@release/v1
+  github-release:
+    needs: ["source-wheel"]
+    runs-on: [self-hosted]
+    steps:
+      - name: Get pypi artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: pypi-packages
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Generate release notes on the new GH release
+          generate_release_notes: true
+          # Add wheel and source tarball
+          files: |
+            *.whl
+            *.tar.gz

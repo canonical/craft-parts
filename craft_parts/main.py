@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,6 +30,7 @@ from functools import partial
 from pathlib import Path
 
 import yaml
+from typing_extensions import Any
 from xdg import BaseDirectory  # type: ignore[import]
 
 import craft_parts
@@ -49,10 +50,14 @@ def main() -> None:
 
     logging.basicConfig(level=log_level)
 
-    craft_parts.Features(enable_overlay=True)
+    features = {"enable_overlay": True}
+    if options.partitions:
+        features["enable_partitions"] = True
+
+    craft_parts.Features(**features)
 
     try:
-        _process_parts(options)
+        _process_inputs(options)
     except OSError as err:
         msg = err.strerror
         if err.filename:
@@ -73,8 +78,8 @@ def main() -> None:
         sys.exit(5)
 
 
-def _process_parts(options: argparse.Namespace) -> None:
-    with open(options.file) as opt_file:
+def _process_inputs(options: argparse.Namespace) -> None:
+    with open(options.file) as opt_file:  # noqa: PTH123
         part_data = yaml.safe_load(opt_file)
 
     cache_dir = options.cache_dir
@@ -92,6 +97,18 @@ def _process_parts(options: argparse.Namespace) -> None:
         base_layer_hash = b""
         overlay_base = None
 
+    partitions = options.partitions.split(",") if options.partitions else None
+
+    filesystem_mounts_data = None
+    if options.filesystem_mounts:
+        with open(options.filesystem_mounts) as opt_filesystem_mounts_file:  # noqa: PTH123
+            filesystems_data: dict[str, Any] | list[dict[str, Any]] = yaml.safe_load(
+                opt_filesystem_mounts_file
+            )
+            if not isinstance(filesystems_data, dict):
+                raise TypeError("filesystem_mounts definition must be a dictionary")
+            filesystem_mounts_data = filesystems_data.get("filesystems")
+
     lcm = craft_parts.LifecycleManager(
         part_data,
         application_name=options.application_name,
@@ -101,6 +118,8 @@ def _process_parts(options: argparse.Namespace) -> None:
         base=options.base,
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
+        partitions=partitions,
+        filesystem_mounts=filesystem_mounts_data,
     )
 
     command = options.command if options.command else "prime"
@@ -272,6 +291,17 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="dirname",
         default="",
         help="Set an alternate cache directory location.",
+    )
+    parser.add_argument(
+        "--partitions",
+        metavar="name",
+        default="",
+        help="List of partitions to create.",
+    )
+    parser.add_argument(
+        "--filesystem-mounts",
+        metavar="filesystem_mounts",
+        help="The filesystem mounts file.",
     )
     parser.add_argument(
         "-v",

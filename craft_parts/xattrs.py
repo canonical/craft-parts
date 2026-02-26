@@ -16,6 +16,7 @@
 
 """Helpers to read and write filesystem extended attributes."""
 
+import errno
 import logging
 import os
 import sys
@@ -37,7 +38,7 @@ def read_xattr(path: str, key: str) -> str | None:
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
-    if os.path.islink(path):
+    if os.path.islink(path):  # noqa: PTH114
         return None
 
     key = f"user.craft_parts.{key}"
@@ -49,7 +50,7 @@ def read_xattr(path: str, key: str) -> str | None:
     except OSError as error:
         # No label present with:
         # OSError: [Errno 61] No data available: b'<path>'
-        if error.errno == 61:  # noqa: PLR2004
+        if error.errno == errno.ENODATA:
             return None
 
         # Chain unknown variants of OSError.
@@ -69,7 +70,7 @@ def write_xattr(path: str, key: str, value: str) -> None:
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
-    if os.path.islink(path):
+    if os.path.islink(path):  # noqa: PTH114
         return
 
     key = f"user.craft_parts.{key}"
@@ -79,7 +80,7 @@ def write_xattr(path: str, key: str, value: str) -> None:
     except OSError as error:
         # Label is too long for filesystem:
         # OSError: [Errno 7] Argument list too long: b'<path>'
-        if error.errno == 7:  # noqa: PLR2004
+        if error.errno == errno.E2BIG:
             raise errors.XAttributeTooLong(path=path, key=key, value=value) from error
 
         # Chain unknown variants of OSError.

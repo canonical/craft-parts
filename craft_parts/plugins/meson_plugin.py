@@ -16,12 +16,11 @@
 
 """The Meson plugin."""
 
-
 import logging
 import shlex
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from . import validator
 from .base import Plugin
@@ -111,7 +110,7 @@ class MesonPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(MesonPluginProperties, self._options)
 
-        meson_cmd = ["meson", str(self._part_info.part_src_subdir)]
+        meson_cmd = ["meson", "setup", str(self._part_info.part_src_subdir)]
         if options.meson_parameters:
             meson_cmd.extend(shlex.quote(p) for p in options.meson_parameters)
 

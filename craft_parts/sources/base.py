@@ -27,7 +27,7 @@ from typing import Any, ClassVar
 
 import pydantic
 import requests
-from overrides import overrides
+from typing_extensions import override
 
 from craft_parts.dirs import ProjectDirs
 from craft_parts.utils import os_utils, url_utils
@@ -115,7 +115,7 @@ class SourceHandler(abc.ABC):
         if not ignore_patterns:
             ignore_patterns = []
 
-        invalid_options = []
+        invalid_options: list[str] = []
         model_params = {key.replace("_", "-"): value for key, value in kwargs.items()}
         model_params["source"] = source
         properties = self.source_model.model_json_schema()["properties"]
@@ -158,7 +158,10 @@ class SourceHandler(abc.ABC):
         """Retrieve the source file."""
 
     def check_if_outdated(
-        self, target: str, *, ignore_files: list[str] | None = None  # noqa: ARG002
+        self,
+        target: str,  # noqa: ARG002
+        *,
+        ignore_files: list[str] | None = None,  # noqa: ARG002
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 
@@ -189,6 +192,10 @@ class SourceHandler(abc.ABC):
         """
         raise errors.SourceUpdateUnsupported(self.__class__.__name__)
 
+    def get_pull_snaps(self) -> set[str]:
+        """Return the set of snaps needed for handling this source type."""
+        return set()
+
     @classmethod
     def _run(cls, command: list[str], **kwargs: Any) -> None:
         try:
@@ -197,7 +204,7 @@ class SourceHandler(abc.ABC):
             raise errors.PullError(command=command, exit_code=err.returncode) from err
 
     @classmethod
-    def _run_output(cls, command: Sequence) -> str:
+    def _run_output(cls, command: Sequence[str | Path]) -> str:
         try:
             return subprocess.check_output(command, text=True).strip()
         except subprocess.CalledProcessError as err:
@@ -243,7 +250,7 @@ class FileSourceHandler(SourceHandler):
     ) -> None:
         """Process the source file to extract its payload."""
 
-    @overrides
+    @override
     def pull(self) -> None:
         """Retrieve this source from its origin."""
         source_file = None
@@ -254,7 +261,7 @@ class FileSourceHandler(SourceHandler):
         if is_source_url:
             source_file = self.download()
         else:
-            basename = os.path.basename(self.source)
+            basename = os.path.basename(self.source)  # noqa: PTH119
             source_file = Path(self.part_src_dir, basename)
             # We make this copy as the provisioning logic can delete
             # this file and we don't want that.
@@ -275,7 +282,7 @@ class FileSourceHandler(SourceHandler):
         :param filepath: the destination file to download to.
         """
         if filepath is None:
-            self._file = Path(self.part_src_dir, os.path.basename(self.source))
+            self._file = Path(self.part_src_dir, os.path.basename(self.source))  # noqa: PTH119
         else:
             self._file = filepath
 
@@ -298,7 +305,7 @@ class FileSourceHandler(SourceHandler):
                 self.source, stream=True, allow_redirects=True, timeout=3600
             )
             request.raise_for_status()
-        except requests.exceptions.HTTPError as err:
+        except requests.HTTPError as err:
             if err.response.status_code == requests.codes.not_found:
                 raise errors.SourceNotFound(source=self.source) from err
 
@@ -307,7 +314,7 @@ class FileSourceHandler(SourceHandler):
                 reason=err.response.reason,
                 source=self.source,
             ) from err
-        except requests.exceptions.RequestException as err:
+        except requests.RequestException as err:
             raise errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "
                 f"response={err.response!r})",

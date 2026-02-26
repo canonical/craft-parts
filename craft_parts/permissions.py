@@ -21,7 +21,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 
 class Permissions(BaseModel):
@@ -42,10 +42,49 @@ class Permissions(BaseModel):
 
     """
 
-    path: str = "*"
-    owner: int | None = None
-    group: int | None = None
-    mode: str | None = None
+    path: str = Field(
+        default="*",
+        description="The file path, relative to the prime directory, being assigned permissions.",
+    )
+    """The file path, relative to the prime directory, being assigned permissions.
+
+    Wildcards (``*``) are supported.
+
+    If unset, the permissions will be assigned to every file in the prime directory.
+    """
+
+    owner: int | None = Field(
+        default=None,
+        description="The numeric user ID (UID) of the desired owner on the host system.",
+    )
+    """The numeric user ID (UID) of the desired owner on the host system.
+
+    This entry is required if the permissions contain a ``group`` entry.
+    """
+
+    group: int | None = Field(
+        default=None,
+        description="The numeric group (GID) of the desired owner group on the host system.",
+    )
+    """The numeric group ID (GID) of the desired owner group on the host system.
+
+    This entry is required if the permissions contain an ``owner`` entry.
+    """
+
+    mode: str | None = Field(
+        default=None,
+        description="The numeric representation of the file's read, write, and execute permissions.",
+    )
+    """The numeric representation of the file's read, write, and execute permissions.
+
+    This entry must be assigned an octal number, enclosed in double-quotation marks
+    (``"``), for each defined path.
+
+    This value should align with the POSIX specification for file permissions, just like
+    one would use when calling ``chmod``. For more detail on octal file permissions, see
+    the `chmod command reference
+    <https://pubs.opengroup.org/onlinepubs/9699919799/utilities/chmod.html>`_.
+    """
 
     # pylint: disable=no-self-argument
     @model_validator(mode="before")
@@ -85,7 +124,7 @@ class Permissions(BaseModel):
         pattern matches ``target``; be sure to call ``applies_to()`` beforehand.
         """
         if self.mode is not None:
-            os.chmod(target, self.mode_octal)
+            os.chmod(target, self.mode_octal)  # noqa: PTH101
 
         if self.owner is not None and self.group is not None:
             os.chown(target, self.owner, self.group)
@@ -165,18 +204,17 @@ def _squash_permissions(permissions: list[Permissions]) -> Permissions:
     :param permissions: A series of Permissions objects to be "squashed" into a single
         one.
     """
-    attributes = {
-        "path": "*",
-        "owner": None,
-        "group": None,
-        "mode": None,
-    }
+    squashed_permissions = Permissions(
+        path=permissions[-1].path,
+        owner=permissions[0].owner,
+        group=permissions[0].group,
+        mode=permissions[0].mode,
+    )
 
-    keys = tuple(attributes.keys())
-    for permission in permissions:
-        for key in keys:
+    for permission in permissions[1:]:
+        for key in ["path", "owner", "group", "mode"]:
             permission_value = getattr(permission, key)
             if permission_value is not None:
-                attributes[key] = permission_value
+                setattr(squashed_permissions, key, permission_value)
 
-    return Permissions(**attributes)
+    return squashed_permissions

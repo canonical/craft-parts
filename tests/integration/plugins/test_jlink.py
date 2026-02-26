@@ -22,6 +22,141 @@ import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors
 
+pytestmark = [pytest.mark.java]
+
+
+@pytest.fixture
+def build_test_jar(new_dir):
+    Path("Test.java").write_text(
+        """
+            public class Test {
+                public static void main(String[] args) {
+                    new Embedded();
+                }
+            }
+        """
+    )
+    Path("Embedded.java").write_text(
+        """
+            import javax.swing.*;
+            public class Embedded {
+                public Embedded() {
+                    new JFrame("foo").setVisible(true);
+                }
+            }
+
+        """
+    )
+    subprocess.run(
+        ["javac", "Test.java", "Embedded.java"], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["jar", "cvf", "embedded.jar", "Embedded.class"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["jar", "cvf", "test.jar", "Test.class", "embedded.jar"],
+        check=True,
+        capture_output=True,
+    )
+
+
+@pytest.mark.usefixtures("build_test_jar")
+def test_jlink_plugin_embedded_jar(new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+            my-part:
+                plugin: jlink
+                source: .
+                jlink-jars: ["test.jar"]
+                after: ["stage-jar"]
+            stage-jar:
+                plugin: dump
+                source: .
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_jlink", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    # java.desktop module should be included in the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("libawt.so"))) > 0
+
+
+@pytest.mark.usefixtures("build_test_jar")
+def test_jlink_plugin_set_modules(new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+            my-part:
+                plugin: jlink
+                source: .
+                jlink-modules: ["jdk.crypto.ec", "java.sql"]
+                after: ["stage-jar"]
+            stage-jar:
+                plugin: dump
+                source: .
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_jlink", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    # java.desktop module should not be included in the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("libawt.so"))) == 0
+    # jdk.crypto.ec should be added to the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("jdk.crypto.ec"))) > 0
+    # java.sql should be added to the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("java.sql"))) > 0
+
+
+@pytest.mark.usefixtures("build_test_jar")
+def test_jlink_plugin_add_modules(new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+            my-part:
+                plugin: jlink
+                source: .
+                jlink-jars: ["test.jar"]
+                jlink-extra-modules: ["jdk.crypto.ec", "java.sql"]
+                after: ["stage-jar"]
+            stage-jar:
+                plugin: dump
+                source: .
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = LifecycleManager(
+        parts, application_name="test_jlink", cache_dir=new_dir, partitions=partitions
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    # java.desktop module should be included in the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("libawt.so"))) > 0
+    # jdk.crypto.ec should be added to the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("jdk.crypto.ec"))) > 0
+    # java.sql should be added to the image
+    assert len(list(Path(f"{new_dir}/stage/usr/lib/jvm/").rglob("java.sql"))) > 0
+
 
 def test_jlink_plugin_with_jar(new_dir, partitions):
     """Test that jlink produces tailored modules"""
@@ -106,7 +241,6 @@ def test_jlink_plugin_bad_java_home(new_dir, partitions):
 
 
 def test_jlink_plugin_java_home(new_dir, partitions):
-
     parts_yaml = textwrap.dedent(
         """
         parts:

@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+}
+
+group 'sample'
+version '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'sample.HelloWorld'
+        )
+    }
+}
+
+tasks.build {
+    dependsOn jar
+}
