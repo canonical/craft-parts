@@ -48,6 +48,10 @@ New features:
   This prevents the error going unnoticed & appearing at build-time (when the
   module doesn't appear in the Go workspace)
 
+Documentation:
+
+- Update documentation system to Canonical's Sphinx Starter Pack 1.4.0.
+
 Bug fixes:
 
 - Fix ``mark_packages`` failing with ``PackageNotFound`` when versioned packages
