@@ -44,6 +44,9 @@ New features:
   shared local cache for ``self-contained`` builds.
 - Add support for the ``override-overlay`` key, which runs a script
   inside a chroot environment during the overlay step.
+- The ``go-use`` plugin returns an error if a ``go.mod`` file doesn't exist.
+  This prevents the error going unnoticed & appearing at build-time (when the
+  module doesn't appear in the Go workspace)
 
 Bug fixes:
 
