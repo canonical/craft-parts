@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import subprocess
+
 import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
-from craft_parts.plugins.go_use_plugin import GoUsePlugin
+from craft_parts.plugins.go_use_plugin import GoUsePlugin, _remove_local_replaces_cmd
 from pydantic import ValidationError
 
 
@@ -151,12 +153,184 @@ def test_get_out_of_source_build(part_info):
 )
 def test_get_build_commands(mocker, part_info, part_data):
     """Test that go work is created and that work.go is created."""
+    # Create a go.mod file
+    part_info.part_src_subdir.mkdir(parents=True, exist_ok=True)
+    (part_info.part_src_subdir / "go.mod").write_text(
+        "module example.com/test\n\ngo 1.21\n"
+    )
+
     properties = GoUsePlugin.properties_class.unmarshal(part_data)
     plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
     dest_dir = part_info.part_export_dir / "go-use" / part_info.part_name
+    go_mod_path = part_info.part_src_subdir / "go.mod"
 
-    assert plugin.get_build_commands() == [
-        f"mkdir -p '{part_info.part_export_dir}/go-use'",
-        f"ln -sf '{part_info.part_src_subdir}' '{dest_dir}'",
-    ]
+    commands = plugin.get_build_commands()
+    assert len(commands) == 3
+    assert commands[0].startswith("awk ")
+    assert str(go_mod_path) in commands[0]
+    assert commands[1] == f"mkdir -p '{part_info.part_export_dir}/go-use'"
+    assert commands[2] == f"ln -sf '{part_info.part_src_subdir}' '{dest_dir}'"
+
+
+@pytest.mark.parametrize(
+    ("input_content", "expected_content"),
+    [
+        pytest.param(
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "require (\n"
+                "    example.com/dep v1.0.0\n"
+                ")\n"
+            ),
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "require (\n"
+                "    example.com/dep v1.0.0\n"
+                ")\n"
+            ),
+            id="no-replace-directives",
+        ),
+        pytest.param(
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "require (\n"
+                "    example.com/dep v1.0.0\n"
+                ")\n\n"
+                "replace example.com/foo => ./local\n"
+            ),
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "require (\n"
+                "    example.com/dep v1.0.0\n"
+                ")\n\n"
+                "// replace example.com/foo => ./local\n"
+            ),
+            id="single-line-local-dot-slash",
+        ),
+        pytest.param(
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "replace example.com/foo => ../sibling\n"
+            ),
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "// replace example.com/foo => ../sibling\n"
+            ),
+            id="single-line-local-dot-dot-slash",
+        ),
+        pytest.param(
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "replace example.com/foo v1.2.3 => ./local\n"
+            ),
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "// replace example.com/foo v1.2.3 => ./local\n"
+            ),
+            id="single-line-local-with-version",
+        ),
+        pytest.param(
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "replace example.com/foo => example.com/bar v1.0.0\n"
+            ),
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "replace example.com/foo => example.com/bar v1.0.0\n"
+            ),
+            id="single-line-non-local",
+        ),
+        pytest.param(
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "require (\n"
+                "    example.com/dep v1.0.0\n"
+                ")\n\n"
+                "replace (\n"
+                "    example.com/foo => ./local\n"
+                "    example.com/baz => ../other\n"
+                ")\n"
+            ),
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "require (\n"
+                "    example.com/dep v1.0.0\n"
+                ")\n\n"
+                "replace (\n"
+                "// example.com/foo => ./local\n"
+                "// example.com/baz => ../other\n"
+                ")\n"
+            ),
+            id="block-all-local",
+        ),
+        pytest.param(
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "replace (\n"
+                "    example.com/foo => example.com/bar v1.0.0\n"
+                ")\n"
+            ),
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "replace (\n"
+                "    example.com/foo => example.com/bar v1.0.0\n"
+                ")\n"
+            ),
+            id="block-all-non-local",
+        ),
+        pytest.param(
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "require (\n"
+                "    example.com/dep v1.0.0\n"
+                ")\n\n"
+                "replace (\n"
+                "    example.com/foo => ./local\n"
+                "    example.com/bar => example.com/baz v1.0.0\n"
+                ")\n"
+            ),
+            (
+                "module example.com/mymod\n\n"
+                "go 1.21\n\n"
+                "require (\n"
+                "    example.com/dep v1.0.0\n"
+                ")\n\n"
+                "replace (\n"
+                "// example.com/foo => ./local\n"
+                "    example.com/bar => example.com/baz v1.0.0\n"
+                ")\n"
+            ),
+            id="block-mixed",
+        ),
+        pytest.param(
+            ("module example.com/mymod\n\ngo 1.21\n\nreplace (\n)\n"),
+            ("module example.com/mymod\n\ngo 1.21\n\nreplace (\n)\n"),
+            id="block-empty",
+        ),
+    ],
+)
+def test_remove_local_replaces(tmp_path, input_content, expected_content):
+    """Test that local replace directives are commented out."""
+    go_mod = tmp_path / "go.mod"
+    go_mod.write_text(input_content)
+
+    cmd = _remove_local_replaces_cmd(go_mod)
+    subprocess.run(["bash", "-c", cmd], check=True)
+
+    assert go_mod.read_text() == expected_content

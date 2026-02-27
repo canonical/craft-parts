@@ -16,7 +16,7 @@
 
 """The Go Use plugin."""
 
-import logging
+from pathlib import Path
 from typing import Literal
 
 from typing_extensions import override
@@ -25,7 +25,50 @@ from .base import Plugin
 from .go_plugin import GoPluginEnvironmentValidator
 from .properties import PluginProperties
 
-logger = logging.getLogger(__name__)
+# awk program that comments out replace directives pointing to local directories
+# (i.e. where the right-hand side starts with ./ or ../).  It handles both
+# single-line replaces and multi-line replace() blocks.
+_REMOVE_LOCAL_REPLACES_AWK = r"""
+# Returns 1 if `spec` is a replace directive pointing to a local path (./ or ../).
+# Matches: <module> [<version>] => ./path  or  <module> [<version>] => ../path
+function is_local_replace(spec) {
+    return spec ~ /^[[:space:]]*[^[:space:]]+([ \t]+[^[:space:]]+)?[ \t]+=>[ \t]+\.\.?\//
+}
+
+BEGIN { inside = 0 }
+
+# Detect the start of a multi-line replace block: replace (
+/^[[:space:]]*replace[[:space:]]*\(/ { inside = 1; print; next }
+
+# Detect the closing ) of a replace block
+inside && /^[[:space:]]*\)[[:space:]]*$/ { inside = 0; print; next }
+
+# Inside a block: comment out any entry pointing to a local path (./ or ../)
+inside {
+    stripped = $0; gsub(/^[[:space:]]+/, "", stripped)
+    if (is_local_replace(stripped)) { print "// " stripped } else { print }
+    next
+}
+
+# Single-line replace: replace module => ./path
+/^[[:space:]]*replace[[:space:]]/ && /=>/ {
+    stripped = $0; gsub(/^[[:space:]]+/, "", stripped)
+    spec = substr(stripped, 9)  # strip the leading "replace " (8 chars)
+    if (is_local_replace(spec)) { print "// " stripped; next }
+}
+
+# Default: print the line unchanged
+{ print }
+""".strip()
+
+
+def _remove_local_replaces_cmd(go_mod_path: Path) -> str:
+    """Return a bash command that comments out local replace directives in go.mod."""
+    return (
+        f"awk '{_REMOVE_LOCAL_REPLACES_AWK}'"
+        f" '{go_mod_path}' > '{go_mod_path}.tmp'"
+        f" && mv '{go_mod_path}.tmp' '{go_mod_path}'"
+    )
 
 
 class GoUsePluginProperties(PluginProperties, frozen=True):
@@ -75,7 +118,10 @@ class GoUsePlugin(Plugin):
         dest_dir = (
             self._part_info.part_export_dir / "go-use" / self._part_info.part_name
         )
+        go_mod_path = self._part_info.part_src_subdir / "go.mod"
+
         return [
+            _remove_local_replaces_cmd(go_mod_path),
             f"mkdir -p '{dest_dir.parent}'",
             f"ln -sf '{self._part_info.part_src_subdir}' '{dest_dir}'",
         ]
