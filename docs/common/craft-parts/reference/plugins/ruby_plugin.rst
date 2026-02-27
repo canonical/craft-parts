@@ -157,7 +157,6 @@ are included in the output artifact.
   parts:
     ruby-deps:
       plugin: nil
-      source: .
       stage-packages:
         - ruby-bundler
     my-project:
