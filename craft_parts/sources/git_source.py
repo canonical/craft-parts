@@ -169,7 +169,7 @@ class GitSource(SourceHandler):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        source: str,
+        source: str | Path,
         part_src_dir: Path,
         **kwargs: Any,
     ) -> None:

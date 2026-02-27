@@ -640,7 +640,7 @@ class TestGetPackagesInBase:
             "craft_parts.packages.deb._get_dpkg_list_path", return_value=dpkg_list_path
         )
         with dpkg_list_path.open("w") as dpkg_list_file:
-            print(
+            dpkg_list_file.write(
                 textwrap.dedent(
                     """\
             Desired=Unknown/Install/Remove/Purge/Hold
@@ -656,7 +656,6 @@ class TestGetPackagesInBase:
             ii  zlib1g:amd64                  1:1.2.11.dfsg-2ubuntu1     amd64        compression
             """
                 ),
-                file=dpkg_list_file,
             )
 
         assert deb.get_packages_in_base(base="core20") == [

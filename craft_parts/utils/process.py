@@ -199,7 +199,7 @@ def _select_stream(stream: Stream, default_stream: TextIO) -> Generator[int]:
     closing it afterwards.
     """
     if stream == DEVNULL:
-        with open(os.devnull, "wb") as s:  # noqa: PTH123
+        with Path(os.devnull).open("wb") as s:
             yield s.fileno()
     elif isinstance(stream, int):
         yield stream

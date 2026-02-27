@@ -17,8 +17,8 @@
 """URL parsing and downloading helpers."""
 
 import logging
-import os
 import urllib.parse
+from pathlib import Path
 
 import requests
 
@@ -39,7 +39,7 @@ def is_url(url: str) -> bool:
 
 def download_request(
     request: requests.Response,
-    destination: str,
+    destination: Path,
     message: str | None = None,
     total_read: int = 0,
 ) -> None:
@@ -57,7 +57,7 @@ def download_request(
         # Content-Length in the case of resuming will be
         # Content-Length - total_read so we add back up to have the feel of
         # resuming
-        if os.path.exists(destination):  # noqa: PTH110
+        if destination.exists():
             total_length += total_read
 
     if message:
@@ -65,9 +65,9 @@ def download_request(
     else:
         logger.debug("Downloading %r", destination)
 
-    mode = "ab" if os.path.exists(destination) else "wb"  # noqa: PTH110
+    mode = "ab" if destination.exists() else "wb"
 
-    with open(destination, mode) as destination_file:  # noqa: PTH123
+    with destination.open(mode) as destination_file:
         for buf in request.iter_content(1024):
             destination_file.write(buf)
             if not os_utils.is_dumb_terminal():
