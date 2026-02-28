@@ -370,6 +370,30 @@ def _is_list_of_slices(names: list[str]) -> bool:
     return any("_" in name for name in names)
 
 
+def _dpkg_installed_version(pkg_name: str) -> str | None:
+    """Return installed version for pkg_name, or None if not installed."""
+    # dpkg-query exits non-zero if the package isn't installed
+    result = subprocess.run(
+        ["dpkg-query", "-W", "-f=${Status}\t${Version}\n", pkg_name],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+
+    line = (result.stdout or "").strip()
+    if not line:
+        return None
+
+    status, _, version = line.partition("\t")
+    if "install ok installed" not in status:
+        return None
+    version = version.strip()
+    return version or None
+
+
 class Ubuntu(BaseRepository):
     """Repository management for Ubuntu packages."""
 
@@ -435,7 +459,6 @@ class Ubuntu(BaseRepository):
             ) from call_error
 
     @classmethod
-    @_apt_cache_wrapper
     def _check_if_all_packages_installed(cls, package_names: list[str]) -> bool:
         """Check if all given packages are installed.
 
@@ -445,40 +468,29 @@ class Ubuntu(BaseRepository):
 
         :return True if _all_ packages are installed (with correct versions).
         """
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            for package in package_names:
-                pkg_name, pkg_version = get_pkg_name_parts(package)
-                installed_version = apt_cache.get_installed_version(
-                    pkg_name, resolve_virtual_packages=True
-                )
-
-                if installed_version is None or (
-                    pkg_version is not None and installed_version != pkg_version
-                ):
-                    return False
-
+        for package in package_names:
+            pkg_name, pkg_version = get_pkg_name_parts(package)
+            installed_version = _dpkg_installed_version(pkg_name)
+            if installed_version is None:
+                return False
+            if pkg_version is not None and installed_version != pkg_version:
+                return False
         return True
 
     @classmethod
-    @_apt_cache_wrapper
     def _get_installed_package_versions(cls, package_names: Sequence[str]) -> list[str]:
         packages: list[str] = []
-
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            for package_name in package_names:
-                package_version = apt_cache.get_installed_version(
-                    package_name, resolve_virtual_packages=True
-                )
-                if package_version is None:
-                    logger.debug("Expected package %s not installed", package_name)
-                    continue
-                logger.debug(
-                    "Found installed version %s for package %s",
-                    package_version,
-                    package_name,
-                )
-                packages.append(f"{package_name}={package_version}")
-
+        for package_name in package_names:
+            package_version = _dpkg_installed_version(package_name)
+            if package_version is None:
+                logger.debug("Expected package %s not installed", package_name)
+                continue
+            logger.debug(
+                "Found installed version %s for package %s",
+                package_version,
+                package_name,
+            )
+            packages.append(f"{package_name}={package_version}")
         return packages
 
     @classmethod
@@ -545,8 +557,7 @@ class Ubuntu(BaseRepository):
             install_required = True
 
         # Collect the list of marked packages to later construct a manifest
-        marked_packages = cls._get_packages_marked_for_installation(package_names)
-        marked_package_names = [name for name, _ in sorted(marked_packages)]
+        marked_package_names = [get_pkg_name_parts(p)[0] for p in package_names]
 
         if not list_only:
             if refresh_package_cache and install_required:
