@@ -34,6 +34,14 @@ def part_info(new_dir):
     )
 
 
+@pytest.fixture
+def self_contained_part_info(new_dir):
+    return PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {"build-attributes": ["self-contained"]}),
+    )
+
+
 class TestPluginNpmPlugin:
     """Npm plugin tests."""
 
@@ -379,3 +387,28 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_out_of_source_build() is False
+
+    def test_get_self_contained_build_commands(self, self_contained_part_info, mocker):
+        mocker.patch(
+            "craft_parts.plugins.npm_plugin.get_install_from_local_tarballs_commands",
+            return_value=[],
+        )
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=self_contained_part_info)
+
+        assert plugin.get_build_commands() == [
+            'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"'
+        ]
+
+    def test_part_properties_build_attributes_match(self):
+        spec = {
+            "plugin": "npm",
+            "source": ".",
+            "build-attributes": ["self-contained"],
+        }
+
+        properties = NpmPlugin.properties_class.unmarshal(spec)
+        part = Part("my-part", spec, plugin_properties=properties)
+
+        assert part.spec.build_attributes == ["self-contained"]
+        assert part.plugin_properties.build_attributes == ["self-contained"]  # type: ignore[reportAttributeAccessIssue]

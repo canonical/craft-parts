@@ -24,6 +24,8 @@ from collections.abc import Iterable
 from contextlib import ContextDecorator
 from pathlib import Path
 
+from typing_extensions import Self
+
 try:
     import apt
     import apt.cache
@@ -92,7 +94,7 @@ class AptCache(ContextDecorator):
         self.progress: LogProgress | None = None
 
     # pylint: disable=attribute-defined-outside-init
-    def __enter__(self) -> "AptCache":
+    def __enter__(self) -> Self:
         if self.stage_cache is not None:
             self.progress = LogProgress()
             self._populate_stage_cache_dir()
@@ -292,8 +294,15 @@ class AptCache(ContextDecorator):
     def mark_packages(self, package_names: set[str]) -> None:
         """Mark the given package names to be fetched from the repository.
 
+        Two-pass fix: set all candidate versions before marking any packages.
+        This fixes versioned interdependencies where package A=v1 depends on
+        package B (= v1), but B's default candidate is v2. By setting all
+        candidates first, mark_install can resolve dependencies correctly.
+
         :param package_names: The set of package names to be marked.
         """
+        # First pass: resolve names and set candidate versions
+        resolved: list[apt.package.Package] = []
         for _name in package_names:
             name = _name[:-4] if _name.endswith(":any") else _name
 
@@ -311,7 +320,10 @@ class AptCache(ContextDecorator):
                 _set_pkg_version(package, version)
 
             logger.debug("package: %s", package)
+            resolved.append(package)
 
+        # Second pass: mark all packages for install
+        for package in resolved:
             # Disable automatic resolving of broken packages here
             # because if that fails it raises a SystemError and the
             # API doesn't expose enough information about the problem.

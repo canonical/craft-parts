@@ -49,7 +49,8 @@ class LocalSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     model_config = get_model_config(get_json_extra_schema(r"^\./?"))
     source_type: Literal["local"] = "local"
     source: Annotated[  # type: ignore[assignment]
-        pathlib.Path, pydantic.AfterValidator(lambda source: pathlib.Path(source))
+        pathlib.Path,
+        pydantic.AfterValidator(lambda source: pathlib.Path(source)),  # noqa: PLW0108 - ruff suggests that the lambda is unnecessary, but pydantic breaks without it.
     ]
 
 

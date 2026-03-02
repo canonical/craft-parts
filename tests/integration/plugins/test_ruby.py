@@ -242,6 +242,9 @@ def test_ruby_self_contained(new_dir, partitions):
             source-tag: v2.0.0  # should match ./test_ruby/Gemfile
             build-attributes:
               - self-contained
+            override-build: |
+                echo "Hello, world" > test-override-build-loc.txt
+                craftctl default
             after:
               - rack
               - webrick
@@ -274,3 +277,9 @@ def test_ruby_self_contained(new_dir, partitions):
     )
     # installed rackup executable should match gem version
     assert rackup_version.strip() == "Rack 3.2.1"
+
+    rackup_part_path = Path(lf.project_info.parts_dir, "rackup")
+    rackup_file_created = rackup_part_path / "build" / "test-override-build-loc.txt"
+    rackup_file_not_created = rackup_part_path / "src" / "test-override-build-loc.txt"
+    assert rackup_file_created.is_file()
+    assert not rackup_file_not_created.is_file()

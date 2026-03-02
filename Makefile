@@ -59,6 +59,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
 APT_PACKAGES += python3-venv
 endif
+ifeq ($(wildcard /usr/share/doc/mmdebstrap/copyright),)
+APT_PACKAGES += mmdebstrap
+endif
 
 # Dependencies for sources
 ifeq ($(wildcard /usr/share/doc/p7zip-full/copyright),)
@@ -231,6 +234,9 @@ endif
 # Used by the autotools plugin itself.
 ifeq ($(wildcard /usr/share/doc/libtool/copyright),)
 APT_PACKAGES += libtool
+endif
+ifeq ($(wildcard /usr/share/doc/socat/copyright),)
+APT_PACKAGES += socat
 endif
 endif
 

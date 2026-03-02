@@ -19,6 +19,46 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+2.28.1 (2026-02-25)
+-------------------
+
+Bug fixes:
+
+- Setting ``source-commit`` with a full-length commit hash would force a shallow
+  clone, regardless of the value of ``source-depth``. Parts will now only pull
+  a shallow clone if ``source-depth`` is non-zero.
+
+
+.. _release-2.30.0:
+
+2.30.0 (unreleased)
+-------------------
+
+New features:
+
+- Add support for the ``self-contained`` build attribute for parts using the
+  :ref:`craft_parts_npm_plugin`.
+- Circular dependency errors now show the actual part processing order,
+  making it easier to identify and fix dependency cycles in complex projects.
+- Add :ref:`craft_parts_npm_use_plugin` to export npm dependencies to a
+  shared local cache for ``self-contained`` builds.
+- Add support for the ``override-overlay`` key, which runs a script
+  inside a chroot environment during the overlay step.
+- The ``go-use`` plugin returns an error if a ``go.mod`` file doesn't exist.
+  This prevents the error going unnoticed & appearing at build-time (when the
+  module doesn't appear in the Go workspace)
+
+Bug fixes:
+
+- Fix ``mark_packages`` failing with ``PackageNotFound`` when versioned packages
+  have interdependencies on each other. The method now sets all candidate
+  versions before calling ``mark_install``, so the resolver sees the correct
+  candidates for all dependencies.
+- The Ruby plugin will now build the Ruby source tree in the part's
+  build directory instead of the source directory when the
+  ``self-contained`` key is true and ``ruby-use-bundler`` key is false.
+  This resolves an issue where changes made by an ``override-build``
+  script were effectively ignored.
 
 .. _release-2.29.0:
 
