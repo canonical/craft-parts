@@ -53,9 +53,11 @@ class Executor:
     :param extra_build_packages: Additional packages to install on the host system.
     :param extra_build_snaps: Additional snaps to install on the host system.
     :param ignore_patterns: File patterns to ignore when pulling local sources.
+    :param use_host_sources: Whether overlay steps should also include the repository
+      sources defined on the host.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         part_list: list[Part],
@@ -66,6 +68,7 @@ class Executor:
         ignore_patterns: list[str] | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: LayerHash | None = None,
+        use_host_sources: bool = False,
     ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -75,6 +78,7 @@ class Executor:
         self._base_layer_hash = base_layer_hash
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
+        self._use_host_sources = use_host_sources
 
         # The cache layer level is set to the first part that doesn't organize
         # to the overlay coming after a part that organizes to the overlay.
@@ -93,6 +97,7 @@ class Executor:
             part_list=self._part_list,
             base_layer_dir=base_layer_dir,
             cache_level=cache_level,
+            use_host_sources=use_host_sources,
         )
 
     def prologue(self) -> None:

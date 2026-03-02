@@ -235,6 +235,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/libtool/copyright),)
 APT_PACKAGES += libtool
 endif
+ifeq ($(wildcard /usr/share/doc/socat/copyright),)
+APT_PACKAGES += socat
+endif
 endif
 
 .PHONY: install-chisel

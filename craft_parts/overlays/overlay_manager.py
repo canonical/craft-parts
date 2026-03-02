@@ -66,6 +66,8 @@ class OverlayManager:
         if the project doesn't use overlay parameters.
     :param cache_level: The number of part layers to be mounted before the
         package cache.
+    :param use_host_sources: Configure chroot to use package sources from
+        the host environment.
     """
 
     def __init__(
@@ -75,6 +77,7 @@ class OverlayManager:
         part_list: list[Part],
         base_layer_dir: Path | None,
         cache_level: int,
+        use_host_sources: bool = False,
     ) -> None:
         self._project_info = project_info
         self._part_list = part_list
@@ -82,6 +85,7 @@ class OverlayManager:
         self._overlay_fs: OverlayFS | None = None
         self._base_layer_dir = base_layer_dir
         self._cache_level = cache_level
+        self._use_host_sources = use_host_sources
 
     @property
     def base_layer_dir(self) -> Path | None:
@@ -184,7 +188,9 @@ class OverlayManager:
         # Ensure we always run refresh_packages_list by resetting the cache
         packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
         chroot.chroot(
-            mount_dir, _defer_evaluation(packages.Repository.refresh_packages_list)
+            mount_dir,
+            _defer_evaluation(packages.Repository.refresh_packages_list),
+            use_host_sources=self._use_host_sources,
         )
 
     def download_packages(self, package_names: list[str]) -> None:
@@ -195,6 +201,7 @@ class OverlayManager:
         self.run(
             _defer_evaluation(packages.Repository.download_packages),
             package_names,
+            use_host_sources=self._use_host_sources,
         )
 
     def install_packages(self, package_names: list[str]) -> None:
@@ -206,6 +213,7 @@ class OverlayManager:
             _defer_evaluation(packages.Repository.install_packages),
             package_names,
             refresh_package_cache=False,
+            use_host_sources=self._use_host_sources,
         )
 
     def run(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
