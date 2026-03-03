@@ -569,12 +569,9 @@ class Ubuntu(BaseRepository):
                     "Requested build-packages already installed: %s", package_names
                 )
 
-        # This result is a best effort approach for deps and virtual packages
-        # as they are not part of the installation list.
-        # Tell static type checkers to ignore until we can use PEP 612 (Python 3.10)
-        return cls._get_installed_package_versions(  # type: ignore[no-any-return]
-            marked_package_names
-        )
+        marked = cls._get_packages_marked_for_installation(marked_package_names)
+        # marked is list[tuple[str, str]] -> format "name=version" deterministically
+        return [f"{name}={version}" for name, version in sorted(marked)]
 
     @classmethod
     def _install_packages(cls, package_names: list[str]) -> None:
@@ -796,14 +793,44 @@ class Ubuntu(BaseRepository):
             return apt_cache.get_installed_version(package_name) is not None
 
     @classmethod
-    @_apt_cache_wrapper
     def get_installed_packages(cls) -> list[str]:
-        """Obtain a list of the installed packages and their versions."""
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            return [
-                f"{pkg_name}={pkg_version}"
-                for pkg_name, pkg_version in apt_cache.get_installed_packages().items()
-            ]
+        """Return installed package names (no versions).
+
+        This intentionally avoids python-apt because it may try to create
+        /etc/apt/sources.list when missing, which fails in unprivileged environments.
+        """
+
+        try:
+            out = subprocess.check_output(
+                ["dpkg-query", "-W", "-f=${Package}\n"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            )
+            pkgs = {line.strip() for line in out.splitlines() if line.strip()}
+            return sorted(pkgs)
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            pkgs: set[str] = set()
+            try:
+                status_path = Path("/var/lib/dpkg/status")
+                name: str | None = None
+                installed = False
+                with status_path.open(encoding="utf-8") as f:
+                    for line in f:
+                        if line.startswith("Package: "):
+                            name = line.split(":", 1)[1].strip()
+                            installed = False
+                        elif line.startswith("Status: "):
+                            installed = "install ok installed" in line
+                        elif line.strip() == "":
+                            if name and installed:
+                                pkgs.add(name)
+                            name = None
+                            installed = False
+                if name and installed:
+                    pkgs.add(name)
+            except OSError:
+                pass
+            return sorted(pkgs)
 
     @classmethod
     def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
