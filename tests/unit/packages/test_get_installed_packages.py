@@ -17,7 +17,7 @@ def test_get_installed_packages_does_not_use_aptcache(monkeypatch):
     # call the method: if it tries to instantiate AptCache -> 💥
     pkgs = Ubuntu.get_installed_packages()
     assert isinstance(pkgs, list)
-    
+
 
 def test_get_installed_packages_uses_dpkg_query_when_available(monkeypatch):
     def fake_check_output(cmd, text=False, stderr=None):  # noqa: ANN001
@@ -28,6 +28,7 @@ def test_get_installed_packages_uses_dpkg_query_when_available(monkeypatch):
 
     pkgs = Ubuntu.get_installed_packages()
     assert isinstance(pkgs, list)
+    assert all("=" not in p for p in pkgs)
     assert pkgs == ["bash", "coreutils"]
 
 
