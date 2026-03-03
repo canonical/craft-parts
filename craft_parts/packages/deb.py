@@ -568,10 +568,13 @@ class Ubuntu(BaseRepository):
                 logger.debug(
                     "Requested build-packages already installed: %s", package_names
                 )
-
         marked = cls._get_packages_marked_for_installation(marked_package_names)
-        # marked is list[tuple[str, str]] -> format "name=version" deterministically
-        return [f"{name}={version}" for name, version in sorted(marked)]
+        if list_only:
+            # For list-only, report what apt would install (deterministic).
+            return [f"{name}={version}" for name, version in sorted(marked)]
+
+        # For actual installs (or already-satisfied deps), report what is installed on disk.
+        return cls._get_installed_package_versions(marked_package_names)
 
     @classmethod
     def _install_packages(cls, package_names: list[str]) -> None:
@@ -791,45 +794,69 @@ class Ubuntu(BaseRepository):
         """Inform if a package is installed on the host system."""
         with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
             return apt_cache.get_installed_version(package_name) is not None
-
     @classmethod
     def get_installed_packages(cls) -> list[str]:
-        """Return installed package names (no versions).
+        """Obtain a list of the installed packages and their versions.
 
         This intentionally avoids python-apt because it may try to create
         /etc/apt/sources.list when missing, which fails in unprivileged environments.
-        """
 
+        :return: A list of installed packages in the form package=version.
+        """
+        pkgs: set[str] = set()
         try:
             out = subprocess.check_output(
-                ["dpkg-query", "-W", "-f=${Package}\n"],
+                ["dpkg-query", "-W", "-f=${Package}\t${Status}\t${Version}\n"],
                 text=True,
                 stderr=subprocess.DEVNULL,
             )
-            pkgs = {line.strip() for line in out.splitlines() if line.strip()}
+            for line in out.splitlines():
+                if not line.strip():
+                    continue
+                parts = line.split("\t", 2)
+                if len(parts) != 3:
+                    continue
+                pkg_name, pkg_status, pkg_version = (p.strip() for p in parts)
+                if not pkg_name:
+                    continue
+                if "install ok installed" not in pkg_status:
+                    continue
+                if not pkg_version:
+                    continue
+                pkgs.add(f"{pkg_name}={pkg_version}")
             return sorted(pkgs)
+
         except (FileNotFoundError, subprocess.CalledProcessError):
-            pkgs: set[str] = set()
+            pkgs.clear()
             try:
                 status_path = Path("/var/lib/dpkg/status")
-                name: str | None = None
+                stanza_name: str | None = None
+                stanza_version: str | None = None
                 installed = False
+
                 with status_path.open(encoding="utf-8") as f:
                     for line in f:
                         if line.startswith("Package: "):
-                            name = line.split(":", 1)[1].strip()
+                            stanza_name = line.split(":", 1)[1].strip()
+                            stanza_version = None
                             installed = False
                         elif line.startswith("Status: "):
                             installed = "install ok installed" in line
+                        elif line.startswith("Version: "):
+                            stanza_version = line.split(":", 1)[1].strip()
                         elif line.strip() == "":
-                            if name and installed:
-                                pkgs.add(name)
-                            name = None
+                            if stanza_name and installed and stanza_version:
+                                pkgs.add(f"{stanza_name}={stanza_version}")
+                            stanza_name = None
+                            stanza_version = None
                             installed = False
-                if name and installed:
-                    pkgs.add(name)
+
+                if stanza_name and installed and stanza_version:
+                    pkgs.add(f"{stanza_name}={stanza_version}")
+
             except OSError:
                 pass
+
             return sorted(pkgs)
 
     @classmethod
