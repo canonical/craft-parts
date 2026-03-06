@@ -370,6 +370,77 @@ def _is_list_of_slices(names: list[str]) -> bool:
     return any("_" in name for name in names)
 
 
+def _parse_installed_dpkg_query_line(line: str) -> str | None:
+    """Parse one dpkg-query output line into package=version, if installed."""
+    if not line.strip():
+        return None
+
+    parts = line.split("\t", 2)
+    if len(parts) != 3:
+        return None
+
+    pkg_name, pkg_status, pkg_version = (part.strip() for part in parts)
+    if not pkg_name or not pkg_version:
+        return None
+    if "install ok installed" not in pkg_status:
+        return None
+
+    return f"{pkg_name}={pkg_version}"
+
+
+def _get_installed_packages_dpkg_query() -> list[str]:
+    """Return installed packages using dpkg-query.
+
+    Prefer dpkg-query because python-apt may try to create
+    /etc/apt/sources.list when it is missing, which fails in unprivileged
+    environments. Fall back to parsing /var/lib/dpkg/status when dpkg-query
+    is unavailable or fails.
+    """
+    output = subprocess.check_output(
+        ["dpkg-query", "-W", "-f=${Package}\t${Status}\t${Version}\n"],
+        text=True,
+        stderr=subprocess.DEVNULL,
+    )
+    packages = {
+        package
+        for line in output.splitlines()
+        if (package := _parse_installed_dpkg_query_line(line)) is not None
+    }
+    return sorted(packages)
+
+
+def _get_installed_packages_dpkg_status() -> list[str]:
+    """Return installed packages by parsing /var/lib/dpkg/status."""
+    packages: set[str] = set()
+    status_path = Path("/var/lib/dpkg/status")
+
+    stanza_name: str | None = None
+    stanza_version: str | None = None
+    installed = False
+
+    with status_path.open(encoding="utf-8") as status_file:
+        for line in status_file:
+            if line.startswith("Package: "):
+                stanza_name = line.split(":", 1)[1].strip()
+                stanza_version = None
+                installed = False
+            elif line.startswith("Status: "):
+                installed = "install ok installed" in line
+            elif line.startswith("Version: "):
+                stanza_version = line.split(":", 1)[1].strip()
+            elif not line.strip():
+                if stanza_name and installed and stanza_version:
+                    packages.add(f"{stanza_name}={stanza_version}")
+                stanza_name = None
+                stanza_version = None
+                installed = False
+
+    if stanza_name and installed and stanza_version:
+        packages.add(f"{stanza_name}={stanza_version}")
+
+    return sorted(packages)
+
+
 def _dpkg_installed_version(pkg_name: str) -> str | None:
     """Return installed version for pkg_name, or None if not installed."""
     # dpkg-query exits non-zero if the package isn't installed
@@ -574,7 +645,10 @@ class Ubuntu(BaseRepository):
             return [f"{name}={version}" for name, version in sorted(marked)]
 
         # For actual installs (or already-satisfied deps), report what is installed on disk.
-        return cls._get_installed_package_versions(marked_package_names)
+        return sorted(
+            cls._get_installed_package_versions([name for name, _ in marked]),
+            key=lambda package: package.split("=", 1)[0],
+        )
 
     @classmethod
     def _install_packages(cls, package_names: list[str]) -> None:
@@ -794,70 +868,27 @@ class Ubuntu(BaseRepository):
         """Inform if a package is installed on the host system."""
         with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
             return apt_cache.get_installed_version(package_name) is not None
+
     @classmethod
     def get_installed_packages(cls) -> list[str]:
         """Obtain a list of the installed packages and their versions.
 
-        This intentionally avoids python-apt because it may try to create
-        /etc/apt/sources.list when missing, which fails in unprivileged environments.
+        Prefer dpkg-query because python-apt may try to create
+        /etc/apt/sources.list when it is missing, which fails in unprivileged
+        environments. Fall back to parsing /var/lib/dpkg/status when dpkg-query
+        is unavailable or fails.
 
         :return: A list of installed packages in the form package=version.
         """
-        pkgs: set[str] = set()
         try:
-            out = subprocess.check_output(
-                ["dpkg-query", "-W", "-f=${Package}\t${Status}\t${Version}\n"],
-                text=True,
-                stderr=subprocess.DEVNULL,
-            )
-            for line in out.splitlines():
-                if not line.strip():
-                    continue
-                parts = line.split("\t", 2)
-                if len(parts) != 3:
-                    continue
-                pkg_name, pkg_status, pkg_version = (p.strip() for p in parts)
-                if not pkg_name:
-                    continue
-                if "install ok installed" not in pkg_status:
-                    continue
-                if not pkg_version:
-                    continue
-                pkgs.add(f"{pkg_name}={pkg_version}")
-            return sorted(pkgs)
+            return _get_installed_packages_dpkg_query()
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+            pass
 
-        except (FileNotFoundError, subprocess.CalledProcessError):
-            pkgs.clear()
-            try:
-                status_path = Path("/var/lib/dpkg/status")
-                stanza_name: str | None = None
-                stanza_version: str | None = None
-                installed = False
-
-                with status_path.open(encoding="utf-8") as f:
-                    for line in f:
-                        if line.startswith("Package: "):
-                            stanza_name = line.split(":", 1)[1].strip()
-                            stanza_version = None
-                            installed = False
-                        elif line.startswith("Status: "):
-                            installed = "install ok installed" in line
-                        elif line.startswith("Version: "):
-                            stanza_version = line.split(":", 1)[1].strip()
-                        elif line.strip() == "":
-                            if stanza_name and installed and stanza_version:
-                                pkgs.add(f"{stanza_name}={stanza_version}")
-                            stanza_name = None
-                            stanza_version = None
-                            installed = False
-
-                if stanza_name and installed and stanza_version:
-                    pkgs.add(f"{stanza_name}={stanza_version}")
-
-            except OSError:
-                pass
-
-            return sorted(pkgs)
+        try:
+            return _get_installed_packages_dpkg_status()
+        except OSError:
+            return []
 
     @classmethod
     def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
