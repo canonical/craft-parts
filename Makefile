@@ -183,6 +183,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
 APT_PACKAGES += cmake
 endif
+ifeq ($(wildcard /usr/share/doc/bazel-bootstrap/copyright),)
+APT_PACKAGES += bazel-bootstrap
+endif
 # Ruby
 ifeq ($(wildcard /usr/share/doc/ruby/copyright),)
 APT_PACKAGES += ruby
