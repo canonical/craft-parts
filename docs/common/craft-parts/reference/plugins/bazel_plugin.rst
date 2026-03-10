@@ -34,11 +34,12 @@ Targets to pass to ``bazel build``. By default, all targets are built.
 Dependencies
 ------------
 
-The plugin requires Bazel, and its installation is handled by the plugin itself
-through ``build-packages``.
+The plugin requires Bazel. By default, the plugin installs Bazel through
+``build-packages``, via the ``bazel-bootstrap`` package.
 
-The plugin currently provides Bazel via the ``bazel-bootstrap``
-package.
+If you provide Bazel from a separate part named ``bazel-deps``, add
+``after: [bazel-deps]`` to the Bazel plugin part and the plugin will skip
+installing ``bazel-bootstrap``.
 
 From the project, the ``BUILD`` file must define the targets to be built.
 

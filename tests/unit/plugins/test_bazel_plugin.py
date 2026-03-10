@@ -17,6 +17,7 @@
 from pathlib import Path
 
 import pytest
+from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.bazel_plugin import BazelPlugin
@@ -44,6 +45,21 @@ class TestPluginBazel:
     def test_get_build_packages(self):
         assert self._plugin.get_build_packages() == {"bazel-bootstrap"}
         assert self._plugin.get_build_snaps() == set()
+
+    def test_get_build_packages_with_bazel_deps(self, new_dir):
+        props = BazelPlugin.properties_class.unmarshal(
+            {
+                "source": ".",
+                "after": ["bazel-deps"],
+            }
+        )
+        part = Part("foo", {})
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(project_info=project_info, part=part)
+
+        plugin = BazelPlugin(properties=props, part_info=part_info)
+
+        assert plugin.get_build_packages() == set()
 
     def test_get_build_environment(self):
         assert not self._plugin.get_build_environment()
@@ -99,3 +115,69 @@ class TestPluginBazel:
 
     def test_get_out_of_source_build(self):
         assert self._plugin.get_out_of_source_build() is False
+
+
+def test_validate_environment(dependency_fixture, new_dir):
+    properties = BazelPlugin.properties_class.unmarshal({"source": "."})
+    part_info = PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {}),
+    )
+    plugin = BazelPlugin(properties=properties, part_info=part_info)
+    bazel = dependency_fixture("bazel", output="bazel 6.3.2")
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(bazel.parent)}", properties=properties
+    )
+    validator.validate_environment()
+
+
+def test_validate_environment_missing_bazel(new_dir):
+    properties = BazelPlugin.properties_class.unmarshal({"source": "."})
+    part_info = PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {}),
+    )
+    plugin = BazelPlugin(properties=properties, part_info=part_info)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env="PATH=/foo", properties=properties
+    )
+    with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
+        validator.validate_environment()
+
+    assert raised.value.reason == "'bazel' not found"
+
+
+def test_validate_environment_with_bazel_deps(new_dir):
+    properties = BazelPlugin.properties_class.unmarshal({"source": "."})
+    part_info = PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {}),
+    )
+    plugin = BazelPlugin(properties=properties, part_info=part_info)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env="PATH=/foo", properties=properties
+    )
+    validator.validate_environment(part_dependencies=["bazel-deps"])
+
+
+def test_validate_environment_without_bazel_deps(new_dir):
+    properties = BazelPlugin.properties_class.unmarshal({"source": "."})
+    part_info = PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {}),
+    )
+    plugin = BazelPlugin(properties=properties, part_info=part_info)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env="PATH=/foo", properties=properties
+    )
+    with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
+        validator.validate_environment(part_dependencies=[])
+
+    assert raised.value.reason == (
+        "'bazel' not found and part 'my-part' does not depend on a part named "
+        "'bazel-deps' that would satisfy the dependency"
+    )
