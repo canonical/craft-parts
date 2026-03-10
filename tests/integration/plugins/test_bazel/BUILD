@@ -1,4 +1,4 @@
-sh_binary(
+cc_binary(
     name = "hello",
-    srcs = ["hello.sh"],
+    srcs = ["hello.c"],
 )

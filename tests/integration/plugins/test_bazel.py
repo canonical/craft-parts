@@ -69,7 +69,6 @@ def test_bazel_plugin(new_dir, partitions, parts_yaml, binary_path, expected_out
         pytest.skip("bazel is not installed on the test host")
 
     source_location = Path(__file__).parent / "test_bazel"
-    (source_location / "hello.sh").chmod(0o755)
 
     parts_yaml_str = parts_yaml.format(source_location=source_location)
     parts = yaml.safe_load(parts_yaml_str)
