@@ -14,6 +14,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/ant_plugin.rst
    /common/craft-parts/reference/plugins/autotools_plugin.rst
    /common/craft-parts/reference/plugins/cmake_plugin.rst
+   /common/craft-parts/reference/plugins/colcon_plugin.rst
    /common/craft-parts/reference/plugins/dump_plugin.rst
    /common/craft-parts/reference/plugins/go_plugin.rst
    /common/craft-parts/reference/plugins/go_use_plugin.rst
@@ -25,6 +26,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/meson_plugin.rst
    /common/craft-parts/reference/plugins/nil_plugin.rst
    /common/craft-parts/reference/plugins/npm_plugin.rst
+   /common/craft-parts/reference/plugins/npm_use_plugin.rst
    /common/craft-parts/reference/plugins/poetry_plugin.rst
    /common/craft-parts/reference/plugins/python_v2_plugin.rst
    /common/craft-parts/reference/plugins/python_plugin.rst

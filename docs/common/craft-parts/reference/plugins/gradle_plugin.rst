@@ -51,6 +51,24 @@ The `Gradle task <https://docs.gradle.org/current/userguide/more_about_tasks.htm
 to build the project.
 
 
+gradle-use-daemon
+~~~~~~~~~~~~~~~~~
+
+**Type:** boolean
+
+Whether to use the `Gradle daemon <https://docs.gradle.org/current/userguide/gradle_daemon.html>`_
+during the build. The daemon is disabled by default.
+
+
+Attributes
+----------
+
+This plugin supports the ``self-contained`` build attribute. Declaring this attribute
+redirects all dependency resolution to a local Maven repository by overriding repository
+settings. All dependencies, including plugins, must then be provided as build packages or
+in an earlier part.
+
+
 Environment variables
 ---------------------
 

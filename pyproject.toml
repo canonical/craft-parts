@@ -28,18 +28,39 @@ license-files = ["LICENSE"]
 
 [dependency-groups]
 docs = [
-    "canonical-sphinx[full]",
-    "pydantic-kitbash==0.0.8",
-    # Missing from sphinxcontrib-details-directive, see
-    # https://github.com/sphinx-contrib/sphinxcontrib-details-directive/issues/5
-    "setuptools",
-    "sphinx",
+    "pydantic-kitbash~=1.0",
     "sphinx-autodoc-typehints",
-    "sphinx-lint",
-    "sphinx-pydantic",
-    "sphinx-rtd-theme",
-    "sphinxcontrib-details-directive",
-    "sphinxext-rediraffe",
+    "sphinx-lint~=1.0",
+    "sphinx-pydantic==0.1.1",
+    "sphinxext-rediraffe==0.3.0",
+    "sphinx-substitution-extensions==2025.1.2",
+    {include-group = "docs-starter-pack"},
+]
+# We disable the unused but default SP dependencies slated for removal
+# https://warthogs.atlassian.net/browse/DOCPR-2387
+docs-starter-pack = [
+    "canonical-sphinx>=0.5.1",
+    "myst-parser>=4.0.1",
+    "packaging>=25.0",
+    "rst2html>=2020.7.4",
+    "sphinx-autobuild>=2024.10.3",
+    # "sphinx-config-options>=0.1.0",
+    # "sphinx-contributor-listing>=0.1.0",
+    "sphinx-design>=0.6.1",
+    # "sphinx-filtered-toctree>=0.1.0",
+    # "sphinx-last-updated-by-git>=0.3.8",
+    "sphinx-notfound-page>=1.1.0",
+    # "sphinx-related-links>=0.1.1",
+    "sphinx-roles>=0.1.0",
+    "sphinx-sitemap>=2.6.0",
+    # "sphinx-tabs>=3.4.5",
+    "sphinx-terminal>=1.0.2",
+    # "sphinx-ubuntu-images>=0.1.0",
+    # "sphinx-youtube-links>=0.1.0",
+    "sphinxcontrib-jquery>=4.1",
+    # "sphinxcontrib-svg2pdfconverter[cairosvg]>=2.0.0",
+    "sphinxext-opengraph>=0.13.0",
+    "vale>=3.13.0.0",
 ]
 dev = [
     "build",
@@ -49,7 +70,7 @@ dev = [
     "pytest-cov~=7.0",
     "pytest-mock~=3.12",
     "pytest-rerunfailures>=16.0.1",
-    "mypy[reports]~=1.18.2",
+    "mypy[reports]~=1.19.1",
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
@@ -186,6 +207,7 @@ testpaths = "tests"
 xfail_strict = true
 addopts = "--ignore=tests/spread"
 markers = [
+    "requires_root: tests that require root permissions",
     "slow: slow tests",
     "java: tests that require the Java build tools to be installed (includes maven, gradle, etc.)",
     "python: tests that require the Python build tools (poetry, uv, pip)",
