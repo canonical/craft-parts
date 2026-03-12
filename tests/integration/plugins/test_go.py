@@ -184,6 +184,147 @@ def test_go_use(new_dir, partitions):
     assert output == "hello\n"
 
 
+def test_go_enable_checks(new_dir, partitions):
+    """Test that unit tests are run during build when enable-checks is set."""
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+          foo:
+            plugin: go
+            source: .
+            build-attributes:
+              - enable-checks
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    Path("go.mod").write_text(
+        textwrap.dedent(
+            """
+            module example.com/hello
+
+            go 1.13
+            """
+        )
+    )
+
+    Path("hello.go").write_text(
+        textwrap.dedent(
+            """
+            package main
+
+            import "fmt"
+
+            func Hello() string {
+                return "Hello, World!"
+            }
+
+            func main() {
+                fmt.Println(Hello())
+            }
+            """
+        )
+    )
+
+    Path("hello_test.go").write_text(
+        textwrap.dedent(
+            """
+            package main
+
+            import "testing"
+
+            func TestHello(t *testing.T) {
+                got := Hello()
+                want := "Hello, World!"
+                if got != want {
+                    t.Errorf("Hello() = %q, want %q", got, want)
+                }
+            }
+            """
+        )
+    )
+
+    lf = LifecycleManager(
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.BUILD)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+
+def test_go_enable_checks_failing_test(new_dir, partitions):
+    """Test that a failing unit test causes the build to fail."""
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+          foo:
+            plugin: go
+            source: .
+            build-attributes:
+              - enable-checks
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    Path("go.mod").write_text(
+        textwrap.dedent(
+            """
+            module example.com/hello
+
+            go 1.13
+            """
+        )
+    )
+
+    Path("hello.go").write_text(
+        textwrap.dedent(
+            """
+            package main
+
+            import "fmt"
+
+            func Hello() string {
+                return "Hello, World!"
+            }
+
+            func main() {
+                fmt.Println(Hello())
+            }
+            """
+        )
+    )
+
+    Path("hello_test.go").write_text(
+        textwrap.dedent(
+            """
+            package main
+
+            import "testing"
+
+            func TestHello(t *testing.T) {
+                t.Fatal("intentionally failing test")
+            }
+            """
+        )
+    )
+
+    lf = LifecycleManager(
+        parts,
+        application_name="test_go",
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.BUILD)
+
+    with lf.action_executor() as ctx:
+        with pytest.raises(PluginBuildError):
+            ctx.execute(actions)
+
+
 @pytest.mark.parametrize(
     "parts_yaml_template",
     [
