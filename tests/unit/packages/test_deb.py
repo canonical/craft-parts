@@ -27,6 +27,7 @@ import pytest
 import zstandard
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
+from craft_parts.packages.deb import Ubuntu
 from craft_parts.packages.deb_package import DebPackage
 from pytest_mock import MockerFixture
 
@@ -995,6 +996,7 @@ def test_chown_stage_packages(
     mock_chown.assert_called_once_with(deb_cache_dir, user="_apt")
     assert message.format(deb_cache_dir) in caplog.text
 
+
 def test_refresh_called_before_mark(monkeypatch):
     """Ensure apt cache is refreshed before marking packages."""
 
@@ -1012,8 +1014,6 @@ def test_refresh_called_before_mark(monkeypatch):
 
     def fake_install(packages):
         call_order.append("install")
-
-    from craft_parts.packages.deb import Ubuntu
 
     monkeypatch.setattr(Ubuntu, "_check_if_all_packages_installed", fake_check)
     monkeypatch.setattr(Ubuntu, "refresh_packages_list", fake_refresh)
@@ -1045,8 +1045,6 @@ def test_refresh_not_called_when_disabled(monkeypatch):
 
     def fake_install(packages):
         call_order.append("install")
-
-    from craft_parts.packages.deb import Ubuntu
 
     monkeypatch.setattr(Ubuntu, "_check_if_all_packages_installed", fake_check)
     monkeypatch.setattr(Ubuntu, "refresh_packages_list", fake_refresh)
