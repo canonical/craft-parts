@@ -26,6 +26,7 @@ from unittest.mock import Mock, call
 import pytest
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
+from craft_parts.packages.deb import Ubuntu
 from craft_parts.packages.deb_package import DebPackage
 from pytest_mock import MockerFixture
 
@@ -880,8 +881,6 @@ def test_refresh_called_before_mark(monkeypatch):
     def fake_install(packages):
         call_order.append("install")
 
-    from craft_parts.packages.deb import Ubuntu
-
     monkeypatch.setattr(Ubuntu, "_check_if_all_packages_installed", fake_check)
     monkeypatch.setattr(Ubuntu, "refresh_packages_list", fake_refresh)
     monkeypatch.setattr(Ubuntu, "_get_packages_marked_for_installation", fake_mark)
@@ -912,8 +911,6 @@ def test_refresh_not_called_when_disabled(monkeypatch):
 
     def fake_install(packages):
         call_order.append("install")
-
-    from craft_parts.packages.deb import Ubuntu
 
     monkeypatch.setattr(Ubuntu, "_check_if_all_packages_installed", fake_check)
     monkeypatch.setattr(Ubuntu, "refresh_packages_list", fake_refresh)
