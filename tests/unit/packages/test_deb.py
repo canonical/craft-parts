@@ -588,7 +588,6 @@ class TestBuildPackages:
             ),
         ]
 
-
     @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_invalid_package_requested(self, fake_apt_cache, fake_deb_run, mocker):
         mocker.patch(
@@ -598,7 +597,6 @@ class TestBuildPackages:
 
         with pytest.raises(errors.BuildPackageNotFound):
             deb.Ubuntu.install_packages(["package-invalid"])
-
 
     @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_broken_package_apt_install(self, fake_apt_cache, fake_deb_run, mocker):
@@ -910,9 +908,12 @@ def test_chown_stage_packages(
     mock_chown.assert_called_once_with(deb_cache_dir, user="_apt")
     assert message.format(deb_cache_dir) in caplog.text
 
+
 def test_dpkg_installed_version_nonzero_returncode(monkeypatch):
     def fake_run(*args, **kwargs):
-        return CompletedProcess(args=["dpkg-query"], returncode=1, stdout="", stderr="nope")
+        return CompletedProcess(
+            args=["dpkg-query"], returncode=1, stdout="", stderr="nope"
+        )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     assert _dpkg_installed_version("bash") is None
@@ -920,7 +921,9 @@ def test_dpkg_installed_version_nonzero_returncode(monkeypatch):
 
 def test_dpkg_installed_version_empty_stdout(monkeypatch):
     def fake_run(*args, **kwargs):
-        return CompletedProcess(args=["dpkg-query"], returncode=0, stdout="\n", stderr="")
+        return CompletedProcess(
+            args=["dpkg-query"], returncode=0, stdout="\n", stderr=""
+        )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     assert _dpkg_installed_version("bash") is None
@@ -929,7 +932,9 @@ def test_dpkg_installed_version_empty_stdout(monkeypatch):
 def test_dpkg_installed_version_not_installed_status(monkeypatch):
     def fake_run(*args, **kwargs):
         out = "deinstall ok config-files\t1.2.3\n"
-        return CompletedProcess(args=["dpkg-query"], returncode=0, stdout=out, stderr="")
+        return CompletedProcess(
+            args=["dpkg-query"], returncode=0, stdout=out, stderr=""
+        )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     assert _dpkg_installed_version("bash") is None
@@ -938,7 +943,9 @@ def test_dpkg_installed_version_not_installed_status(monkeypatch):
 def test_dpkg_installed_version_installed(monkeypatch):
     def fake_run(*args, **kwargs):
         out = "install ok installed\t5.2.15-2ubuntu1\n"
-        return CompletedProcess(args=["dpkg-query"], returncode=0, stdout=out, stderr="")
+        return CompletedProcess(
+            args=["dpkg-query"], returncode=0, stdout=out, stderr=""
+        )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     assert _dpkg_installed_version("bash") == "5.2.15-2ubuntu1"
