@@ -101,6 +101,12 @@ class GoPlugin(Plugin):
     properties_class = GoPluginProperties
     validator_class = GoPluginEnvironmentValidator
 
+    @classmethod
+    @override
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports."""
+        return {"enable-checks"}
+
     @override
     def get_build_snaps(self) -> set[str]:
         """Return a set of required snaps to install in the build environment."""
@@ -146,4 +152,9 @@ class GoPlugin(Plugin):
             *setup_cmds,
             *generate_cmds,
             f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
+            *(
+                [f'go test -p "{self._part_info.parallel_build_count}" {tags} ./...']
+                if "enable-checks" in self._part_info.build_attributes
+                else []
+            ),
         ]
