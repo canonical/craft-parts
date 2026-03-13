@@ -35,7 +35,6 @@ separate ``go generate`` call. The default behavior is not to call ``go generate
 Attributes
 ----------
 
-
 enable-checks
 ~~~~~~~~~~~~~
 
@@ -86,7 +85,7 @@ During the build step the plugin performs the following actions:
 #. Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
    ``--tags`` parameter.
 #. If ``enable-checks`` is set in ``build-attributes``, call ``go test ./...`` to run
-   unit tests for the project.
+   unit tests.
 
 
 Example
