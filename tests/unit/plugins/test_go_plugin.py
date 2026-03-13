@@ -198,6 +198,39 @@ def test_get_build_commands_go_generate(part_info):
     ]
 
 
+def test_get_build_commands_enable_checks(project_info):
+    part_data = {"source": ".", "build-attributes": ["enable-checks"]}
+    properties = GoPlugin.properties_class.unmarshal(part_data)
+    part_info = PartInfo(
+        project_info=project_info,
+        part=Part("my-part", part_data),
+    )
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "go mod download all",
+        'go install -p "1"  ./...',
+        'go test -p "1"  ./...',
+    ]
+
+
+def test_get_build_commands_enable_checks_with_buildtags(project_info):
+    part_data = {"source": ".", "build-attributes": ["enable-checks"]}
+    plugin_data = {**part_data, "go-buildtags": ["dev", "debug"]}
+    properties = GoPlugin.properties_class.unmarshal(plugin_data)
+    part_info = PartInfo(
+        project_info=project_info,
+        part=Part("my-part", part_data),
+    )
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "go mod download all",
+        'go install -p "1" -tags=dev,debug ./...',
+        'go test -p "1" -tags=dev,debug ./...',
+    ]
+
+
 @pytest.mark.parametrize(
     "part_data",
     [
