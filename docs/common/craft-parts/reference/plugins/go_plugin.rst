@@ -32,8 +32,8 @@ Parameters to pass to `go generate`_ before building. Each item on the list will
 separate ``go generate`` call. The default behavior is not to call ``go generate``.
 
 
-Build attributes
-----------------
+Attributes
+----------
 
 enable-checks
 ~~~~~~~~~~~~~
