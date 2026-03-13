@@ -279,7 +279,7 @@ class RubyPlugin(Plugin):
                 # Build but don't install gem(s)
                 commands.extend(
                     f"gem build {gemspec}"
-                    for gemspec in self._part_info.part_src_dir.glob("*.gemspec")
+                    for gemspec in self._part_info.part_build_subdir.glob("*.gemspec")
                 )
 
                 # Move freshly-built gem(s) to local cache

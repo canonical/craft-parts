@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
@@ -71,7 +72,7 @@ class TestPartSpecs:
         data_copy["overlay"] = ["*"]
         data_copy["overlay-packages"] = []
         data_copy["overlay-script"] = None
-
+        data_copy["override-overlay"] = None
         spec = PartSpec.unmarshal(data)
         assert spec.marshal() == data_copy
 
@@ -420,6 +421,84 @@ class TestPartOrdering:
 
         with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
+
+    @pytest.mark.parametrize(
+        ("parts_data", "expected_cycle"),
+        [
+            pytest.param(
+                [
+                    ("part-one", {"after": ["part-two"]}),
+                    ("part-two", {"after": ["part-one"]}),
+                ],
+                "part-one -> part-two -> part-one",
+                id="two_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-a", {"after": ["part-b"]}),
+                    ("part-b", {"after": ["part-c"]}),
+                    ("part-c", {"after": ["part-a"]}),
+                ],
+                "part-a -> part-b -> part-c -> part-a",
+                id="three_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-w", {"after": ["part-x"]}),
+                    ("part-x", {"after": ["part-y"]}),
+                    ("part-y", {"after": ["part-z"]}),
+                    ("part-z", {"after": ["part-w"]}),
+                ],
+                "part-w -> part-x -> part-y -> part-z -> part-w",
+                id="four_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-a", {"after": ["part-c"]}),
+                    ("part-b", {"after": ["part-a"]}),
+                    ("part-c", {"after": ["part-b"]}),
+                ],
+                "part-a -> part-c -> part-b -> part-a",
+                id="non_alphabetical_chain",
+            ),
+        ],
+    )
+    def test_sort_parts_cycle_detailed(self, partitions, parts_data, expected_cycle):
+        """Test circular dependency detection with various cycle configurations."""
+        part_list = [
+            Part(name, spec, partitions=partitions) for name, spec in parts_data
+        ]
+
+        expected = f"Part processing order: {expected_cycle}"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts(part_list)
+
+    def test_sort_parts_cycle_with_independent_part(self, partitions):
+        """Test that error message only shows parts in the cycle, not independent parts."""
+        # Create a cycle between part-a, part-b, and part-c
+        p1 = Part("part-a", {"after": ["part-b"]}, partitions=partitions)
+        p2 = Part("part-b", {"after": ["part-c"]}, partitions=partitions)
+        p3 = Part("part-c", {"after": ["part-a"]}, partitions=partitions)
+        # Add an independent part that should not appear in the error
+        p4 = Part("independent-part", {}, partitions=partitions)
+
+        # The actual dependency chain: part-a -> part-b -> part-c -> part-a (showing the cycle)
+        expected = "Part processing order: part-a -> part-b -> part-c -> part-a"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts([p1, p2, p3, p4])
+
+    def test_sort_parts_cycle_self_dependency(self, partitions):
+        """Test circular dependency where a part depends on itself."""
+        p1 = Part("self-dep", {"after": ["self-dep"]}, partitions=partitions)
+
+        expected = "Part processing order: self-dep -> self-dep"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts([p1])
+
+    def test_sort_parts_empty_list(self, partitions):
+        """Test that sorting an empty list returns an empty list."""
+        result = parts.sort_parts([])
+        assert result == []
 
 
 class TestPartUnmarshal:

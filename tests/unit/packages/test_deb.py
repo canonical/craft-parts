@@ -863,6 +863,7 @@ def test_chown_stage_packages(
     mock_chown.assert_called_once_with(deb_cache_dir, user="_apt")
     assert message.format(deb_cache_dir) in caplog.text
 
+
 def test_refresh_called_before_mark(monkeypatch):
     """Ensure apt cache is refreshed before marking packages."""
 

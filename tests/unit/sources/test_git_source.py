@@ -322,6 +322,30 @@ class TestGitSource:
 
         assert should_warn == (warning in caplog.text)
 
+    @pytest.mark.usefixtures("fake_run")
+    def test_never_shallow_fetch_without_depth(
+        self,
+        new_dir: Path,
+        mocker: MockerFixture,
+        fake_check_output: mock.MagicMock,
+    ) -> None:
+        commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
+        fake_check_output.return_value = commit
+
+        mock_clone_at_commit = mocker.spy(GitSource, "_clone_at_commit")
+
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_commit=commit,
+            project_dirs=self._dirs,
+        )
+
+        git.pull()
+
+        mock_clone_at_commit.assert_not_called()
+
     def test_pull_short_commit_error(self, fake_check_output, fake_run, new_dir):
         fake_check_output.side_effect = subprocess.CalledProcessError(1, [])
         git = GitSource(
