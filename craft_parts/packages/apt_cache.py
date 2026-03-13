@@ -24,6 +24,8 @@ from collections.abc import Iterable
 from contextlib import ContextDecorator
 from pathlib import Path
 
+from typing_extensions import Self
+
 try:
     import apt
     import apt.cache
@@ -92,7 +94,7 @@ class AptCache(ContextDecorator):
         self.progress: LogProgress | None = None
 
     # pylint: disable=attribute-defined-outside-init
-    def __enter__(self) -> "AptCache":
+    def __enter__(self) -> Self:
         if self.stage_cache is not None:
             self.progress = LogProgress()
             self._populate_stage_cache_dir()

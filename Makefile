@@ -59,6 +59,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
 APT_PACKAGES += python3-venv
 endif
+ifeq ($(wildcard /usr/share/doc/mmdebstrap/copyright),)
+APT_PACKAGES += mmdebstrap
+endif
 
 # Dependencies for sources
 ifeq ($(wildcard /usr/share/doc/p7zip-full/copyright),)
@@ -232,6 +235,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/libtool/copyright),)
 APT_PACKAGES += libtool
 endif
+ifeq ($(wildcard /usr/share/doc/socat/copyright),)
+APT_PACKAGES += socat
+endif
 endif
 
 .PHONY: install-chisel
@@ -297,18 +303,6 @@ else ifeq ($(shell which snap),)
 	$(warning Cannot install rustup without snap. Install it yourself.)
 else
 	sudo snap install rustup --classic
-endif
-
-# A temporary override to the lint-docs directive to ignore the sphinx-docs-starter-pack git submodule.
-.PHONY: lint-docs
-lint-docs:  ##- Lint the documentation
-ifneq ($(CI),)
-	@echo ::group::$@
-endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --ignore docs/reference/commands --ignore docs/_build --ignore docs/sphinx-docs-starter-pack --enable all $(DOCS) -d line-too-long,missing-underscore-after-hyperlink,missing-space-in-hyperlink
-	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
-ifneq ($(CI),)
-	@echo ::endgroup::
 endif
 
 .PHONY: install-dotnet

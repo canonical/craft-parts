@@ -19,6 +19,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+2.28.1 (2026-02-25)
+-------------------
+
+Bug fixes:
+
+- Setting ``source-commit`` with a full-length commit hash would force a shallow
+  clone, regardless of the value of ``source-depth``. Parts will now only pull
+  a shallow clone if ``source-depth`` is non-zero.
+
 
 .. _release-2.30.0:
 
@@ -29,6 +38,19 @@ New features:
 
 - Add support for the ``self-contained`` build attribute for parts using the
   :ref:`craft_parts_npm_plugin`.
+- Circular dependency errors now show the actual part processing order,
+  making it easier to identify and fix dependency cycles in complex projects.
+- Add :ref:`craft_parts_npm_use_plugin` to export npm dependencies to a
+  shared local cache for ``self-contained`` builds.
+- Add support for the ``override-overlay`` key, which runs a script
+  inside a chroot environment during the overlay step.
+- The ``go-use`` plugin returns an error if a ``go.mod`` file doesn't exist.
+  This prevents the error going unnoticed & appearing at build-time (when the
+  module doesn't appear in the Go workspace)
+
+Documentation:
+
+- Update documentation system to Canonical's Sphinx Starter Pack 1.4.0.
 
 Bug fixes:
 
@@ -36,6 +58,11 @@ Bug fixes:
   have interdependencies on each other. The method now sets all candidate
   versions before calling ``mark_install``, so the resolver sees the correct
   candidates for all dependencies.
+- The Ruby plugin will now build the Ruby source tree in the part's
+  build directory instead of the source directory when the
+  ``self-contained`` key is true and ``ruby-use-bundler`` key is false.
+  This resolves an issue where changes made by an ``override-build``
+  script were effectively ignored.
 
 .. _release-2.29.0:
 
@@ -631,8 +658,7 @@ Bug fixes:
 Bug fixes:
 
 - Fix CPATH variable scope in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
-- Fix Jdeps parameter ordering in the
-  :ref:`jlink plugin<craft_parts_jlink_plugin>`.
+- Fix ``jdeps`` parameter ordering in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
 
 .. _release-2.3.1:
 
@@ -711,7 +737,7 @@ For a complete list of commits, check out the `2.4.0`_ release on GitHub.
 
 New features:
 
-- Change craftctl communication mechanism to unix sockets to consolidate
+- Change craftctl communication mechanism to Unix sockets to consolidate
   the ctl server and output stream processing selector loops.
 - Get the error output from step scriptlet execution and surface it when
   raising ScriptletRunError.
@@ -1121,7 +1147,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.21.1 (2023-06-09)
 -------------------
 
-- Revert subdir changes in pull and build steps
+- Revert subdirectory changes in pull and build steps
 
 .. _release-1.21.0:
 
@@ -1136,10 +1162,10 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.20.0 (2023-05-15)
 -------------------
 
-- Add initial support for dnf-based distros
+- Add initial support for dnf-based distributions
 - Add support for pyproject.toml projects in Python plugin
 - Improve interpreter detection in Python plugin
-- Fix subdir in pull and build steps
+- Fix subdirectories in pull and build steps
 - Tox and packaging updates
 - Documentation updates
 
@@ -1163,7 +1189,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.19.6 (2023-06-09)
 -------------------
 
-- Revert subdir changes in pull and build steps
+- Revert subdirectory changes in pull and build steps
 
 .. _release-1.19.5:
 
@@ -1178,7 +1204,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 -------------------
 
 - Backport support for pyproject.toml projects from 1.20.0
-- Backport pull and build steps subdir from 1.20.0
+- Backport pull and build steps subdirectories from 1.20.0
 
 .. _release-1.19.3:
 
@@ -1222,7 +1248,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.18.4 (2023-03-09)
 -------------------
 
-- Make chroot /dev mount private
+- Make ``chroot /dev mount`` private
 
 .. _release-1.18.3:
 
@@ -1272,7 +1298,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 -------------------
 
 - Fix go plugin mod download in jammy
-- Remove hardcoded ubuntu version in chisel call
+- Remove hard-coded ubuntu version in chisel call
 - Add plain file source handler
 - Pass build attributes and state to post-step callback
 
@@ -1307,7 +1333,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.14.2 (2022-09-22)
 -------------------
 
-- Fix pypi release package
+- Fix PyPI release package
 
 .. _release-1.14.1:
 
@@ -1369,7 +1395,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.10.1 (2022-07-29)
 -------------------
 
-- Change staged snap pkgconfig prefix normalization to be predictable
+- Change staged snap pkg-config prefix normalization to be predictable
   regardless of the path used for destructive mode packing
 
 .. _release-1.10.0:
@@ -1379,7 +1405,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 
 - Add plugin class method to check for out of source builds
 - Normalize file copy functions signatures
-- Fix pkgconfig prefix in staged snaps
+- Fix pkg-config prefix in staged snaps
 
 .. _release-1.9.0:
 

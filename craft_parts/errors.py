@@ -89,13 +89,21 @@ class FeatureError(PartsError):
 
 
 class PartDependencyCycle(PartsError):  # noqa: N818
-    """A dependency cycle has been detected in the parts definition."""
+    """A dependency cycle has been detected in the parts definition.
 
-    def __init__(self) -> None:
+    :param part_names: The names of the parts involved in the cycle.
+    """
+
+    def __init__(self, *, part_names: list[str] | None = None) -> None:
         brief = "A circular dependency chain was detected."
         resolution = "Review the parts definition to remove dependency cycles."
 
-        super().__init__(brief=brief, resolution=resolution)
+        if part_names:
+            details = f"Part processing order: {' -> '.join(part_names)}"
+        else:
+            details = None
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
 
 
 class InvalidApplicationName(PartsError):  # noqa: N818

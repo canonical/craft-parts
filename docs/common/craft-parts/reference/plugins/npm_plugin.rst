@@ -60,17 +60,6 @@ architecture.
     significant security hazard. If your project still requires a JavaScript runtime
     from nearly a decade ago, consider migrating to the modern Node.js runtime.
 
-npm-publish-to-cache
-~~~~~~~~~~~~~~~~~~~~
-
-**Type:** boolean
-
-**Default:** false
-
-When set to ``true``, the plugin packs the project as a tarball and publishes it to a
-shared cache directory instead of installing it globally. Requires the ``self-contained``
-build attribute.
-
 
 Attributes
 ----------
@@ -79,8 +68,8 @@ This plugin supports the ``self-contained`` build attribute. Declaring this attr
 enables offline builds by blocking all npm registry access and installing dependencies from
 pre-cached tarballs.
 
-Parts that produce dependencies should set ``npm-publish-to-cache: true`` to publish their
-tarballs to the shared cache.
+Parts that produce dependencies should use the :ref:`craft_parts_npm_use_plugin` to publish their
+tarballs to a shared cache.
 
 
 In self-contained builds, ``package-lock.json`` is ignored. Dependencies
