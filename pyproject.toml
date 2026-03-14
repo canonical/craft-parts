@@ -48,7 +48,7 @@ dev = [
     "pytest-cov~=7.0",
     "pytest-mock~=3.12",
     "pytest-rerunfailures>=16.0.1",
-    "mypy[reports]~=1.18.2",
+    "mypy[reports]~=1.19.1",
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
