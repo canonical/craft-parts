@@ -29,7 +29,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      fast-test-python-versions: '["3.10", "3.12", "3.13"]'
+      fast-test-python-versions: '["3.10", "3.12", "3.14"]'
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -39,7 +39,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       # We must always test on at least one EOL base to ensure that chisel behaves
       # correctly on said EOL base.
       lowest-python-platform: '["amd64", "focal"]'
@@ -59,7 +59,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
       pytest-markers: java
       setup-vars: NO_PYTHON=1 NO_PLUGIN=1
@@ -74,7 +74,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
@@ -87,7 +87,7 @@ jobs:
           "ubuntu-22.04",
           ["jammy", "arm64", "medium"],
         ]
-      slow-test-python-versions: '["3.10"]'
+      slow-test-python-versions: '["3.10", "3.14"]'
       lowest-python-version: ""
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
@@ -104,7 +104,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-platform: '["focal"]'
       lowest-python-version: "3.10"
       pytest-markers: plugin
