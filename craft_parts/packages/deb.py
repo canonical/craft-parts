@@ -601,19 +601,6 @@ class Ubuntu(BaseRepository):
         return packages
 
     @classmethod
-    @_apt_cache_wrapper
-    def _get_packages_marked_for_installation(
-        cls, package_names: list[str]
-    ) -> list[tuple[str, str]]:
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            try:
-                apt_cache.mark_packages(set(package_names))
-            except errors.PackageNotFound as error:
-                raise errors.BuildPackageNotFound(error.package_name) from error
-
-            return apt_cache.get_packages_marked_for_installation()
-
-    @classmethod
     def download_packages(cls, package_names: list[str]) -> None:
         """Download the specified packages to the local package cache area."""
         logger.debug("Downloading packages using apt: %s", " ".join(package_names))
