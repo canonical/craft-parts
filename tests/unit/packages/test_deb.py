@@ -1057,7 +1057,9 @@ def test_install_packages_host_path_does_not_use_apt_cache_for_manifest(
 ):
     mocker.patch(
         "craft_parts.packages.deb._get_packages_marked_for_installation_apt_get",
-        side_effect=AssertionError("should not use apt-get mark simulation on host install path"),
+        side_effect=AssertionError(
+            "should not use apt-get mark simulation on host install path"
+        ),
     )
     mocker.patch(
         "craft_parts.packages.deb.Ubuntu._get_installed_package_versions",
