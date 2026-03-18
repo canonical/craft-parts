@@ -485,7 +485,6 @@ docs = [
     { name = "sphinx-design", version = "0.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-jammy') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-noble') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-focal' and extra == 'group-11-craft-parts-dev-resolute') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-noble') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-jammy' and extra == 'group-11-craft-parts-dev-resolute') or (extra == 'group-11-craft-parts-dev-noble' and extra == 'group-11-craft-parts-dev-plucky') or (extra == 'group-11-craft-parts-dev-noble' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-noble' and extra == 'group-11-craft-parts-dev-resolute') or (extra == 'group-11-craft-parts-dev-plucky' and extra == 'group-11-craft-parts-dev-questing') or (extra == 'group-11-craft-parts-dev-plucky' and extra == 'group-11-craft-parts-dev-resolute') or (extra == 'group-11-craft-parts-dev-questing' and extra == 'group-11-craft-parts-dev-resolute')" },
     { name = "sphinx-lint" },
     { name = "sphinx-notfound-page" },
-    { name = "sphinx-pydantic" },
     { name = "sphinx-roles" },
     { name = "sphinx-sitemap" },
     { name = "sphinx-substitution-extensions" },
@@ -581,7 +580,6 @@ docs = [
     { name = "sphinx-design", specifier = ">=0.6.1" },
     { name = "sphinx-lint", specifier = "~=1.0" },
     { name = "sphinx-notfound-page", specifier = ">=1.1.0" },
-    { name = "sphinx-pydantic", specifier = "==0.1.1" },
     { name = "sphinx-roles", specifier = ">=0.1.0" },
     { name = "sphinx-sitemap", specifier = ">=2.6.0" },
     { name = "sphinx-substitution-extensions", specifier = "==2025.1.2" },
@@ -776,15 +774,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d", size = 245115, upload-time = "2025-03-05T20:05:02.478Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67", size = 134899, upload-time = "2025-03-05T20:05:00.369Z" },
-]
-
-[[package]]
-name = "jsonpointer"
-version = "3.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6a/0a/eebeb1fa92507ea94016a2a790b93c2ae41a7e18778f85471dc54475ed25/jsonpointer-3.0.0.tar.gz", hash = "sha256:2b2d729f2091522d61c3b31f82e11870f60b68f43fbc705cb76bf4b832af59ef", size = 9114, upload-time = "2024-06-10T19:24:42.462Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/92/5e77f98553e9e75130c78900d000368476aed74276eb8ae8796f65f00918/jsonpointer-3.0.0-py2.py3-none-any.whl", hash = "sha256:13e088adc14fca8b6aa8177c044e12701e6ad4b28ff10e65f2267a90109c9942", size = 7595, upload-time = "2024-06-10T19:24:40.698Z" },
 ]
 
 [[package]]
@@ -2285,18 +2274,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sphinx-jsonschema"
-version = "1.19.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "docutils" },
-    { name = "jsonpointer" },
-    { name = "pyyaml" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3c/03/15c1d632e6671ae07a8689ce84c6c72d7849cca13ec32bc68c2e3d6f6f08/sphinx_jsonschema-1.19.2.tar.gz", hash = "sha256:1a48954217c2b3c6759c89b9ddd2c8e5b668b8730564e0283b009f23932be150", size = 30550, upload-time = "2025-12-01T08:54:33.726Z" }
-
-[[package]]
 name = "sphinx-last-updated-by-git"
 version = "0.3.8"
 source = { registry = "https://pypi.org/simple" }
@@ -2331,19 +2308,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6a/b2/67603444a8ee97b4a8ea71b0a9d6bab1727ed65e362c87e02f818ee57b8a/sphinx_notfound_page-1.1.0.tar.gz", hash = "sha256:913e1754370bb3db201d9300d458a8b8b5fb22e9246a816643a819a9ea2b8067", size = 7392, upload-time = "2025-01-28T18:45:02.871Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cd/d4/019fe439c840a7966012bbb95ccbdd81c5c10271749706793b43beb05145/sphinx_notfound_page-1.1.0-py3-none-any.whl", hash = "sha256:835dc76ff7914577a1f58d80a2c8418fb6138c0932c8da8adce4d9096fbcd389", size = 8167, upload-time = "2025-01-28T18:45:00.465Z" },
-]
-
-[[package]]
-name = "sphinx-pydantic"
-version = "0.1.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pydantic" },
-    { name = "sphinx-jsonschema" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/67/58/e7a518876db551cf3bd6621eecc6675d003b9bd8413382c10298e2113f7e/sphinx-pydantic-0.1.1.tar.gz", hash = "sha256:a830e4f07fe88fbdfe3edecc2f52ef133cde2def7cb882a3f22780f34963b0fb", size = 3394, upload-time = "2020-06-04T17:27:16.982Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/87/e397aba1d53aea3bccb8df07e1086e00855404afd92d118b07854d746947/sphinx_pydantic-0.1.1-py3-none-any.whl", hash = "sha256:371487ad81250d8bc5b944a2936b33c10ff88af7188d5be0ee6c4b46bb70254a", size = 2888, upload-time = "2020-06-04T17:27:15.879Z" },
 ]
 
 [[package]]
