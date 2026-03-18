@@ -59,20 +59,20 @@ html_context = {
     # Your documentation GitHub repository URL
     "github_url": "https://github.com/canonical/craft-parts",
     # Docs branch in the repo; used in links for viewing the source files
-    'repo_default_branch': 'main',
+    "repo_default_branch": "main",
     # Docs location in the repo; used in links for viewing the source files
     "repo_folder": "/docs/",
     # List contributors on individual pages
     "display_contributors": False,
     # Required for feedback button
-    'github_issues': 'enabled',
+    "github_issues": "enabled",
 }
 
-#html_extra_path = []
+# html_extra_path = []
 
 # Enable the edit button on pages
 html_theme_options = {
-  'source_edit_link': "https://github.com/canonical/craft-parts",
+    "source_edit_link": "https://github.com/canonical/craft-parts",
 }
 
 # slug = ''
@@ -86,16 +86,16 @@ html_theme_options = {
 html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
 
 # sphinx-sitemap uses html_baseurl to generate the full URL for each page:
-sitemap_url_scheme = '{link}'
+sitemap_url_scheme = "{link}"
 
 # Include `lastmod` dates in the sitemap:
-#sitemap_show_lastmod = True
+# sitemap_show_lastmod = True
 
 # Exclude generated pages from the sitemap:
 sitemap_excludes = [
-    '404/',
-    'genindex/',
-    'search/',
+    "404/",
+    "genindex/",
+    "search/",
 ]
 
 
@@ -196,13 +196,12 @@ extensions = [
     "sphinx_sitemap",
     # Custom Craft extensions
     "pydantic_kitbash",
-    "sphinx-pydantic",
     "sphinxext.rediraffe",
     "sphinx.ext.autodoc",
     "sphinx_autodoc_typehints",
-    #"sphinx.ext.doctest",
+    # "sphinx.ext.doctest",
     "sphinx.ext.ifconfig",
-    #"sphinx.ext.viewcode",
+    # "sphinx.ext.viewcode",
     "sphinx_substitution_extensions",
 ]
 
@@ -269,8 +268,14 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 
 # Add configuration for intersphinx mapping
 intersphinx_mapping = {
-    'starter-pack': ('https://canonical-example-product-documentation.readthedocs-hosted.com/en/latest', None),
-    'sphinxcontrib-mermaid': ('https://sphinxcontrib-mermaid-demo.readthedocs.io/en/latest', None)
+    "starter-pack": (
+        "https://canonical-example-product-documentation.readthedocs-hosted.com/en/latest",
+        None,
+    ),
+    "sphinxcontrib-mermaid": (
+        "https://sphinxcontrib-mermaid-demo.readthedocs.io/en/latest",
+        None,
+    ),
 }
 
 
@@ -286,6 +291,7 @@ always_document_param_types = True
 # Automated documentation
 project_dir = pathlib.Path(__file__).parents[1].resolve()
 sys.path.insert(0, str(project_dir.absolute()))
+
 
 def run_apidoc(_):
     import os
