@@ -27,7 +27,7 @@ bazel-targets
 
 **Type:** list of strings
 
-**Default:** "//..."
+**Default:** ``["//..."]``
 
 Targets to pass to ``bazel build``. By default, all targets are built.
 
