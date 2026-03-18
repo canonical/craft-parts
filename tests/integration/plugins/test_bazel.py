@@ -51,6 +51,19 @@ pytestmark = [pytest.mark.plugin]
                   foo:
                     plugin: bazel
                     source: {source_location}
+                """
+            ),
+            "hello",
+            "Hello, world!\n",
+            id="with-targets",
+        ),
+        pytest.param(
+            textwrap.dedent(
+                """
+                parts:
+                  foo:
+                    plugin: bazel
+                    source: {source_location}
                     bazel-targets:
                       - //:hello
                     bazel-parameters:
