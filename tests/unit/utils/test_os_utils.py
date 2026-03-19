@@ -266,6 +266,7 @@ class TestOsRelease:
         assert release.id() == "arch"
         assert release.name() == "Arch Linux"
         assert release.version_id() == "foo"
+        assert release.version_codename() == "bar"
 
     def test_no_id(self):
         release = os_utils.OsRelease(
@@ -320,6 +321,24 @@ class TestOsRelease:
 
         with pytest.raises(errors.OsReleaseVersionIdError):
             release.version_id()
+
+    def test_no_version_codename(self):
+        release = os_utils.OsRelease(
+            os_release_file=self._write_os_release(
+                textwrap.dedent(
+                    """\
+                NAME="Arch Linux"
+                ID=arch
+                PRETTY_NAME="Arch Linux"
+                ID_LIKE=archlinux
+                VERSION_ID="foo"
+            """
+                )
+            )
+        )
+
+        with pytest.raises(errors.OsReleaseCodenameError):
+            release.version_codename()
 
 
 class TestEnvironment:

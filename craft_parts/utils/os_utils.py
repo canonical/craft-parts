@@ -320,6 +320,16 @@ class OsRelease:
 
         raise errors.OsReleaseVersionIdError
 
+    def version_codename(self) -> str:
+        """Return the OS version codename.
+
+        :raises OsReleaseCodenameError: If no version codename can be determined.
+        """
+        with contextlib.suppress(KeyError):
+            return self._os_release["VERSION_CODENAME"]
+
+        raise errors.OsReleaseCodenameError
+
 
 def process_run(
     command: list[str], log_func: Callable[[str], None], **kwargs: Any
