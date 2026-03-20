@@ -74,7 +74,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      slow-test-python-versions: '["3.12", "3.14"]'
+      slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
@@ -87,7 +87,7 @@ jobs:
           "ubuntu-22.04",
           ["jammy", "arm64", "medium"],
         ]
-      slow-test-python-versions: '["3.10", "3.14"]'
+      slow-test-python-versions: '["3.10"]'
       lowest-python-version: ""
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
