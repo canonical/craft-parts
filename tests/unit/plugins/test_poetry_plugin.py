@@ -13,12 +13,13 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import pytest
 import pytest_check  # type: ignore[import-untyped]
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.poetry_plugin import PoetryPlugin
+from craft_parts.utils import os_utils
 from pydantic import ValidationError
+from pytest_mock import MockFixture
 
 
 @pytest.fixture
@@ -137,3 +138,25 @@ def test_call_should_remove_symlinks(plugin, new_dir, mocker):
     pytest_check.is_in(
         f'rm "{plugin._part_info.part_install_dir}"/bin/python*', build_commands
     )
+
+
+@pytest.mark.parametrize(
+    ("version", "should_install"),
+    [
+        pytest.param("24.04", False, id="noble"),
+        pytest.param("25.04", True, id="plucky"),
+        pytest.param("26.04", True, id="resolute"),
+    ],
+)
+def test_include_export_plugin(
+    plugin: PoetryPlugin, mocker: MockFixture, version: str, should_install: bool
+) -> None:
+    """Make sure that the export command plugin is included on 25.04+"""
+    mocker.patch.object(os_utils.OsRelease, "name", "Ubuntu")
+    mocker.patch(
+        "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
+    )
+
+    build_packages = plugin.get_build_packages()
+
+    assert ("python3-poetry-plugin-export" in build_packages) == should_install
