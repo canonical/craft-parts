@@ -22,17 +22,29 @@ jobs:
     with:
       fast-test-platforms: >
         [
-          "self-hosted-linux-amd64-resolute-large"
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+          ["resolute", "amd64"],
         ]
       fast-test-python-versions: '["3.10", "3.12", "3.14"]'
       slow-test-platforms: >
         [
-          "self-hosted-linux-amd64-resolute-large"
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+          ["resolute", "amd64"],
         ]
       slow-test-python-versions: '["3.12", "3.14"]'
       # We must always test on at least one EOL base to ensure that chisel behaves
       # correctly on said EOL base.
-      lowest-python-platform: "[]"
+      lowest-python-platform: '["amd64", "focal"]'
       lowest-python-version: "3.10"
       pytest-markers: not java and not python and not plugin
       setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
@@ -42,19 +54,40 @@ jobs:
       fast-test-platforms: "[]"
       slow-test-platforms: >
         [
-          "self-hosted-linux-amd64-resolute-large"
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+          ["resolute", "amd64"],
         ]
       slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
       pytest-markers: java
       setup-vars: NO_PYTHON=1 NO_PLUGIN=1
-  test-python-plugins:
+  test-python-plugins-resolute:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
       slow-test-platforms: >
         [
-          "self-hosted-linux-amd64-resolute-large"
+          ["resolute", "amd64"],
+        ]
+      slow-test-python-versions: '["3.14"]'
+      lowest-python-version: ""
+      pytest-markers: python
+      setup-vars: NO_JAVA=1 NO_PLUGIN=1
+  test-python-plugins-noble:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: "[]"
+      slow-test-platforms: >
+        [
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
         ]
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
@@ -66,7 +99,8 @@ jobs:
       fast-test-platforms: "[]"
       slow-test-platforms: >
         [
-          "self-hosted-linux-amd64-resolute-large"
+          "ubuntu-22.04",
+          ["jammy", "arm64", "medium"],
         ]
       slow-test-python-versions: '["3.10"]'
       lowest-python-version: ""
@@ -78,10 +112,16 @@ jobs:
       fast-test-platforms: "[]"
       slow-test-platforms: >
         [
-          "self-hosted-linux-amd64-resolute-large"
+          "ubuntu-22.04",
+          ["jammy", "arm64"],
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+          ["noble", "s390x", "edge"],
+          ["noble", "ppc64el", "edge"],
+          ["resolute", "amd64"],
         ]
       slow-test-python-versions: '["3.12", "3.14"]'
-      lowest-python-platform: "[]"
+      lowest-python-platform: '["focal"]'
       lowest-python-version: "3.10"
       pytest-markers: plugin
       setup-vars: NO_JAVA=1 NO_PYTHON=1
@@ -89,9 +129,9 @@ jobs:
   test-requires-root:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: '[""self-hosted-linux-amd64-resolute-large""]'
+      fast-test-platforms: '["ubuntu-24.04"]'
       fast-test-python-versions: '["3.12", "3.14"]'
-      slow-test-platforms: '[""self-hosted-linux-amd64-resolute-large""]'
+      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm", ["resolute", "amd64"],]'
       slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
       pytest-markers: requires_root
