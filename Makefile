@@ -314,7 +314,7 @@ endif
 
 .PHONY: install-dotnet
 install-dotnet:
-ifneq ($(UBUNTU_CODENAME),$(filter $(UBUNTU_CODENAME), jammy noble plucky questing resolute)
+ifneq ($(UBUNTU_CODENAME),$(filter $(UBUNTU_CODENAME), jammy noble plucky questing resolute))
 ifeq ($(wildcard /snap/dotnet),)  # Skip if we already have dotnet
 ifeq ($(shell which snap),)
 	$(warning Cannot install dotnet without snap.)
