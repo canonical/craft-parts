@@ -202,8 +202,11 @@ endif
 # 22.04 -> 25.10 (and possibly 26.04).
 # On focal, we'll get the snap instead.
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
-ifneq ($(UBUNTU_CODENAME),focal)
+ifeq ($(UBUNTU_CODENAME),$(filter $(UBUNTU_CODENAME), jammy noble plucky questing))
 APT_PACKAGES += dotnet-sdk-8.0
+endif
+ifeq ($(UBUNTU_CODENAME),$(filter $(UBUNTU_CODENAME), resolute))
+APT_PACKAGES += dotnet-sdk-10.0
 endif
 endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
@@ -239,6 +242,10 @@ ifeq ($(wildcard /usr/share/doc/socat/copyright),)
 APT_PACKAGES += socat
 endif
 endif
+
+.PHONY: show-packages
+show-packages:
+	echo $(APT_PACKAGES)
 
 .PHONY: install-chisel
 install-chisel:
@@ -307,7 +314,7 @@ endif
 
 .PHONY: install-dotnet
 install-dotnet:
-ifeq ($(UBUNTU_CODENAME),focal)
+ifneq ($(UBUNTU_CODENAME),$(filter $(UBUNTU_CODENAME), jammy noble plucky questing resolute)
 ifeq ($(wildcard /snap/dotnet),)  # Skip if we already have dotnet
 ifeq ($(shell which snap),)
 	$(warning Cannot install dotnet without snap.)
