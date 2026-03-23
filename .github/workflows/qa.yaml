@@ -22,22 +22,12 @@ jobs:
     with:
       fast-test-platforms: >
         [
-          "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
+          "self-hosted-linux-amd64-resolute-large"
         ]
       fast-test-python-versions: '["3.10", "3.12", "3.14"]'
       slow-test-platforms: >
         [
-          "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
+          "self-hosted-linux-amd64-resolute-large"
         ]
       slow-test-python-versions: '["3.12", "3.14"]'
       # We must always test on at least one EOL base to ensure that chisel behaves
@@ -52,12 +42,7 @@ jobs:
       fast-test-platforms: "[]"
       slow-test-platforms: >
         [
-          "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
+          "self-hosted-linux-amd64-resolute-large"
         ]
       slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
@@ -69,10 +54,7 @@ jobs:
       fast-test-platforms: "[]"
       slow-test-platforms: >
         [
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
+          "self-hosted-linux-amd64-resolute-large"
         ]
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
@@ -84,8 +66,7 @@ jobs:
       fast-test-platforms: "[]"
       slow-test-platforms: >
         [
-          "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
+          "self-hosted-linux-amd64-resolute-large"
         ]
       slow-test-python-versions: '["3.10"]'
       lowest-python-version: ""
@@ -97,12 +78,7 @@ jobs:
       fast-test-platforms: "[]"
       slow-test-platforms: >
         [
-          "ubuntu-22.04",
-          ["jammy", "arm64"],
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
+          "self-hosted-linux-amd64-resolute-large"
         ]
       slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-platform: '["focal"]'
@@ -113,9 +89,9 @@ jobs:
   test-requires-root:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: '["ubuntu-24.04"]'
+      fast-test-platforms: '[""self-hosted-linux-amd64-resolute-large""]'
       fast-test-python-versions: '["3.12", "3.14"]'
-      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
+      slow-test-platforms: '[""self-hosted-linux-amd64-resolute-large""]'
       slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
       pytest-markers: requires_root
