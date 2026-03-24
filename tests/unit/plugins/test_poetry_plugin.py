@@ -17,7 +17,6 @@ import pytest
 import pytest_check  # type: ignore[import-untyped]
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.poetry_plugin import PoetryPlugin
-from craft_parts.utils import os_utils
 from pydantic import ValidationError
 from pytest_mock import MockFixture
 
@@ -152,7 +151,7 @@ def test_include_export_plugin(
     plugin: PoetryPlugin, mocker: MockFixture, version: str, should_install: bool
 ) -> None:
     """Make sure that the export command plugin is included on 25.04+"""
-    mocker.patch.object(os_utils.OsRelease, "name", "Ubuntu")
+    mocker.patch("craft_parts.utils.os_utils.OsRelease.name", return_value="Ubuntu")
     mocker.patch(
         "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
     )
