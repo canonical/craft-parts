@@ -52,7 +52,7 @@ class DNFRepository(YUMRepository):
                 packages = {"subversion"}
             case "rpm2cpio" | "rpm":
                 packages = set()
-            case "7zip":
+            case "7z" | "7zip":
                 packages = {"p7zip"}
             case _:
                 packages = set()
