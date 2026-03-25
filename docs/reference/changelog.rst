@@ -28,9 +28,7 @@ New features:
 
 Bug fixes:
 
-- Accept 7z as source-type
-
-Documentation:
+- Accept "7z" as a source-type
 
 For a complete list of commits, check out the `2.30.1`_ release on GitHub.
 
