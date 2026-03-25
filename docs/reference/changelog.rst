@@ -19,6 +19,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.30.1:
+
+2.30.1 (2026-MM-DD)
+-------------------
+
+Bug fixes:
+
+- Fix the Poetry plugin being unable to call ``poetry export`` on Ubuntu 25.04 or later.
+
 .. _release-2.30.0:
 
 2.30.0 (2026-03-18)
