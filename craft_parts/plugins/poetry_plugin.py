@@ -25,6 +25,7 @@ import pydantic
 from typing_extensions import override
 
 from craft_parts.plugins import validator
+from craft_parts.utils import os_utils
 
 from .base import BasePythonPlugin
 from .properties import PluginProperties
@@ -103,6 +104,13 @@ class PoetryPlugin(BasePythonPlugin):
             and "poetry-deps" not in self._part_info.part_dependencies
         ):
             build_packages |= {"python3-poetry"}
+
+        # In 25.04+, Poetry 2 is included which deprecated the built-in `export` subcommand
+        # and moved it to an optional plugin.
+        os_release = os_utils.OsRelease()
+        if os_release.name() == "Ubuntu" and os_release.version_id() >= "25.04":
+            build_packages |= {"python3-poetry-plugin-export"}
+
         return build_packages
 
     def _get_poetry_export_commands(self, requirements_path: pathlib.Path) -> list[str]:
