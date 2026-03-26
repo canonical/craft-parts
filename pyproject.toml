@@ -30,7 +30,6 @@ docs = [
     "pydantic-kitbash~=1.0",
     "sphinx-autodoc-typehints",
     "sphinx-lint~=1.0",
-    "sphinx-pydantic==0.1.1",
     "sphinxext-rediraffe==0.3.0",
     "sphinx-substitution-extensions==2025.1.2",
     {include-group = "docs-starter-pack"},
@@ -64,7 +63,7 @@ docs-starter-pack = [
 dev = [
     "build",
     "coverage[toml]~=7.4",
-    "pyfakefs~=5.3",
+    "pyfakefs~=6.1",
     "pytest~=9.0",
     "pytest-cov~=7.0",
     "pytest-mock~=3.12",
