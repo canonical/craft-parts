@@ -27,6 +27,9 @@ Changelog
 Bug fixes:
 
 - Fix the Poetry plugin being unable to call ``poetry export`` on Ubuntu 25.04 or later.
+- Accept ``7z`` as a ``source-type``.
+
+For a complete list of commits, check out the `2.30.1`_ release on GitHub.
 
 .. _release-2.30.0:
 
@@ -67,6 +70,7 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.30.0`_ release on GitHub.
 
+.. _release-2.28.1:
 
 2.28.1 (2026-02-25)
 -------------------
@@ -1637,6 +1641,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.30.1: https://github.com/canonical/craft-parts/releases/tag/2.30.1
 .. _2.30.0: https://github.com/canonical/craft-parts/releases/tag/2.30.0
 .. _2.29.0: https://github.com/canonical/craft-parts/releases/tag/2.29.0
 .. _2.28.1: https://github.com/canonical/craft-parts/releases/tag/2.28.1

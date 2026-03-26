@@ -221,6 +221,8 @@ class PartSpec(BaseModel):
 
         * - Value
           - Description
+        * - ``7z``
+          - 7zip file
         * - ``deb``
           - Debian package
         * - ``git``

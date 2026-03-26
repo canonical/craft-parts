@@ -585,6 +585,7 @@ class TestBuildPackages:
 @pytest.mark.parametrize(
     ("source_type", "pkgs"),
     [
+        ("7z", {"p7zip-full"}),
         ("7zip", {"p7zip-full"}),
         ("bzr", {"bzr"}),
         ("git", {"git"}),
