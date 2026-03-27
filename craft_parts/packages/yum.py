@@ -67,7 +67,7 @@ class YUMRepository(BaseRepository):
             case "rpm2cpio" | "rpm":
                 # installed by default in CentOS systems by the rpm package
                 packages = set()
-            case "7zip":
+            case "7z" | "7zip":
                 packages = {"p7zip"}
             case "deb":
                 raise NotImplementedError("Deb files not yet supported on this base.")
