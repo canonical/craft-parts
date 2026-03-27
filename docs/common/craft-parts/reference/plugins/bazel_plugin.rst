@@ -40,11 +40,13 @@ Dependencies
 The plugin requires Bazel. By default, the plugin installs Bazel through
 ``build-packages``, via the ``bazel-bootstrap`` package.
 
-If you provide Bazel from a separate part named ``bazel-deps``, add
-``after: [bazel-deps]`` to the Bazel plugin part and the plugin will skip
-installing ``bazel-bootstrap``.
+You can provide your own Bazel installation by adding a part called ``bazel-deps`` 
+with the installation path and adding ``after: [bazel-deps]`` to the 
+Bazel plugin part. Doing this will cause the plugin to skip the 
+installation of ``bazel-bootstrap``.
 
-From the project, the ``BUILD`` file must define the targets to be built.
+From the project, the ``BUILD`` file must define the targets to be built. This file
+is a configuration for Bazel that tells it what to build and how.
 
 
 
