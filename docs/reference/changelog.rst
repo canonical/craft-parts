@@ -19,19 +19,21 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-2.28.1 (2026-02-25)
+.. _release-2.30.1:
+
+2.30.1 (2026-MM-DD)
 -------------------
 
 Bug fixes:
 
-- Setting ``source-commit`` with a full-length commit hash would force a shallow
-  clone, regardless of the value of ``source-depth``. Parts will now only pull
-  a shallow clone if ``source-depth`` is non-zero.
+- Fix the Poetry plugin being unable to call ``poetry export`` on Ubuntu 25.04 or later.
+- Accept ``7z`` as a ``source-type``.
 
+For a complete list of commits, check out the `2.30.1`_ release on GitHub.
 
 .. _release-2.30.0:
 
-2.30.0 (unreleased)
+2.30.0 (2026-03-18)
 -------------------
 
 New features:
@@ -47,6 +49,8 @@ New features:
 - The ``go-use`` plugin returns an error if a ``go.mod`` file doesn't exist.
   This prevents the error going unnoticed & appearing at build-time (when the
   module doesn't appear in the Go workspace)
+- Add support for copying Apt configuration from the host into the overlay system
+  using a new ``use_host_sources`` parameter for the ``LifecycleManager``.
 
 Documentation:
 
@@ -63,6 +67,22 @@ Bug fixes:
   ``self-contained`` key is true and ``ruby-use-bundler`` key is false.
   This resolves an issue where changes made by an ``override-build``
   script were effectively ignored.
+
+For a complete list of commits, check out the `2.30.0`_ release on GitHub.
+
+.. _release-2.28.1:
+
+2.28.1 (2026-02-25)
+-------------------
+
+Bug fixes:
+
+- Setting ``source-commit`` with a full-length commit hash would force a shallow
+  clone, regardless of the value of ``source-depth``. Parts will now only pull
+  a shallow clone if ``source-depth`` is non-zero.
+
+For a complete list of commits, check out the `2.28.1`_ release on GitHub.
+
 
 .. _release-2.29.0:
 
@@ -595,6 +615,16 @@ New features:
 - Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
   a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
 
+.. _release-2.7.1:
+
+2.7.1 (2025-05-01)
+------------------
+
+Bug fixes:
+
+- Fix the uv plugin breaking with uv 0.7
+
+For a complete list of commits, check out the `2.7.1`_ release on GitHub.
 
 .. _release-2.7.0:
 
@@ -1621,7 +1651,10 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.30.1: https://github.com/canonical/craft-parts/releases/tag/2.30.1
+.. _2.30.0: https://github.com/canonical/craft-parts/releases/tag/2.30.0
 .. _2.29.0: https://github.com/canonical/craft-parts/releases/tag/2.29.0
+.. _2.28.1: https://github.com/canonical/craft-parts/releases/tag/2.28.1
 .. _2.28.0: https://github.com/canonical/craft-parts/releases/tag/2.28.0
 .. _2.27.0: https://github.com/canonical/craft-parts/releases/tag/2.27.0
 .. _2.26.0: https://github.com/canonical/craft-parts/releases/tag/2.26.0
@@ -1646,6 +1679,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
 .. _2.9.1: https://github.com/canonical/craft-parts/releases/tag/2.9.1
 .. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
+.. _2.7.1: https://github.com/canonical/craft-parts/releases/tag/2.7.1
 .. _2.4.4: https://github.com/canonical/craft-parts/releases/tag/2.4.4
 .. _2.4.3: https://github.com/canonical/craft-parts/releases/tag/2.4.3
 .. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2
