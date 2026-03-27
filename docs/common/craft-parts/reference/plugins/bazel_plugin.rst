@@ -45,8 +45,9 @@ with the installation path and adding ``after: [bazel-deps]`` to the
 Bazel plugin part. Doing this will cause the plugin to skip the 
 installation of ``bazel-bootstrap``.
 
-From the project, the ``BUILD`` file must define the targets to be built. This file
-is a configuration for Bazel that tells it what to build and how.
+The project must also have a ``BUILD`` file that defines the targets to 
+be built. This file is a configuration for Bazel that tells it 
+what to build and how.
 
 
 
