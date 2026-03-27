@@ -105,7 +105,7 @@ class GoPlugin(Plugin):
     @override
     def supported_build_attributes(cls) -> set[str]:
         """Return the build attributes that this plugin supports."""
-        return {"enable-checks"}
+        return {"enable-check"}
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -154,7 +154,7 @@ class GoPlugin(Plugin):
             f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
             *(
                 [f'go test -p "{self._part_info.parallel_build_count}" {tags} ./...']
-                if "enable-checks" in self._part_info.build_attributes
+                if "enable-check" in self._part_info.build_attributes
                 else []
             ),
         ]

@@ -35,10 +35,10 @@ separate ``go generate`` call. The default behavior is not to call ``go generate
 Attributes
 ----------
 
-enable-checks
+enable-check
 ~~~~~~~~~~~~~
 
-When ``enable-checks`` is added as a build attribute, Go runs the source's unit tests
+When ``enable-check`` is added as a build attribute, Go runs the source's unit tests
 after compiling.
 
 
@@ -84,7 +84,7 @@ During the build step the plugin performs the following actions:
 #. Call ``go generate <item>`` for each item in ``go-generate``.
 #. Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
    ``--tags`` parameter.
-#. If ``enable-checks`` is set in ``build-attributes``, call ``go test ./...`` to run
+#. If ``enable-check`` is set in ``build-attributes``, call ``go test ./...`` to run
    unit tests.
 
 

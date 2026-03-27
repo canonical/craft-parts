@@ -198,8 +198,8 @@ def test_get_build_commands_go_generate(part_info):
     ]
 
 
-def test_get_build_commands_enable_checks(project_info):
-    part_data = {"source": ".", "build-attributes": ["enable-checks"]}
+def test_get_build_commands_enable_check(project_info):
+    part_data = {"source": ".", "build-attributes": ["enable-check"]}
     properties = GoPlugin.properties_class.unmarshal(part_data)
     part_info = PartInfo(
         project_info=project_info,
@@ -214,8 +214,8 @@ def test_get_build_commands_enable_checks(project_info):
     ]
 
 
-def test_get_build_commands_enable_checks_with_buildtags(project_info):
-    part_data = {"source": ".", "build-attributes": ["enable-checks"]}
+def test_get_build_commands_enable_check_with_buildtags(project_info):
+    part_data = {"source": ".", "build-attributes": ["enable-check"]}
     plugin_data = {**part_data, "go-buildtags": ["dev", "debug"]}
     properties = GoPlugin.properties_class.unmarshal(plugin_data)
     part_info = PartInfo(

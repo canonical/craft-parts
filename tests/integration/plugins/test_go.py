@@ -184,8 +184,8 @@ def test_go_use(new_dir, partitions):
     assert output == "hello\n"
 
 
-def test_go_enable_checks(new_dir, partitions):
-    """Test that unit tests are run during build when enable-checks is set."""
+def test_go_enable_check(new_dir, partitions):
+    """Test that unit tests are run during build when enable-check is set."""
     parts_yaml = textwrap.dedent(
         """
         parts:
@@ -193,7 +193,7 @@ def test_go_enable_checks(new_dir, partitions):
             plugin: go
             source: .
             build-attributes:
-              - enable-checks
+              - enable-check
         """
     )
     parts = yaml.safe_load(parts_yaml)
@@ -256,7 +256,7 @@ def test_go_enable_checks(new_dir, partitions):
         ctx.execute(actions)
 
 
-def test_go_enable_checks_failing_test(new_dir, partitions):
+def test_go_enable_check_failing_test(new_dir, partitions):
     """Test that a failing unit test causes the build to fail."""
     parts_yaml = textwrap.dedent(
         """
@@ -265,7 +265,7 @@ def test_go_enable_checks_failing_test(new_dir, partitions):
             plugin: go
             source: .
             build-attributes:
-              - enable-checks
+              - enable-check
         """
     )
     parts = yaml.safe_load(parts_yaml)
