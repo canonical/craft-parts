@@ -615,6 +615,16 @@ New features:
 - Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
   a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
 
+.. _release-2.7.1:
+
+2.7.1 (2025-05-01)
+------------------
+
+Bug fixes:
+
+- Fix the uv plugin breaking with uv 0.7
+
+For a complete list of commits, check out the `2.7.1`_ release on GitHub.
 
 .. _release-2.7.0:
 
@@ -1669,6 +1679,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
 .. _2.9.1: https://github.com/canonical/craft-parts/releases/tag/2.9.1
 .. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
+.. _2.7.1: https://github.com/canonical/craft-parts/releases/tag/2.7.1
 .. _2.4.4: https://github.com/canonical/craft-parts/releases/tag/2.4.4
 .. _2.4.3: https://github.com/canonical/craft-parts/releases/tag/2.4.3
 .. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2
