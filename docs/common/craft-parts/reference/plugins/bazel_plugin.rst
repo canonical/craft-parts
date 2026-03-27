@@ -1,3 +1,6 @@
+.. meta::
+    :description: Reference for parts built with the Bazel plugin. Review the plugin's special configuration keys and see working examples of Bazel parts in YAML.
+
 .. _craft_parts_bazel_plugin:
 
 Bazel plugin
