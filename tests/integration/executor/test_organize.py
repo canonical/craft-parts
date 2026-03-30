@@ -13,8 +13,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
+import pathlib
 import stat
 import textwrap
 from pathlib import Path
@@ -36,7 +36,9 @@ basic_parts_yaml = textwrap.dedent(
 
 
 @pytest.mark.requires_root
-@pytest.mark.skip(reason="Fails due to #1458")
+@pytest.mark.xfail(
+    reason="Fails due to https://github.com/canonical/craft-parts/issues/1458"
+)
 def test_organize_special_files(new_dir, mocker):
     parts = yaml.safe_load(basic_parts_yaml)
 
@@ -70,3 +72,53 @@ def test_organize_special_files(new_dir, mocker):
     assert stat.S_ISBLK(os.stat("prime/dest/dev/loop99").st_mode)  # noqa: PTH116
     assert stat.S_ISFIFO(os.stat("prime/dest/bar.fifo").st_mode)  # noqa: PTH116
     assert Path("prime/dest/qux").readlink() == "quux"
+
+
+@pytest.mark.requires_root
+def test_two_parts_organize_to_same_overlay(new_dir: pathlib.Path):
+    parts_yaml = textwrap.dedent(
+        """\
+            parts:
+              a:
+                plugin: nil
+                override-build: |
+                  mkdir -p "${CRAFT_PART_INSTALL}/my-dir/subdir-a"
+                organize:
+                  '*': (overlay)/
+              b:
+                plugin: nil
+                override-build: |
+                  mkdir -p "${CRAFT_PART_INSTALL}/my-dir/subdir-b"
+                  touch "${CRAFT_PART_INSTALL}/my-dir/subdir-b/my-file"
+                organize:
+                  '*': (overlay)/
+              overlayer:
+                plugin: nil
+                overlay-script: |
+                  echo 'Hi from overlay'
+                  test -d "${CRAFT_OVERLAY}/my-dir/subdir-a"
+                  test -d "${CRAFT_OVERLAY}/my-dir/subdir-b"
+                  test -f "${CRAFT_OVERLAY}/my-dir/subdir-b/my-file"
+        """
+    )
+    overlay_base = new_dir / "overlay_base"
+    overlay_base.mkdir()
+
+    parts = yaml.safe_load(parts_yaml)
+
+    craft_parts.Features.reset()
+    craft_parts.Features(enable_overlay=True, enable_partitions=True)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test",
+        cache_dir=new_dir,
+        base_layer_dir=overlay_base,
+        base_layer_hash=b"deadbeef",
+        partitions=["default"],
+    )
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert (lf.project_info.prime_dirs["default"] / "my-dir/subdir-b/my-file").is_file()
