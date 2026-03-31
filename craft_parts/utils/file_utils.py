@@ -170,12 +170,23 @@ def copy(
         os.unlink(destination)  # noqa: PTH108
 
     try:
-        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
+        src_stat = os.stat(source, follow_symlinks=follow_symlinks)  # noqa: PTH116
     except FileNotFoundError as err:
         raise errors.CopyFileNotFound(source) from err
 
-    uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid  # noqa: PTH116
-    gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid  # noqa: PTH116
+    src_mode = src_stat.st_mode
+
+    if stat.S_ISFIFO(src_mode):
+        os.mkfifo(destination)
+        shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
+    elif stat.S_ISCHR(src_mode) or stat.S_ISBLK(src_mode):
+        os.mknod(destination, src_mode, src_stat.st_rdev)
+        shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
+    else:
+        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
+
+    uid = src_stat.st_uid
+    gid = src_stat.st_gid
 
     try:
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
