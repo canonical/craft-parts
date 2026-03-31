@@ -406,7 +406,7 @@ class Ubuntu(BaseRepository):
                 packages = {"rpm2cpio"}
             case "rpm":
                 packages = {"rpm"}
-            case "7zip":
+            case "7z" | "7zip":
                 packages = {"p7zip-full"}
             case _:
                 packages = set()
