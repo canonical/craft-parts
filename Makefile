@@ -183,8 +183,11 @@ endif
 ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
 APT_PACKAGES += cmake
 endif
+# bazel-bootstrap is not available in apt on focal.
+ifeq ($(filter $(VERSION_CODENAME),focal),)
 ifeq ($(wildcard /usr/share/doc/bazel-bootstrap/copyright),)
 APT_PACKAGES += bazel-bootstrap
+endif
 endif
 # Ruby
 ifeq ($(wildcard /usr/share/doc/ruby/copyright),)
