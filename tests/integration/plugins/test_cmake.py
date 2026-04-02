@@ -74,7 +74,7 @@ def test_cmake_plugin(new_dir, partitions, prefix, install_path):
     Path("CMakeLists.txt").write_text(
         textwrap.dedent(
             """\
-            cmake_minimum_required(VERSION 2.6)
+            cmake_minimum_required(VERSION 3.5)
             project(cmake-hello C)
             add_executable(cmake-hello hello.c)
             install(TARGETS cmake-hello RUNTIME DESTINATION bin)
@@ -141,7 +141,7 @@ def test_cmake_plugin_subdir(new_dir, partitions, prefix, install_path):
     (source_subdir / "CMakeLists.txt").write_text(
         textwrap.dedent(
             """\
-            cmake_minimum_required(VERSION 2.6)
+            cmake_minimum_required(VERSION 3.5)
             project(cmake-hello C)
             add_executable(cmake-hello hello.c)
             install(TARGETS cmake-hello RUNTIME DESTINATION bin)
