@@ -85,7 +85,7 @@ During the build step the plugin performs the following actions:
 #. Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
    ``--tags`` parameter.
 #. If ``enable-check`` is set in ``build-attributes``, call ``go test ./...`` to run
-   unit tests.
+   unit tests, passing the items in ``go-buildtags`` through the ``--tags`` parameter.
 
 
 Example

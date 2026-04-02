@@ -16,6 +16,7 @@
 
 import os
 import platform
+import re
 import subprocess
 import textwrap
 from pathlib import Path
@@ -321,7 +322,10 @@ def test_go_enable_check_failing_test(new_dir, partitions):
     actions = lf.plan(Step.BUILD)
 
     with lf.action_executor() as ctx:
-        with pytest.raises(PluginBuildError):
+        with pytest.raises(
+            PluginBuildError,
+            match=re.escape("Failed to run the build script for part 'foo'."),
+        ):
             ctx.execute(actions)
 
 
