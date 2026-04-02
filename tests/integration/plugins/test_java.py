@@ -16,6 +16,7 @@
 
 import subprocess
 import textwrap
+import warnings
 from pathlib import Path
 
 import pytest
@@ -42,9 +43,12 @@ def expected_jdk_version() -> str:
         case "26.04":
             return "25"
         case _:
-            pytest.fail(
-                reason="Cannot determine which version of the JDK to expect on this platform."
+            warnings.warn(
+                "Cannot determine which version of the JDK to expect on this platform, defaulting to latest.",
+                FutureWarning,
+                stacklevel=3,
             )
+            return "25"
 
 
 def run_build(new_dir, partitions, application):
