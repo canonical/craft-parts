@@ -36,9 +36,10 @@ def expected_jdk_version() -> str:
     platform = OsRelease().version_id()
 
     match platform:
-        case "22.04":
-            return "11"
-        case p if p in ("24.04", "25.10"):
+        # Even though 22.04's "default-jdk" virtual package resolves to JDK 11,
+        # the Makefile currently installs many versions of the JDK and JDK 21 seems
+        # to be consistently picked up first on the path
+        case p if p in ("22.04", "24.04", "25.10"):
             return "21"
         case "26.04":
             return "25"
