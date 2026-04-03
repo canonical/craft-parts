@@ -71,6 +71,7 @@ def test_organize_special_files(new_dir, mocker):
     assert stat.S_ISFIFO(os.stat("prime/dest/bar.fifo").st_mode)  # noqa: PTH116
     assert Path("prime/dest/qux").readlink() == "quux"
 
+
 def test_organize_from_empty_string(new_dir):
     parts_yaml = textwrap.dedent(
         """\
