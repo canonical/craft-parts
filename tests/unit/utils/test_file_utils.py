@@ -212,13 +212,14 @@ class TestCopy:
 
     def test_copy_fifo(self):
         Path("1").unlink()
-        os.mkfifo("1")
+        os.mkfifo("1", 0o640)
 
         file_utils.copy("1", "3")
         dest_stat = os.stat("3")  # noqa: PTH116
 
         assert Path("3").exists()
         assert stat.S_ISFIFO(dest_stat.st_mode)
+        assert stat.S_IMODE(dest_stat.st_mode) == 0o640
 
 
 class TestMove:

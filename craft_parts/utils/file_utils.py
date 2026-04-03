@@ -177,7 +177,7 @@ def copy(
     src_mode = src_stat.st_mode
 
     if stat.S_ISFIFO(src_mode):
-        os.mkfifo(destination)
+        os.mkfifo(destination, stat.S_IMODE(src_mode))
         shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
     elif stat.S_ISCHR(src_mode) or stat.S_ISBLK(src_mode):
         os.mknod(destination, src_mode, src_stat.st_rdev)
