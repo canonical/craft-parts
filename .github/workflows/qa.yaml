@@ -28,8 +28,9 @@ jobs:
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
+          ["resolute", "amd64"],
         ]
-      fast-test-python-versions: '["3.10", "3.12", "3.13"]'
+      fast-test-python-versions: '["3.10", "3.12", "3.14"]'
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -38,8 +39,9 @@ jobs:
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
+          ["resolute", "amd64"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       # We must always test on at least one EOL base to ensure that chisel behaves
       # correctly on said EOL base.
       lowest-python-platform: '["amd64", "focal"]'
@@ -58,12 +60,25 @@ jobs:
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
+          ["resolute", "amd64"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
       pytest-markers: java
       setup-vars: NO_PYTHON=1 NO_PLUGIN=1
-  test-python-plugins:
+  test-python-plugins-resolute:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: "[]"
+      slow-test-platforms: >
+        [
+          ["resolute", "amd64"],
+        ]
+      slow-test-python-versions: '["3.14"]'
+      lowest-python-version: ""
+      pytest-markers: python
+      setup-vars: NO_JAVA=1 NO_PLUGIN=1
+  test-python-plugins-noble:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: "[]"
@@ -103,8 +118,9 @@ jobs:
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
+          ["resolute", "amd64"],
         ]
-      slow-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-platform: '["focal"]'
       lowest-python-version: "3.10"
       pytest-markers: plugin
@@ -114,9 +130,9 @@ jobs:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: '["ubuntu-24.04"]'
-      fast-test-python-versions: '["3.12"]'
-      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
-      slow-test-python-versions: '["3.12"]'
+      fast-test-python-versions: '["3.12", "3.14"]'
+      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm", ["resolute", "amd64"],]'
+      slow-test-python-versions: '["3.12", "3.14"]'
       lowest-python-version: ""
       pytest-markers: requires_root
       test-command-prefix: sudo env "PATH=$PATH"
