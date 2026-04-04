@@ -36,6 +36,7 @@ PARTITION_INVALID_MSG = (
 
 DEFAULT_PARTITION = "default"
 OVERLAY_PARTITION = "overlay"  # Pseudo-partition targeting the overlay
+BUILD_PARTITION = "build"  # Pseudo-partition pointing to the part's build directory
 
 
 def validate_partition_names(partitions: Sequence[str] | None) -> None:

@@ -44,6 +44,7 @@ from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 from craft_parts.utils.partition_utils import (
+    BUILD_PARTITION,
     DEFAULT_PARTITION,
     OVERLAY_PARTITION,
     get_partition_dir_map,
@@ -819,6 +820,8 @@ class Part:
         )
         if self.organizes_to_overlay:
             dir_map[OVERLAY_PARTITION] = self.dirs.overlay_mount_dir
+        if Features().enable_partitions:
+            dir_map[BUILD_PARTITION] = self.part_build_dir
         return MappingProxyType(dir_map)
 
     @property
@@ -1002,7 +1005,7 @@ class Part:
                 partitions=self._partitions,
             )
 
-    def _check_partitions_in_filepaths(
+    def _check_partitions_in_filepaths(  # noqa: PLR0912
         self, fileset_name: str, fileset: Iterable[str], *, require_inner_path: bool
     ) -> tuple[list[str], list[str]]:
         """Check if partitions are properly used in a fileset.
@@ -1043,7 +1046,11 @@ class Part:
             match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
+                if str(partition) == BUILD_PARTITION:
+                    error_list.append(
+                        "    cannot organize files into the build directory"
+                    )
+                elif str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
                     # If overlays are enabled we can organize to (overlay)
                     pass
                 elif str(partition) not in self._partitions:
