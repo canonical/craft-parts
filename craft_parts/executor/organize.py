@@ -83,6 +83,11 @@ def organize_files(  # noqa: PLR0912
             dst_partition_pair, part_name, install_dir_map, default_partition
         )
 
+        # If the destinations ends with a slash character and it doesn't exist,
+        # create it as a directory.
+        if dst.endswith("/") and not os.path.exists(dst.rstrip("/")):  # noqa: PTH110
+            os.makedirs(dst)  # noqa: PTH103
+
         sources = iglob(src, recursive=True)  # noqa: PTH207
 
         # Keep track of the number of glob expansions so we can properly error if more

@@ -101,6 +101,12 @@ from tests.unit.executor.test_organize import organize_and_assert
             "organize_map": {"foo": "/bar"},
             "expected": [(["bar"], "")],
         },
+        # trailing_slash_in_value
+        {
+            "setup_files": ["foo"],
+            "organize_map": {"foo": "dir/"},
+            "expected": [(["foo"], "dir")],
+        },
         # overwrite_existing_file
         {
             "setup_files": ["foo", "bar"],
@@ -200,7 +206,6 @@ from tests.unit.executor.test_organize import organize_and_assert
         },
         # from_build
         {
-            "setup_dirs": ["dir"],
             "build_files": ["foo", "bar"],
             "organize_map": {"(build)/foo": "dir/", "(build)/bar": "(mypart)/baz"},
             "expected": [

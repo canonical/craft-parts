@@ -61,6 +61,12 @@ from craft_parts.executor.organize import organize_files
             "organize_map": {"foo": "/bar"},
             "expected": [(["bar"], "")],
         },
+        # trailing_slash_in_value
+        {
+            "setup_files": ["foo"],
+            "organize_map": {"foo": "dir/"},
+            "expected": [(["foo"], "dir")],
+        },
         # overwrite_existing_file
         {
             "setup_files": ["foo", "bar"],
