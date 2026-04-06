@@ -19,6 +19,17 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.30.2:
+
+2.30.2 (Unreleased)
+-------------------
+
+Documentation:
+
+- Clarify the compatibility of the :ref:`craft_parts_dotnet_v2_plugin` self-provisioned
+  .NET SDK with different Ubuntu releases, with an example of how to override this
+  behavior to use a custom user-provided SDK instead.
+
 .. _release-2.30.1:
 
 2.30.1 (2026-03-31)
@@ -112,12 +123,6 @@ New features:
   All plugin groups should contain at least the plugins from the :py:data:`craft_parts.plugins.PluginGroup.MINIMAL` group.
 - A new :ref:`craft_parts_ruby_plugin` allows convenient building of Ruby projects, including bundling Ruby interpreters.
 - The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to disable this feature.
-
-Documentation:
-
-- Clarify the compatibility of the :ref:`craft_parts_dotnet_v2_plugin` self-provisioned
-  .NET SDK with different Ubuntu releases, with an example of how to override this
-  behavior to use a custom user-provided SDK instead.
 
 Bug fixes:
 
