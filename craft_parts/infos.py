@@ -845,6 +845,7 @@ class PartInfo:
         self._part_build_subdir = part.part_build_subdir
         self._part_export_dir = part.part_export_dir
         self._part_install_dir = part.part_install_dir
+        self._part_install_dirs = part.part_install_dirs
         self._part_state_dir = part.part_state_dir
         self._part_cache_dir = part.part_cache_dir
         self._part_dependencies = part.dependencies
