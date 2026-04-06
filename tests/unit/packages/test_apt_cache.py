@@ -84,6 +84,123 @@ class TestAptStageCache:
 
             assert sorted(names) == ["libpci3", "pciutils"]
 
+    def test_mark_packages_version_interdependency(self, tmpdir, mocker):  # noqa: PLR0915
+        """Test that mark_packages pins all versions before calling mark_install.
+
+        Simulates libnvinfer-dev depending on libnvinfer10 with an exact
+        version constraint. Without the two-pass fix, iteration order can
+        cause mark_install to fail because the dependency's candidate has
+        not been pinned yet.
+        """
+        # Create Version mocks directly.
+        nvinfer10_v14 = mocker.MagicMock()
+        nvinfer10_v14.version = "10.14.1"
+        nvinfer10_v14.dependencies = []
+
+        nvinfer10_v15 = mocker.MagicMock()
+        nvinfer10_v15.version = "10.15.1"
+        nvinfer10_v15.dependencies = []
+
+        # libnvinfer-dev 10.14.1 depends on libnvinfer10 (= 10.14.1)
+        dep = mocker.MagicMock()
+        dep.name = "libnvinfer10"
+        dep.relation = "="
+        dep.version = "10.14.1"
+        dep.target_versions = [nvinfer10_v14]
+
+        nvinfer_dev_v14 = mocker.MagicMock()
+        nvinfer_dev_v14.version = "10.14.1"
+        nvinfer_dev_v14.dependencies = [[dep]]
+
+        nvinfer_dev_v15 = mocker.MagicMock()
+        nvinfer_dev_v15.version = "10.15.1"
+        nvinfer_dev_v15.dependencies = []
+
+        # Create Package mocks directly.
+        # Default candidates are v15 (the "wrong" version apt would pick).
+        pkg_attrs = [
+            "name",
+            "installed",
+            "marked_install",
+            "candidate",
+            "versions",
+            "mark_install",
+            "mark_auto",
+        ]
+
+        nvinfer_dev_pkg = mocker.MagicMock(spec=pkg_attrs)
+        nvinfer_dev_pkg.name = "libnvinfer-dev"
+        nvinfer_dev_pkg.installed = None
+        nvinfer_dev_pkg.marked_install = False
+        nvinfer_dev_pkg.candidate = nvinfer_dev_v15
+        nvinfer_dev_pkg.versions = mocker.MagicMock()
+        nvinfer_dev_pkg.versions.get = {
+            "10.14.1": nvinfer_dev_v14,
+            "10.15.1": nvinfer_dev_v15,
+        }.get
+        nvinfer_dev_pkg.mark_auto.side_effect = lambda auto: None
+
+        nvinfer10_pkg = mocker.MagicMock(spec=pkg_attrs)
+        nvinfer10_pkg.name = "libnvinfer10"
+        nvinfer10_pkg.installed = None
+        nvinfer10_pkg.marked_install = False
+        nvinfer10_pkg.candidate = nvinfer10_v15
+        nvinfer10_pkg.versions = mocker.MagicMock()
+        nvinfer10_pkg.versions.get = {
+            "10.14.1": nvinfer10_v14,
+            "10.15.1": nvinfer10_v15,
+        }.get
+        nvinfer10_pkg.mark_auto.side_effect = lambda auto: None
+
+        pkg_mocks = {
+            "libnvinfer-dev": nvinfer_dev_pkg,
+            "libnvinfer10": nvinfer10_pkg,
+        }
+
+        # Simulate apt's mark_install: fail when a dependency's candidate
+        # doesn't match the required version.
+        def make_mark_install(pkg):
+            def side_effect(auto_fix=True, from_user=True):
+                for dep_group in pkg.candidate.dependencies if pkg.candidate else []:
+                    for d in dep_group:
+                        dep_pkg = pkg_mocks.get(d.name)
+                        if dep_pkg is None:
+                            continue
+                        if (
+                            dep_pkg.candidate is None
+                            or dep_pkg.candidate.version != d.version
+                        ):
+                            pkg.candidate = None
+                            pkg.marked_install = False
+                            return
+                pkg.marked_install = True
+
+            return side_effect
+
+        for pkg in pkg_mocks.values():
+            pkg.mark_install.side_effect = make_mark_install(pkg)
+
+        # Mock cache.
+        mock_cache = mocker.MagicMock()
+        mock_cache.is_virtual_package.return_value = False
+        mock_cache.__contains__ = lambda self, n: n in pkg_mocks
+        mock_cache.__getitem__ = lambda self, n: pkg_mocks[n]
+        mocker.patch("apt.cache.Cache", return_value=mock_cache)
+
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+
+        with AptCache(stage_cache=stage_cache) as cache:
+            cache.mark_packages(
+                {
+                    "libnvinfer-dev=10.14.1",
+                    "libnvinfer10=10.14.1",
+                }
+            )
+
+        for pkg in pkg_mocks.values():
+            assert pkg.marked_install is True
+
     def test_packages_without_candidate(self, tmpdir, mocker):
         class MockPackage:
             def __init__(self):

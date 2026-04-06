@@ -1,0 +1,11 @@
+{
+  "name": "hello-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "bin": {
+    "hello-app": "index.js"
+  },
+  "dependencies": {
+    "hello-dep": "^1.0.0"
+  }
+}

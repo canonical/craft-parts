@@ -16,6 +16,7 @@
 
 """Register and execute callback functions."""
 
+import enum
 import itertools
 import logging
 from collections.abc import Callable, Iterable
@@ -28,6 +29,16 @@ from typing_extensions import TypeVar
 from craft_parts import errors
 from craft_parts.infos import ProjectInfo, StepInfo
 from craft_parts.steps import Step
+
+
+@enum.unique
+class HookPoint(enum.IntEnum):
+    """The point a callback is called during the step execution."""
+
+    PRE_STEP = 1
+    POST_STEP = 2
+    PRE_ORGANIZE = 3
+
 
 FilterCallback = Callable[[ProjectInfo], Iterable[str]]
 ExecutionCallback = Callable[[ProjectInfo], None]
@@ -44,14 +55,14 @@ class CallbackHook(Generic[_T_cb_co]):
 
     function: _T_cb_co
     step_list: list[Step] | None
+    hook_point: HookPoint | None
 
 
 _STAGE_PACKAGE_FILTERS: list[CallbackHook[FilterCallback]] = []
 _OVERLAY_HOOKS: list[CallbackHook[ConfigureOverlayCallback]] = []
 _PROLOGUE_HOOKS: list[CallbackHook[ExecutionCallback]] = []
 _EPILOGUE_HOOKS: list[CallbackHook[ExecutionCallback]] = []
-_PRE_STEP_HOOKS: list[CallbackHook[StepCallback]] = []
-_POST_STEP_HOOKS: list[CallbackHook[StepCallback]] = []
+_STEP_HOOKS: list[CallbackHook[StepCallback]] = []
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +77,7 @@ def register_stage_packages_filter(func: FilterCallback) -> None:
     :param func: The callback function returning the filtered packages iterator.
     """
     _ensure_not_defined(func, _STAGE_PACKAGE_FILTERS)
-    _STAGE_PACKAGE_FILTERS.append(CallbackHook(func, None))
+    _STAGE_PACKAGE_FILTERS.append(CallbackHook(func, None, None))
 
 
 def register_configure_overlay(func: ConfigureOverlayCallback) -> None:
@@ -82,7 +93,7 @@ def register_configure_overlay(func: ConfigureOverlayCallback) -> None:
       the overlay mount and the project info.
     """
     _ensure_not_defined(func, _OVERLAY_HOOKS)
-    _OVERLAY_HOOKS.append(CallbackHook(func, None))
+    _OVERLAY_HOOKS.append(CallbackHook(func, None, None))
 
 
 def register_prologue(func: ExecutionCallback) -> None:
@@ -91,7 +102,7 @@ def register_prologue(func: ExecutionCallback) -> None:
     :param func: The callback function to run.
     """
     _ensure_not_defined(func, _PROLOGUE_HOOKS)
-    _PROLOGUE_HOOKS.append(CallbackHook(func, None))
+    _PROLOGUE_HOOKS.append(CallbackHook(func, None, None))
 
 
 def register_epilogue(func: ExecutionCallback) -> None:
@@ -100,7 +111,7 @@ def register_epilogue(func: ExecutionCallback) -> None:
     :param func: The callback function to run.
     """
     _ensure_not_defined(func, _EPILOGUE_HOOKS)
-    _EPILOGUE_HOOKS.append(CallbackHook(func, None))
+    _EPILOGUE_HOOKS.append(CallbackHook(func, None, None))
 
 
 def register_pre_step(
@@ -112,8 +123,7 @@ def register_pre_step(
     :param step_list: The steps before which the callback function should run.
         If not specified, the callback function will be executed before all steps.
     """
-    _ensure_not_defined(func, _PRE_STEP_HOOKS)
-    _PRE_STEP_HOOKS.append(CallbackHook(func, step_list))
+    register_step(func, step_list=step_list, hook_point=HookPoint.PRE_STEP)
 
 
 def register_post_step(
@@ -125,8 +135,21 @@ def register_post_step(
     :param step_list: The steps after which the callback function should run.
         If not specified, the callback function will be executed after all steps.
     """
-    _ensure_not_defined(func, _POST_STEP_HOOKS)
-    _POST_STEP_HOOKS.append(CallbackHook(func, step_list))
+    register_step(func, step_list=step_list, hook_point=HookPoint.POST_STEP)
+
+
+def register_step(
+    func: StepCallback, *, step_list: list[Step] | None, hook_point: HookPoint
+) -> None:
+    """Register a step callback function.
+
+    :param func: The callback function to run.
+    :param step_list: The steps for which the callback function should run.
+        If not specified, the callback function will be executed in all steps.
+    :param hook_point: The point during step execution this callback is attached to.
+    """
+    _ensure_not_defined(func, _STEP_HOOKS, hook_point=hook_point)
+    _STEP_HOOKS.append(CallbackHook(func, step_list, hook_point))
 
 
 def unregister_all() -> None:
@@ -135,8 +158,7 @@ def unregister_all() -> None:
     _OVERLAY_HOOKS[:] = []
     _PROLOGUE_HOOKS[:] = []
     _EPILOGUE_HOOKS[:] = []
-    _PRE_STEP_HOOKS[:] = []
-    _POST_STEP_HOOKS[:] = []
+    _STEP_HOOKS[:] = []
 
 
 def get_stage_packages_filters(project_info: ProjectInfo) -> set[str] | None:
@@ -187,7 +209,7 @@ def run_pre_step(step_info: StepInfo) -> None:
 
     :param step_info: the step information to be sent to the callback functions.
     """
-    return _run_step(hook_list=_PRE_STEP_HOOKS, step_info=step_info)
+    return _run_step(step_info=step_info, hook_point=HookPoint.PRE_STEP)
 
 
 def run_post_step(step_info: StepInfo) -> None:
@@ -195,22 +217,39 @@ def run_post_step(step_info: StepInfo) -> None:
 
     :param step_info: the step information to be sent to the callback functions.
     """
-    return _run_step(hook_list=_POST_STEP_HOOKS, step_info=step_info)
+    return _run_step(step_info=step_info, hook_point=HookPoint.POST_STEP)
 
 
-def _run_step(
-    *, hook_list: list[CallbackHook[StepCallback]], step_info: StepInfo
-) -> None:
-    for hook in hook_list:
-        if not hook.step_list or step_info.step in hook.step_list:
-            hook.function(step_info)
+def run_step(step_info: StepInfo, hook_point: HookPoint) -> None:
+    """Run all step callbacks registered with the given hook point.
+
+    :param step_info: the step information to be sent to the callback functions.
+    :param hook_point: the mid-step hook the callback was registered at.
+    """
+    return _run_step(step_info=step_info, hook_point=hook_point)
+
+
+def _run_step(*, step_info: StepInfo, hook_point: HookPoint) -> None:
+    for hook in _STEP_HOOKS:
+        if hook.hook_point != hook_point:
+            continue
+
+        if hook.step_list and step_info.step not in hook.step_list:
+            continue
+
+        hook.function(step_info)
 
 
 def _ensure_not_defined(
-    func: Callback, hook_list: list[CallbackHook[Callable[..., Any]]]
+    func: Callback,
+    hook_list: list[CallbackHook[Callable[..., Any]]],
+    *,
+    hook_point: HookPoint | None = None,
 ) -> None:
     for hook in hook_list:
         if func == hook.function:
+            if hook_point and hook.hook_point != hook_point:
+                continue
             raise errors.CallbackRegistrationError(
                 f"callback function {func.__name__!r} is already registered."
             )

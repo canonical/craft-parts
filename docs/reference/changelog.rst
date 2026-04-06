@@ -1,3 +1,6 @@
+.. meta::
+    :description: See the features and bug fixes added in each release of Craft Parts.
+
 Changelog
 =========
 
@@ -16,16 +19,99 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.30.1:
 
-.. _release-2.28.0:
+2.30.1 (2026-03-31)
+-------------------
 
-2.28.0 (unreleased)
+Bug fixes:
+
+- Fix the Poetry plugin being unable to call ``poetry export`` on Ubuntu 25.04 or later.
+- Accept ``7z`` as a ``source-type``.
+- Correctly handle host sources on ``override-overlay`` scripts.
+
+For a complete list of commits, check out the `2.30.1`_ release on GitHub.
+
+.. _release-2.30.0:
+
+2.30.0 (2026-03-18)
 -------------------
 
 New features:
 
-- The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to
-  disable this feature.
+- Add support for the ``self-contained`` build attribute for parts using the
+  :ref:`craft_parts_npm_plugin`.
+- Circular dependency errors now show the actual part processing order,
+  making it easier to identify and fix dependency cycles in complex projects.
+- Add :ref:`craft_parts_npm_use_plugin` to export npm dependencies to a
+  shared local cache for ``self-contained`` builds.
+- Add support for the ``override-overlay`` key, which runs a script
+  inside a chroot environment during the overlay step.
+- The ``go-use`` plugin returns an error if a ``go.mod`` file doesn't exist.
+  This prevents the error going unnoticed & appearing at build-time (when the
+  module doesn't appear in the Go workspace)
+- Add support for copying Apt configuration from the host into the overlay system
+  using a new ``use_host_sources`` parameter for the ``LifecycleManager``.
+
+Documentation:
+
+- Update documentation system to Canonical's Sphinx Starter Pack 1.4.0.
+
+Bug fixes:
+
+- Fix ``mark_packages`` failing with ``PackageNotFound`` when versioned packages
+  have interdependencies on each other. The method now sets all candidate
+  versions before calling ``mark_install``, so the resolver sees the correct
+  candidates for all dependencies.
+- The Ruby plugin will now build the Ruby source tree in the part's
+  build directory instead of the source directory when the
+  ``self-contained`` key is true and ``ruby-use-bundler`` key is false.
+  This resolves an issue where changes made by an ``override-build``
+  script were effectively ignored.
+
+For a complete list of commits, check out the `2.30.0`_ release on GitHub.
+
+.. _release-2.28.1:
+
+2.28.1 (2026-02-25)
+-------------------
+
+Bug fixes:
+
+- Setting ``source-commit`` with a full-length commit hash would force a shallow
+  clone, regardless of the value of ``source-depth``. Parts will now only pull
+  a shallow clone if ``source-depth`` is non-zero.
+
+For a complete list of commits, check out the `2.28.1`_ release on GitHub.
+
+
+.. _release-2.29.0:
+
+2.29.0 (2026-02-03)
+-------------------
+
+New features:
+
+- Add support for mid-step callbacks.
+- Add a colcon plugin for building parts that use the colcon build tool. Requires
+  core24 or higher.
+- Add self-contained support for parts using the Gradle plugin.
+- The Gradle daemon is now disabled by default when using the Gradle plugin. You can
+  control this behaviour with the new ``gradle-use-daemon`` key.
+
+For a complete list of commits, check out the `2.29.0`_ release on GitHub.
+
+.. _release-2.28.0:
+
+2.28.0 (2026-01-08)
+-------------------
+
+New features:
+
+- The entire set of active plugins can now be replaced by using :py:func:`craft_parts.plugins.set_plugin_group`.
+  All plugin groups should contain at least the plugins from the :py:data:`craft_parts.plugins.PluginGroup.MINIMAL` group.
+- A new :ref:`craft_parts_ruby_plugin` allows convenient building of Ruby projects, including bundling Ruby interpreters.
+- The ``uv`` plugin now compiles Python bytecode. Use ``UV_COMPILE_BYTECODE=0`` to disable this feature.
 
 Documentation:
 
@@ -37,6 +123,11 @@ Bug fixes:
 
 - The Maven Use plugin now correctly infers a ``groupId`` when there is a parent pom to
   infer from.
+- The ``make clean`` command now deletes ``docs/reference/gen``, which fixes
+  documentation builds that break because of outdated and leftover files in that
+  directory.
+
+For a complete list of commits, check out the `2.28.0`_ release on GitHub.
 
 .. _release-2.27.0:
 
@@ -54,6 +145,8 @@ Bug fixes:
   ``source-depth``.
 - Ignored outdated files are now still 'pulled', otherwise git will always consider
   the repository dirty.
+
+For a complete list of commits, check out the `2.27.0`_ release on GitHub.
 
 .. _release-2.26.0:
 
@@ -529,6 +622,16 @@ New features:
 - Add a :ref:`cargo-use plugin<craft_parts_cargo_use_plugin>` that creates
   a local Cargo registry for :ref:`rust plugin<craft_parts_rust_plugin>`.
 
+.. _release-2.7.1:
+
+2.7.1 (2025-05-01)
+------------------
+
+Bug fixes:
+
+- Fix the uv plugin breaking with uv 0.7
+
+For a complete list of commits, check out the `2.7.1`_ release on GitHub.
 
 .. _release-2.7.0:
 
@@ -592,8 +695,7 @@ Bug fixes:
 Bug fixes:
 
 - Fix CPATH variable scope in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
-- Fix Jdeps parameter ordering in the
-  :ref:`jlink plugin<craft_parts_jlink_plugin>`.
+- Fix ``jdeps`` parameter ordering in the :ref:`jlink plugin<craft_parts_jlink_plugin>`.
 
 .. _release-2.3.1:
 
@@ -672,7 +774,7 @@ For a complete list of commits, check out the `2.4.0`_ release on GitHub.
 
 New features:
 
-- Change craftctl communication mechanism to unix sockets to consolidate
+- Change craftctl communication mechanism to Unix sockets to consolidate
   the ctl server and output stream processing selector loops.
 - Get the error output from step scriptlet execution and surface it when
   raising ScriptletRunError.
@@ -1082,7 +1184,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.21.1 (2023-06-09)
 -------------------
 
-- Revert subdir changes in pull and build steps
+- Revert subdirectory changes in pull and build steps
 
 .. _release-1.21.0:
 
@@ -1097,10 +1199,10 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.20.0 (2023-05-15)
 -------------------
 
-- Add initial support for dnf-based distros
+- Add initial support for dnf-based distributions
 - Add support for pyproject.toml projects in Python plugin
 - Improve interpreter detection in Python plugin
-- Fix subdir in pull and build steps
+- Fix subdirectories in pull and build steps
 - Tox and packaging updates
 - Documentation updates
 
@@ -1124,7 +1226,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.19.6 (2023-06-09)
 -------------------
 
-- Revert subdir changes in pull and build steps
+- Revert subdirectory changes in pull and build steps
 
 .. _release-1.19.5:
 
@@ -1139,7 +1241,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 -------------------
 
 - Backport support for pyproject.toml projects from 1.20.0
-- Backport pull and build steps subdir from 1.20.0
+- Backport pull and build steps subdirectories from 1.20.0
 
 .. _release-1.19.3:
 
@@ -1183,7 +1285,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.18.4 (2023-03-09)
 -------------------
 
-- Make chroot /dev mount private
+- Make ``chroot /dev mount`` private
 
 .. _release-1.18.3:
 
@@ -1233,7 +1335,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 -------------------
 
 - Fix go plugin mod download in jammy
-- Remove hardcoded ubuntu version in chisel call
+- Remove hard-coded ubuntu version in chisel call
 - Add plain file source handler
 - Pass build attributes and state to post-step callback
 
@@ -1268,7 +1370,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.14.2 (2022-09-22)
 -------------------
 
-- Fix pypi release package
+- Fix PyPI release package
 
 .. _release-1.14.1:
 
@@ -1330,7 +1432,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 1.10.1 (2022-07-29)
 -------------------
 
-- Change staged snap pkgconfig prefix normalization to be predictable
+- Change staged snap pkg-config prefix normalization to be predictable
   regardless of the path used for destructive mode packing
 
 .. _release-1.10.0:
@@ -1340,7 +1442,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 
 - Add plugin class method to check for out of source builds
 - Normalize file copy functions signatures
-- Fix pkgconfig prefix in staged snaps
+- Fix pkg-config prefix in staged snaps
 
 .. _release-1.9.0:
 
@@ -1556,6 +1658,12 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.30.1: https://github.com/canonical/craft-parts/releases/tag/2.30.1
+.. _2.30.0: https://github.com/canonical/craft-parts/releases/tag/2.30.0
+.. _2.29.0: https://github.com/canonical/craft-parts/releases/tag/2.29.0
+.. _2.28.1: https://github.com/canonical/craft-parts/releases/tag/2.28.1
+.. _2.28.0: https://github.com/canonical/craft-parts/releases/tag/2.28.0
+.. _2.27.0: https://github.com/canonical/craft-parts/releases/tag/2.27.0
 .. _2.26.0: https://github.com/canonical/craft-parts/releases/tag/2.26.0
 .. _2.25.0: https://github.com/canonical/craft-parts/releases/tag/2.25.0
 .. _2.24.0: https://github.com/canonical/craft-parts/releases/tag/2.24.0
@@ -1578,6 +1686,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _2.10.0: https://github.com/canonical/craft-parts/releases/tag/2.10.0
 .. _2.9.1: https://github.com/canonical/craft-parts/releases/tag/2.9.1
 .. _2.9.0: https://github.com/canonical/craft-parts/releases/tag/2.9.0
+.. _2.7.1: https://github.com/canonical/craft-parts/releases/tag/2.7.1
 .. _2.4.4: https://github.com/canonical/craft-parts/releases/tag/2.4.4
 .. _2.4.3: https://github.com/canonical/craft-parts/releases/tag/2.4.3
 .. _2.4.2: https://github.com/canonical/craft-parts/releases/tag/2.4.2

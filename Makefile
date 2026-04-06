@@ -59,6 +59,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
 APT_PACKAGES += python3-venv
 endif
+ifeq ($(wildcard /usr/share/doc/mmdebstrap/copyright),)
+APT_PACKAGES += mmdebstrap
+endif
 
 # Dependencies for sources
 ifeq ($(wildcard /usr/share/doc/p7zip-full/copyright),)
@@ -95,9 +98,6 @@ APT_PACKAGES += openjdk-21-jdk
 endif
 ifeq ($(wildcard /usr/share/doc/tinyproxy/copyright),)
 APT_PACKAGES += tinyproxy
-endif
-ifeq ($(wildcard /usr/share/doc/gradle/copyright),)
-APT_PACKAGES += gradle
 endif
 # Maven
 ifeq ($(wildcard /usr/share/doc/maven/copyright),)
@@ -144,6 +144,28 @@ endif
 ifeq ($(wildcard /usr/share/doc/meson/copyright),)
 APT_PACKAGES += meson
 endif
+endif
+endif
+
+# Colcon is not available in apt on jammy or focal.
+ifeq ($(filter $(VERSION_CODENAME),jammy focal),)
+ifeq ($(wildcard /usr/share/doc/colcon/copyright),)
+APT_PACKAGES += colcon
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-core/),)
+APT_PACKAGES += python3-colcon-core
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-cmake/),)
+APT_PACKAGES += python3-colcon-cmake
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-package-selection/),)
+APT_PACKAGES += python3-colcon-package-selection
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-python-setup-py/),)
+APT_PACKAGES += python3-colcon-python-setup-py
+endif
+ifeq ($(wildcard /usr/share/doc/python3-colcon-parallel-executor/),)
+APT_PACKAGES += python3-colcon-parallel-executor
 endif
 endif
 
@@ -213,6 +235,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/libtool/copyright),)
 APT_PACKAGES += libtool
 endif
+ifeq ($(wildcard /usr/share/doc/socat/copyright),)
+APT_PACKAGES += socat
+endif
 endif
 
 .PHONY: install-chisel
@@ -242,8 +267,19 @@ else
 	sudo snap install core20
 endif
 
+.PHONY: install-gradle
+install-gradle:
+ifneq ($(NO_JAVA),1)
+ifneq ($(wildcard /snap/gradle/),)
+else ifeq ($(shell which snap),)
+	$(warning Cannot install gradle without snap. Please install it yourself.)
+else
+	sudo snap install gradle --classic
+endif
+endif
+
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup
+install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup install-gradle
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
@@ -262,23 +298,11 @@ install-lint-build-deps:
 
 .PHONY: install-rustup
 install-rustup:
-ifeq ($(shell which rustup),)
+ifneq ($(shell which rustup),)
 else ifeq ($(shell which snap),)
 	$(warning Cannot install rustup without snap. Install it yourself.)
 else
 	sudo snap install rustup --classic
-endif
-
-# A temporary override to the lint-docs directive to ignore the sphinx-docs-starter-pack git submodule.
-.PHONY: lint-docs
-lint-docs:  ##- Lint the documentation
-ifneq ($(CI),)
-	@echo ::group::$@
-endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --ignore docs/sphinx-docs-starter-pack --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
-	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
-ifneq ($(CI),)
-	@echo ::endgroup::
 endif
 
 .PHONY: install-dotnet
@@ -291,14 +315,6 @@ else
 	sudo snap install dotnet --classic
 endif
 endif
-endif
-
-.PHONY: install-rustup
-install-rustup:
-ifeq ($(shell which snap),)
-	$(warning Cannot install rustup without snap.)
-else
-	sudo snap install rustup --classic
 endif
 
 .PHONY: _gh-runner-clean
