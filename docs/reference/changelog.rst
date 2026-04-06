@@ -21,13 +21,14 @@ Changelog
 
 .. _release-2.30.1:
 
-2.30.1 (2026-MM-DD)
+2.30.1 (2026-03-31)
 -------------------
 
 Bug fixes:
 
 - Fix the Poetry plugin being unable to call ``poetry export`` on Ubuntu 25.04 or later.
 - Accept ``7z`` as a ``source-type``.
+- Correctly handle host sources on ``override-overlay`` scripts.
 
 For a complete list of commits, check out the `2.30.1`_ release on GitHub.
 
