@@ -901,6 +901,11 @@ class PartInfo:
         return self._part_install_dir
 
     @property
+    def part_install_dirs(self) -> Path:
+        """Return the subdirectory to install build artifacts in partitions."""
+        return self._part_install_dirs
+
+    @property
     def part_state_dir(self) -> Path:
         """Return the subdirectory containing this part's lifecycle state."""
         return self._part_state_dir
