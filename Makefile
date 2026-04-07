@@ -177,6 +177,8 @@ endif
 ifeq ($(wildcard /usr/share/doc/autopoint/copyright),)
 APT_PACKAGES += autopoint
 endif
+# Cargo may be installed by other means, like the rustup snap.
+# Particularly for CI, the apt version is preferred since it's the disto's "native" version.
 ifeq ($(wildcard /usr/share/doc/cargo/copyright),)
 ifeq ($(shell which cargo),)
 APT_PACKAGES += cargo
