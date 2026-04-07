@@ -243,7 +243,7 @@ from tests.unit.executor.test_organize import organize_and_assert
             ],
             "organize_map": {"foo": "(build)/foo"},
             "expected": errors.FileOrganizeError,
-            "expected_message": (r".*Cannot organize files into the build directory."),
+            "expected_message": (r".*Cannot organize files into the build directory"),
             "check_copy": True,
         },
         # from_*_to_partition
