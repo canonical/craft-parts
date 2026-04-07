@@ -214,6 +214,28 @@ from tests.unit.executor.test_organize import organize_and_assert
             ],
             "check_copy": True,
         },
+        # from_build_*
+        {
+            "build_files": ["foo", "dir1/bar"],
+            "organize_map": {"(build)/f*": "dir2/", "(build)/": "."},
+            "expected": [
+                (["dir1", "dir2", "foo"], ""),
+                (["bar"], "dir1"),
+                (["foo"], "dir2"),
+            ],
+            "check_copy": True,
+        },
+        # from_build_*_to_partition
+        {
+            "build_files": ["my-dir/subdir/foo", "my-dir/bar"],
+            "organize_map": {"(build)/*": "(mypart)/"},
+            "expected": [
+                (["my-dir"], "../partitions/mypart/parts/part-name/install"),
+                (["bar", "subdir"], "../partitions/mypart/parts/part-name/install/my-dir"),
+                (["foo"], "../partitions/mypart/parts/part-name/install/my-dir/subdir"),
+            ],
+            "check_copy": True,
+        },
         # to_build
         {
             "setup_files": [
@@ -223,6 +245,17 @@ from tests.unit.executor.test_organize import organize_and_assert
             "expected": errors.FileOrganizeError,
             "expected_message": (r".*Cannot organize files into the build directory."),
             "check_copy": True,
+        },
+        # from_*_to_partition
+        {
+            "setup_dirs": ["my-dir", "my-dir/subdir"],
+            "setup_files": ["my-dir/subdir/foo", "my-dir/bar"],
+            "organize_map": {"(default)/*": "(mypart)/"},
+            "expected": [
+                (["my-dir"], "../partitions/mypart/parts/part-name/install"),
+                (["bar", "subdir"], "../partitions/mypart/parts/part-name/install/my-dir"),
+                (["foo"], "../partitions/mypart/parts/part-name/install/my-dir/subdir"),
+            ],
         },
     ],
 )

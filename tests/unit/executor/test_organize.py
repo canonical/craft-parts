@@ -314,6 +314,7 @@ def organize_and_assert(
         for file_entry in build_files:
             path = build_dir / file_entry
             paths_to_check.append(path)
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
 
     for symlink_entry, symlink_target in setup_symlinks:
