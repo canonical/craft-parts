@@ -1047,9 +1047,14 @@ class Part:
             if match:
                 partition = match.group("partition")
                 if str(partition) == BUILD_PARTITION:
-                    error_list.append(
-                        "    cannot organize files into the build directory"
-                    )
+                    if fileset_name == "organize":
+                        error_list.append(
+                            "    cannot organize files into the build directory"
+                        )
+                    else:
+                        error_list.append(
+                            f"    ({partition}) cannot be used in {fileset_name!r}"
+                        )
                 elif str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
                     # If overlays are enabled we can organize to (overlay)
                     pass
