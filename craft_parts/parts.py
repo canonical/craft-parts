@@ -820,8 +820,7 @@ class Part:
         )
         if self.organizes_to_overlay:
             dir_map[OVERLAY_PARTITION] = self.dirs.overlay_mount_dir
-        if Features().enable_partitions:
-            dir_map[BUILD_PARTITION] = self.part_build_dir
+        dir_map[BUILD_PARTITION] = self.part_build_dir
         return MappingProxyType(dir_map)
 
     @property
