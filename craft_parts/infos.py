@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import platform
 import re
-import warnings
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, cast
 
@@ -38,7 +38,7 @@ from craft_parts.filesystem_mounts import (
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION, is_default_partition
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence, ValuesView
+    from collections.abc import Mapping, Sequence, ValuesView
 
     from craft_parts.parts import Part
     from craft_parts.state_manager import states
@@ -901,7 +901,7 @@ class PartInfo:
         return self._part_install_dir
 
     @property
-    def part_install_dirs(self) -> Path:
+    def part_install_dirs(self) -> Mapping[str | None, Path]:
         """Return the subdirectory to install build artifacts in partitions."""
         return self._part_install_dirs
 
