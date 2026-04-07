@@ -178,7 +178,9 @@ ifeq ($(wildcard /usr/share/doc/autopoint/copyright),)
 APT_PACKAGES += autopoint
 endif
 ifeq ($(wildcard /usr/share/doc/cargo/copyright),)
+ifeq ($(shell which cargo),)
 APT_PACKAGES += cargo
+endif
 endif
 ifeq ($(wildcard /usr/share/doc/cmake/copyright),)
 APT_PACKAGES += cmake
