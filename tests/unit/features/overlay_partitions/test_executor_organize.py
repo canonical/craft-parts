@@ -43,6 +43,13 @@ from tests.unit.executor.test_organize import organize_and_assert
             "organize_map": {"foo": "(overlay)/bar"},
             "expected": [([], ""), (["bar"], "../overlay_dir")],
         },
+        # organize from build into overlay
+        {
+            "build_files": ["foo"],
+            "organize_map": {"(build)/foo": "(overlay)/bar"},
+            "expected": [([], ""), (["bar"], "../overlay_dir")],
+            "check_copy": True,
+        },
     ],
 )
 def test_organize(new_dir, data):
@@ -61,6 +68,7 @@ def test_organize(new_dir, data):
         install_dirs={
             "default": Path(new_dir / "install"),
             "overlay": Path(new_dir / "overlay_dir"),
+            "build": Path(new_dir / "build"),
         },
     )
 
@@ -80,5 +88,6 @@ def test_organize(new_dir, data):
         install_dirs={
             "default": Path(new_dir / "install"),
             "overlay": Path(new_dir / "overlay_dir"),
+            "build": Path(new_dir / "build"),
         },
     )
