@@ -13,8 +13,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from tests.integration.plugins.test_dump import install_dir
-
 import os
 import re
 from pathlib import Path
@@ -22,7 +20,7 @@ from typing import Any, cast
 
 import pytest
 from craft_parts import errors
-from craft_parts.executor.organize import organize_files, get_src_path, get_dst_path
+from craft_parts.executor.organize import organize_files
 
 
 @pytest.mark.parametrize(

@@ -13,11 +13,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from collections.abc import Callable
-from craft_parts.utils.file_utils import get_path_differences
 import os
 import pathlib
 import stat
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +25,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
+from craft_parts.utils.file_utils import get_path_differences
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pyfakefs.fake_pathlib import FakePathlibModule
 

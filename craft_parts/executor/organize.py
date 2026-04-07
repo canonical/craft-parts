@@ -23,7 +23,6 @@ represents how the file is going to be staged.
 """
 
 from __future__ import annotations
-from craft_parts.utils.file_utils import find_merge_conflicts, get_path_differences
 
 import contextlib
 import os
@@ -33,8 +32,8 @@ from glob import iglob
 from typing import TYPE_CHECKING
 
 from craft_parts import errors
-from craft_parts.errors import FileOrganizeError
 from craft_parts.utils import file_utils, path_utils
+from craft_parts.utils.file_utils import find_merge_conflicts, get_path_differences
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 if TYPE_CHECKING:
@@ -158,16 +157,15 @@ def organize_files(  # noqa: PLR0912
                             "supposed to be a directory, end it with a slash."
                         ),
                     )
-                else:
-                    if get_path_differences(pathlib.Path(src), pathlib.Path(dst)):
-                        raise errors.FileOrganizeError(
-                            part_name=part_name,
-                            message=(
-                                f"trying to organize file {key!r} to "
-                                f"{file_map[key]!r}, but "
-                                f"{dst_string!r} already exists"
-                            ),
-                        )
+                elif get_path_differences(pathlib.Path(src), pathlib.Path(dst)):
+                    raise errors.FileOrganizeError(
+                        part_name=part_name,
+                        message=(
+                            f"trying to organize file {key!r} to "
+                            f"{file_map[key]!r}, but "
+                            f"{dst_string!r} already exists"
+                        ),
+                    )
 
             # Organize a "not dir" to a dir
             if os.path.isdir(dst):  # noqa: PTH112
