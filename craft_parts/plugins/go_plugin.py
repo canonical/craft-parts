@@ -40,6 +40,7 @@ class GoPluginProperties(PluginProperties, frozen=True):
 
     go_buildtags: list[str] = []
     go_generate: list[str] = []
+    go_testtags: list[str] = []
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
@@ -96,6 +97,11 @@ class GoPlugin(Plugin):
       (list of strings)
       Parameters to pass to `go generate` before building. Each item on the list
       will be a separate `go generate` call. Default is not to call `go generate`.
+    - ``go-testtags``
+      (list of strings)
+      Tags to use when running unit tests with the ``enable-check`` build attribute.
+      These are combined with ``go-buildtags`` and passed to ``go test`` through the
+      ``--tags`` parameter. Default is not to use any test tags.
     """
 
     properties_class = GoPluginProperties
@@ -146,6 +152,9 @@ class GoPlugin(Plugin):
 
         tags = f"-tags={','.join(options.go_buildtags)}" if options.go_buildtags else ""
 
+        test_tags_list = options.go_buildtags + options.go_testtags
+        test_tags = f"-tags={','.join(test_tags_list)}" if test_tags_list else ""
+
         generate_cmds: list[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
         return [
@@ -153,7 +162,7 @@ class GoPlugin(Plugin):
             *generate_cmds,
             f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
             *(
-                [f'go test -p "{self._part_info.parallel_build_count}" {tags} ./...']
+                [f'go test -p "{self._part_info.parallel_build_count}" {test_tags} ./...']
                 if "enable-check" in self._part_info.build_attributes
                 else []
             ),
