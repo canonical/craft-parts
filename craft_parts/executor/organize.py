@@ -23,20 +23,46 @@ represents how the file is going to be staged.
 """
 
 from __future__ import annotations
+from craft_parts.utils.file_utils import find_merge_conflicts, get_path_differences
 
 import contextlib
 import os
+import pathlib
 import shutil
 from glob import iglob
 from typing import TYPE_CHECKING
 
 from craft_parts import errors
+from craft_parts.errors import FileOrganizeError
 from craft_parts.utils import file_utils, path_utils
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from pathlib import Path
+
+
+def _render_merge_conflicts(
+    key: str,
+    map_value: str,
+    dst_root: str,
+    conflicts: Mapping[Path, list[str]],
+) -> str:
+    if len(conflicts) == 1:
+        ((conflict_path, issues), *_) = conflicts.items()
+        dst_path = dst_root / conflict_path
+        if len(issues) == 1:
+            issue = issues[0]
+            return (
+                f"trying to organize directory {key!r} to {map_value!r}, but "
+                f"{dst_path.as_posix()!r} already exists and {issue}"
+            )
+        issue_list = "\n".join(f" - {issue}" for issue in issues)
+        return (
+            f"trying to organize directory {key!r} to {map_value!r}, but "
+            f"{dst_path.as_posix()!r} already exists and:\n{issue_list}"
+        )
+    return "I fucked up"
 
 
 def organize_files(  # noqa: PLR0912
@@ -70,6 +96,7 @@ def organize_files(  # noqa: PLR0912
         dst, dst_string = get_dst_path(
             key, file_map, install_dir_map, default_partition
         )
+        dst_path = pathlib.Path(dst)
 
         sources = iglob(src, recursive=True)  # noqa: PTH207
 
@@ -77,11 +104,40 @@ def organize_files(  # noqa: PLR0912
         # than one tries to organize to the same file
         src_count = 0
         for src in sources:
+            src_path = pathlib.Path(src)
             src_count += 1
 
+            # Organize a symlink to its target
+            if src_path.is_symlink() and src_path.readlink().samefile(dst):
+                src_path.unlink()
+                continue
+            # Organize a symlink's target to the link
+            if dst_path.is_symlink() and dst_path.readlink().samefile(src_path):
+                dst_path.unlink()
+                file_utils.move(src, dst)
+                continue
+
             # Organize a dir to a dir
-            if os.path.isdir(src) and "*" not in key:  # noqa: PTH112
-                file_utils.link_or_copy_tree(src, dst)
+            if os.path.isdir(src):  # noqa: PTH112
+                if dst_path.exists() and dst_path.samefile(src):
+                    continue
+                if "*" in key:
+                    real_dst = dst_path / src_path.name
+                else:
+                    real_dst = dst_path
+                if not overwrite:
+                    conflicts = find_merge_conflicts(src_path, real_dst)
+                    if conflicts:
+                        raise errors.FileOrganizeError(
+                            part_name=part_name,
+                            message=_render_merge_conflicts(
+                                key,
+                                file_map[key],
+                                dst_string,
+                                conflicts,
+                            ),
+                        )
+                file_utils.link_or_copy_tree(src, real_dst.as_posix())
                 shutil.rmtree(src)
                 continue
 
@@ -103,14 +159,15 @@ def organize_files(  # noqa: PLR0912
                         ),
                     )
                 else:
-                    raise errors.FileOrganizeError(
-                        part_name=part_name,
-                        message=(
-                            f"trying to organize file {key!r} to "
-                            f"{file_map[key]!r}, but "
-                            f"{dst_string!r} already exists"
-                        ),
-                    )
+                    if get_path_differences(pathlib.Path(src), pathlib.Path(dst)):
+                        raise errors.FileOrganizeError(
+                            part_name=part_name,
+                            message=(
+                                f"trying to organize file {key!r} to "
+                                f"{file_map[key]!r}, but "
+                                f"{dst_string!r} already exists"
+                            ),
+                        )
 
             # Organize a "not dir" to a dir
             if os.path.isdir(dst):  # noqa: PTH112
@@ -125,6 +182,9 @@ def organize_files(  # noqa: PLR0912
                         with contextlib.suppress(FileNotFoundError):
                             os.remove(real_dst)  # noqa: PTH107
                 elif os.path.exists(real_dst):  # noqa: PTH110
+                    if not get_path_differences(src_path, pathlib.Path(real_dst)):
+                        src_path.unlink()
+                        continue
                     rel_dst_string = os.path.join(dst_string, os.path.basename(src))  # noqa: PTH118, PTH119
                     raise errors.FileOrganizeError(
                         part_name=part_name,

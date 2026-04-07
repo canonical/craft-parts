@@ -19,8 +19,10 @@
 import contextlib
 import errno
 import hashlib
+import io
 import logging
 import os
+import pathlib
 import shutil
 import stat
 import sys
@@ -275,6 +277,212 @@ def move(source: str, destination: str) -> None:
         return
 
     shutil.move(src_path, dest_path)
+
+
+def _file_digest(f: io.BufferedReader, digest: str) -> "hashlib.HASH":
+    """Return a digest of the given file.
+
+    We can replace this with hashlib.file_digest once our minimum version
+    of Python is 3.11 or higher.
+    """
+    file_hash = hashlib.new(digest)
+    # Workaround for https://github.com/pytest-dev/pyfakefs/issues/1304
+    f.seek(0, 2)
+    length = f.tell()
+    f.seek(0)
+    while f.tell() < length:
+        file_hash.update(f.read(2**20))
+    return file_hash
+
+
+def get_path_differences(a: pathlib.Path, b: pathlib.Path) -> list[str]:
+    """Get the differences between two paths."""
+    differences = []
+
+    if a.is_symlink() and not a.exists():
+        if b.exists() or not b.is_symlink():
+            differences.append("one is a broken symlink")
+        elif b.is_symlink():
+            a_dest = a.readlink()
+            b_dest = b.readlink()
+
+            if a_dest != b_dest:
+                differences.append(
+                    f"different link destinations ({a_dest.as_posix()!r} vs. {b_dest.as_posix()!r})"
+                )
+    elif b.is_symlink() and not b.exists():
+        if a.exists() or not a.is_symlink():
+            differences.append("one is a broken symlink")
+
+    if not a.exists() or not b.exists():
+        return differences
+    if a.samefile(b):
+        return differences
+    a_stat = a.stat(follow_symlinks=False)
+    b_stat = b.stat(follow_symlinks=False)
+
+    # The permissions/mode are registered in the lower 12 bits, The upper 4 bits
+    # represent the file type.
+    a_type = a_stat.st_mode >> 12
+    b_type = b_stat.st_mode >> 12
+    if a_type != b_type:
+        differences.append("different types")
+
+    a_mode = a_stat.st_mode & 0o7777
+    b_mode = b_stat.st_mode & 0o7777
+    if a_mode != b_mode:
+        differences.append(f"different modes ({a_mode:o} vs. {b_mode:o})")
+
+    if a_stat.st_uid != b_stat.st_uid:
+        differences.append(f"different owners ({a_stat.st_uid} vs. {b_stat.st_uid})")
+    if a_stat.st_gid != b_stat.st_gid:
+        differences.append(f"different groups ({a_stat.st_gid} vs. {b_stat.st_gid})")
+
+    if a.is_symlink() or b.is_symlink():
+        a_dest = a.readlink()
+        b_dest = b.readlink()
+
+        if not a_dest.samefile(b_dest):
+            differences.append(
+                f"different link destinations ({a_dest.as_posix()!r} vs. {b_dest.as_posix()!r})"
+            )
+
+    if a.is_file() and b.is_file():
+        if a_stat.st_size != b_stat.st_size:
+            differences.append("sizes differ")
+        else:
+            with a.open("rb") as f_a:
+                with b.open("rb") as f_b:
+                    while True:
+                        sixteen_megs = 2**24
+                        a_block = f_a.read(sixteen_megs)
+                        b_block = f_b.read(sixteen_megs)
+                        if a_block != b_block:
+                            differences.append("contents differ")
+                            break
+                        if a_block == b"":
+                            break
+
+    return differences
+
+
+def find_merge_conflicts(
+    source: Path, destination: Path
+) -> dict[pathlib.Path, list[str]]:
+    """Check that the given directories can be merged.
+
+    Checks that the two directories provided can be merged without
+    """
+    conflicts = {}
+    for source_path in (*source.rglob("*"), source):
+        relative_path = source_path.relative_to(source)
+        dest_path = destination / relative_path
+        if not dest_path.exists() or dest_path.samefile(source_path):
+            continue
+
+        source_stat = source_path.stat(follow_symlinks=False)
+        dest_stat = dest_path.stat(follow_symlinks=False)
+        source_type = source_stat.st_mode >> 12
+        dest_type = dest_stat.st_mode >> 12
+
+        if source_type != dest_type:
+            conflicts.setdefault(relative_path, []).append(
+                "source and destination are of different types"
+            )
+
+        source_mode = source_stat.st_mode & 0o7777
+        dest_mode = dest_stat.st_mode & 0o7777
+        if source_mode != dest_mode:
+            conflicts.setdefault(relative_path, []).append(
+                f"source and destination have different modes (source: {source_mode:o}, destination: {dest_mode:o})"
+            )
+
+        if source_stat.st_uid != dest_stat.st_uid:
+            conflicts.setdefault(relative_path, []).append(
+                f"source and destination are owned by different uids (source: {source_stat.st_uid}, destination: {dest_stat.st_uid})"
+            )
+
+        if source_stat.st_gid != dest_stat.st_gid:
+            conflicts.setdefault(relative_path, []).append(
+                f"source and destination are owned by different gids (source: {source_stat.st_gid}, destination: {dest_stat.st_gid})"
+            )
+
+        if source_path.is_file() and dest_path.is_file():
+            if source_stat.st_size != dest_stat.st_size:
+                conflicts.setdefault(relative_path, []).append(
+                    "source and destination file sizes differ"
+                )
+            else:
+                with source_path.open("rb") as f:
+                    source_hash = _file_digest(f, "sha384")
+                with dest_path.open("rb") as f:
+                    dest_hash = _file_digest(f, "sha384")
+                if source_hash.digest() != dest_hash.digest():
+                    conflicts.setdefault(relative_path, []).append(
+                        "source and destination file contents differ"
+                    )
+
+    return conflicts
+
+
+def merge_directories(
+    source: Path,
+    destination: Path,
+) -> None:
+    """Merge the source directory into the destination directory.
+
+    For any directories to move that already exist in the destination, the
+    source and destination mode and ownership are compared, erroring if they
+    differ.
+    For any files to move that already exist in the destination, the mode,
+    ownership, and contents of the files are compared, erroring if they differ.
+
+    :param source: Directory from which to move.
+    :param destination: Directory which will contain both the contents of the
+        source directory and its own contents.
+    :raises: Exception if any files or directories differ.
+    """
+    for source_path in source.rglob("*"):  # Walk the entire source
+        relative_path = source_path.relative_to(source)
+        dest_path = destination / relative_path
+        if not dest_path.exists():
+            shutil.move(source_path, dest_path)
+            continue
+
+        source_stat = source_path.stat(follow_symlinks=False)
+        dest_stat = dest_path.stat(follow_symlinks=False)
+        if source_stat.st_mode != dest_stat.st_mode:
+            raise FileExistsError(
+                f"Could not merge directories. '{source_path}' and "
+                f"'{dest_path}' have different types or modes."
+            )
+        if source_stat.st_uid != dest_stat.st_uid:
+            raise FileExistsError(
+                f"Could not merge directories. '{source_path}' and "
+                f"'{dest_path}' are owned by different users."
+            )
+
+        if source_stat.st_gid != dest_stat.st_gid:
+            raise FileExistsError(
+                f"Could not merge directories. '{source_path}' and "
+                f"'{dest_path}' are owned by different groups."
+            )
+
+        if source_path.is_file() and dest_path.is_file():
+            with source_path.open("rb") as f:
+                source_hash = _file_digest(f, "sha384")
+            with dest_path.open("rb") as f:
+                dest_hash = _file_digest(f, "sha384")
+            if source_hash.digest() != dest_hash.digest():
+                raise FileExistsError(
+                    f"Could not merge directories. '{source_path}' and "
+                    f"'{dest_path}' have different contents."
+                )
+
+        # If we got all the way here, the destination file is the same as the
+        # source file, so we can just unlink the source file.
+        if not source_path.is_dir():
+            source_path.unlink()
 
 
 def create_similar_directory(

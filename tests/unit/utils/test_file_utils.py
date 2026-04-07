@@ -13,16 +13,21 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+from collections.abc import Callable
+from craft_parts.utils.file_utils import get_path_differences
 import os
 import pathlib
 import stat
 from pathlib import Path
+from typing import Any
 
+import pyfakefs.helpers
 import pytest
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
+from pyfakefs.fake_filesystem import FakeFilesystem
+from pyfakefs.fake_pathlib import FakePathlibModule
 
 
 @pytest.fixture(autouse=True)
@@ -257,6 +262,538 @@ class TestMove:
             and a.st_gid == b.st_gid
             and a.st_mtime_ns == b.st_mtime_ns
         )
+
+
+def _create_and_chown(
+    path: pathlib.Path, creator: Callable[[], None], uid: int, gid: int
+):
+    creator()
+    os.chown(path, uid, gid, follow_symlinks=False)
+
+
+@pytest.mark.parametrize(
+    ("setup_a", "setup_b", "expected"),
+    [
+        pytest.param(lambda a: None, lambda b: None, [], id="neither-exist"),
+        pytest.param(lambda a: a.mkdir(), lambda b: None, [], id="a-dir"),
+        pytest.param(lambda a: None, lambda b: b.touch(), [], id="b-file"),
+        pytest.param(
+            pathlib.Path.mkdir,
+            pathlib.Path.mkdir,
+            [],
+            id="equivalent-directories",
+        ),
+        pytest.param(
+            pathlib.Path.touch,
+            pathlib.Path.touch,
+            [],
+            id="empty-files",
+        ),
+        pytest.param(
+            lambda a: a.write_text("This file intentionally left blank."),
+            lambda b: b.write_text("This file intentionally left blank."),
+            [],
+            id="texty-files",
+        ),
+        pytest.param(
+            lambda a: a.write_bytes(b"\0" * 2**20),
+            lambda b: b.write_bytes(b"\0" * 2**20),
+            [],
+            id="big-files",
+        ),
+        pytest.param(
+            lambda a: a.symlink_to("/"),
+            lambda b: b.symlink_to("/"),
+            [],
+            id="same-dir-links",
+        ),
+        pytest.param(
+            lambda a: a.symlink_to("c"),
+            lambda b: b.symlink_to("c"),
+            [],
+            id="same-broken-links",
+        ),
+        pytest.param(
+            lambda a: a.symlink_to("a"),
+            lambda b: b.symlink_to("a"),
+            [],
+            id="a-links",
+        ),
+        pytest.param(
+            os.mkfifo,
+            os.mkfifo,
+            [],
+            id="both-fifos",
+        ),
+        pytest.param(
+            lambda a: os.mknod(a, device=stat.S_IFCHR),
+            lambda a: os.mknod(a, device=stat.S_IFCHR),
+            [],
+            id="both-char-devices",
+        ),
+        pytest.param(
+            lambda a: os.mknod(a, device=stat.S_IFCHR),
+            lambda a: os.mknod(a, device=stat.S_IFCHR),
+            [],
+            id="both-block-devices",
+        ),
+        pytest.param(
+            lambda a: a.mkdir(mode=0o700),
+            lambda b: b.touch(mode=0o700),
+            ["different types"],
+            id="different-types",
+        ),
+        pytest.param(
+            lambda a: a.mkdir(mode=0o700),
+            lambda b: b.touch(mode=0o600),
+            ["different types", "different modes (700 vs. 600)"],
+            id="different-types-and-modes",
+        ),
+        pytest.param(
+            lambda a: a.touch(mode=0o755),
+            lambda b: b.touch(mode=0o600),
+            ["different modes (755 vs. 600)"],
+            id="different-modes",
+        ),
+        pytest.param(
+            lambda a: a.write_bytes(b"\0" * 2**20),
+            lambda b: b.write_bytes(b"\0" * 2**21),
+            ["sizes differ"],
+            id="big-files-different",
+        ),
+        pytest.param(
+            lambda a: a.symlink_to("/tmp"),
+            lambda b: b.symlink_to("/"),
+            ["different link destinations ('/tmp' vs. '/')"],
+            id="different-links",
+        ),
+        pytest.param(
+            lambda a: a.symlink_to("b"),
+            lambda b: b.symlink_to("a"),
+            ["different link destinations ('b' vs. 'a')"],
+            id="circular-links",
+        ),
+        pytest.param(
+            lambda a: a.symlink_to("a"),
+            lambda b: b.symlink_to("b"),
+            ["different link destinations ('a' vs. 'b')"],
+            id="self-links",
+        ),
+        pytest.param(
+            lambda a: _create_and_chown(a, a.touch, 0, 0),
+            lambda b: _create_and_chown(b, b.touch, 1, 0),
+            ["different owners (0 vs. 1)"],
+            marks=pytest.mark.requires_root,
+            id="different-owners",
+        ),
+        pytest.param(
+            lambda a: _create_and_chown(a, a.touch, 0, 0),
+            lambda b: _create_and_chown(b, b.touch, 0, 1),
+            ["different groups (0 vs. 1)"],
+            marks=pytest.mark.requires_root,
+            id="different-groups",
+        ),
+    ],
+)
+def test_get_path_differences(tmp_path, setup_a, setup_b, expected):
+    a = tmp_path / "a"
+    b = tmp_path / "b"
+    setup_a(a)
+    setup_b(b)
+
+    actual = get_path_differences(a, b)
+
+    assert actual == expected
+
+
+def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):
+    for path, info in files.items():
+        full = root / path
+        if info.get("type") == "dir":
+            full.mkdir(parents=True, exist_ok=True)
+        elif info.get("type") == "chr":
+            os.mknod(full, mode=stat.S_IFCHR | info.get("mode", 0o600))
+        elif info.get("type") == "blk":
+            os.mknod(full, mode=stat.S_IFBLK | info.get("mode", 0o600))
+        else:
+            full.parent.mkdir(parents=True, exist_ok=True)
+            full.touch()
+        if "contents" in info:
+            full.write_text(info["contents"])
+        if "mode" in info:
+            full.chmod(info["mode"])
+        if "uid" in info or "gid" in info:
+            os.chown(
+                full, info.get("uid", -1), info.get("gid", -1), follow_symlinks=False
+            )
+
+
+def _check_tree_matches_description(
+    root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]
+):
+    for path, info in files.items():
+        dest_path = root / path
+        if "mode" in info:
+            assert dest_path.stat().st_mode & 0o7777 == info["mode"]
+        if info.get("type") == "dir":
+            assert dest_path.is_dir()
+        elif info.get("type") == "blk":
+            assert dest_path.is_block_device()
+        elif info.get("type") == "chr":
+            assert dest_path.is_char_device()
+        else:
+            assert dest_path.read_text() == info.get("contents", "")
+
+
+@pytest.mark.parametrize(
+    ("source_files", "dest_files", "expected_conflicts"),
+    [
+        pytest.param({}, {}, {}, id="both-empty"),
+        pytest.param(
+            {
+                "some/file/way/deep/in/a/directory/structure": {
+                    "mode": 0o0700,
+                    "contents": "This is a text file.",
+                }
+            },
+            {},
+            {},
+            id="dest-empty",
+        ),
+        pytest.param(
+            {
+                "some/file/way/deep/in/a/directory/structure": {
+                    "mode": 0o0700,
+                    "contents": "This is a text file.",
+                }
+            },
+            {
+                "another/file/way/deep/in/a/directory/structure": {
+                    "mode": 0o0700,
+                    "contents": "This is a text file.",
+                }
+            },
+            {},
+            id="disjoint-trees",
+        ),
+        pytest.param(
+            {"parent/child": {"type": "dir"}},
+            {"parent": {"type": "dir"}},
+            {},
+            id="add-child-directory",
+        ),
+        pytest.param(
+            {"parent/child": {}},
+            {"parent": {"type": "dir"}},
+            {},
+            id="add-child-file",
+        ),
+        pytest.param(
+            {"parent/source-child": {"type": "dir", "mode": 0o777}},
+            {"parent/dest-child": {"type": "dir", "mode": 0o700}},
+            {},
+            id="distinct-child-dirs",
+        ),
+        pytest.param(
+            {"parent/source-child": {"mode": 0o777}},
+            {"parent/dest-child": {"mode": 0o700}},
+            {},
+            id="distinct-child-files",
+        ),
+        pytest.param(
+            {"child": {"type": "dir", "mode": 0o777}},
+            {"child": {"mode": 0o777}},
+            {
+                FakePathlibModule.PosixPath("child"): [
+                    "source and destination are of different types"
+                ]
+            },
+            id="type-mismatch",
+        ),
+        pytest.param(
+            {
+                "my-file": {
+                    "mode": 0o0700,
+                }
+            },
+            {
+                "my-file": {
+                    "mode": 0o0755,
+                }
+            },
+            {
+                FakePathlibModule.PosixPath("my-file"): [
+                    "source and destination have different modes (source: 700, destination: 755)"
+                ]
+            },
+            id="file-mode-mismatch",
+        ),
+        pytest.param(
+            {
+                "my-file": {
+                    "contents": "This is a text file.",
+                }
+            },
+            {
+                "my-file": {
+                    "contents": "This is a different text file.",
+                }
+            },
+            {
+                FakePathlibModule.PosixPath("my-file"): [
+                    "source and destination file sizes differ"
+                ]
+            },
+            id="file-sizes-mismatch",
+        ),
+        pytest.param(
+            {
+                "my-file": {
+                    "contents": "This is a text file.",
+                }
+            },
+            {
+                "my-file": {
+                    "contents": "This is a text file!",
+                }
+            },
+            {
+                FakePathlibModule.PosixPath("my-file"): [
+                    "source and destination file contents differ"
+                ]
+            },
+            id="file-contents-mismatch",
+        ),
+        pytest.param(
+            {
+                "my-dir": {
+                    "type": "dir",
+                    "mode": 0o0700,
+                }
+            },
+            {
+                "my-dir": {
+                    "type": "dir",
+                    "mode": 0o0755,
+                }
+            },
+            {
+                FakePathlibModule.PosixPath("my-dir"): [
+                    "source and destination have different modes (source: 700, destination: 755)"
+                ]
+            },
+            id="dir-mode-mismatch",
+        ),
+        pytest.param(
+            {
+                "my-dir": {"type": "dir", "uid": 123, "gid": 456},
+                "my-file": {"uid": 123, "gid": 456},
+            },
+            {
+                "my-dir": {"type": "dir", "uid": 234, "gid": 567},
+                "my-file": {"uid": 234, "gid": 567},
+            },
+            {
+                FakePathlibModule.PosixPath("my-dir"): [
+                    "source and destination are owned by different uids (source: 123, destination: 234)",
+                    "source and destination are owned by different gids (source: 456, destination: 567)",
+                ],
+                FakePathlibModule.PosixPath("my-file"): [
+                    "source and destination are owned by different uids (source: 123, destination: 234)",
+                    "source and destination are owned by different gids (source: 456, destination: 567)",
+                ],
+            },
+            id="owner",
+        ),
+        pytest.param(
+            {"my-chr": {"type": "chr", "mode": 0o600}},
+            {"my-chr": {"mode": 0o600}},
+            {
+                FakePathlibModule.PosixPath("my-chr"): [
+                    "source and destination are of different types"
+                ]
+            },
+            id="character-device",
+        ),
+        pytest.param(
+            {"my-blk": {"type": "blk", "mode": 0o600}},
+            {"my-blk": {"type": "chr", "mode": 0o600}},
+            {
+                FakePathlibModule.PosixPath("my-blk"): [
+                    "source and destination are of different types"
+                ]
+            },
+            id="block-device",
+        ),
+    ],
+)
+def test_find_merge_conflicts(
+    fs: FakeFilesystem,
+    source_files: dict[pathlib.Path, dict[str, Any]],
+    dest_files: dict[pathlib.Path, dict[str, Any]],
+    expected_conflicts: dict[pathlib.Path, str],
+):
+    # Pretend to be root so we can create certain special files like character devices.
+    pyfakefs.helpers.set_uid(0)
+
+    source_root = pathlib.Path("/source")
+    dest_root = pathlib.Path("/dest")
+    source_root.mkdir()
+    dest_root.mkdir()
+
+    _create_tree(source_root, source_files)
+    _create_tree(dest_root, dest_files)
+
+    assert file_utils.find_merge_conflicts(source_root, dest_root) == expected_conflicts
+
+
+@pytest.mark.parametrize(
+    ("source_files", "dest_files"),
+    [
+        pytest.param({}, {}, id="both-empty"),
+        pytest.param(
+            {
+                "some/file/way/deep/in/a/directory/structure": {
+                    "mode": 0o0700,
+                    "contents": "This is a text file.",
+                }
+            },
+            {},
+            id="dest-empty",
+        ),
+        pytest.param(
+            {
+                "some/file/way/deep/in/a/directory/structure": {
+                    "mode": 0o0700,
+                    "contents": "This is a text file.",
+                }
+            },
+            {
+                "another/file/way/deep/in/a/directory/structure": {
+                    "mode": 0o0700,
+                    "contents": "This is a text file.",
+                }
+            },
+            id="disjoint-trees",
+        ),
+        pytest.param(
+            {"parent/child": {"type": "dir"}},
+            {"parent": {"type": "dir"}},
+            id="add-child-directory",
+        ),
+        pytest.param(
+            {"parent/child": {}},
+            {"parent": {"type": "dir"}},
+            id="add-child-file",
+        ),
+        pytest.param(
+            {"parent/source-child": {"type": "dir", "mode": 0o777}},
+            {"parent/dest-child": {"type": "dir", "mode": 0o700}},
+            id="distinct-child-dirs",
+        ),
+        pytest.param(
+            {"parent/source-child": {"mode": 0o777}},
+            {"parent/dest-child": {"mode": 0o700}},
+            id="distinct-child-files",
+        ),
+        pytest.param(
+            {"block": {"type": "blk", "mode": 0o777}},
+            {},
+            id="block_device",
+            marks=pytest.mark.requires_root,
+        ),
+        pytest.param(
+            {"char": {"type": "chr", "mode": 0o777}},
+            {},
+            id="character_device",
+            marks=pytest.mark.requires_root,
+        ),
+    ],
+)
+def test_merge_directories_success(
+    tmp_path: pathlib.Path,
+    source_files: dict[pathlib.Path, dict[str, Any]],
+    dest_files: dict[pathlib.Path, dict[str, Any]],
+):
+    source_root = tmp_path / "source"
+    dest_root = tmp_path / "dest"
+    source_root.mkdir()
+    dest_root.mkdir()
+
+    _create_tree(source_root, source_files)
+    _create_tree(dest_root, dest_files)
+
+    file_utils.merge_directories(source_root, dest_root)
+
+    _check_tree_matches_description(dest_root, source_files)
+    _check_tree_matches_description(dest_root, dest_files)
+
+
+@pytest.mark.parametrize(
+    ("source_files", "dest_files", "match"),
+    [
+        pytest.param(
+            {
+                "my-file": {
+                    "mode": 0o0700,
+                }
+            },
+            {
+                "my-file": {
+                    "mode": 0o0755,
+                }
+            },
+            "Could not merge directories. .+ have different types or modes.",
+            id="file-mode-mismatch",
+        ),
+        pytest.param(
+            {
+                "my-file": {
+                    "contents": "This is a text file.",
+                }
+            },
+            {
+                "my-file": {
+                    "contents": "This is a different text file.",
+                }
+            },
+            "Could not merge directories. .+ have different contents.",
+            id="file-contents-mismatch",
+        ),
+        pytest.param(
+            {
+                "my-dir": {
+                    "type": "dir",
+                    "mode": 0o0700,
+                }
+            },
+            {
+                "my-dir": {
+                    "type": "dir",
+                    "mode": 0o0755,
+                }
+            },
+            "Could not merge directories. .+ have different types or modes.",
+            id="dir-mode-mismatch",
+        ),
+    ],
+)
+def test_merge_directories_error(
+    tmp_path: pathlib.Path,
+    source_files: dict[pathlib.Path, dict[str, Any]],
+    dest_files: dict[pathlib.Path, dict[str, Any]],
+    match: str,
+):
+    source_root = tmp_path / "source"
+    dest_root = tmp_path / "dest"
+    source_root.mkdir()
+    dest_root.mkdir()
+
+    _create_tree(source_root, source_files)
+    _create_tree(dest_root, dest_files)
+
+    with pytest.raises(OSError, match=match):
+        file_utils.merge_directories(source_root, dest_root)
 
 
 def test_create_similar_directory_permissions(tmp_path, mock_chown):

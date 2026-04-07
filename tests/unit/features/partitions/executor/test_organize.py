@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import pathlib
 
 import pytest
 from craft_parts import errors
@@ -198,6 +199,30 @@ from tests.unit.executor.test_organize import organize_and_assert
                 (["foo"], os.path.join("nested", "dir")),  # noqa: PTH118
             ],
         },
+        # Organize everything to another partition
+        pytest.param(
+            {
+                "setup_dirs": ["my-dir", "my-dir/my-subdir"],
+                "setup_files": ["my-dir/my-subdir/file"],
+                "organize_map": {"": "(yourpart)/"},
+                "expected": [
+                    ([["my-dir"], "../partitions/yourpart/parts/part-name/install/"]),
+                    (
+                        [
+                            ["my-subdir"],
+                            "../partitions/yourpart/parts/part-name/install/my-dir",
+                        ]
+                    ),
+                    (
+                        [
+                            ["file"],
+                            "../partitions/yourpart/parts/part-name/install/my-dir/my-subdir",
+                        ]
+                    ),
+                ],
+            },
+            id="organize-to-overlay",
+        ),
     ],
 )
 def test_organize(new_dir, data):
@@ -208,6 +233,7 @@ def test_organize(new_dir, data):
         "our/special-part": new_dir
         / "partitions/our/special-part/parts/part-name/install",
     }
+    (new_dir / "install").mkdir()
 
     organize_and_assert(
         tmp_path=new_dir,
@@ -221,6 +247,8 @@ def test_organize(new_dir, data):
         overwrite=False,
         install_dirs=install_dirs,
     )
+
+    pathlib.Path(new_dir / "install").mkdir(exist_ok=True)
 
     # Verify that it can be organized again by overwriting
     organize_and_assert(

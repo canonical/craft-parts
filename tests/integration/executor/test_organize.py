@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import hashlib
 import os
 import pathlib
 import stat
@@ -83,15 +84,16 @@ def test_two_parts_organize_to_same_overlay(new_dir: pathlib.Path):
                 plugin: nil
                 override-build: |
                   mkdir -p "${CRAFT_PART_INSTALL}/my-dir/subdir-a"
+                  touch "${CRAFT_PART_INSTALL}/my-dir/subdir-a/file"
                 organize:
-                  '*': (overlay)/
+                  '*': '(overlay)/'
               b:
                 plugin: nil
                 override-build: |
                   mkdir -p "${CRAFT_PART_INSTALL}/my-dir/subdir-b"
                   touch "${CRAFT_PART_INSTALL}/my-dir/subdir-b/my-file"
                 organize:
-                  '*': (overlay)/
+                  '*': '(overlay)/'
               overlayer:
                 plugin: nil
                 overlay-script: |
@@ -103,6 +105,8 @@ def test_two_parts_organize_to_same_overlay(new_dir: pathlib.Path):
     )
     overlay_base = new_dir / "overlay_base"
     overlay_base.mkdir()
+    overlay_hasher = hashlib.sha1()  # noqa: S324
+    overlay_hasher.update(pathlib.Path(overlay_base).name.encode())
 
     parts = yaml.safe_load(parts_yaml)
 
@@ -112,13 +116,14 @@ def test_two_parts_organize_to_same_overlay(new_dir: pathlib.Path):
     lf = craft_parts.LifecycleManager(
         parts,
         application_name="test",
-        cache_dir=new_dir,
+        cache_dir=new_dir / "cache",
+        work_dir=new_dir,
         base_layer_dir=overlay_base,
-        base_layer_hash=b"deadbeef",
-        partitions=["default"],
+        base_layer_hash=overlay_hasher.digest(),
+        partitions=["default", "other"],
     )
     actions = lf.plan(Step.PRIME)
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    assert (lf.project_info.prime_dirs["default"] / "my-dir/subdir-b/my-file").is_file()
+    assert (lf.project_info.prime_dir / "my-dir/subdir-b/my-file").is_file()
