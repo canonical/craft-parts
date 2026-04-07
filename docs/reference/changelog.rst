@@ -19,6 +19,17 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.30.2:
+
+2.30.2 (Unreleased)
+-------------------
+
+Documentation:
+
+- Clarify the compatibility of the :ref:`craft_parts_dotnet_v2_plugin` self-provisioned
+  .NET SDK with different Ubuntu releases, with an example of how to override this
+  behavior to use a custom user-provided SDK instead.
+
 .. _release-2.30.1:
 
 2.30.1 (2026-03-31)
