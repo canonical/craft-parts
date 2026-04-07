@@ -17,6 +17,7 @@
 from pathlib import Path
 
 import pytest
+from craft_parts import errors
 
 from tests.unit.executor.test_organize import organize_and_assert
 
@@ -43,12 +44,18 @@ from tests.unit.executor.test_organize import organize_and_assert
             "organize_map": {"foo": "(overlay)/bar"},
             "expected": [([], ""), (["bar"], "../overlay_dir")],
         },
-        # organize from build into overlay
+        # organize_from_build_into_overlay
         {
             "build_files": ["foo"],
             "organize_map": {"(build)/foo": "(overlay)/bar"},
             "expected": [([], ""), (["bar"], "../overlay_dir")],
             "check_copy": True,
+        },
+        # organize_from_overlay
+        {
+            "organize_map": {"(overlay)/foo": "bar"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (r".*Cannot organize files from 'overlay' partition."),
         },
     ],
 )
