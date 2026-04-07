@@ -16,7 +16,6 @@
 
 import os
 import platform
-import re
 import subprocess
 import textwrap
 from pathlib import Path
@@ -322,11 +321,15 @@ def test_go_enable_check_failing_test(new_dir, partitions):
     actions = lf.plan(Step.BUILD)
 
     with lf.action_executor() as ctx:
-        with pytest.raises(
-            PluginBuildError,
-            match=re.escape("Failed to run the build script for part 'foo'."),
-        ):
+        with pytest.raises(PluginBuildError) as exc_info:
             ctx.execute(actions)
+
+    # Confirm the failure is specifically from go test, not some other build step.
+    # The shell trace (set -x) in stderr will include the failing command.
+    assert exc_info.value.part_name == "foo"
+    assert exc_info.value.plugin_name == "go"
+    assert exc_info.value.stderr is not None
+    assert b"go test" in exc_info.value.stderr
 
 
 @pytest.mark.parametrize(
