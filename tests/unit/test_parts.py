@@ -17,6 +17,7 @@
 import re
 from copy import deepcopy
 from functools import partial
+from pathlib import Path
 
 import pydantic
 import pytest
@@ -352,8 +353,7 @@ class TestPartData:
     def test_part_install_dirs(self, new_dir):
         p = Part("foo", {"organize": {"foo": "bar"}})
         assert p.part_install_dirs == {
-            None: new_dir / "parts/foo/install",
-            "build": new_dir / "parts/foo/build",
+            None: Path(new_dir / "parts/foo/install"),
         }
 
     @pytest.mark.parametrize(
