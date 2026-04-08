@@ -156,6 +156,7 @@ def organize_files(  # noqa: PLR0912
             os.makedirs(os.path.dirname(dst), exist_ok=True)  # noqa: PTH103, PTH120
             if src_partition_pair.partition == BUILD_PARTITION:
                 if os.path.isdir(src):  # noqa: PTH112
+                    real_dst = os.path.join(dst, os.path.basename(src))  # noqa: PTH118, PTH119
                     file_utils.link_or_copy_tree(src, real_dst)
                 else:
                     file_utils.link_or_copy(src, dst)
