@@ -24,6 +24,7 @@ from unittest import mock
 from unittest.mock import Mock, call
 
 import pytest
+import zstandard
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
 from craft_parts.packages.deb_package import DebPackage
@@ -629,6 +630,8 @@ def fake_dpkg_query(mocker):
 class TestGetPackagesInBase:
     HARDCODED_BASES = ["core", "core16", "core18"]
     DPKG_BASES = ["core20", "core22", "core24"]
+    # assuming core28+ bases are chiseled
+    CHISELED_BASES = ["core26", "core28", "core30"]
 
     @pytest.mark.parametrize("base", HARDCODED_BASES)
     def test_hardcoded_bases(self, base):
@@ -673,13 +676,119 @@ class TestGetPackagesInBase:
         ]
 
     @pytest.mark.parametrize("base", DPKG_BASES)
-    def test_package_empty_list_from_missing_dpkg_list(self, base, tmp_path, mocker):
+    def test_package_empty_list_no_manifests(self, base, tmp_path, mocker):
+        """Return an empty list if there is no dpkg list or chisel manifest."""
         mocker.patch(
             "craft_parts.packages.deb._get_dpkg_list_path",
             return_value=tmp_path / "dpkg.list",
         )
+        mocker.patch(
+            "craft_parts.packages.deb._get_chisel_manifest_path",
+            return_value=tmp_path / "manifest.wall",
+        )
 
         assert deb.get_packages_in_base(base=base) == []
+
+    def test_package_list_from_chisel_manifest(self, tmp_path, mocker):
+        manifest_path = tmp_path / "manifest.wall"
+        # a few lines from core26's manifest
+        entries = textwrap.dedent(
+            """
+            {"jsonwall":"1.0","schema":"1.0","count":16092}
+            {"kind":"content","slice":"base-files_bin","path":"/bin"}
+            {"kind":"content","slice":"base-files_bin","path":"/sbin"}
+            {"kind":"content","slice":"base-files_bin","path":"/usr/bin/"}
+            {"kind":"content","slice":"base-files_bin","path":"/usr/sbin/"}
+            {"kind":"package","name":"base-files","version":"14ubuntu5","sha256":"cf62a9888dd4c3526856b9e9696062e7c9a84784abc5de06a426578aa33464f4","arch":"amd64"}
+            {"kind":"package","name":"bash","version":"5.3-2ubuntu1","sha256":"82d4aba3490578089d399921bf6444ad848468a23f2cb37262625b28e3615a76","arch":"amd64"}
+            {"kind":"path","path":"/bin","mode":"0777","slices":["base-files_bin"],"link":"usr/bin"}
+            {"kind":"path","path":"/etc/","mode":"0755","slices":["base-files_etc"]}
+            """
+        ).encode()
+        cctx = zstandard.ZstdCompressor()
+        manifest_path.write_bytes(cctx.compress(entries))
+        mocker.patch(
+            "craft_parts.packages.deb._get_dpkg_list_path",
+            return_value=tmp_path / "dpkg.list",
+        )
+        mocker.patch(
+            "craft_parts.packages.deb._get_chisel_manifest_path",
+            return_value=manifest_path,
+        )
+
+        packages = deb.get_packages_in_base(base="core26")
+
+        assert packages == [
+            DebPackage("base-files"),
+            DebPackage("bash"),
+        ]
+
+    @pytest.mark.parametrize(
+        "entry",
+        [
+            pytest.param(
+                '{"kind":"package","name":123}',
+                id="package-name-is-int",
+            ),
+            pytest.param(
+                '{"kind":"package"}',
+                id="package-name-missing",
+            ),
+        ],
+    )
+    def test_chisel_manifest_ignore_invalid_packages(self, tmp_path, mocker, entry):
+        """Skip invalid package entries."""
+        manifest_path = tmp_path / "manifest.wall"
+        entries = textwrap.dedent(
+            """
+            {"jsonwall":"1.0","schema":"1.0","count":16092}
+            {"kind":"package","name":"base-files","version":"14ubuntu5","sha256":"deadbeef"}
+            """
+            + entry
+        ).encode()
+        cctx = zstandard.ZstdCompressor()
+        manifest_path.write_bytes(cctx.compress(entries))
+        mocker.patch(
+            "craft_parts.packages.deb._get_dpkg_list_path",
+            return_value=tmp_path / "dpkg.list",
+        )
+        mocker.patch(
+            "craft_parts.packages.deb._get_chisel_manifest_path",
+            return_value=manifest_path,
+        )
+
+        packages = deb.get_packages_in_base(base="core26")
+
+        assert packages == [DebPackage("base-files")]
+
+    @pytest.mark.parametrize(
+        "manifest_bytes",
+        [
+            pytest.param(
+                b"invalid data",
+                id="invalid-zstd",
+            ),
+            pytest.param(
+                zstandard.ZstdCompressor().compress(b"not json\n"),
+                id="invalid-json",
+            ),
+        ],
+    )
+    def test_chisel_manifest_error(self, tmp_path, mocker, manifest_bytes: bytes):
+        """Error if the manifest can't be decompressed or parsed."""
+        manifest_path = tmp_path / "manifest.wall"
+        manifest_path.write_bytes(manifest_bytes)
+        mocker.patch(
+            "craft_parts.packages.deb._get_dpkg_list_path",
+            return_value=tmp_path / "dpkg.list",
+        )
+        mocker.patch(
+            "craft_parts.packages.deb._get_chisel_manifest_path",
+            return_value=manifest_path,
+        )
+
+        with pytest.raises(errors.BaseManifestError):
+            deb.get_packages_in_base(base="core26")
 
 
 class TestStagePackagesFilters:
