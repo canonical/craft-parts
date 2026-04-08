@@ -627,15 +627,18 @@ def fake_dpkg_query(mocker):
 
 
 class TestGetPackagesInBase:
-    def test_hardcoded_bases(self):
-        for base in ("core", "core16", "core18"):
-            pkgs = [
-                DebPackage.from_unparsed(p)
-                for p in deb._DEFAULT_FILTERED_STAGE_PACKAGES
-            ]
-            assert deb.get_packages_in_base(base=base) == pkgs
+    HARDCODED_BASES = ["core", "core16", "core18"]
+    DPKG_BASES = ["core20", "core22", "core24"]
 
-    def test_package_list_from_dpkg_list(self, tmpdir, mocker):
+    @pytest.mark.parametrize("base", HARDCODED_BASES)
+    def test_hardcoded_bases(self, base):
+        pkgs = [
+            DebPackage.from_unparsed(p) for p in deb._DEFAULT_FILTERED_STAGE_PACKAGES
+        ]
+        assert deb.get_packages_in_base(base=base) == pkgs
+
+    @pytest.mark.parametrize("base", DPKG_BASES)
+    def test_package_list_from_dpkg_list(self, base, tmpdir, mocker):
         dpkg_list_path = Path(tmpdir, "dpkg.list")
         mocker.patch(
             "craft_parts.packages.deb._get_dpkg_list_path", return_value=dpkg_list_path
@@ -660,7 +663,7 @@ class TestGetPackagesInBase:
                 file=dpkg_list_file,
             )
 
-        assert deb.get_packages_in_base(base="core20") == [
+        assert deb.get_packages_in_base(base=base) == [
             DebPackage("adduser"),
             DebPackage("apparmor"),
             DebPackage("apt"),
@@ -669,13 +672,14 @@ class TestGetPackagesInBase:
             DebPackage("zlib1g", arch="amd64"),
         ]
 
-    def test_package_empty_list_from_missing_dpkg_list(self, tmpdir, mocker):
-        dpkg_list_path = Path(tmpdir, "dpkg.list")
+    @pytest.mark.parametrize("base", DPKG_BASES)
+    def test_package_empty_list_from_missing_dpkg_list(self, base, tmp_path, mocker):
         mocker.patch(
-            "craft_parts.packages.deb._get_dpkg_list_path", return_value=dpkg_list_path
+            "craft_parts.packages.deb._get_dpkg_list_path",
+            return_value=tmp_path / "dpkg.list",
         )
 
-        assert deb.get_packages_in_base(base="core22") == []
+        assert deb.get_packages_in_base(base=base) == []
 
 
 class TestStagePackagesFilters:
