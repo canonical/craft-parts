@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import platform
 import re
-from collections.abc import Mapping
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, cast
 
