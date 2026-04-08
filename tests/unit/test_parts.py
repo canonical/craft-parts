@@ -17,7 +17,6 @@
 import re
 from copy import deepcopy
 from functools import partial
-from pathlib import Path
 
 import pydantic
 import pytest
