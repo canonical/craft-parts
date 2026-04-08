@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import http.server
+import multiprocessing
 import os
 import pathlib
 import sys
@@ -137,6 +139,18 @@ def mock_chroot(monkeypatch):
     mock_fn = mock.Mock(spec=os.chroot)
     monkeypatch.setattr(os, "chroot", mock_fn)
     return mock_fn
+
+
+@pytest.fixture
+def multiprocessing_fork():
+    """Force multiprocessing to use 'fork' start method on Linux.
+
+    Starting with Python 3.14, 'spawn' is the default on Linux. However, our
+    unit tests rely on 'fork' to inherit mocks.
+    """
+    if sys.platform == "linux":
+        with contextlib.suppress(AttributeError, RuntimeError, ValueError):
+            multiprocessing.set_start_method("fork", force=True)
 
 
 @pytest.fixture

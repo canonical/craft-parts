@@ -288,7 +288,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
         ctx.execute(actions)
 
 
-@pytest.mark.usefixtures("new_dir")
+@pytest.mark.usefixtures("new_dir", "multiprocessing_fork")
 class TestCleaning:
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, mocker):
