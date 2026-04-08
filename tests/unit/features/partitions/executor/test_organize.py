@@ -231,7 +231,10 @@ from tests.unit.executor.test_organize import organize_and_assert
             "organize_map": {"(build)/*": "(mypart)/"},
             "expected": [
                 (["my-dir"], "../partitions/mypart/parts/part-name/install"),
-                (["bar", "subdir"], "../partitions/mypart/parts/part-name/install/my-dir"),
+                (
+                    ["bar", "subdir"],
+                    "../partitions/mypart/parts/part-name/install/my-dir",
+                ),
                 (["foo"], "../partitions/mypart/parts/part-name/install/my-dir/subdir"),
             ],
             "check_copy": True,
@@ -253,7 +256,10 @@ from tests.unit.executor.test_organize import organize_and_assert
             "organize_map": {"(default)/*": "(mypart)/"},
             "expected": [
                 (["my-dir"], "../partitions/mypart/parts/part-name/install"),
-                (["bar", "subdir"], "../partitions/mypart/parts/part-name/install/my-dir"),
+                (
+                    ["bar", "subdir"],
+                    "../partitions/mypart/parts/part-name/install/my-dir",
+                ),
                 (["foo"], "../partitions/mypart/parts/part-name/install/my-dir/subdir"),
             ],
         },
