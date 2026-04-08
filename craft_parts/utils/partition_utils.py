@@ -76,10 +76,11 @@ def validate_partition_names(partitions: Sequence[str] | None) -> None:
     if DEFAULT_PARTITION in partitions[1:]:
         raise errors.FeatureError("Only the first partition can be named 'default'.")
 
-    if OVERLAY_PARTITION in partitions:
-        raise errors.FeatureError(
-            "Reserved name 'overlay' cannot be used to name a partition."
-        )
+    for partition in (OVERLAY_PARTITION, BUILD_PARTITION):
+        if partition in partitions:
+            raise errors.FeatureError(
+                f"Reserved name '{partition}' cannot be used to name a partition."
+            )
 
     _validate_partition_naming_convention(partitions)
     _validate_partitions_conflicts(partitions)

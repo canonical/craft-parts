@@ -119,6 +119,14 @@ def test_validate_partitions_success_feature_enabled(partitions):
                 "- 'qux-baz', 'qux/baz'"
             ),
         ),
+        (
+            ["default", "build"],
+            ("Reserved name 'build' cannot be used to name a partition."),
+        ),
+        (
+            ["default", "overlay"],
+            ("Reserved name 'overlay' cannot be used to name a partition."),
+        ),
     ],
 )
 def test_validate_partitions_failure_feature_enabled(partitions, message):
