@@ -230,12 +230,8 @@ from tests.unit.executor.test_organize import organize_and_assert
             "build_files": ["my-dir/subdir/foo", "my-dir/bar"],
             "organize_map": {"(build)/*": "(mypart)/"},
             "expected": [
-                (["my-dir"], "../partitions/mypart/parts/part-name/install"),
-                (
-                    ["bar", "subdir"],
-                    "../partitions/mypart/parts/part-name/install/my-dir",
-                ),
-                (["foo"], "../partitions/mypart/parts/part-name/install/my-dir/subdir"),
+                (["bar", "subdir"], "../partitions/mypart/parts/part-name/install"),
+                (["foo"], "../partitions/mypart/parts/part-name/install/subdir"),
             ],
             "check_copy": True,
         },
