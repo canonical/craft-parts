@@ -38,7 +38,7 @@ from craft_parts.filesystem_mounts import (
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION, is_default_partition
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence, ValuesView
+    from collections.abc import Mapping, Sequence, ValuesView
 
     from craft_parts.parts import Part
     from craft_parts.state_manager import states
@@ -845,6 +845,7 @@ class PartInfo:
         self._part_build_subdir = part.part_build_subdir
         self._part_export_dir = part.part_export_dir
         self._part_install_dir = part.part_install_dir
+        self._part_install_dirs = part.part_install_dirs
         self._part_state_dir = part.part_state_dir
         self._part_cache_dir = part.part_cache_dir
         self._part_dependencies = part.dependencies
@@ -898,6 +899,11 @@ class PartInfo:
     def part_install_dir(self) -> Path:
         """Return the subdirectory to install the part's build artifacts."""
         return self._part_install_dir
+
+    @property
+    def part_install_dirs(self) -> Mapping[str | None, Path]:
+        """Return the subdirectory to install build artifacts in partitions."""
+        return self._part_install_dirs
 
     @property
     def part_state_dir(self) -> Path:

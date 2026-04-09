@@ -19,6 +19,16 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.31.0:
+
+2.31.0 (Unreleased)
+-------------------
+
+New features:
+
+- Allow parts to organize files directly from the build directory.
+
+For a complete list of commits, check out the `2.31.0`_ release on GitHub.
 .. _release-2.30.2:
 
 2.30.2 (Unreleased)
@@ -1663,6 +1673,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.31.0: https://github.com/canonical/craft-parts/releases/tag/2.31.0
 .. _2.30.1: https://github.com/canonical/craft-parts/releases/tag/2.30.1
 .. _2.30.0: https://github.com/canonical/craft-parts/releases/tag/2.30.0
 .. _2.29.0: https://github.com/canonical/craft-parts/releases/tag/2.29.0
