@@ -21,11 +21,13 @@ import errno
 import hashlib
 import logging
 import os
+import pathlib
 import shutil
 import stat
 import sys
 from collections.abc import Callable, Generator
 from pathlib import Path
+from typing import Literal
 
 from craft_parts import errors
 from craft_parts.permissions import Permissions, apply_permissions
@@ -187,8 +189,8 @@ def copy(
 
 
 def link_or_copy_tree(
-    source_tree: str,
-    destination_tree: str,
+    source_tree: str | Path,
+    destination_tree: str | Path,
     ignore: Callable[[str, list[str]], list[str]] | None = None,
     copy_function: Callable[..., None] = link_or_copy,
 ) -> None:
@@ -255,7 +257,7 @@ def link_or_copy_tree(
             copy_function(source, destination)
 
 
-def move(source: str, destination: str) -> None:
+def move(source: str | Path, destination: str | Path) -> None:
     """Move regular files, directories, or special files from source to destination.
 
     :param source: Directory from which to move the file or directory.
@@ -278,7 +280,9 @@ def move(source: str, destination: str) -> None:
 
 
 def create_similar_directory(
-    source: str, destination: str, permissions: list[Permissions] | None = None
+    source: str | Path,
+    destination: str | Path,
+    permissions: list[Permissions] | None = None,
 ) -> None:
     """Create a directory with the same permission bits and owner information.
 
@@ -344,3 +348,126 @@ def _file_reader_iter(
         while len(block) > 0:
             yield block
             block = file.read(block_size)
+
+
+def _get_file_type_str(result: os.stat_result) -> str:
+    """Get the type of a file pointed to by path, as a string."""
+    if stat.S_ISDIR(result.st_mode):
+        file_type = "dir"
+    elif stat.S_ISLNK(result.st_mode):
+        file_type = "symlink"
+    elif stat.S_ISFIFO(result.st_mode):
+        file_type = "fifo"
+    elif stat.S_ISBLK(result.st_mode):
+        file_type = "blk"
+    elif stat.S_ISCHR(result.st_mode):
+        file_type = "chr"
+    elif stat.S_ISSOCK(result.st_mode):
+        file_type = "socket"
+    elif stat.S_ISREG(result.st_mode):
+        file_type = "file"
+    elif stat.S_ISWHT(result.st_mode):
+        file_type = "whiteout"
+    else:
+        file_type = "unknown"
+    return file_type
+
+
+def are_paths_equivalent(  # noqa: PLR0912
+    a: Path, b: Path
+) -> tuple[Literal[True], None] | tuple[Literal[False], list[str]]:
+    """Check whether two paths are equivalent.
+
+    This is a more forgiving test than ``Path.samefile()``, checking whether the
+    files referenced by these two paths are equivalent for the purpose of organizing.
+    If either file does not exist, they are considered to be equivalent.
+
+    To be equivalent, they must:
+    - Be of the same type (or one must be a symlink to the other).
+    - Have the same owner and group
+    - Have the same mode.
+
+    For regular files, they must also:
+    - Have the same size
+    - Have the same contents
+
+    """
+    try:
+        if a.samefile(b):
+            return True, None
+    except FileNotFoundError:
+        # Broken symlinks will get a FileNotFoundError, but for our use case a broken
+        # symlink is considered to be an extant file. For example, a broken symlink
+        # could point to /snap/<project>/current/usr/bin/true
+        if not a.is_symlink() and not b.is_symlink():
+            return True, None
+
+    a_stat = a.stat(follow_symlinks=False)
+    b_stat = b.stat(follow_symlinks=False)
+
+    # Mode is in the lower 12 bits, type is in the upper 4 bits.
+    a_mode = a_stat.st_mode & 0o7777
+    b_mode = b_stat.st_mode & 0o7777
+    a_type = _get_file_type_str(a_stat)
+    b_type = _get_file_type_str(b_stat)
+
+    differences = []
+
+    if a_type != b_type:
+        differences.append(f"different types ({a_type}, {b_type})")
+
+    if a_stat.st_uid != b_stat.st_uid:
+        differences.append(f"different uids ({a_stat.st_uid}, {b_stat.st_uid})")
+
+    if a_stat.st_gid != b_stat.st_gid:
+        differences.append(f"different gids ({a_stat.st_gid}, {b_stat.st_gid})")
+
+    if differences:
+        return False, differences
+
+    if a_mode != b_mode:
+        differences.append(f"different modes ({a_mode:o}, {b_mode:o})")
+
+    if a.is_file() or b.is_file():
+        if a_stat.st_size != b_stat.st_size:
+            differences.append(f"different sizes ({a_stat.st_size}, {b_stat.st_size})")
+        elif stat.S_ISREG(a_stat.st_mode) and stat.S_ISREG(b_stat.st_mode):
+            with a.open("rb") as a_f, b.open("rb") as b_f:
+                while True:
+                    a_read = a_f.read(2**30)
+                    b_read = b_f.read(2**30)
+                    if not a_read and not b_read:
+                        break
+                    if a_read != b_read:
+                        differences.append("different contents")
+
+    if differences:
+        return False, differences
+
+    return True, None
+
+
+def find_merge_conflicts(
+    src_root: Path, dst_root: Path, *, strict: bool = False
+) -> dict[pathlib.Path, list[str]]:
+    """Check that the given directories can be merged.
+
+    Checks that the two directories provided can be merged without overwriting files.
+
+    :param strict: if True, errors if overwriting a file, even if it's identical.
+    """
+    conflicts: dict[pathlib.Path, list[str]] = {}
+    for source_path in (*src_root.rglob("*"), src_root):
+        relative_path = source_path.relative_to(src_root)
+        dest_path = dst_root / relative_path
+        if not dest_path.exists() or dest_path.samefile(source_path):
+            continue
+
+        if strict and dest_path.is_file():
+            conflicts.setdefault(relative_path, []).append("exists")
+        else:
+            equivalent, msg = are_paths_equivalent(source_path, dest_path)
+            if msg:
+                conflicts.setdefault(relative_path, []).extend(msg)
+
+    return conflicts
