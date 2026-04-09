@@ -35,7 +35,8 @@ Documentation:
   behavior to use a custom user-provided SDK instead.
 
 For a complete list of commits, check out the `2.31.0`_ release on GitHub.
-.. _release-2.31.0:
+
+.. _release-2.30.1:
 
 2.30.1 (2026-03-31)
 -------------------
