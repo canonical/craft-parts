@@ -61,6 +61,12 @@ from craft_parts.executor.organize import organize_files
             "organize_map": {"foo": "/bar"},
             "expected": [(["bar"], "")],
         },
+        # trailing_slash_in_value
+        {
+            "setup_files": ["foo"],
+            "organize_map": {"foo": "dir/"},
+            "expected": [(["foo"], "dir")],
+        },
         # overwrite_existing_file
         {
             "setup_files": ["foo", "bar"],
@@ -165,10 +171,12 @@ def test_organize(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
+        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
+        check_copy=False,
         overwrite=False,
         install_dirs={None: Path(new_dir / "install")},
     )
@@ -179,10 +187,12 @@ def test_organize(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
+        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
+        check_copy=False,
         overwrite=True,
         install_dirs={None: Path(new_dir / "install")},
     )
@@ -258,10 +268,12 @@ def test_organize_no_overwrite(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
+        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
+        check_copy=False,
         overwrite=False,
         install_dirs={None: Path(new_dir / "install")},
     )
@@ -273,10 +285,12 @@ def organize_and_assert(
     setup_dirs,
     setup_files,
     setup_symlinks: list[tuple[str, str]],
+    build_files,
     organize_map,
     expected: list[Any],
     expected_message,
     expected_overwrite,
+    check_copy,
     overwrite,
     install_dirs,
 ):
@@ -286,8 +300,22 @@ def organize_and_assert(
     for directory in setup_dirs:
         (install_dir / directory).mkdir(exist_ok=True)
 
+    paths_to_check: list[Path] = []
+
     for file_entry in setup_files:
-        (install_dir / file_entry).touch()
+        path = install_dir / file_entry
+        paths_to_check.append(path)
+        path.touch()
+
+    if build_files:
+        build_dir = Path(tmp_path / "build")
+        build_dir.mkdir(parents=True, exist_ok=True)
+
+        for file_entry in build_files:
+            path = build_dir / file_entry
+            paths_to_check.append(path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.touch()
 
     for symlink_entry, symlink_target in setup_symlinks:
         symlink_path = install_dir / symlink_entry
@@ -323,3 +351,7 @@ def organize_and_assert(
             dir_contents = os.listdir(dir_path)  # noqa: PTH208
             dir_contents.sort()
             assert dir_contents == expect[0]
+
+        if check_copy:
+            for path in paths_to_check:
+                assert path.exists()
