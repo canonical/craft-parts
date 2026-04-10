@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+
 from craft_parts.packages import errors
 
 
@@ -177,3 +179,17 @@ def test_snapd_connection_error():
     )
     assert err.details is None
     assert err.resolution is None
+
+
+def test_base_manifest_error():
+    err = errors.BaseManifestError(
+        manifest_path=Path("/snap/core26/current/var/lib/chisel/manifest.wall"),
+        reason="Could not decompress: zstd decompress error: Unknown frame descriptor",
+    )
+    assert err.brief == (
+        "Failed to read package manifest '/snap/core26/current/var/lib/chisel/manifest.wall'."
+    )
+    assert (
+        err.details
+        == "Could not decompress: zstd decompress error: Unknown frame descriptor"
+    )

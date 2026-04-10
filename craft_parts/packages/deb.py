@@ -18,6 +18,8 @@
 
 import fileinput
 import functools
+import io
+import json
 import logging
 import os
 import pathlib
@@ -29,6 +31,8 @@ from collections.abc import Callable, Sequence
 from io import StringIO
 from pathlib import Path
 from typing import Any, TypeVar
+
+import zstandard
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -309,10 +313,6 @@ def _run_dpkg_query_list_files(package_name: str) -> set[str]:
     return {i for i in output if ("lib" in i and os.path.isfile(i))}  # noqa: PTH113
 
 
-def _get_dpkg_list_path(base: str) -> pathlib.Path:
-    return pathlib.Path(f"/snap/{base}/current/usr/share/snappy/dpkg.list")
-
-
 def _get_filtered_stage_package_names(
     *,
     base: str,
@@ -332,27 +332,116 @@ def _get_filtered_stage_package_names(
     return filtered_packages - stage_packages
 
 
-def get_packages_in_base(*, base: str) -> list[DebPackage]:
-    """Get the list of packages for the given base."""
-    # We do not want to break what we already have.
-    if base in ("core", "core16", "core18"):
-        return [DebPackage.from_unparsed(p) for p in _DEFAULT_FILTERED_STAGE_PACKAGES]
+def _get_dpkg_list_path(base: str) -> pathlib.Path:
+    """Return a path to a core snap's dpkg.list.
 
-    base_package_list_path = _get_dpkg_list_path(base)
-    if not base_package_list_path.exists():
-        return []
+    Only core24 and lower bases have a dpkg file.
+    """
+    return pathlib.Path(f"/snap/{base}/current/usr/share/snappy/dpkg.list")
 
+
+def _get_packages_from_dpkg(dpkg_list_path: pathlib.Path) -> list[DebPackage]:
+    """Get a list of Debian packages from a dpkg list."""
+    logger.debug("Parsing dpkg list at %r.", str(dpkg_list_path))
     # Lines we care about in dpkg.list had the following format:
     # ii adduser 3.118ubuntu1 all add and rem
     package_list: list[DebPackage] = []
-    with fileinput.input(str(base_package_list_path)) as file:
+    with fileinput.input(str(dpkg_list_path)) as file:
         for line in file:
             if not str(line).startswith("ii "):
                 continue
             package = DebPackage.from_unparsed(str(line.split()[1]))
             package_list.append(package)
-
     return package_list
+
+
+def _get_chisel_manifest_path(base: str) -> pathlib.Path:
+    """Return a path to a core snap's chisel manifest.wall."""
+    return pathlib.Path(f"/snap/{base}/current/var/lib/chisel/manifest.wall")
+
+
+def _read_chisel_manifest(manifest_path: pathlib.Path) -> list[dict[str, Any]]:
+    """Read a chisel manifest.wall, returning parsed JSON entries.
+
+    Chisel uses a zstd-compressed NDJSON manifest.wall file.
+    See https://documentation.ubuntu.com/chisel/latest/reference/manifest/ for
+    more information.
+
+    :param manifest_path: Path to the chisel manifest.
+
+    :returns: A list of manifest entries.
+
+    :raises errors.BaseManifestError: If the file cannot be decompressed or parsed.
+    """
+    entries: list[dict[str, Any]] = []
+    try:
+        dctx = zstandard.ZstdDecompressor()
+        with manifest_path.open("rb") as fh:
+            # stream_reader() decompresses in chunks as data is read, so we
+            # don't need to worry about the full size of the uncompressed file.
+            with dctx.stream_reader(fh) as reader:
+                for raw_line in io.TextIOWrapper(reader, encoding="utf-8"):
+                    line = raw_line.rstrip("\n")
+                    # ignore the jsonwall metadata entry
+                    if not line or line.startswith('{"jsonwall"'):
+                        continue
+                    entries.append(json.loads(line))
+    except (OSError, zstandard.ZstdError) as exc:
+        raise errors.BaseManifestError(
+            manifest_path=manifest_path,
+            reason=f"Could not decompress: {exc}",
+        ) from exc
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise errors.BaseManifestError(
+            manifest_path=manifest_path,
+            reason=f"Could not parse: {exc}",
+        ) from exc
+
+    return entries
+
+
+def get_packages_from_chisel_manifest(manifest_path: pathlib.Path) -> list[DebPackage]:
+    """Return deb packages recorded in a chisel manifest.wall file.
+
+    :param manifest_path: Path to the chisel manifest.
+
+    :returns: A list of packages recorded in the manifest.
+    """
+    logger.debug("Parsing chisel manifest at %r.", str(manifest_path))
+    packages: list[DebPackage] = []
+    for entry in _read_chisel_manifest(manifest_path):
+        if entry.get("kind") != "package":
+            continue
+        name = entry.get("name")
+        if not name or not isinstance(name, str):
+            logger.debug("Ignoring package entry with invalid name: %r", name)
+            continue
+        packages.append(DebPackage.from_unparsed(name))
+    return packages
+
+
+def get_packages_in_base(*, base: str) -> list[DebPackage]:
+    """Get the list of packages for the given base."""
+    # Core18 and lower bases could parse the dpkg list, but craft-parts
+    # uses a hard-coded list of packages for compatibility.
+    if base in ("core", "core16", "core18"):
+        return [DebPackage.from_unparsed(p) for p in _DEFAULT_FILTERED_STAGE_PACKAGES]
+
+    # core20, core22, and core24 use their dpkg lists
+    base_package_list_path = _get_dpkg_list_path(base)
+    if base_package_list_path.exists():
+        return _get_packages_from_dpkg(base_package_list_path)
+
+    # core26 and higher bases are chiselled
+    chisel_manifest_path = _get_chisel_manifest_path(base)
+    if chisel_manifest_path.exists():
+        return get_packages_from_chisel_manifest(chisel_manifest_path)
+
+    logger.debug(
+        "Skipping stage package filtering: no package manifest found for base %r.",
+        base,
+    )
+    return []
 
 
 def _is_list_of_slices(names: list[str]) -> bool:
