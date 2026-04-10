@@ -17,6 +17,7 @@
 from pathlib import Path
 
 import pytest
+from craft_parts import errors
 
 from tests.unit.executor.test_organize import organize_and_assert
 
@@ -43,6 +44,19 @@ from tests.unit.executor.test_organize import organize_and_assert
             "organize_map": {"foo": "(overlay)/bar"},
             "expected": [([], ""), (["bar"], "../overlay_dir")],
         },
+        # organize_from_build_into_overlay
+        {
+            "build_files": ["foo"],
+            "organize_map": {"(build)/foo": "(overlay)/bar"},
+            "expected": [([], ""), (["bar"], "../overlay_dir")],
+            "check_copy": True,
+        },
+        # organize_from_overlay
+        {
+            "organize_map": {"(overlay)/foo": "bar"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (r".*Cannot organize files from 'overlay' partition."),
+        },
     ],
 )
 def test_organize(new_dir, data):
@@ -51,14 +65,17 @@ def test_organize(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
+        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
+        check_copy=False,
         overwrite=False,
         install_dirs={
             "default": Path(new_dir / "install"),
             "overlay": Path(new_dir / "overlay_dir"),
+            "build": Path(new_dir / "build"),
         },
     )
 
@@ -68,13 +85,16 @@ def test_organize(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
+        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
+        check_copy=False,
         overwrite=True,
         install_dirs={
             "default": Path(new_dir / "install"),
             "overlay": Path(new_dir / "overlay_dir"),
+            "build": Path(new_dir / "build"),
         },
     )

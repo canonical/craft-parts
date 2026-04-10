@@ -44,6 +44,7 @@ class TestPartData:
             "default": Path(new_dir / "parts/foo/install"),
             "mypart": Path(new_dir / "partitions/mypart/parts/foo/install"),
             "yourpart": Path(new_dir / "partitions/yourpart/parts/foo/install"),
+            "build": Path(new_dir / "parts/foo/build"),
         }
 
     def test_part_install_dirs_organize_to_overlay(self, new_dir, partitions):
@@ -53,6 +54,7 @@ class TestPartData:
             "mypart": Path(new_dir / "partitions/mypart/parts/foo/install"),
             "yourpart": Path(new_dir / "partitions/yourpart/parts/foo/install"),
             "overlay": Path(new_dir / "overlay/overlay"),
+            "build": Path(new_dir / "parts/foo/build"),
         }
 
     def test_get_parts_with_overlay(self, partitions):
