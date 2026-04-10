@@ -42,6 +42,11 @@ def mock_env_copy():
 
 
 @pytest.fixture
+def mock_logger(mocker):
+    return mocker.patch("craft_parts.packages.deb.logger", spec=logging.Logger)
+
+
+@pytest.fixture
 def fake_all_packages_installed(mocker):
     mocker.patch(
         "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
@@ -676,7 +681,7 @@ class TestGetPackagesInBase:
         ]
 
     @pytest.mark.parametrize("base", DPKG_BASES)
-    def test_package_empty_list_no_manifests(self, base, tmp_path, mocker):
+    def test_package_empty_list_no_manifests(self, base, tmp_path, mock_logger, mocker):
         """Return an empty list if there is no dpkg list or chisel manifest."""
         mocker.patch(
             "craft_parts.packages.deb._get_dpkg_list_path",
@@ -688,6 +693,12 @@ class TestGetPackagesInBase:
         )
 
         assert deb.get_packages_in_base(base=base) == []
+        assert mock_logger.debug.mock_calls == [
+            call(
+                "Skipping stage package filtering: no package manifest found for base %r.",
+                base,
+            )
+        ]
 
     def test_package_list_from_chisel_manifest(self, tmp_path, mocker):
         manifest_path = tmp_path / "manifest.wall"
@@ -724,19 +735,23 @@ class TestGetPackagesInBase:
         ]
 
     @pytest.mark.parametrize(
-        "entry",
+        ("entry", "package"),
         [
             pytest.param(
                 '{"kind":"package","name":123}',
+                123,
                 id="package-name-is-int",
             ),
             pytest.param(
                 '{"kind":"package"}',
+                None,
                 id="package-name-missing",
             ),
         ],
     )
-    def test_chisel_manifest_ignore_invalid_packages(self, tmp_path, mocker, entry):
+    def test_chisel_manifest_ignore_invalid_packages(
+        self, tmp_path, mock_logger, mocker, entry, package
+    ):
         """Skip invalid package entries."""
         manifest_path = tmp_path / "manifest.wall"
         entries = textwrap.dedent(
@@ -760,6 +775,10 @@ class TestGetPackagesInBase:
         packages = deb.get_packages_in_base(base="core26")
 
         assert packages == [DebPackage("base-files")]
+        assert mock_logger.debug.mock_calls[-1] == call(
+            "Ignoring package entry with invalid name: %r",
+            package,
+        )
 
     @pytest.mark.parametrize(
         "manifest_bytes",
