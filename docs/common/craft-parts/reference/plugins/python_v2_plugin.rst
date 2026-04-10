@@ -99,3 +99,23 @@ During the build step, the plugin performs the following actions:
 #. A `sitecustomize <https://docs.python.org/3/library/site.html>`_ file is created,
    which adds the files from the part's install directory to Python's runtime import
    path.
+
+Example
+-------
+
+The following snippet declares a part using the python plugin to define a custom
+mirror index in the ``python-requirements`` key:
+
+.. code-block:: yaml
+
+   parts:
+     my-part:
+       plugin: python
+       python-requirements:
+         - requirements.txt
+
+where ``requirements.txt`` contains:
+
+.. code-block:: text
+
+   -i https://example-mirror.com

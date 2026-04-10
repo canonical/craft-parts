@@ -101,3 +101,23 @@ During the build step, the plugin performs the following actions:
    ``python-packages`` keys.
 #. If the source contains a ``setup.py`` or ``pyproject.toml`` file, those
    files are used to install the dependencies specified by the package itself.
+
+Example
+-------
+
+The following snippet declares a part using the python plugin to define a custom
+mirror index in the ``python-requirements`` key:
+
+.. code-block:: yaml
+
+   parts:
+     my-part:
+       plugin: python
+       python-requirements:
+         - requirements.txt
+
+where ``requirements.txt`` contains:
+
+.. code-block:: text
+
+   -i https://example-mirror.com
