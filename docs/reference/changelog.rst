@@ -29,6 +29,10 @@ New features:
 - Add a ``gradle-use`` plugin for publishing Gradle artifacts to a local Maven
   repository.
 
+Bug fixes:
+
+- Wrap streaming request errors for file sources in ``NetworkRequestError``.
+
 .. _release-2.33.0:
 
 2.33.0 (2026-04-15)
