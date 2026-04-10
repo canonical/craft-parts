@@ -21,7 +21,7 @@ Changelog
 
 .. _release-2.32.0:
 
-2.32.0 (unreleased)
+2.32.0 (2026-04-10)
 -------------------
 
 New features:
