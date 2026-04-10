@@ -19,6 +19,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-unreleased:
+
+Unreleased
+----------
+
+Bug fixes:
+
+- Wrap streaming request errors for file sources in ``NetworkRequestError``.
+
 .. _release-2.31.0:
 
 2.31.0 (2026-04-09)
