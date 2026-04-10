@@ -21,24 +21,20 @@ Changelog
 
 .. _release-2.31.0:
 
-2.31.0 (Unreleased)
+2.31.0 (2026-04-09)
 -------------------
 
 New features:
 
 - Allow parts to organize files directly from the build directory.
 
-For a complete list of commits, check out the `2.31.0`_ release on GitHub.
-.. _release-2.30.2:
-
-2.30.2 (Unreleased)
--------------------
-
 Documentation:
 
 - Clarify the compatibility of the :ref:`craft_parts_dotnet_v2_plugin` self-provisioned
   .NET SDK with different Ubuntu releases, with an example of how to override this
   behavior to use a custom user-provided SDK instead.
+
+For a complete list of commits, check out the `2.31.0`_ release on GitHub.
 
 .. _release-2.30.1:
 
