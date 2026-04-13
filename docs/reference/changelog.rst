@@ -19,26 +19,35 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.32.0:
+
+2.32.0 (2026-04-10)
+-------------------
+
+New features:
+
+- Add support for parsing
+  `Chisel manifests <https://documentation.ubuntu.com/chisel/latest/reference/manifest/>`__
+  in core26 bases when filtering stage packages.
+
+For a complete list of commits, check out the `2.32.0`_ release on GitHub.
+
 .. _release-2.31.0:
 
-2.31.0 (Unreleased)
+2.31.0 (2026-04-09)
 -------------------
 
 New features:
 
 - Allow parts to organize files directly from the build directory.
 
-For a complete list of commits, check out the `2.31.0`_ release on GitHub.
-.. _release-2.30.2:
-
-2.30.2 (Unreleased)
--------------------
-
 Documentation:
 
 - Clarify the compatibility of the :ref:`craft_parts_dotnet_v2_plugin` self-provisioned
   .NET SDK with different Ubuntu releases, with an example of how to override this
   behavior to use a custom user-provided SDK instead.
+
+For a complete list of commits, check out the `2.31.0`_ release on GitHub.
 
 .. _release-2.30.1:
 
@@ -1673,6 +1682,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.32.0: https://github.com/canonical/craft-parts/releases/tag/2.32.0
 .. _2.31.0: https://github.com/canonical/craft-parts/releases/tag/2.31.0
 .. _2.30.1: https://github.com/canonical/craft-parts/releases/tag/2.30.1
 .. _2.30.0: https://github.com/canonical/craft-parts/releases/tag/2.30.0
