@@ -26,7 +26,6 @@ from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
 from craft_parts.utils.file_utils import are_paths_equivalent
 from pyfakefs.fake_filesystem import FakeFilesystem
-from pyfakefs.fake_pathlib import FakePathlibModule
 from typing_extensions import Any
 
 
@@ -504,7 +503,7 @@ def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):
         pytest.param(
             {"child": {"type": "dir", "mode": 0o777}},
             {"child": {"mode": 0o777}},
-            {FakePathlibModule.PosixPath("child"): ["different types (dir, file)"]},
+            {"child": ["different types (dir, file)"]},
             id="type-mismatch",
         ),
         pytest.param(
@@ -518,7 +517,7 @@ def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):
                     "mode": 0o0755,
                 }
             },
-            {FakePathlibModule.PosixPath("my-file"): ["different modes (700, 755)"]},
+            {"my-file": ["different modes (700, 755)"]},
             id="file-mode-mismatch",
         ),
         pytest.param(
@@ -533,7 +532,7 @@ def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):
                 }
             },
             {
-                FakePathlibModule.PosixPath("my-file"): [
+                "my-file": [
                     "different sizes (20, 30)",
                 ]
             },
@@ -550,7 +549,7 @@ def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):
                     "contents": "This is a text file!",
                 }
             },
-            {FakePathlibModule.PosixPath("my-file"): ["different contents"]},
+            {"my-file": ["different contents"]},
             id="file-contents-mismatch",
         ),
         pytest.param(
@@ -566,7 +565,7 @@ def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):
                     "mode": 0o0755,
                 }
             },
-            {FakePathlibModule.PosixPath("my-dir"): ["different modes (700, 755)"]},
+            {"my-dir": ["different modes (700, 755)"]},
             id="dir-mode-mismatch",
         ),
         pytest.param(
@@ -579,11 +578,11 @@ def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):
                 "my-file": {"uid": 234, "gid": 567},
             },
             {
-                FakePathlibModule.PosixPath("my-dir"): [
+                "my-dir": [
                     "different uids (123, 234)",
                     "different gids (456, 567)",
                 ],
-                FakePathlibModule.PosixPath("my-file"): [
+                "my-file": [
                     "different uids (123, 234)",
                     "different gids (456, 567)",
                 ],
@@ -593,13 +592,13 @@ def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):
         pytest.param(
             {"my-chr": {"type": "chr", "mode": 0o600}},
             {"my-chr": {"mode": 0o600}},
-            {FakePathlibModule.PosixPath("my-chr"): ["different types (chr, file)"]},
+            {"my-chr": ["different types (chr, file)"]},
             id="character-device",
         ),
         pytest.param(
             {"my-blk": {"type": "blk", "mode": 0o600}},
             {"my-blk": {"type": "chr", "mode": 0o600}},
-            {FakePathlibModule.PosixPath("my-blk"): ["different types (blk, chr)"]},
+            {"my-blk": ["different types (blk, chr)"]},
             id="block-device",
         ),
     ],
@@ -618,7 +617,16 @@ def test_find_merge_conflicts(
     source_root.mkdir()
     dest_root.mkdir()
 
+    # Because pyfakefs replaces pathlib during test setup, the parametrized versions
+    # cannot be Path objects. So we convert them here.
+    fake_path_expected_conflicts = {
+        pathlib.Path(key): value for key, value in expected_conflicts.items()
+    }
+
     _create_tree(source_root, source_files)
     _create_tree(dest_root, dest_files)
 
-    assert file_utils.find_merge_conflicts(source_root, dest_root) == expected_conflicts
+    assert (
+        file_utils.find_merge_conflicts(source_root, dest_root)
+        == fake_path_expected_conflicts
+    )
