@@ -327,13 +327,13 @@ def test_create_similar_directory_permissions(tmp_path, mock_chown):
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("permissive_file"),
-            (False, ["different modes (600, 660)"]),
+            (False, ["different modes (600, 640)"]),
             id="file-permissions",
         ),
         pytest.param(
             pathlib.Path("empty_dir"),
             pathlib.Path("permissive_dir"),
-            (False, ["different modes (700, 770)"]),
+            (False, ["different modes (700, 750)"]),
             id="dir-permissions",
         ),
         pytest.param(
@@ -409,10 +409,12 @@ def test_are_paths_equivalent(
     (tmp_path / "other_file2").touch(mode=0o600)
     (tmp_path / "other_file2").write_text("This file is not empty?")
     (tmp_path / "hardlink").hardlink_to(tmp_path / "empty_file")
-    (tmp_path / "permissive_file").touch(mode=0o660)
+    # This is the most permissive we can make it in GH runners
+    (tmp_path / "permissive_file").touch(mode=0o640)
     (tmp_path / "empty_dir").mkdir(mode=0o700)
     (tmp_path / "other_dir").mkdir(mode=0o700)
-    (tmp_path / "permissive_dir").mkdir(mode=0o770)
+    # This is the most permissive we can make it in GH runners
+    (tmp_path / "permissive_dir").mkdir(mode=0o750)
     (tmp_path / "broken_link").symlink_to("this_does_not_exist")
     (tmp_path / "symlink_to_file").symlink_to("empty_file")
     (tmp_path / "symlink_to_dir").symlink_to("empty_dir")
