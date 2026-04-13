@@ -411,7 +411,7 @@ def are_paths_equivalent(  # noqa: PLR0912
     a_type = _get_file_type_str(a_stat)
     b_type = _get_file_type_str(b_stat)
 
-    differences = []
+    differences: list[str] = []
 
     if a_type != b_type:
         differences.append(f"different types ({a_type}, {b_type})")
@@ -466,7 +466,7 @@ def find_merge_conflicts(
         if strict and dest_path.is_file():
             conflicts.setdefault(relative_path, []).append("exists")
         else:
-            equivalent, msg = are_paths_equivalent(source_path, dest_path)
+            _, msg = are_paths_equivalent(source_path, dest_path)
             if msg:
                 conflicts.setdefault(relative_path, []).extend(msg)
 

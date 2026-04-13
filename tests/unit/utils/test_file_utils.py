@@ -19,7 +19,7 @@ import pathlib
 import stat
 from pathlib import Path
 
-import pyfakefs
+import pyfakefs.helpers
 import pytest
 from craft_parts import errors
 from craft_parts.permissions import Permissions
