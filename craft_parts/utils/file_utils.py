@@ -19,6 +19,7 @@
 import contextlib
 import errno
 import hashlib
+import itertools
 import logging
 import os
 import pathlib
@@ -434,8 +435,8 @@ def are_paths_equivalent(  # noqa: PLR0912
         elif stat.S_ISREG(a_stat.st_mode) and stat.S_ISREG(b_stat.st_mode):
             with a.open("rb") as a_f, b.open("rb") as b_f:
                 while True:
-                    a_read = a_f.read(2**30)
-                    b_read = b_f.read(2**30)
+                    a_read = a_f.read(2**24)  # 16 MiB
+                    b_read = b_f.read(2**24)  # 16 MiB
                     if not a_read and not b_read:
                         break
                     if a_read != b_read:
@@ -457,7 +458,7 @@ def find_merge_conflicts(
     :param strict: if True, errors if overwriting a file, even if it's identical.
     """
     conflicts: dict[pathlib.Path, list[str]] = {}
-    for source_path in (*src_root.rglob("*"), src_root):
+    for source_path in itertools.chain(src_root.rglob("*"), (src_root,)):
         relative_path = source_path.relative_to(src_root)
         dest_path = dst_root / relative_path
         if not dest_path.exists() or dest_path.samefile(source_path):
