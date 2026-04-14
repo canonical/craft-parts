@@ -40,7 +40,6 @@ from craft_parts.utils.partition_utils import (
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from pathlib import Path
 
 
 def organize_files(  # noqa: PLR0912
