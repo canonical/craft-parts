@@ -14,14 +14,36 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import glob
 import os
+import random
 import re
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
 from craft_parts import errors
+from craft_parts.executor import organize
 from craft_parts.executor.organize import organize_files
+
+
+@pytest.fixture(autouse=True, params=range(3))
+def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
+    """Replace the system's iglob function with a function that randomizes the glob.
+
+    It also runs each test case 3 times to increase the chance of a test failing due
+    to the random glob order.
+
+    This will catch issues that occur due to order being important.
+    """
+    _ = request
+
+    def random_glob(pathname: str, recursive: bool = False):
+        result = glob.glob(pathname, recursive=recursive)  # noqa: PTH207
+        random.shuffle(result)
+        return result
+
+    monkeypatch.setattr(organize, "iglob", random_glob)
 
 
 @pytest.mark.parametrize(

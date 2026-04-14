@@ -19,7 +19,12 @@ from pathlib import Path
 import pytest
 from craft_parts import errors
 
-from tests.unit.executor.test_organize import organize_and_assert
+# Although it's not explicitly used, randomize_iglob is used here as it's an auto-use
+# fixture that checks that the order of an organize doesn't matter.
+from tests.unit.executor.test_organize import (
+    organize_and_assert,
+    randomize_iglob,  # noqa: F401
+)
 
 
 @pytest.mark.parametrize(
