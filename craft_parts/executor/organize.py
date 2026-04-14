@@ -106,11 +106,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
             if dst_partition_pair.partition == OVERLAY_PARTITION:  # noqa: SIM102
                 # Organizing a symlink to its destination simply deletes the link.
                 if src_path.is_symlink():
-                    relative_src_target = src_path.readlink().relative_to(src_root)
+                    relative_src_target = src_path.resolve().relative_to(src_root)
                     dst_target = (
                         install_dir_map[OVERLAY_PARTITION] / relative_src_target
                     )
-                    if dst_target.exists() and dst_target.samefile(dst_path):
+                    if dst_target.exists() and (
+                        dst_target.samefile(dst_path) or dst_path.is_dir()
+                    ):
                         src_path.unlink()
                         continue
 

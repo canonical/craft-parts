@@ -416,7 +416,7 @@ def organize_and_assert(
     for symlink_entry, symlink_target in setup_symlinks:
         symlink_path = install_dir / symlink_entry
         if not symlink_path.is_symlink():
-            symlink_path.symlink_to(install_dir / symlink_target)
+            symlink_path.symlink_to(symlink_target)
 
     if overwrite and expected_overwrite is not None:
         expected = expected_overwrite
