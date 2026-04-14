@@ -28,6 +28,7 @@ import contextlib
 import os
 import shutil
 from glob import iglob
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from craft_parts import errors
@@ -160,7 +161,9 @@ def organize_files(  # noqa: PLR0912
                 else:
                     file_utils.link_or_copy(src, dst)
             else:
-                file_utils.move(src, dst)
+                # Prevent moving a directory into itself or its own subtree
+                if not Path(src).is_dir() or not Path(dst).is_relative_to(src):
+                    file_utils.move(src, dst)
 
 
 def get_src_path(

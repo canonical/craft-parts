@@ -163,6 +163,12 @@ from craft_parts.executor.organize import organize_files
             "organize_map": {"**/bardir/*": "bardir/"},
             "expected": [(["bardir", "foodir"], ""), (["foo"], "bardir")],
         },
+        # Organize directory into itself
+        {
+            "setup_files": ["foo.txt", "bar.txt"],
+            "organize_map": {"*": "etc/config/"},
+            "expected": [(["bar.txt", "foo.txt"], "etc/config")],
+        }
     ],
 )
 def test_organize(new_dir, data):
