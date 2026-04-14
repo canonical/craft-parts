@@ -27,7 +27,7 @@ from craft_parts.executor import organize
 from craft_parts.executor.organize import organize_files
 
 
-@pytest.fixture(autouse=True, params=range(3))
+@pytest.fixture(autouse=True, params=range(6))
 def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
     """Replace the system's iglob function with a function that randomizes the glob.
 
@@ -36,14 +36,14 @@ def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
 
     This will catch issues that occur due to order being important.
     """
-    _ = request
 
     def random_glob(pathname: str, recursive: bool = False):
         result = glob.glob(pathname, recursive=recursive)  # noqa: PTH207
         random.shuffle(result)
         return result
 
-    monkeypatch.setattr(organize, "iglob", random_glob)
+    if request.param != 0:  # In one case we use the real iglob.
+        monkeypatch.setattr(organize, "iglob", random_glob)
 
 
 @pytest.mark.parametrize(
