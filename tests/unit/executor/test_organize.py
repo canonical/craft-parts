@@ -375,7 +375,7 @@ def test_organize_no_overwrite_idempotent(new_dir, data):
     )
 
 
-def organize_and_assert(
+def organize_and_assert(  # noqa: PLR0912
     *,
     tmp_path: Path,
     setup_dirs,
@@ -390,6 +390,8 @@ def organize_and_assert(
     overwrite,
     install_dirs,
 ):
+    for dest_install_dir in install_dirs.values():
+        Path(dest_install_dir).mkdir(parents=True, exist_ok=True)
     install_dir = Path(tmp_path / "install")
     install_dir.mkdir(parents=True, exist_ok=True)
 

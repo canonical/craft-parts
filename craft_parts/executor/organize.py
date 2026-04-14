@@ -87,6 +87,14 @@ def organize_files(  # noqa: PLR0912, PLR0915
         )
         dst_path = pathlib.Path(dst)
 
+        # If the destination is a symlink to itself, unlink it and we'll replace it
+        # with the real thing.
+        if (
+            dst_path.is_symlink()
+            and (dst_path.parent / dst_path.readlink()) == dst_path
+        ):
+            dst_path.unlink()
+
         # If the destinations ends with a slash character and it doesn't exist,
         # create it as a directory.
         if dst.endswith("/") and not os.path.exists(dst.rstrip("/")):  # noqa: PTH110
@@ -110,16 +118,36 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     dst_target = (
                         install_dir_map[OVERLAY_PARTITION] / relative_src_target
                     )
+                    if dst_path in install_dir_map.values():
+                        real_dst_path = dst_path / src_path.name
+                    else:
+                        real_dst_path = dst_path
                     if dst_target.exists() and (
-                        dst_target.samefile(dst_path) or dst_path.is_dir()
+                        dst_target.samefile(dst_path) or real_dst_path.is_dir()
                     ):
                         src_path.unlink()
                         continue
+                    if real_dst_path.is_symlink() and real_dst_path.readlink() in (
+                        dst_target,
+                        relative_src_target,
+                    ):
+                        src_path.unlink()
+                        continue
+                    if src_path.readlink().is_absolute():
+                        real_dst_path.symlink_to(dst_target)
+                    else:
+                        real_dst_path.symlink_to(relative_src_target)
+                    src_path.unlink()
+                    continue
 
             # Organize a dir to a dir
             if not src_path.is_symlink() and src_path.is_dir():
                 if "*" not in key:  # Key is explicit
-                    file_utils.link_or_copy_tree(src, dst)
+                    if dst_path.is_symlink():
+                        real_dst_path = dst_path.resolve()
+                    else:
+                        real_dst_path = dst_path
+                    file_utils.link_or_copy_tree(src, real_dst_path)
                     if src_partition_pair.partition != BUILD_PARTITION:
                         shutil.rmtree(src)
                     continue
