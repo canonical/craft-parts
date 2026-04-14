@@ -110,7 +110,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     dst_target = (
                         install_dir_map[OVERLAY_PARTITION] / relative_src_target
                     )
-                    if dst_target.exists():
+                    if dst_target.exists() and dst_target.samefile(dst_path):
                         src_path.unlink()
                         continue
 
