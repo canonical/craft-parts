@@ -1,0 +1,33 @@
+# Organize pattern where destination paths use an absolute (leading-slash) form.
+# craft-parts strips the leading slash transparently, treating the destination
+# as relative to the part's install directory, just like paths without a slash.
+# This style appears in various snapcraft.yaml files in the wild.
+
+description: >
+  Destination paths written with a leading '/' are silently normalised to
+  relative paths by craft-parts. This test verifies that both files end up in
+  the same location whether or not the destination starts with '/'.
+
+parts:
+  my-part:
+    plugin: dump
+    source: src
+    organize:
+      'bin/myapp': /usr/bin/myapp
+      'lib/libmyapp.so.1': /usr/lib/libmyapp.so.1
+
+setup_dirs:
+  - src/bin
+  - src/lib
+
+setup_files:
+  - src/bin/myapp
+  - src/lib/libmyapp.so.1
+
+expected_prime_present:
+  - usr/bin/myapp
+  - usr/lib/libmyapp.so.1
+
+expected_prime_absent:
+  - bin/myapp
+  - lib/libmyapp.so.1

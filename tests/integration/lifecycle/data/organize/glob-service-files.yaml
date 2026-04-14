@@ -1,0 +1,37 @@
+# Organize pattern for snaps that ship systemd services and shared data files.
+# Glob patterns are used to move matching files into their FHS-compliant locations.
+# Source: https://snapcraft.io/docs/organizing-content (include_files how-to)
+
+description: >
+  Move systemd service files and font assets into FHS-compliant directories
+  using glob patterns. Two separate globs map to two distinct destinations.
+
+parts:
+  my-part:
+    plugin: dump
+    source: src
+    organize:
+      'services/*.service': usr/lib/systemd/system/
+      'fonts/*': usr/share/fonts/
+
+setup_dirs:
+  - src/services
+  - src/fonts
+
+setup_files:
+  - src/services/hello.service
+  - src/services/world.service
+  - src/fonts/good.otf
+  - src/fonts/better.ttf
+
+expected_prime_present:
+  - usr/lib/systemd/system/hello.service
+  - usr/lib/systemd/system/world.service
+  - usr/share/fonts/good.otf
+  - usr/share/fonts/better.ttf
+
+expected_prime_absent:
+  - services/hello.service
+  - services/world.service
+  - fonts/good.otf
+  - fonts/better.ttf

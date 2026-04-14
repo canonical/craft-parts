@@ -1,0 +1,33 @@
+# Organize pattern that uses the '**' recursive glob to flatten a nested
+# directory tree.  Some upstream projects install locale catalogues or config
+# files deep inside a multi-level hierarchy; the recursive glob lets craft-parts
+# hoist them to a single target directory in one rule.
+# Inspired by snaps that consolidate locale files from arch-specific sub-trees.
+
+description: >
+  Use the '**' recursive glob to match files nested at arbitrary depth under a
+  common prefix and copy them into a flat destination directory.  Here, '.conf'
+  files scattered across sub-directories are all moved to etc/myapp/.
+
+parts:
+  my-part:
+    plugin: dump
+    source: src
+    organize:
+      '**/conf/*.conf': etc/myapp/
+
+setup_dirs:
+  - src/a/conf
+  - src/b/sub/conf
+
+setup_files:
+  - src/a/conf/alpha.conf
+  - src/b/sub/conf/beta.conf
+
+expected_prime_present:
+  - etc/myapp/alpha.conf
+  - etc/myapp/beta.conf
+
+expected_prime_absent:
+  - a/conf/alpha.conf
+  - b/sub/conf/beta.conf

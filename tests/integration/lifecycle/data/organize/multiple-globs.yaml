@@ -1,0 +1,45 @@
+# Organize pattern common in snaps that ship a library with headers and a CLI.
+# Three separate glob rules move headers, shared libraries, and executables
+# into the conventional FHS locations under usr/.
+# Inspired by library/tool snaps on Snapcraft (e.g. openssl, sqlite, zlib).
+
+description: >
+  Use multiple glob rules to reorganise headers, shared libraries, and
+  executables from flat staging directories into FHS-compliant paths.
+  This pattern is prevalent in library snaps that expose a development kit
+  alongside the runtime components.
+
+parts:
+  my-lib:
+    plugin: dump
+    source: src
+    organize:
+      'include/*': usr/include/
+      'lib/*': usr/lib/
+      'bin/*': usr/bin/
+
+setup_dirs:
+  - src/include
+  - src/lib
+  - src/bin
+
+setup_files:
+  - src/include/mylib.h
+  - src/include/mylib_extra.h
+  - src/lib/libmylib.so.1
+  - src/lib/libmylib.a
+  - src/bin/mylib-config
+  - src/bin/mylib-tool
+
+expected_prime_present:
+  - usr/include/mylib.h
+  - usr/include/mylib_extra.h
+  - usr/lib/libmylib.so.1
+  - usr/lib/libmylib.a
+  - usr/bin/mylib-config
+  - usr/bin/mylib-tool
+
+expected_prime_absent:
+  - include/mylib.h
+  - lib/libmylib.so.1
+  - bin/mylib-config

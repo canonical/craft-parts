@@ -1,0 +1,35 @@
+# Organize pattern for snaps that re-home an entire directory tree.
+# The top-level directory name produced by the source is different from the
+# desired install path, so organize renames the whole tree in one mapping.
+# Source: craft-parts include_files how-to (Plymouth theme example)
+#   https://github.com/snapcore/plymouth-theme-ubuntu-core
+
+description: >
+  Rename a top-level directory to its final installation path by mapping the
+  directory name on the left to the desired destination path on the right.
+  This is the pattern used by Plymouth theme snaps where the upstream directory
+  name differs from the conventional theme installation directory.
+
+parts:
+  plymouth-theme:
+    plugin: dump
+    source: src
+    organize:
+      ubuntu-core: usr/share/plymouth/themes/ubuntu-core
+
+setup_dirs:
+  - src/ubuntu-core
+
+setup_files:
+  - src/ubuntu-core/throbber-1.png
+  - src/ubuntu-core/throbber-2.png
+  - src/ubuntu-core/ubuntu-core.plymouth
+
+expected_prime_present:
+  - usr/share/plymouth/themes/ubuntu-core/throbber-1.png
+  - usr/share/plymouth/themes/ubuntu-core/throbber-2.png
+  - usr/share/plymouth/themes/ubuntu-core/ubuntu-core.plymouth
+
+expected_prime_absent:
+  - ubuntu-core/throbber-1.png
+  - throbber-1.png

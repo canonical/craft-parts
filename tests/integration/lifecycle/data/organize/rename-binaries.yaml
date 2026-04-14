@@ -1,0 +1,25 @@
+# Organize pattern inspired by snaps that ship pre-built binaries (e.g. ffmpeg).
+# Each binary is explicitly renamed to its final path under usr/bin/.
+# Source: https://github.com/snapcrafters/ffmpeg/blob/master/snap/snapcraft.yaml
+
+description: Rename individual pre-built binaries to their final usr/bin/ locations.
+
+parts:
+  ffmpeg-part:
+    plugin: dump
+    source: src
+    organize:
+      ffmpeg: usr/bin/ffmpeg
+      ffprobe: usr/bin/ffprobe
+
+setup_files:
+  - src/ffmpeg
+  - src/ffprobe
+
+expected_prime_present:
+  - usr/bin/ffmpeg
+  - usr/bin/ffprobe
+
+expected_prime_absent:
+  - ffmpeg
+  - ffprobe
