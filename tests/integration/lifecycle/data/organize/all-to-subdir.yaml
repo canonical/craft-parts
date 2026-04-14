@@ -1,7 +1,8 @@
-# Organize pattern from the .NET SDK snap / craft-parts dotnet v2 plugin docs.
-# All installed files are moved into a named subdirectory so that a dependent
-# part can extend PATH to include that subdirectory without polluting the root.
-# Source: craft-parts dotnet_v2_plugin documentation
+# Organize pattern from the craft-parts dotnet v2 plugin documentation.
+# The plugin guide recommends isolating the self-provisioned .NET SDK under a
+# single prefix so that downstream parts can set PATH without side effects.
+#
+# Source: https://github.com/canonical/craft-parts/blob/main/docs/common/craft-parts/reference/plugins/dotnet_v2_plugin.rst
 
 description: >
   Move every installed file into a dedicated subdirectory using the wildcard

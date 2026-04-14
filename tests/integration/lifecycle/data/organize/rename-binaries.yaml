@@ -1,6 +1,9 @@
-# Organize pattern inspired by snaps that ship pre-built binaries (e.g. ffmpeg).
-# Each binary is explicitly renamed to its final path under usr/bin/.
-# Source: https://github.com/snapcrafters/ffmpeg/blob/master/snap/snapcraft.yaml
+# Organize pattern from the craft-parts documentation (Dump plugin how-to,
+# section "To include a remote third-party pre-compiled archive from a URL").
+# The same rename-to-explicit-path style is common in snaps that redistribute
+# pre-built binaries alongside other files and want them at predictable paths.
+#
+# Source: https://github.com/canonical/craft-parts/blob/main/docs/common/craft-parts/how-to/include_files.rst
 
 description: Rename individual pre-built binaries to their final usr/bin/ locations.
 

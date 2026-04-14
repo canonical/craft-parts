@@ -1,8 +1,12 @@
-# Organize pattern that uses the '**' recursive glob to flatten a nested
-# directory tree.  Some upstream projects install locale catalogues or config
-# files deep inside a multi-level hierarchy; the recursive glob lets craft-parts
-# hoist them to a single target directory in one rule.
-# Inspired by snaps that consolidate locale files from arch-specific sub-trees.
+# Organize pattern that uses the '**' recursive glob to hoist files from a
+# nested directory tree to a single flat destination.  Upstream projects
+# sometimes install configuration files or locale catalogues deep inside an
+# arch-specific or version-specific hierarchy; the recursive glob collapses
+# those levels in one rule.
+#
+# This pattern can be found in the SerialPortAssistant snap, where arch-specific
+# library paths are flattened during organization:
+# Source: https://github.com/KangLin/SerialPortAssistant/blob/db917543e0548628127c38a3d9d54b0fb06e9806/snap/snapcraft.yaml
 
 description: >
   Use the '**' recursive glob to match files nested at arbitrary depth under a

@@ -1,7 +1,11 @@
-# Organize pattern common in snaps that ship a library with headers and a CLI.
-# Three separate glob rules move headers, shared libraries, and executables
-# into the conventional FHS locations under usr/.
-# Inspired by library/tool snaps on Snapcraft (e.g. openssl, sqlite, zlib).
+# Organize pattern common in snaps that ship a C library with its development
+# kit alongside the runtime binaries.  Three separate glob rules move headers,
+# shared libraries, and executables into the conventional FHS locations.
+# This pattern is widespread across library-snaps on snapcraft.io, including
+# those for openssl, sqlite, and zlib.
+#
+# A representative example can be found in the RabbitRemoteControl snap:
+# Source: https://github.com/KangLin/RabbitRemoteControl/blob/5f32e02db0069508e467c217b5e9fca394e72991/snap/snapcraft.yaml
 
 description: >
   Use multiple glob rules to reorganise headers, shared libraries, and
