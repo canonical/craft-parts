@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from textwrap import dedent, indent
 
 import pytest
@@ -56,12 +57,9 @@ class TestPartData(test_parts.TestPartData):
         pytest_check.equal(p.prime_dir, new_dir / "prime")
         pytest_check.equal(
             p.part_install_dirs,
-            {
-                **get_partition_dir_map(
-                    base_dir=new_dir, partitions=partitions, suffix="parts/foo/install"
-                ),
-                "build": new_dir / "parts/foo/build",
-            },
+            get_partition_dir_map(
+                base_dir=new_dir, partitions=partitions, suffix="parts/foo/install"
+            ),
         )
 
     def test_part_work_dir(self, new_dir, partitions):
@@ -91,22 +89,18 @@ class TestPartData(test_parts.TestPartData):
         pytest_check.equal(p.prime_dir, new_dir / work_dir / "prime")
         pytest_check.equal(
             p.part_install_dirs,
-            {
-                **get_partition_dir_map(
-                    base_dir=new_dir / work_dir,
-                    partitions=partitions,
-                    suffix="parts/foo/install",
-                ),
-                "build": new_dir / work_dir / "parts/foo/build",
-            },
+            get_partition_dir_map(
+                base_dir=new_dir / work_dir,
+                partitions=partitions,
+                suffix="parts/foo/install",
+            ),
         )
 
     def test_part_install_dirs(self, new_dir):
         p = Part("foo", {"organize": {"foo": "bar"}}, partitions=["mypart", "yourpart"])
         assert p.part_install_dirs == {
-            "mypart": new_dir / "parts/foo/install",  # aliased default part
-            "yourpart": new_dir / "partitions/yourpart/parts/foo/install",
-            "build": new_dir / "parts/foo/build",
+            "mypart": Path(new_dir / "parts/foo/install"),  # aliased default part
+            "yourpart": Path(new_dir / "partitions/yourpart/parts/foo/install"),
         }
 
 
