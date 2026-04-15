@@ -49,12 +49,12 @@ as the source. It also declares an ``after`` dependency on the ``nginx`` part an
 
 .. code-block:: yaml
 
-   parts:
-      config:
-          plugin: dump
-          after:
-            - nginx
-          source: .
-          organize:
-            nginx.conf: etc/nginx/nginx.conf
-            default.conf: etc/nginx/conf.d/default.conf
+  parts:
+    config:
+      plugin: dump
+      after:
+        - nginx
+      source: .
+      organize:
+        nginx.conf: etc/nginx/nginx.conf
+        default.conf: etc/nginx/conf.d/default.conf
