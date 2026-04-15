@@ -44,8 +44,8 @@ Example
 -------
 
 The following snippet declares a part using the Dump plugin with the local directory
-as the source. It also declares an ``after`` dependency on ``nginx`` and uses
-``organize`` to introduce ``nginx.conf`` and ``default.conf``:
+as the source. It also declares an ``after`` dependency on the ``nginx`` part and uses
+``organize`` to introduce the ``nginx.conf`` and ``default.conf`` files:
 
 .. code-block:: yaml
 
