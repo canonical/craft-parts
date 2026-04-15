@@ -105,8 +105,8 @@ During the build step, the plugin performs the following actions:
 Example
 -------
 
-The following snippet declares a part using the python plugin to define a custom
-mirror index in the ``python-requirements`` key:
+The following snippet declares a part with the Python plugin, and selects the 
+project's ``requirements.txt`` file with the ``python-requirements`` key:
 
 .. code-block:: yaml
 
