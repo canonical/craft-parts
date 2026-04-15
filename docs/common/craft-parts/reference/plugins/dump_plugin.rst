@@ -39,3 +39,22 @@ During the build step, the plugin performs the following actions:
 #. Unpack the file if it is an archive specified by the ``source-type`` key.
 #. Copy all contents and preserve the directory structure to the part's install
    directory.
+
+Example
+-------
+
+The following snippet declares a part using the Dump plugin with the local directory
+as the source. It also declares an ``after`` dependency on ``nginx`` and uses
+``organize`` to introduce ``nginx.conf`` and ``default.conf``:
+
+.. code-block:: yaml
+
+   parts:
+      config:
+          plugin: dump
+          after:
+            - nginx
+          source: .
+          organize:
+            nginx.conf: etc/nginx/nginx.conf
+            default.conf: etc/nginx/conf.d/default.conf
