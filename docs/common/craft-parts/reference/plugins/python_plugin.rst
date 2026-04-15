@@ -116,7 +116,7 @@ project's ``requirements.txt`` file with the ``python-requirements`` key:
        python-requirements:
          - requirements.txt
 
-where ``requirements.txt`` contains:
+The ``requirements.txt`` declares a custom mirror for its package index:
 
 .. code-block:: text
 
