@@ -121,7 +121,7 @@ stage packages:
         - python3-venv
 
 The following example declares a part using the Python plugin with an index mirror.
-It selects the project's ``requirements.txt`` file with the``python-requirements`` key:
+It selects the project's ``requirements.txt`` file with the ``python-requirements`` key:
 
 .. code-block:: yaml
 

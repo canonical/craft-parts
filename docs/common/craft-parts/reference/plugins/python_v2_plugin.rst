@@ -104,7 +104,7 @@ Examples
 --------
 
 The following example declares a part using the Python plugin with a Git source.
-It installs the pyfiglet package from a remote Git repository:
+It installs the ``pyfiglet`` package from a remote Git repository:
 
 .. code-block:: yaml
 
@@ -115,7 +115,7 @@ It installs the pyfiglet package from a remote Git repository:
       source: https://github.com/snapcraft-docs/pyfiglet
 
 The following example declares a part using the Python plugin with an index mirror.
-It selects the project's ``requirements.txt`` file with the``python-requirements`` key:
+It selects the project's ``requirements.txt`` file with the ``python-requirements`` key:
 
 .. code-block:: yaml
 
