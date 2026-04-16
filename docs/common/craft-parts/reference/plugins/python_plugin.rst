@@ -116,7 +116,7 @@ stage packages:
       plugin: python
       source: .
       python-packages:
-        - pyfiglet==0.7.6 # Note: should match `version` above
+        - pyfiglet==0.7.6
       stage-packages:
         - python3-venv
 
