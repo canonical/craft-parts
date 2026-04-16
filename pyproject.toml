@@ -22,6 +22,7 @@ dependencies = [
     "requests>=2.32.4,<3.0",
     "semver>=3.0.4",
     "tomli >= 1.1.0 ; python_version < '3.11'",
+    "zstandard>=0.25",
 ]
 license-files = ["LICENSE"]
 
