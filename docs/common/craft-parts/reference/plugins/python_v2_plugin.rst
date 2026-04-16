@@ -100,11 +100,22 @@ During the build step, the plugin performs the following actions:
    which adds the files from the part's install directory to Python's runtime import
    path.
 
-Example
--------
+Examples
+--------
 
-The following snippet declares a part using the python plugin to define a custom
-mirror index in the ``python-requirements`` key:
+The following example declares a part using the Python plugin with a Git source.
+It installs the pyfiglet package from a remote Git repository:
+
+.. code-block:: yaml
+
+  parts:
+    pyfiglet:
+      plugin: python
+      source-type: git
+      source: https://github.com/snapcraft-docs/pyfiglet
+
+The following example declares a part using the Python plugin with an index mirror.
+It selects the project's ``requirements.txt`` file with the``python-requirements`` key:
 
 .. code-block:: yaml
 
@@ -114,8 +125,9 @@ mirror index in the ``python-requirements`` key:
        python-requirements:
          - requirements.txt
 
-where ``requirements.txt`` contains:
+The ``requirements.txt`` declares a custom mirror for its package index:
 
 .. code-block:: text
 
    -i https://example-mirror.com
+

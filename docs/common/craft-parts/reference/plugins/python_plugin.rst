@@ -102,11 +102,26 @@ During the build step, the plugin performs the following actions:
 #. If the source contains a ``setup.py`` or ``pyproject.toml`` file, those
    files are used to install the dependencies specified by the package itself.
 
-Example
--------
+Examples
+--------
 
-The following snippet declares a part with the Python plugin, and selects the 
-project's ``requirements.txt`` file with the ``python-requirements`` key:
+The following example declares a part using the Python plugin for a local source.
+It installs a package from PyPI and includes the Python virtual environment in
+stage packages:
+
+.. code-block:: yaml
+
+  parts:
+    pyfiglet:
+      plugin: python
+      source: .
+      python-packages:
+        - pyfiglet==0.7.6 # Note: should match `version` above
+      stage-packages:
+        - python3-venv
+
+The following example declares a part using the Python plugin with an index mirror.
+It selects the project's ``requirements.txt`` file with the``python-requirements`` key:
 
 .. code-block:: yaml
 
@@ -115,6 +130,8 @@ project's ``requirements.txt`` file with the ``python-requirements`` key:
        plugin: python
        python-requirements:
          - requirements.txt
+       stage-packages:
+         - python3-venv
 
 The ``requirements.txt`` declares a custom mirror for its package index:
 
