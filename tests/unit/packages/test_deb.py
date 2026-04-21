@@ -27,6 +27,7 @@ import pytest
 import zstandard
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
+from craft_parts.packages.deb import Ubuntu
 from craft_parts.packages.deb_package import DebPackage
 from pytest_mock import MockerFixture
 
@@ -994,3 +995,64 @@ def test_chown_stage_packages(
     # Make sure chown was called properly
     mock_chown.assert_called_once_with(deb_cache_dir, user="_apt")
     assert message.format(deb_cache_dir) in caplog.text
+
+
+def test_refresh_called_before_mark(monkeypatch):
+    """Ensure apt cache is refreshed before marking packages."""
+
+    call_order = []
+
+    def fake_check(packages):
+        return False  # force install_required = True
+
+    def fake_refresh():
+        call_order.append("refresh")
+
+    def fake_mark(packages):
+        call_order.append("mark")
+        return []
+
+    def fake_install(packages):
+        call_order.append("install")
+
+    monkeypatch.setattr(Ubuntu, "_check_if_all_packages_installed", fake_check)
+    monkeypatch.setattr(Ubuntu, "refresh_packages_list", fake_refresh)
+    monkeypatch.setattr(Ubuntu, "_get_packages_marked_for_installation", fake_mark)
+    monkeypatch.setattr(Ubuntu, "_install_packages", fake_install)
+    monkeypatch.setattr(Ubuntu, "_get_installed_package_versions", lambda x: [])
+
+    Ubuntu.install_packages(["foo"])
+
+    assert "refresh" in call_order
+    assert "mark" in call_order
+    assert call_order.index("refresh") < call_order.index("mark")
+
+
+def test_refresh_not_called_when_disabled(monkeypatch):
+    """Ensure apt cache is not refreshed when refresh_package_cache=False."""
+
+    call_order = []
+
+    def fake_check(packages):
+        return False  # force install_required = True
+
+    def fake_refresh():
+        call_order.append("refresh")
+
+    def fake_mark(packages):
+        call_order.append("mark")
+        return []
+
+    def fake_install(packages):
+        call_order.append("install")
+
+    monkeypatch.setattr(Ubuntu, "_check_if_all_packages_installed", fake_check)
+    monkeypatch.setattr(Ubuntu, "refresh_packages_list", fake_refresh)
+    monkeypatch.setattr(Ubuntu, "_get_packages_marked_for_installation", fake_mark)
+    monkeypatch.setattr(Ubuntu, "_install_packages", fake_install)
+    monkeypatch.setattr(Ubuntu, "_get_installed_package_versions", lambda x: [])
+
+    Ubuntu.install_packages(["foo"], refresh_package_cache=False)
+
+    assert "refresh" not in call_order
+    assert "mark" in call_order
