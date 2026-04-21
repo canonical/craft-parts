@@ -320,6 +320,71 @@ class TestMockedApt:
         ]
 
 
+    def test_file_is_same_order_independent(self, tmp_path, mocker):
+        deb_path = tmp_path / "package.deb"
+        deb_path.write_bytes(b"deb-data")
+
+        class FakeHash:
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+            def __str__(self) -> str:
+                return self.value
+
+        mocker.patch(
+            "craft_parts.packages.apt_cache.apt_pkg.Hashes",
+            return_value=mocker.Mock(
+                hashes=[FakeHash("MD5Sum:aaa"), FakeHash("SHA256:bbb")]
+            ),
+        )
+
+        hashes = [FakeHash("SHA256:bbb"), FakeHash("MD5Sum:aaa")]
+
+        assert (
+            apt_cache._file_is_same_order_independent(
+                str(deb_path), deb_path.stat().st_size, hashes
+            )
+            is True
+        )
+
+    def test_fetch_archives_patches_file_is_same(self, tmp_path, mocker):
+        fetch_dir = tmp_path / "debs"
+        fetch_dir.mkdir()
+
+        original = object()
+        mocker.patch.object(
+            apt_cache.apt.package, "_file_is_same", original, create=True
+        )
+
+        package = mocker.MagicMock()
+        package.name = "mock-pkg"
+        package.candidate.version = "1.0"
+
+        def fake_fetch_binary(download_path, progress=None):
+            assert (
+                apt_cache.apt.package._file_is_same
+                is apt_cache._file_is_same_order_independent
+            )
+            return str(Path(download_path) / "mock-pkg_1.0.deb")
+
+        package.candidate.fetch_binary.side_effect = fake_fetch_binary
+
+        fake_cache = mocker.MagicMock()
+        fake_cache.get_changes.return_value = [package]
+        mocker.patch(
+            "craft_parts.packages.apt_cache.apt.cache.Cache",
+            return_value=fake_cache,
+        )
+
+        with AptCache() as cache:
+            downloaded = cache.fetch_archives(fetch_dir)
+
+        assert apt_cache.apt.package._file_is_same is original
+        assert downloaded == [
+            ("mock-pkg", "1.0", fetch_dir / "mock-pkg_1.0.deb")
+        ]
+
+
 class TestAptReadonlyHostCache:
     """Host cache tests."""
 

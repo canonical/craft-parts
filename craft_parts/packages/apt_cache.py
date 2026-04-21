@@ -20,8 +20,8 @@ import logging
 import os
 import re
 import shutil
-from collections.abc import Iterable
-from contextlib import ContextDecorator
+from collections.abc import Iterable, Iterator
+from contextlib import ContextDecorator, contextmanager
 from pathlib import Path
 
 from typing_extensions import Self
@@ -249,9 +249,10 @@ class AptCache(ContextDecorator):
 
             try:
                 logger.info("Downloading package: %s", package)
-                dl_path = package.candidate.fetch_binary(
-                    str(download_path), progress=self.progress
-                )
+                with _patched_file_is_same():
+                    dl_path = package.candidate.fetch_binary(
+                        str(download_path), progress=self.progress
+                    )
             except apt.package.FetchError as err:
                 raise errors.PackageFetchError(str(err)) from err
 
@@ -401,6 +402,29 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
         package.candidate = pkg_version
     else:
         raise errors.PackageNotFound(f"{package.name}={version}")
+
+
+
+def _file_is_same_order_independent(
+    path: str, size: int, hashes: apt_pkg.HashStringList
+) -> bool:
+    file_path = Path(path)
+    if file_path.exists() and file_path.stat().st_size == size:
+        with file_path.open("rb") as fobj:
+            actual_hashes = {str(h) for h in apt_pkg.Hashes(fobj).hashes}
+        expected_hashes = {str(h) for h in hashes}
+        return actual_hashes == expected_hashes
+    return False
+
+
+@contextmanager
+def _patched_file_is_same() -> Iterator[None]:
+    original = apt.package._file_is_same  # noqa: SLF001
+    apt.package._file_is_same = _file_is_same_order_independent  # noqa: SLF001
+    try:
+        yield
+    finally:
+        apt.package._file_is_same = original  # noqa: SLF001
 
 
 def _ignore_unreadable_files(
