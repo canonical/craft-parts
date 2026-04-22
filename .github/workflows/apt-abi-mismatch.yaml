@@ -9,9 +9,11 @@ name: Reproduce libapt ABI mismatch (Issue #1554)
 #   - An empty apt cache (binary cache format version mismatch),
 # both leading to BuildPackageNotFound for valid packages.
 #
-# This workflow:
-#   1. Runs the test on Ubuntu 24.04 using the noble python-apt → PASSES
-#   2. Runs the same test on Ubuntu 26.04 using the noble python-apt → FAILS
+# The matrix below runs the same steps on every Ubuntu release with noble
+# (Ubuntu 24.04) python-apt. The expected outcome column shows which releases
+# are affected by the bug:
+#   - Ubuntu 24.04 (noble): test PASSES  – python-apt matches libapt-pkg SONAME
+#   - Ubuntu 26.04 (resolute): test FAILS – libapt-pkg.so.7.0 vs .so.6.0 mismatch
 #
 # See: https://github.com/canonical/craft-parts/issues/1554
 
@@ -27,9 +29,23 @@ permissions:
   contents: read
 
 jobs:
-  ubuntu-24-04-noble-python-apt:
-    name: Ubuntu 24.04 – noble python-apt (should pass)
+  apt-abi-mismatch:
+    name: ${{ matrix.ubuntu-version }} – noble python-apt
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ubuntu-version: "24.04"
+            lxd-image: ubuntu:24.04
+            # Ubuntu 24.04 ships libapt-pkg.so.6.0: noble python-apt matches.
+            expect-failure: false
+          - ubuntu-version: "26.04"
+            lxd-image: ubuntu:26.04
+            # Ubuntu 26.04 ships libapt-pkg.so.7.0: noble python-apt mismatches.
+            # The test failure here IS the bug being reproduced (Issue #1554).
+            expect-failure: true
+
     steps:
       - uses: actions/checkout@v4
 
@@ -41,97 +57,56 @@ jobs:
           sudo chmod 666 /var/snap/lxd/common/lxd/unix.socket
           lxc version
 
-      - name: Launch Ubuntu 24.04 LXD container
+      - name: Launch Ubuntu ${{ matrix.ubuntu-version }} LXD container
         run: |
-          lxc launch ubuntu:24.04 noble --wait
+          lxc launch ${{ matrix.lxd-image }} testenv --wait
           # Allow the container's network and services to start
           sleep 5
 
       - name: Copy source into container
         run: |
-          lxc exec noble -- mkdir -p /root/craft-parts
+          lxc exec testenv -- mkdir -p /root/craft-parts
           tar -C . \
             --exclude='.git' \
             --exclude='.venv' \
             --exclude='__pycache__' \
             -czf - . \
-          | lxc exec noble -- tar -C /root/craft-parts -xzf -
+          | lxc exec testenv -- tar -C /root/craft-parts -xzf -
 
       - name: Install uv in container
         run: |
-          lxc exec noble -- apt-get update -qq
-          lxc exec noble -- snap install --classic astral-uv
+          lxc exec testenv -- apt-get update -qq
+          lxc exec testenv -- snap install --classic astral-uv
 
       - name: Install dependencies with noble python-apt
         run: |
-          lxc exec noble -- sh -c \
+          # Use the noble (Ubuntu 24.04) python-apt regardless of the container's
+          # Ubuntu version. This simulates running a core24-based snap on the host.
+          lxc exec testenv -- sh -c \
             "cd /root/craft-parts && uv sync --group dev --group dev-noble"
 
-      - name: Run test (expected to pass on Ubuntu 24.04)
+      - name: Run ABI mismatch test
         run: |
-          lxc exec noble -- sh -c \
-            "cd /root/craft-parts && uv run pytest \
-              tests/integration/packages/test_apt_abi_mismatch.py \
-              -v --tb=short"
-
-  ubuntu-26-04-noble-python-apt:
-    name: Ubuntu 26.04 – noble python-apt (should fail, demonstrating the bug)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up LXD
-        run: |
-          sudo snap install lxd --channel=latest/stable 2>/dev/null \
-            || sudo snap refresh lxd --channel=latest/stable
-          sudo lxd init --auto
-          sudo chmod 666 /var/snap/lxd/common/lxd/unix.socket
-          lxc version
-
-      - name: Launch Ubuntu 26.04 LXD container
-        run: |
-          lxc launch ubuntu:26.04 resolute --wait
-          # Allow the container's network and services to start
-          sleep 5
-
-      - name: Copy source into container
-        run: |
-          lxc exec resolute -- mkdir -p /root/craft-parts
-          tar -C . \
-            --exclude='.git' \
-            --exclude='.venv' \
-            --exclude='__pycache__' \
-            -czf - . \
-          | lxc exec resolute -- tar -C /root/craft-parts -xzf -
-
-      - name: Install uv in container
-        run: |
-          lxc exec resolute -- apt-get update -qq
-          lxc exec resolute -- snap install --classic astral-uv
-
-      - name: Install dependencies with noble python-apt (on Ubuntu 26.04)
-        run: |
-          # Install the Ubuntu 24.04 (noble) version of python-apt on Ubuntu 26.04.
-          # This simulates what happens when a core24-based snap runs on Ubuntu 26.04:
-          # the snap bundles python-apt compiled against libapt-pkg.so.6.0, but
-          # Ubuntu 26.04 ships libapt-pkg.so.7.0.
-          lxc exec resolute -- sh -c \
-            "cd /root/craft-parts && uv sync --group dev --group dev-noble"
-
-      - name: Reproduce ABI mismatch (expected to fail – demonstrates Issue #1554)
-        run: |
-          # The test is expected to fail on Ubuntu 26.04 with noble python-apt.
-          # Failure here demonstrates that the bug is present.
-          # If the test unexpectedly passes, a warning is emitted but the job
-          # still succeeds so that a fix does not break this reproduction workflow.
-          if lxc exec resolute -- sh -c \
+          # On Ubuntu 24.04 the test is expected to pass (no ABI mismatch).
+          # On Ubuntu 26.04 the test is expected to fail, which IS the bug
+          # being reproduced. If it unexpectedly passes, emit a warning so
+          # that maintainers know the bug may have been fixed upstream.
+          if lxc exec testenv -- sh -c \
               "cd /root/craft-parts && uv run pytest \
                 tests/integration/packages/test_apt_abi_mismatch.py \
                 -v --tb=short"; then
-            echo "::warning::Issue #1554 may be resolved: noble python-apt" \
-              "worked correctly on Ubuntu 26.04. Update this workflow if the" \
-              "fix has landed."
+            if ${{ matrix.expect-failure }}; then
+              echo "::warning::Issue #1554 may be resolved: noble python-apt" \
+                "worked correctly on Ubuntu ${{ matrix.ubuntu-version }}." \
+                "Update this workflow if the fix has landed."
+            fi
           else
+            if ! ${{ matrix.expect-failure }}; then
+              echo "::error::Tests failed on Ubuntu ${{ matrix.ubuntu-version }}" \
+                "where they were expected to pass."
+              exit 1
+            fi
             echo "::notice::Issue #1554 reproduced as expected: noble" \
-              "python-apt failed on Ubuntu 26.04 (ABI mismatch confirmed)."
+              "python-apt failed on Ubuntu ${{ matrix.ubuntu-version }}" \
+              "(ABI mismatch confirmed)."
           fi
