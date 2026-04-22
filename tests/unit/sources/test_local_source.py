@@ -580,3 +580,43 @@ class TestLocalUpdate:
         assert not os.path.isfile(os.path.join(destination, "dir", "file1"))  # noqa: PTH113, PTH118
         # file2 was not removed, it must still be in destination
         assert os.path.isfile(os.path.join(destination, "dir", "file2"))  # noqa: PTH113, PTH118
+
+    def test_non_source_files_in_destination_not_deleted(self, new_dir, partitions):
+        """Files added to destination by later steps must not be treated as deletions.
+
+        When LocalSource is used to update part_build_dir from part_src_dir (as
+        happens in _update_build for in-source-tree plugins), build artifacts
+        present in the destination should never be removed, even though they
+        are absent from the source.
+        """
+        source = "source"
+        destination = "destination"
+        os.mkdir(source)  # noqa: PTH102
+        os.mkdir(destination)  # noqa: PTH102
+
+        with open(os.path.join(source, "file1"), "w") as f:  # noqa: PTH118, PTH123
+            f.write("1")
+
+        # Simulate a reference file with a timestamp later than all source files
+        shutil.copy2(os.path.join(source, "file1"), "reference")  # noqa: PTH118
+        access_time = os.stat("reference").st_atime  # noqa: PTH116
+        modify_time = os.stat("reference").st_mtime  # noqa: PTH116
+        os.utime("reference", (access_time, modify_time + 1))
+
+        dirs = ProjectDirs(partitions=partitions)
+
+        # NOTE: no pull() call here – this LocalSource mimics the build-update
+        # use case where pull() is never invoked for this source/dest pair.
+        local = LocalSource(source, destination, cache_dir=new_dir, project_dirs=dirs)
+
+        # Add a "build artifact" to the destination that is NOT in the source
+        with open(os.path.join(destination, "artifact"), "w") as f:  # noqa: PTH118, PTH123
+            f.write("generated")
+
+        # Source is not outdated (file1 mtime is not newer, artifact is in dest)
+        # There is no manifest, so no deletion detection should happen
+        assert local.check_if_outdated("reference") is False
+
+        # Even after an update, the artifact must not be removed
+        local.update()
+        assert os.path.isfile(os.path.join(destination, "artifact"))  # noqa: PTH113, PTH118

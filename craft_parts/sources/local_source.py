@@ -43,6 +43,11 @@ from .base import (
 
 logger = logging.getLogger(__name__)
 
+# Hidden file written to part_src_dir after a pull to record the set of source
+# entries at that point in time.  Used by check_if_outdated() to detect files
+# and directories that were deleted from the source since the last pull.
+_SOURCE_MANIFEST_FILENAME = ".craft-parts-source-manifest"
+
 
 class LocalSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a generic local source."""
@@ -112,6 +117,11 @@ class LocalSource(SourceHandler):
             copy_function=self.copy_function,
         )
 
+        _write_source_manifest(
+            self.part_src_dir,
+            _collect_source_entries(self.source_abspath, self._ignore),
+        )
+
     @override
     def check_if_outdated(
         self, target: str, *, ignore_files: list[str] | None = None
@@ -171,27 +181,37 @@ class LocalSource(SourceHandler):
         logger.debug("updated files: %r", self._updated_files)
         logger.debug("updated directories: %r", self._updated_directories)
 
-        # Find files/directories that exist in the destination but not in the source
-        for root, directories, files in os.walk(str(self.part_src_dir), topdown=True):
-            rel_root = os.path.relpath(root, str(self.part_src_dir))  # noqa: PTH118
+        # Detect files/directories deleted from the source since the last pull
+        # by comparing the current source against the stored manifest.
+        # We intentionally compare source-vs-manifest (not destination-vs-source)
+        # so that files added to part_src_dir by later lifecycle steps (e.g. build
+        # artifacts in part_build_dir when LocalSource is used for build updates)
+        # are never incorrectly treated as deletions.
+        prev_entries = _read_source_manifest(self.part_src_dir)
+        if prev_entries is not None:
+            current_entries = _collect_source_entries(self.source_abspath, self._ignore)
+            deleted = prev_entries - current_entries
 
-            # Check for directories that exist in destination but not in source
-            dirs_to_skip: list[str] = []
-            for directory in directories:
-                rel_dir = os.path.normpath(os.path.join(rel_root, directory))  # noqa: PTH118
-                src_path = os.path.join(self.source_abspath, rel_dir)  # noqa: PTH118
-                if not os.path.lexists(src_path):  # noqa: PTH110
-                    self._deleted_directories.add(rel_dir)
-                    dirs_to_skip.append(directory)
-            for d in dirs_to_skip:
-                directories.remove(d)
+            # Classify each deleted entry as a file or a directory based on
+            # what is currently present in the destination (part_src_dir).
+            deleted_dirs: set[str] = set()
+            for rel_path in deleted:
+                dest_path = Path(self.part_src_dir) / rel_path
+                if not dest_path.is_symlink() and dest_path.is_dir():
+                    deleted_dirs.add(rel_path)
+                else:
+                    self._deleted_files.add(rel_path)
 
-            # Check for files that exist in destination but not in source
-            for file_name in files:
-                rel_file = os.path.normpath(os.path.join(rel_root, file_name))  # noqa: PTH118
-                src_path = os.path.join(self.source_abspath, rel_file)  # noqa: PTH118
-                if not os.path.lexists(src_path):  # noqa: PTH110
-                    self._deleted_files.add(rel_file)
+            # Filter out files that are inside deleted directories – the whole
+            # directory tree will be removed by shutil.rmtree in update().
+            self._deleted_files = {
+                f
+                for f in self._deleted_files
+                if not any(
+                    f == d or f.startswith(d + os.sep) for d in deleted_dirs
+                )
+            }
+            self._deleted_directories = deleted_dirs
 
         logger.debug("deleted files: %r", self._deleted_files)
         logger.debug("deleted directories: %r", self._deleted_directories)
@@ -250,6 +270,68 @@ class LocalSource(SourceHandler):
             dest_path = os.path.join(self.part_src_dir, file_path)  # noqa: PTH118
             if os.path.lexists(dest_path):  # noqa: PTH110
                 os.remove(dest_path)  # noqa: PTH107
+
+        # Refresh the manifest only if one already exists (i.e. pull() was
+        # previously called for this source→destination pair).  Skipping this
+        # when no manifest is present avoids inadvertently creating a manifest
+        # for uses of LocalSource where pull() is never called (e.g. the
+        # src→build update in _update_build), which would cause build artifacts
+        # to be misidentified as deleted source files on the next check.
+        if (Path(self.part_src_dir) / _SOURCE_MANIFEST_FILENAME).exists():
+            _write_source_manifest(
+                self.part_src_dir,
+                _collect_source_entries(self.source_abspath, self._ignore),
+            )
+
+
+def _collect_source_entries(
+    source: str,
+    ignore_fn: Callable[..., list[str]],
+) -> set[str]:
+    """Walk *source* and return relative paths of all entries (with ignore).
+
+    Both regular files and directories are included so that the manifest can
+    detect directory-level deletions as well as individual file deletions.
+    Symlinks to directories are included as entries but are not descended into
+    (matching the behaviour of :func:`~craft_parts.utils.file_utils.link_or_copy_tree`).
+    """
+    entries: set[str] = set()
+    for root, directories, file_names in os.walk(source, topdown=True):
+        ignored = set(ignore_fn(root, directories + file_names))
+        if ignored:
+            directories[:] = [d for d in directories if d not in ignored]
+
+        for file_name in set(file_names) - ignored:
+            path = os.path.join(root, file_name)  # noqa: PTH118
+            entries.add(os.path.relpath(path, source))  # noqa: PTH118
+
+        for directory in list(directories):
+            path = os.path.join(root, directory)  # noqa: PTH118
+            entries.add(os.path.relpath(path, source))  # noqa: PTH118
+            if os.path.islink(path):  # noqa: PTH114
+                # Treat dir-symlinks as opaque entries; do not descend.
+                directories.remove(directory)
+
+    return entries
+
+
+def _read_source_manifest(part_src_dir: Path) -> set[str] | None:
+    """Return the set of source entries recorded at the last pull, or None.
+
+    Returns ``None`` when no manifest exists (e.g. after a clean or before
+    the first pull with manifest support).
+    """
+    manifest_path = Path(part_src_dir) / _SOURCE_MANIFEST_FILENAME
+    if not manifest_path.is_file():
+        return None
+    content = manifest_path.read_text().strip()
+    return set(content.splitlines()) if content else set()
+
+
+def _write_source_manifest(part_src_dir: Path, entries: set[str]) -> None:
+    """Write the source entry manifest to *part_src_dir*."""
+    manifest_path = Path(part_src_dir) / _SOURCE_MANIFEST_FILENAME
+    manifest_path.write_text("\n".join(sorted(entries)) + "\n")
 
 
 def _ignore(
