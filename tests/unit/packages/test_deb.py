@@ -626,6 +626,30 @@ def fake_dpkg_query(mocker):
     mocker.patch("subprocess.check_output", side_effect=dpkg_query)
 
 
+def test_extract_deb_name_version_keeps_architecture(mocker, tmpdir):
+    deb_path = Path(tmpdir, "libc6-i386.deb")
+    deb_path.touch()
+
+    mock_check_output = mocker.patch(
+        "subprocess.check_output",
+        return_value=b"libc6:i386=2.39-0ubuntu8.6\n",
+    )
+
+    result = deb.Ubuntu._extract_deb_name_version(deb_path)
+
+    assert result == "libc6:i386=2.39-0ubuntu8.6"
+    assert mock_check_output.mock_calls == [
+        call(
+            [
+                "dpkg-deb",
+                "--show",
+                "--showformat=${binary:Package}=${Version}",
+                deb_path,
+            ]
+        )
+    ]
+
+
 class TestGetPackagesInBase:
     def test_hardcoded_bases(self):
         for base in ("core", "core16", "core18"):

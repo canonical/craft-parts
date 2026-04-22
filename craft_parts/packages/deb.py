@@ -798,7 +798,7 @@ class Ubuntu(BaseRepository):
     def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
         try:
             output = subprocess.check_output(
-                ["dpkg-deb", "--show", "--showformat=${Package}=${Version}", deb_path]
+                ["dpkg-deb", "--show", "--showformat=${binary:Package}=${Version}", deb_path]
             )
         except subprocess.CalledProcessError as err:
             raise errors.UnpackError(str(deb_path)) from err
