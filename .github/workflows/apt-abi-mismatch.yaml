@@ -56,19 +56,36 @@ jobs:
           sudo lxd init --auto
           sudo chmod 666 /var/snap/lxd/common/lxd/unix.socket
           lxc version
+          # GitHub Actions runners don't route IPv6; disable it in LXD's bridge
+          # so apt inside containers goes straight to IPv4.
+          lxc network set lxdbr0 ipv6.address none ipv6.nat false
+          # Ensure IP forwarding and NAT masquerade are active so containers
+          # can reach the internet over IPv4 through the host.
+          sudo sysctl -w net.ipv4.ip_forward=1
+          BRIDGE_SUBNET=$(ip -4 addr show lxdbr0 \
+            | awk '/inet /{print $2}')
+          sudo iptables -t nat -C POSTROUTING \
+            -s "$BRIDGE_SUBNET" ! -d "$BRIDGE_SUBNET" -j MASQUERADE \
+            2>/dev/null \
+          || sudo iptables -t nat -A POSTROUTING \
+            -s "$BRIDGE_SUBNET" ! -d "$BRIDGE_SUBNET" -j MASQUERADE
 
       - name: Launch Ubuntu ${{ matrix.ubuntu-version }} LXD container
         run: |
           lxc launch ${{ matrix.lxd-image }} testenv
           # Wait until the container is running and reachable
           lxc exec testenv -- true
-          # Allow the container's network and services to fully start
-          sleep 10
-          # Wait until the container reports that it has network connectivity
+          # Wait until the container can make a real outbound TCP connection to
+          # archive.ubuntu.com:80. DNS resolution succeeds locally even when
+          # the route is broken, so we test actual connectivity instead.
           lxc exec testenv -- sh -c \
-            'until systemctl is-active --quiet network-online.target 2>/dev/null \
-               || systemctl is-active --quiet systemd-networkd-wait-online.service 2>/dev/null \
-               || getent hosts archive.ubuntu.com >/dev/null 2>&1; do sleep 2; done'
+            'until curl --silent --max-time 5 \
+               --output /dev/null \
+               --write-out "%{http_code}" \
+               http://archive.ubuntu.com/ \
+               | grep -qE "^[0-9]"; do
+               echo "Waiting for outbound network…"; sleep 5
+             done'
 
       - name: Copy source into container
         run: |
@@ -82,7 +99,9 @@ jobs:
 
       - name: Install uv in container
         run: |
-          lxc exec testenv -- apt-get update -qq
+          # Force IPv4 so apt doesn't waste time on unreachable IPv6 addresses
+          # (GitHub Actions runners have no outbound IPv6 routing).
+          lxc exec testenv -- apt-get -o Acquire::ForceIPv4=true update -qq
           lxc exec testenv -- snap install --classic astral-uv
 
       - name: Install dependencies with noble python-apt
