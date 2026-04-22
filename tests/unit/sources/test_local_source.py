@@ -494,7 +494,6 @@ class TestLocalUpdate:
         assert also_ignore == ["also ignore"]
         assert local._ignore_patterns == ["*.ignore"]
 
-    @pytest.mark.xfail(strict=True, reason="https://github.com/canonical/craft-parts/issues/710")
     def test_file_removed(self, new_dir, partitions):
         source = "source"
         destination = "destination"
@@ -538,7 +537,6 @@ class TestLocalUpdate:
         # file2 was not removed, it must still be in destination
         assert os.path.isfile(os.path.join(destination, "file2"))  # noqa: PTH113, PTH118
 
-    @pytest.mark.xfail(strict=True, reason="https://github.com/canonical/craft-parts/issues/710")
     def test_file_removed_from_subdirectory(self, new_dir, partitions):
         source = "source"
         source_dir = os.path.join(source, "dir")  # noqa: PTH118

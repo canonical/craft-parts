@@ -22,6 +22,7 @@ import glob
 import logging
 import os
 import pathlib
+import shutil
 from collections.abc import Callable
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -95,6 +96,8 @@ class LocalSource(SourceHandler):
         )
         self._updated_files: set[str] = set()
         self._updated_directories: set[str] = set()
+        self._deleted_files: set[str] = set()
+        self._deleted_directories: set[str] = set()
 
     @override
     def pull(self) -> None:
@@ -130,6 +133,8 @@ class LocalSource(SourceHandler):
 
         self._updated_files = set()
         self._updated_directories = set()
+        self._deleted_files = set()
+        self._deleted_directories = set()
 
         for root, directories, files in os.walk(self.source_abspath, topdown=True):
             ignored = set(
@@ -166,7 +171,37 @@ class LocalSource(SourceHandler):
         logger.debug("updated files: %r", self._updated_files)
         logger.debug("updated directories: %r", self._updated_directories)
 
-        return len(self._updated_files) > 0 or len(self._updated_directories) > 0
+        # Find files/directories that exist in the destination but not in the source
+        for root, directories, files in os.walk(str(self.part_src_dir), topdown=True):
+            rel_root = os.path.relpath(root, str(self.part_src_dir))  # noqa: PTH118
+
+            # Check for directories that exist in destination but not in source
+            dirs_to_skip: list[str] = []
+            for directory in directories:
+                rel_dir = os.path.normpath(os.path.join(rel_root, directory))  # noqa: PTH118
+                src_path = os.path.join(self.source_abspath, rel_dir)  # noqa: PTH118
+                if not os.path.lexists(src_path):  # noqa: PTH110
+                    self._deleted_directories.add(rel_dir)
+                    dirs_to_skip.append(directory)
+            for d in dirs_to_skip:
+                directories.remove(d)
+
+            # Check for files that exist in destination but not in source
+            for file_name in files:
+                rel_file = os.path.normpath(os.path.join(rel_root, file_name))  # noqa: PTH118
+                src_path = os.path.join(self.source_abspath, rel_file)  # noqa: PTH118
+                if not os.path.lexists(src_path):  # noqa: PTH110
+                    self._deleted_files.add(rel_file)
+
+        logger.debug("deleted files: %r", self._deleted_files)
+        logger.debug("deleted directories: %r", self._deleted_directories)
+
+        return (
+            len(self._updated_files) > 0
+            or len(self._updated_directories) > 0
+            or len(self._deleted_files) > 0
+            or len(self._deleted_directories) > 0
+        )
 
     @override
     def get_outdated_files(self) -> tuple[list[str], list[str]]:
@@ -201,6 +236,20 @@ class LocalSource(SourceHandler):
                 os.path.join(self.source, file_path),  # noqa: PTH118
                 os.path.join(self.part_src_dir, file_path),  # noqa: PTH118
             )
+
+        # Remove deleted directories (sort in reverse to remove deepest paths first)
+        for directory in sorted(self._deleted_directories, reverse=True):
+            dest_path = os.path.join(self.part_src_dir, directory)  # noqa: PTH118
+            if os.path.islink(dest_path):  # noqa: PTH114
+                os.remove(dest_path)  # noqa: PTH107
+            elif os.path.isdir(dest_path):  # noqa: PTH112
+                shutil.rmtree(dest_path)
+
+        # Remove deleted files
+        for file_path in self._deleted_files:
+            dest_path = os.path.join(self.part_src_dir, file_path)  # noqa: PTH118
+            if os.path.lexists(dest_path):  # noqa: PTH110
+                os.remove(dest_path)  # noqa: PTH107
 
 
 def _ignore(
