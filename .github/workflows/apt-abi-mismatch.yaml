@@ -41,7 +41,7 @@ jobs:
             # Ubuntu 24.04 ships libapt-pkg.so.6.0: noble python-apt matches.
             expect-failure: false
           - ubuntu-version: "26.04"
-            lxd-image: ubuntu:26.04
+            lxd-image: ubuntu-daily:26.04
             # Ubuntu 26.04 ships libapt-pkg.so.7.0: noble python-apt mismatches.
             # The test failure here IS the bug being reproduced (Issue #1554).
             expect-failure: true
