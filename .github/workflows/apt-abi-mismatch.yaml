@@ -63,7 +63,7 @@ jobs:
           # Wait until the container is running and reachable
           lxc exec testenv -- true
           # Allow the container's network and services to fully start
-          sleep 5
+          sleep 10
 
       - name: Copy source into container
         run: |
