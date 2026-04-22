@@ -1,0 +1,137 @@
+name: Reproduce libapt ABI mismatch (Issue #1554)
+
+# This workflow reproduces the ABI mismatch between the noble (Ubuntu 24.04)
+# python-apt and Ubuntu 26.04's libapt-pkg.so.7.0.
+#
+# The noble python-apt was compiled against libapt-pkg.so.6.0. Running it on
+# Ubuntu 26.04 (which ships libapt-pkg.so.7.0 / apt 3.x) causes either:
+#   - An ImportError (libapt-pkg.so.6.0 not found), or
+#   - An empty apt cache (binary cache format version mismatch),
+# both leading to BuildPackageNotFound for valid packages.
+#
+# This workflow:
+#   1. Runs the test on Ubuntu 24.04 using the noble python-apt → PASSES
+#   2. Runs the same test on Ubuntu 26.04 using the noble python-apt → FAILS
+#
+# See: https://github.com/canonical/craft-parts/issues/1554
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - craft_parts/packages/apt_cache.py
+      - tests/integration/packages/test_apt_abi_mismatch.py
+      - .github/workflows/apt-abi-mismatch.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu-24-04-noble-python-apt:
+    name: Ubuntu 24.04 – noble python-apt (should pass)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up LXD
+        run: |
+          sudo snap install lxd --channel=latest/stable 2>/dev/null \
+            || sudo snap refresh lxd --channel=latest/stable
+          sudo lxd init --auto
+          sudo chmod 666 /var/snap/lxd/common/lxd/unix.socket
+          lxc version
+
+      - name: Launch Ubuntu 24.04 LXD container
+        run: |
+          lxc launch ubuntu:24.04 noble --wait
+          # Allow the container's network and services to start
+          sleep 5
+
+      - name: Copy source into container
+        run: |
+          lxc exec noble -- mkdir -p /root/craft-parts
+          tar -C . \
+            --exclude='.git' \
+            --exclude='.venv' \
+            --exclude='__pycache__' \
+            -czf - . \
+          | lxc exec noble -- tar -C /root/craft-parts -xzf -
+
+      - name: Install uv in container
+        run: |
+          lxc exec noble -- apt-get update -qq
+          lxc exec noble -- snap install --classic astral-uv
+
+      - name: Install dependencies with noble python-apt
+        run: |
+          lxc exec noble -- sh -c \
+            "cd /root/craft-parts && uv sync --group dev --group dev-noble"
+
+      - name: Run test (expected to pass on Ubuntu 24.04)
+        run: |
+          lxc exec noble -- sh -c \
+            "cd /root/craft-parts && uv run pytest \
+              tests/integration/packages/test_apt_abi_mismatch.py \
+              -v --tb=short"
+
+  ubuntu-26-04-noble-python-apt:
+    name: Ubuntu 26.04 – noble python-apt (should fail, demonstrating the bug)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up LXD
+        run: |
+          sudo snap install lxd --channel=latest/stable 2>/dev/null \
+            || sudo snap refresh lxd --channel=latest/stable
+          sudo lxd init --auto
+          sudo chmod 666 /var/snap/lxd/common/lxd/unix.socket
+          lxc version
+
+      - name: Launch Ubuntu 26.04 LXD container
+        run: |
+          lxc launch ubuntu:26.04 resolute --wait
+          # Allow the container's network and services to start
+          sleep 5
+
+      - name: Copy source into container
+        run: |
+          lxc exec resolute -- mkdir -p /root/craft-parts
+          tar -C . \
+            --exclude='.git' \
+            --exclude='.venv' \
+            --exclude='__pycache__' \
+            -czf - . \
+          | lxc exec resolute -- tar -C /root/craft-parts -xzf -
+
+      - name: Install uv in container
+        run: |
+          lxc exec resolute -- apt-get update -qq
+          lxc exec resolute -- snap install --classic astral-uv
+
+      - name: Install dependencies with noble python-apt (on Ubuntu 26.04)
+        run: |
+          # Install the Ubuntu 24.04 (noble) version of python-apt on Ubuntu 26.04.
+          # This simulates what happens when a core24-based snap runs on Ubuntu 26.04:
+          # the snap bundles python-apt compiled against libapt-pkg.so.6.0, but
+          # Ubuntu 26.04 ships libapt-pkg.so.7.0.
+          lxc exec resolute -- sh -c \
+            "cd /root/craft-parts && uv sync --group dev --group dev-noble"
+
+      - name: Reproduce ABI mismatch (expected to fail – demonstrates Issue #1554)
+        run: |
+          # The test is expected to fail on Ubuntu 26.04 with noble python-apt.
+          # Failure here demonstrates that the bug is present.
+          # If the test unexpectedly passes, a warning is emitted but the job
+          # still succeeds so that a fix does not break this reproduction workflow.
+          if lxc exec resolute -- sh -c \
+              "cd /root/craft-parts && uv run pytest \
+                tests/integration/packages/test_apt_abi_mismatch.py \
+                -v --tb=short"; then
+            echo "::warning::Issue #1554 may be resolved: noble python-apt" \
+              "worked correctly on Ubuntu 26.04. Update this workflow if the" \
+              "fix has landed."
+          else
+            echo "::notice::Issue #1554 reproduced as expected: noble" \
+              "python-apt failed on Ubuntu 26.04 (ABI mismatch confirmed)."
+          fi
