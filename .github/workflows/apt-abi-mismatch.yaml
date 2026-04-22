@@ -56,11 +56,6 @@ jobs:
           sudo lxd init --auto
           sudo chmod 666 /var/snap/lxd/common/lxd/unix.socket
           lxc version
-          # GitHub Actions runners don't route IPv6; disable it in LXD's bridge
-          # so apt inside containers goes straight to IPv4.
-          # lxc network set accepts only one key=value pair per invocation.
-          lxc network set lxdbr0 ipv6.address none
-          lxc network set lxdbr0 ipv6.nat false
           # Ensure IP forwarding and NAT masquerade are active so containers
           # can reach the internet over IPv4 through the host.
           sudo sysctl -w net.ipv4.ip_forward=1
@@ -77,15 +72,12 @@ jobs:
           lxc launch ${{ matrix.lxd-image }} testenv
           # Wait until the container is running and reachable
           lxc exec testenv -- true
-          # Wait until the container can make a real outbound TCP connection to
-          # archive.ubuntu.com:80. DNS resolution succeeds locally even when
-          # the route is broken, so we test actual connectivity instead.
+          # Wait until the container has working DNS and outbound HTTP.
+          # curl exits 0 only on a real HTTP response; DNS failure/timeout
+          # produce non-zero exit codes, so the loop keeps retrying.
           lxc exec testenv -- sh -c \
-            'until curl --silent --max-time 5 \
-               --output /dev/null \
-               --write-out "%{http_code}" \
-               http://archive.ubuntu.com/ \
-               | grep -qE "^[0-9]"; do
+            'until curl --silent --max-time 5 --output /dev/null \
+               http://archive.ubuntu.com/; do
                echo "Waiting for outbound network…"; sleep 5
              done'
 
