@@ -58,7 +58,9 @@ jobs:
           lxc version
           # GitHub Actions runners don't route IPv6; disable it in LXD's bridge
           # so apt inside containers goes straight to IPv4.
-          lxc network set lxdbr0 ipv6.address none ipv6.nat false
+          # lxc network set accepts only one key=value pair per invocation.
+          lxc network set lxdbr0 ipv6.address none
+          lxc network set lxdbr0 ipv6.nat false
           # Ensure IP forwarding and NAT masquerade are active so containers
           # can reach the internet over IPv4 through the host.
           sudo sysctl -w net.ipv4.ip_forward=1
