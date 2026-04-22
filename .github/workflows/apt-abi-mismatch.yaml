@@ -59,8 +59,10 @@ jobs:
 
       - name: Launch Ubuntu ${{ matrix.ubuntu-version }} LXD container
         run: |
-          lxc launch ${{ matrix.lxd-image }} testenv --wait
-          # Allow the container's network and services to start
+          lxc launch ${{ matrix.lxd-image }} testenv
+          # Wait until the container is running and reachable
+          lxc exec testenv -- true
+          # Allow the container's network and services to fully start
           sleep 5
 
       - name: Copy source into container
