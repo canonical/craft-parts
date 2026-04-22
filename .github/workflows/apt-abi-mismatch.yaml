@@ -64,6 +64,11 @@ jobs:
           lxc exec testenv -- true
           # Allow the container's network and services to fully start
           sleep 10
+          # Wait until the container reports that it has network connectivity
+          lxc exec testenv -- sh -c \
+            'until systemctl is-active --quiet network-online.target 2>/dev/null \
+               || systemctl is-active --quiet systemd-networkd-wait-online.service 2>/dev/null \
+               || getent hosts archive.ubuntu.com >/dev/null 2>&1; do sleep 2; done'
 
       - name: Copy source into container
         run: |
