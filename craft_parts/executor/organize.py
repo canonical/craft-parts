@@ -81,6 +81,9 @@ def organize_files(  # noqa: PLR0912
 
             # Organize a dir to a dir
             if os.path.isdir(src) and "*" not in key:  # noqa: PTH112
+                if os.path.abspath(dst) == os.path.abspath(src):  # noqa: PTH100
+                    # Trying to organize a directory to the same place, skipping
+                    continue
                 file_utils.link_or_copy_tree(src, dst)
                 shutil.rmtree(src)
                 continue
