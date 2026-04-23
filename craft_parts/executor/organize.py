@@ -70,10 +70,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
         the default partition.
     """
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
-        src_partition_pair = path_utils.get_partition_and_path(key, default_partition)
-        src = get_src_path(
-            src_partition_pair, part_name, install_dir_map, default_partition
-        )
+        src = get_src_path(key, part_name, install_dir_map, default_partition)
         src_root = install_dir_map.get(None) or install_dir_map[default_partition]
 
         # Remove the leading slash so the path actually joins

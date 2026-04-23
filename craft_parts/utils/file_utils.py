@@ -441,6 +441,7 @@ def are_paths_equivalent(  # noqa: PLR0912
                         break
                     if a_read != b_read:
                         differences.append("different contents")
+                        break
 
     if differences:
         return False, differences

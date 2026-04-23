@@ -17,6 +17,7 @@
 from pathlib import Path
 
 import pytest
+from craft_parts import errors
 
 # Although it's not explicitly used, randomize_iglob is used here as it's an auto-use
 # fixture that checks that the order of an organize doesn't matter.
@@ -276,12 +277,10 @@ def test_organize_no_overwrite_idempotent(tmp_path, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
-        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
-        check_copy=False,
         overwrite=False,
         install_dirs={
             "default": Path(tmp_path / "install"),
@@ -295,12 +294,10 @@ def test_organize_no_overwrite_idempotent(tmp_path, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
-        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data.get("expected_2", data["expected"]),
         expected_message=data.get("expected_message_2", data.get("expected_message")),
         expected_overwrite=data.get("expected_overwrite"),
-        check_copy=False,
         overwrite=False,
         install_dirs={
             "default": Path(tmp_path / "install"),

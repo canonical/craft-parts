@@ -31,8 +31,8 @@ from craft_parts.executor.organize import organize_files
 def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
     """Replace the system's iglob function with a function that randomizes the glob.
 
-    It also runs each test case 3 times to increase the chance of a test failing due
-    to the random glob order.
+    It also runs each test case multiple  times to increase the chance of a test failing
+    due to the random glob order.
 
     This will catch issues that occur due to order being important.
     """
@@ -337,12 +337,10 @@ def test_organize_no_overwrite_idempotent(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
-        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
-        check_copy=False,
         overwrite=False,
         install_dirs={None: Path(new_dir / "install")},
     )
@@ -352,18 +350,16 @@ def test_organize_no_overwrite_idempotent(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
-        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data.get("expected_2", data["expected"]),
         expected_message=data.get("expected_message_2", data.get("expected_message")),
         expected_overwrite=data.get("expected_overwrite"),
-        check_copy=False,
         overwrite=False,
         install_dirs={None: Path(new_dir / "install")},
     )
 
 
-def organize_and_assert(  # noqa: PLR0912
+def organize_and_assert(
     *,
     tmp_path: Path,
     setup_dirs,

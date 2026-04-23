@@ -396,7 +396,7 @@ def test_are_paths_equivalent(
     tmp_path: pathlib.Path,
     a: pathlib.Path,
     b: pathlib.Path,
-    expected: tuple[bool, str | None],
+    expected: tuple[bool, list[str] | None],
 ):
     a = tmp_path / a
     b = tmp_path / b
@@ -609,7 +609,7 @@ def test_find_merge_conflicts(
     fs: FakeFilesystem,
     source_files: dict[pathlib.Path, dict[str, Any]],
     dest_files: dict[pathlib.Path, dict[str, Any]],
-    expected_conflicts: dict[pathlib.Path, str],
+    expected_conflicts: dict[pathlib.Path, list[str]],
 ):
     # Pretend to be root so we can create certain special files like character devices.
     pyfakefs.helpers.set_uid(0)
