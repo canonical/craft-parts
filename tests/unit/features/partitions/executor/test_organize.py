@@ -205,12 +205,6 @@ from tests.unit.executor.test_organize import (
             "organize_map": {"foo": "/bar"},
             "expected": [(["bar"], "")],
         },
-        # trailing_slash_in_value
-        {
-            "setup_files": ["foo"],
-            "organize_map": {"foo": "dir/"},
-            "expected": [(["foo"], "dir")],
-        },
         # overwrite_existing_file
         {
             "setup_files": ["foo", "bar"],
@@ -308,57 +302,6 @@ from tests.unit.executor.test_organize import (
                 (["foo"], os.path.join("nested", "dir")),  # noqa: PTH118
             ],
         },
-        # from_build
-        {
-            "build_files": ["foo", "bar"],
-            "organize_map": {"(build)/foo": "dir/", "(build)/bar": "(mypart)/baz"},
-            "expected": [
-                (["foo"], "dir"),
-                (["baz"], "../partitions/mypart/parts/part-name/install"),
-            ],
-            "check_copy": True,
-        },
-        # from_build_*
-        {
-            "build_files": ["foo", "dir1/bar"],
-            "organize_map": {"(build)/f*": "dir2/", "(build)/": "."},
-            "expected": [
-                (["dir1", "dir2", "foo"], ""),
-                (["bar"], "dir1"),
-                (["foo"], "dir2"),
-            ],
-            "check_copy": True,
-        },
-        # from_build_*_to_partition
-        pytest.param(
-            {
-                "build_files": ["my-dir/subdir/foo", "my-dir/bar"],
-                "organize_map": {"(build)/*": "(mypart)/"},
-                "expected": [
-                    (["my-dir"], "../partitions/mypart/parts/part-name/install"),
-                    (
-                        ["bar", "subdir"],
-                        "../partitions/mypart/parts/part-name/install/my-dir",
-                    ),
-                    (
-                        ["foo"],
-                        "../partitions/mypart/parts/part-name/install/my-dir/subdir",
-                    ),
-                ],
-                "check_copy": True,
-            },
-            id="build-wildcard-to-partition",
-        ),
-        # to_build
-        {
-            "setup_files": [
-                "foo",
-            ],
-            "organize_map": {"foo": "(build)/foo"},
-            "expected": errors.FileOrganizeError,
-            "expected_message": (r".*Cannot organize files into the build directory"),
-            "check_copy": True,
-        },
         # from_*_to_partition
         pytest.param(
             {
@@ -384,7 +327,6 @@ from tests.unit.executor.test_organize import (
 def test_organize(new_dir, data):
     install_dirs = {
         "default": new_dir / "install",
-        "build": new_dir / "build",
         "mypart": new_dir / "partitions/mypart/parts/part-name/install",
         "yourpart": new_dir / "partitions/yourpart/parts/part-name/install",
         "our/special-part": new_dir
@@ -396,12 +338,10 @@ def test_organize(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
-        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
-        check_copy=data.get("check_copy", False),
         overwrite=False,
         install_dirs=install_dirs,
     )
@@ -412,12 +352,10 @@ def test_organize(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
-        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
-        check_copy=data.get("check_copy", False),
         overwrite=True,
         install_dirs=install_dirs,
     )
@@ -458,12 +396,10 @@ def test_organize_no_overwrite(new_dir, data):
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
-        build_files=data.get("build_files", []),
         organize_map=data["organize_map"],
         expected=data["expected"],
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
-        check_copy=False,
         overwrite=False,
         install_dirs=install_dirs,
     )

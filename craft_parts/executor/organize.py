@@ -34,7 +34,6 @@ from typing import TYPE_CHECKING
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
 from craft_parts.utils.partition_utils import (
-    BUILD_PARTITION,
     DEFAULT_PARTITION,
     OVERLAY_PARTITION,
 )
@@ -83,7 +82,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
             file_map[key].lstrip("/"), default_partition
         )
         dst, dst_string = get_dst_path(
-            dst_partition_pair, part_name, install_dir_map, default_partition
+            key, file_map, install_dir_map, default_partition
         )
         dst_path = pathlib.Path(dst)
 
@@ -94,11 +93,6 @@ def organize_files(  # noqa: PLR0912, PLR0915
             and (dst_path.parent / dst_path.readlink()) == dst_path
         ):
             dst_path.unlink()
-
-        # If the destinations ends with a slash character and it doesn't exist,
-        # create it as a directory.
-        if dst.endswith("/") and not os.path.exists(dst.rstrip("/")):  # noqa: PTH110
-            os.makedirs(dst)  # noqa: PTH103
 
         sources = iglob(src, recursive=True)  # noqa: PTH207
 
@@ -148,8 +142,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     else:
                         real_dst_path = dst_path
                     file_utils.link_or_copy_tree(src, real_dst_path)
-                    if src_partition_pair.partition != BUILD_PARTITION:
-                        shutil.rmtree(src)
+                    shutil.rmtree(src)
                     continue
                 # Key is a glob
                 # Organizing to the root of a partition in overwrite mode.
@@ -183,8 +176,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     # Where the key is a glob, we get the contents of the dir to
                     # organize, so we need to add the source's name back in.
                     file_utils.link_or_copy_tree(src_path, real_dst_path)
-                    if src_partition_pair.partition != BUILD_PARTITION:
-                        shutil.rmtree(src)
+                    shutil.rmtree(src)
                     continue
 
             # Organize a "not dir" (file, character device, etc.) to a "not dir"
@@ -273,28 +265,23 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     )
 
             os.makedirs(os.path.dirname(dst), exist_ok=True)  # noqa: PTH103, PTH120
-            if src_partition_pair.partition == BUILD_PARTITION:
-                if os.path.isdir(src):  # noqa: PTH112
-                    file_utils.link_or_copy_tree(src, dst)
-                else:
-                    file_utils.link_or_copy(src, dst)
-            else:
-                file_utils.move(src, dst)
+            file_utils.move(src, dst)
 
 
 def get_src_path(
-    src_partition_path: path_utils.PartitionPathPair,
+    key: str,
     part_name: str,
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
 ) -> str:
     """Return the full path for a relative source."""
-    src_partition, src_inner_path = src_partition_path
+    src_partition, src_inner_path = path_utils.get_partition_and_path(
+        key, default_partition
+    )
 
     if src_partition and src_partition not in [
         default_partition,
         DEFAULT_PARTITION,
-        BUILD_PARTITION,
     ]:
         raise errors.FileOrganizeError(
             part_name=part_name,
@@ -312,21 +299,18 @@ def get_src_path(
 
 
 def get_dst_path(
-    dst_partition_path: path_utils.PartitionPathPair,
-    part_name: str,
+    key: str,
+    file_map: dict[str, str],
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
 ) -> tuple[str, str]:
     """Return the full destination path and log-friendly representation of a destination."""
-    # The build pseudo-partition can only be specified in the left hand
-    # side of the organize item.
-    dst_partition, dst_inner_path = dst_partition_path
-
-    if dst_partition == BUILD_PARTITION:
-        raise errors.FileOrganizeError(
-            part_name=part_name,
-            message="Cannot organize files into the build directory",
-        )
+    # Remove the leading slash so the path actually joins
+    # Also trailing slash is significant, be careful if using pathlib!
+    dst_partition, dst_inner_path = path_utils.get_partition_and_path(
+        file_map[key].lstrip("/"),
+        default_partition,
+    )
 
     # Replace default partition default name with alias name to allow
     # using (default) in paths even with aliased default partition
