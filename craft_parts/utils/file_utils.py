@@ -426,6 +426,12 @@ def are_paths_equivalent(  # noqa: PLR0912
     if differences:
         return False, differences
 
+    if stat.S_ISLNK(a_stat.st_mode) and stat.S_ISLNK(b_stat.st_mode):
+        a_target = a.readlink()
+        b_target = b.readlink()
+        if a_target != b_target:
+            differences.append(f"different symlink targets ({a_target}, {b_target})")
+
     if a_mode != b_mode:
         differences.append(f"different modes ({a_mode:o}, {b_mode:o})")
 

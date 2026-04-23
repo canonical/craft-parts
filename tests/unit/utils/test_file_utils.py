@@ -390,6 +390,23 @@ def test_create_similar_directory_permissions(tmp_path, mock_chown):
             (False, ["different types (file, symlink)"]),
             id="symlink_to_wrong_file",
         ),
+        pytest.param(
+            pathlib.Path("broken_link"),
+            pathlib.Path("another_broken_link"),
+            (True, None),
+            id="two-broken-links-same-target",
+        ),
+        pytest.param(
+            pathlib.Path("broken_link"),
+            pathlib.Path("different_broken_link"),
+            (
+                False,
+                [
+                    "different symlink targets (this_does_not_exist, that_does_not_exist)"
+                ],
+            ),
+            id="two-broken-links-different-targets",
+        ),
     ],
 )
 def test_are_paths_equivalent(
@@ -416,6 +433,8 @@ def test_are_paths_equivalent(
     # This is the most permissive we can make it in GH runners
     (tmp_path / "permissive_dir").mkdir(mode=0o750)
     (tmp_path / "broken_link").symlink_to("this_does_not_exist")
+    (tmp_path / "another_broken_link").symlink_to("this_does_not_exist")
+    (tmp_path / "different_broken_link").symlink_to("that_does_not_exist")
     (tmp_path / "symlink_to_file").symlink_to("empty_file")
     (tmp_path / "symlink_to_dir").symlink_to("empty_dir")
 
