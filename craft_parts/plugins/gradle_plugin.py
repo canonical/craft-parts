@@ -26,7 +26,7 @@ from urllib.parse import urlparse
 from pydantic import model_validator
 from typing_extensions import Self, override
 
-from craft_parts.utils.gradle_utils import INIT_SCRIPT_TEMPLATE, PUBLISH_BLOCK_TEMPLATE
+from craft_parts.utils.gradle_utils import INIT_SCRIPT_TEMPLATE
 
 from . import validator
 from .java_plugin import JavaPlugin
@@ -50,7 +50,7 @@ class GradlePluginProperties(PluginProperties, frozen=True):
       Whether to use the Gradle daemon during the build.
     """
 
-    plugin: Literal["gradle"] = "gradle"
+    plugin: Literal["gradle", "gradle-use"] = "gradle"
 
     gradle_init_script: str = ""
     gradle_parameters: list[str] = []
@@ -122,11 +122,6 @@ class GradlePlugin(JavaPlugin):
         )
 
     @property
-    def _publish_maven_repo(self) -> Path:
-        """Path to local Maven repository for publishing."""
-        return self._part_info.part_export_dir / "maven-use"
-
-    @property
     def _local_maven_repo(self) -> Path:
         """Path to local Maven repository used for dependency resolution."""
         return self._part_info.project_info.dirs.backstage_dir / "maven-use"
@@ -166,7 +161,7 @@ class GradlePlugin(JavaPlugin):
                 [
                     "--offline",
                     "--init-script",
-                    self._create_self_contained_init_script(options=options),
+                    self._create_self_contained_init_script(),
                 ]
             )
 
@@ -191,23 +186,15 @@ class GradlePlugin(JavaPlugin):
             *self._get_java_post_build_commands(),
         ]
 
-    def _create_self_contained_init_script(
-        self, options: GradlePluginProperties
-    ) -> str:
+    def _create_self_contained_init_script(self) -> str:
         init_script = (
             self._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
         )
         init_script.parent.mkdir(parents=True, exist_ok=True)
-        publish_block = ""
-        if "publish" in options.gradle_task:
-            publish_block = PUBLISH_BLOCK_TEMPLATE.format(
-                publish_maven_repo=self._publish_maven_repo.as_uri()
-            )
 
         init_script.write_text(
             INIT_SCRIPT_TEMPLATE.format(
-                local_maven_repo=self._local_maven_repo.as_uri(),
-                publish_block=publish_block,
+                local_maven_repo=self._local_maven_repo.as_uri()
             )
         )
         return str(init_script)

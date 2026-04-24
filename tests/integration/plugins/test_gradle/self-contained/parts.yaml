@@ -1,22 +1,20 @@
 parts:
   hello:
-    plugin: gradle
+    plugin: gradle-use
     source: java-dep-hello
-    gradle-task: publish
     build-attributes:
       - self-contained
 
   hello-plugin:
-    plugin: gradle
+    plugin: gradle-use
     source: gradle-plugin
-    gradle-task: publish
     build-attributes:
       - self-contained
 
   main:
     plugin: gradle
     source: java-main
-    gradle-task: build
+    gradle-task: installDist
     after:
       - hello
       - hello-plugin
