@@ -28,6 +28,7 @@ import contextlib
 import os
 import shutil
 from glob import iglob
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from craft_parts import errors
@@ -36,7 +37,6 @@ from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from pathlib import Path
 
 
 def organize_files(  # noqa: PLR0912
@@ -166,7 +166,19 @@ def get_src_path(
     if src_partition == DEFAULT_PARTITION:
         src_partition = default_partition
 
-    return os.path.join(install_dir_map[src_partition], src_inner_path)  # noqa: PTH118
+    base_dir = Path(install_dir_map[src_partition]).resolve()
+    src_path = base_dir / src_inner_path
+
+    if not src_path.resolve().is_relative_to(base_dir):
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize from {key!r}, but source paths must stay within "
+                f"the install directory"
+            ),
+        )
+
+    return str(src_path)
 
 
 def get_dst_path(
