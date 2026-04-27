@@ -18,13 +18,44 @@
 
 import shlex
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
+from pydantic import model_validator
 from typing_extensions import override
 
 from craft_parts.utils.gradle_utils import PUBLISH_BLOCK_TEMPLATE
 
 from .gradle_plugin import GradlePlugin, GradlePluginProperties
+
+
+class GradleUsePluginProperties(GradlePluginProperties, frozen=True):
+    """The part properties used by the gradle plugin.
+
+    - gradle_init_script:
+      (string)
+      The path to init script to run before build script is executed.
+    - gradle_parameters:
+      (list of strings)
+      Extra arguments to pass along to Gradle task execution.
+    - gradle_use_daemon:
+      (boolean)
+      Whether to use the Gradle daemon during the build.
+    """
+
+    gradle_init_script: str = ""
+    gradle_parameters: list[str] = []
+    gradle_use_daemon: bool = False
+
+    # part properties required by the plugin
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
+
+    @model_validator(mode="before")
+    @classmethod
+    def no_gradle_task_defined(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Gradle task must not be defined."""
+        if "gradle-task" in data:
+            raise ValueError("gradle-task is not supported by gradle-use.")
+        return data
 
 
 class GradleUsePlugin(GradlePlugin):
@@ -42,13 +73,12 @@ class GradleUsePlugin(GradlePlugin):
     - gradle-parameters:
       (list of strings)
       Flags to pass to the build using the gradle semantics for parameters.
-    - gradle-task:
-      (string)
-      The task to run to build the project.
     - gradle-use-daemon:
       (boolean, default False)
       Whether to use the Gradle daemon during the build.
     """
+
+    properties_class = GradleUsePluginProperties
 
     @property
     def _publish_maven_repo(self) -> Path:
@@ -58,15 +88,17 @@ class GradleUsePlugin(GradlePlugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        options = cast(GradlePluginProperties, self._options)
+        options = cast(GradleUsePluginProperties, self._options)
 
         self._setup_proxy()
 
         extra_args: list[str] = [
             "--init-script",
             self._create_publish_init_script(),
-            *self._get_gradle_init_command_args(options),
         ]
+
+        if options.gradle_init_script:
+            extra_args.append(f"--init-script {options.gradle_init_script}")
 
         if self._is_self_contained():
             extra_args.extend(
