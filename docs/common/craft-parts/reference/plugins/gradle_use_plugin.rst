@@ -1,4 +1,4 @@
-.. _craft_parts_gradle_plugin:
+.. _craft_parts_gradle_use_plugin:
 
 Gradle Use plugin
 =================
