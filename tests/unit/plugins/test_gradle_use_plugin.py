@@ -18,7 +18,6 @@
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.gradle_use_plugin import GradleUsePlugin
-from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -35,15 +34,6 @@ def self_contained_part_info(new_dir):
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {"build-attributes": ["self-contained"]}),
     )
-
-
-def test_gradle_task_should_not_be_defined():
-    with pytest.raises(ValidationError) as exc:
-        GradleUsePlugin.properties_class.unmarshal(
-            {"source": ".", "gradle-task": "build"}
-        )
-
-    assert "gradle-task is not supported" in exc.value.errors()[0]["msg"]
 
 
 def test_get_build_commands(

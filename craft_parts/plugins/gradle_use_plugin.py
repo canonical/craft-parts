@@ -18,17 +18,17 @@
 
 import shlex
 from pathlib import Path
-from typing import Any, cast
+from typing import Literal, cast
 
-from pydantic import model_validator
 from typing_extensions import override
 
 from craft_parts.utils.gradle_utils import PUBLISH_BLOCK_TEMPLATE
 
-from .gradle_plugin import GradlePlugin, GradlePluginProperties
+from .gradle_plugin import GradlePlugin
+from .properties import PluginProperties
 
 
-class GradleUsePluginProperties(GradlePluginProperties, frozen=True):
+class GradleUsePluginProperties(PluginProperties, frozen=True):
     """The part properties used by the gradle plugin.
 
     - gradle_init_script:
@@ -42,20 +42,13 @@ class GradleUsePluginProperties(GradlePluginProperties, frozen=True):
       Whether to use the Gradle daemon during the build.
     """
 
+    plugin: Literal["gradle-use"] = "gradle-use"
     gradle_init_script: str = ""
     gradle_parameters: list[str] = []
     gradle_use_daemon: bool = False
 
     # part properties required by the plugin
     source: str  # pyright: ignore[reportGeneralTypeIssues]
-
-    @model_validator(mode="before")
-    @classmethod
-    def no_gradle_task_defined(cls, data: dict[str, Any]) -> dict[str, Any]:
-        """Gradle task must not be defined."""
-        if "gradle-task" in data:
-            raise ValueError("gradle-task is not supported by gradle-use.")
-        return data
 
 
 class GradleUsePlugin(GradlePlugin):
@@ -78,7 +71,7 @@ class GradleUsePlugin(GradlePlugin):
       Whether to use the Gradle daemon during the build.
     """
 
-    properties_class = GradleUsePluginProperties
+    properties_class = GradleUsePluginProperties  # type: ignore[assignment]
 
     @property
     def _publish_maven_repo(self) -> Path:

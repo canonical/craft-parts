@@ -50,7 +50,7 @@ class GradlePluginProperties(PluginProperties, frozen=True):
       Whether to use the Gradle daemon during the build.
     """
 
-    plugin: Literal["gradle", "gradle-use"] = "gradle"
+    plugin: Literal["gradle"] = "gradle"
 
     gradle_init_script: str = ""
     gradle_parameters: list[str] = []
