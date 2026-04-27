@@ -108,7 +108,7 @@ must be staged. This dependency is handled by declaring that ``hello-main`` must
       build-attributes:
         - self-contained
     hello-main:
-      source: .
+      source: main/
       plugin: gradle
       build-snaps:
         - gradle
