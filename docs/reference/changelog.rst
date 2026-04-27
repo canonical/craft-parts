@@ -19,6 +19,18 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.34.0:
+
+2.34.0 (Unreleased)
+-------------------
+
+New features:
+
+- Add a ``gradle-use`` plugin for publishing Gradle artifacts to a local Maven
+  repository.
+
+For a complete list of commits, check out the `2.34.0`_ release on GitHub.
+
 .. _release-2.33.0:
 
 2.33.0 (2026-04-15)
