@@ -57,7 +57,7 @@ if TYPE_CHECKING:
 PluginType = type[Plugin]
 
 # build-attributes that require plugin support.
-PLUGINS_BUILD_ATTRIBUTES = {"self-contained"}
+PLUGINS_BUILD_ATTRIBUTES = {"self-contained", "enable-check"}
 
 
 class PluginGroup(enum.Enum):
