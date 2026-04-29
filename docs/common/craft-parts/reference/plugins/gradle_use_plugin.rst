@@ -36,6 +36,7 @@ gradle-use-daemon
 ~~~~~~~~~~~~~~~~~
 
 **Type:** boolean
+**Default:** false
 
 Whether to use the `Gradle daemon <https://docs.gradle.org/current/userguide/gradle_daemon.html>`_
 during the build. The daemon is disabled by default.

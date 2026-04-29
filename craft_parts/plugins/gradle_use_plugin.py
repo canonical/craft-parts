@@ -91,7 +91,7 @@ class GradleUsePlugin(GradlePlugin):
         ]
 
         if options.gradle_init_script:
-            extra_args.append(f"--init-script {options.gradle_init_script}")
+            extra_args.extend(["--init-script", options.gradle_init_script])
 
         if self._is_self_contained():
             extra_args.extend(
