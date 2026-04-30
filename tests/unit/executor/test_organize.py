@@ -143,6 +143,33 @@ from craft_parts.executor.organize import organize_files
             "organize_map": {"bardir/../foo": "foo"},
             "expected": [(["bardir", "foo"], "")],
         },
+        # absolute source paths are rejected
+        {
+            "setup_files": ["foo"],
+            "organize_map": {"/etc/apt": ""},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize from '/etc/apt', but source paths must stay within "
+                r"the install directory.*"
+            ),
+        },
+        # traversal outside install dir is rejected
+        {
+            "setup_files": ["foo"],
+            "organize_map": {"../foo": "foo"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize from '\.\./foo', but source paths must stay within "
+                r"the install directory.*"
+            ),
+        },
+        # normalized traversal that stays within install dir is allowed
+        {
+            "setup_dirs": ["dir"],
+            "setup_files": ["foo"],
+            "organize_map": {"dir/../foo": "bar"},
+            "expected": [(["bar", "dir"], "")],
+        },
         # organize a set with a file to itself
         {
             "setup_dirs": ["bardir"],
