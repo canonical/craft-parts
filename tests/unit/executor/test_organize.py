@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2025 Canonical Ltd.
+# Copyright 2015-2026 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,14 +14,36 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import glob
 import os
+import random
 import re
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
 from craft_parts import errors
+from craft_parts.executor import organize
 from craft_parts.executor.organize import organize_files
+
+
+@pytest.fixture(autouse=True, params=range(6))
+def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
+    """Replace the system's iglob function with a function that randomizes the glob.
+
+    It also runs each test case multiple  times to increase the chance of a test failing
+    due to the random glob order.
+
+    This will catch issues that occur due to order being important.
+    """
+
+    def random_glob(pathname: str, recursive: bool = False):
+        result = glob.glob(pathname, recursive=recursive)  # noqa: PTH207
+        random.shuffle(result)
+        return result
+
+    if request.param != 0:  # In one case we use the real iglob.
+        monkeypatch.setattr(organize, "iglob", random_glob)
 
 
 @pytest.mark.parametrize(
@@ -85,51 +107,60 @@ from craft_parts.executor.organize import organize_files
             "expected_message": r".*multiple files to be organized into 'dir'.*",
         },
         # *_for_directories
-        {
-            "setup_dirs": ["dir1", "dir2"],
-            "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "bar"),  # noqa: PTH118
-            ],
-            "organize_map": {"dir*": "dir/"},
-            "expected": [
-                (["dir"], ""),
-                (["dir1", "dir2"], "dir"),
-                (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
-                (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
-            ],
-        },
+        pytest.param(
+            {
+                "setup_dirs": ["dir1", "dir2"],
+                "setup_files": [
+                    os.path.join("dir1", "foo"),  # noqa: PTH118
+                    os.path.join("dir2", "bar"),  # noqa: PTH118
+                ],
+                "organize_map": {"dir*": "dir/"},
+                "expected": [
+                    (["dir"], ""),
+                    (["dir1", "dir2"], "dir"),
+                    (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
+                    (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
+                ],
+            },
+            id="glob-source-directories",
+        ),
         # combined_*_with_file
-        {
-            "setup_dirs": ["dir1", "dir2"],
-            "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir1", "bar"),  # noqa: PTH118
-                os.path.join("dir2", "bar"),  # noqa: PTH118
-            ],
-            "organize_map": {"dir*": "dir/", "dir1/bar": "."},
-            "expected": [
-                (["bar", "dir"], ""),
-                (["dir1", "dir2"], "dir"),
-                (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
-                (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
-            ],
-        },
+        pytest.param(
+            {
+                "setup_dirs": ["dir1", "dir2"],
+                "setup_files": [
+                    os.path.join("dir1", "foo"),  # noqa: PTH118
+                    os.path.join("dir1", "bar"),  # noqa: PTH118
+                    os.path.join("dir2", "bar"),  # noqa: PTH118
+                ],
+                "organize_map": {"dir*": "dir/", "dir1/bar": "."},
+                "expected": [
+                    (["bar", "dir"], ""),
+                    (["dir1", "dir2"], "dir"),
+                    (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
+                    (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
+                ],
+            },
+            id="glob-source-directories-with-file",
+        ),
         # *_into_dir
-        {
-            "setup_dirs": ["dir"],
-            "setup_files": [
-                os.path.join("dir", "foo"),  # noqa: PTH118
-                os.path.join("dir", "bar"),  # noqa: PTH118
-            ],
-            "organize_map": {"dir/f*": "nested/dir/"},
-            "expected": [
-                (["dir", "nested"], ""),
-                (["bar"], "dir"),
-                (["dir"], "nested"),
-                (["foo"], os.path.join("nested", "dir")),  # noqa: PTH118
-            ],
-        },
+        pytest.param(
+            {
+                "setup_dirs": ["dir"],
+                "setup_files": [
+                    os.path.join("dir", "foo"),  # noqa: PTH118
+                    os.path.join("dir", "bar"),  # noqa: PTH118
+                ],
+                "organize_map": {"dir/f*": "nested/dir/"},
+                "expected": [
+                    (["dir", "nested"], ""),
+                    (["bar"], "dir"),
+                    (["dir"], "nested"),
+                    (["foo"], os.path.join("nested", "dir")),  # noqa: PTH118
+                ],
+            },
+            id="glob-file-into-new-dir",
+        ),
         # organize a file to itself
         {
             "setup_files": ["foo"],
@@ -267,6 +298,67 @@ def test_organize_no_overwrite(new_dir, data):
     )
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        pytest.param(
+            {
+                "setup_files": ["foo"],
+                "setup_dirs": ["foo_dir"],
+                "setup_symlinks": [
+                    ("foo_link", "foo"),
+                ],
+                "organize_map": {},
+                "expected": [(["foo", "foo_dir", "foo_link"], "")],
+            },
+            id="no-op",
+        ),
+        pytest.param(
+            # It's unclear whether this is intended behaviour. This test case was added
+            # while working on ensuring organizing to the overlay would not error here
+            # (as is needed for imagecraft). This test exists to ensure that we did not
+            # change this behaviour without intending to do so, but we should examine
+            # whether this behaviour deserves changing. See: ST172
+            {
+                "setup_files": ["foo"],
+                "setup_symlinks": [],
+                "organize_map": {"foo": "bar"},
+                "expected": [(["bar"], "")],
+                "expected_2": errors.FileOrganizeError,
+                "expected_message_2": r".*trying to organize file 'foo' to 'bar', but 'bar' already exists.*",
+            },
+            id="organize-file-clash-with-previous",
+        ),
+    ],
+)
+def test_organize_no_overwrite_idempotent(new_dir, data):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
+        setup_symlinks=data.get("setup_symlinks", []),
+        organize_map=data["organize_map"],
+        expected=data["expected"],
+        expected_message=data.get("expected_message"),
+        expected_overwrite=data.get("expected_overwrite"),
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
+        setup_symlinks=data.get("setup_symlinks", []),
+        organize_map=data["organize_map"],
+        expected=data.get("expected_2", data["expected"]),
+        expected_message=data.get("expected_message_2", data.get("expected_message")),
+        expected_overwrite=data.get("expected_overwrite"),
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
 def organize_and_assert(
     *,
     tmp_path: Path,
@@ -280,6 +372,8 @@ def organize_and_assert(
     overwrite,
     install_dirs,
 ):
+    for dest_install_dir in install_dirs.values():
+        Path(dest_install_dir).mkdir(parents=True, exist_ok=True)
     install_dir = Path(tmp_path / "install")
     install_dir.mkdir(parents=True, exist_ok=True)
 
@@ -292,7 +386,7 @@ def organize_and_assert(
     for symlink_entry, symlink_target in setup_symlinks:
         symlink_path = install_dir / symlink_entry
         if not symlink_path.is_symlink():
-            symlink_path.symlink_to(install_dir / symlink_target)
+            symlink_path.symlink_to(symlink_target)
 
     if overwrite and expected_overwrite is not None:
         expected = expected_overwrite
