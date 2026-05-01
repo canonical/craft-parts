@@ -174,8 +174,7 @@ class PartSpec(BaseModel):
     )
     """A list of patch files to apply to the part's source.
 
-    During the pull step, entries are interpreted as patch files that can be
-    consumed by craft applications that support patch application.
+    During the pull step, entries are applied to the pulled source tree.
     """
 
     source_submodules: list[str] | None = Field(
