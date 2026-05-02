@@ -468,8 +468,18 @@ def find_merge_conflicts(
     for source_path in itertools.chain(src_root.rglob("*"), (src_root,)):
         relative_path = source_path.relative_to(src_root)
         dest_path = dst_root / relative_path
-        if not dest_path.exists() or dest_path.samefile(source_path):
+        # exists() follows symlinks and returns False for broken symlinks, so
+        # we also check is_symlink() to ensure broken-link destinations are not
+        # silently skipped as if they were absent.
+        if not dest_path.exists() and not dest_path.is_symlink():
             continue
+        try:
+            if dest_path.samefile(source_path):
+                continue
+        except FileNotFoundError:
+            # samefile() follows symlinks and raises if either path is a broken
+            # symlink. Fall through so are_paths_equivalent() can compare them.
+            pass
 
         if strict and dest_path.is_file():
             conflicts.setdefault(relative_path, []).append("exists")

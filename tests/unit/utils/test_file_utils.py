@@ -651,3 +651,50 @@ def test_find_merge_conflicts(
         file_utils.find_merge_conflicts(source_root, dest_root)
         == fake_path_expected_conflicts
     )
+
+
+def test_find_merge_conflicts_broken_symlink_in_dest(tmp_path: pathlib.Path):
+    """A broken symlink at the destination should not be silently skipped."""
+    source_root = tmp_path / "source"
+    dest_root = tmp_path / "dest"
+    source_root.mkdir()
+    dest_root.mkdir()
+
+    (source_root / "my-link").symlink_to("this_does_not_exist")
+    (dest_root / "my-link").symlink_to("that_does_not_exist")
+
+    conflicts = file_utils.find_merge_conflicts(source_root, dest_root)
+
+    assert conflicts == {
+        pathlib.Path("my-link"): [
+            "different symlink targets (this_does_not_exist, that_does_not_exist)"
+        ]
+    }
+
+
+def test_find_merge_conflicts_broken_symlink_same_target(tmp_path: pathlib.Path):
+    """Two broken symlinks pointing to the same target are not a conflict."""
+    source_root = tmp_path / "source"
+    dest_root = tmp_path / "dest"
+    source_root.mkdir()
+    dest_root.mkdir()
+
+    (source_root / "my-link").symlink_to("this_does_not_exist")
+    (dest_root / "my-link").symlink_to("this_does_not_exist")
+
+    assert file_utils.find_merge_conflicts(source_root, dest_root) == {}
+
+
+def test_find_merge_conflicts_broken_symlink_vs_file(tmp_path: pathlib.Path):
+    """A broken symlink in source conflicting with a real file in dest is detected."""
+    source_root = tmp_path / "source"
+    dest_root = tmp_path / "dest"
+    source_root.mkdir()
+    dest_root.mkdir()
+
+    (source_root / "my-link").symlink_to("this_does_not_exist")
+    (dest_root / "my-link").touch()
+
+    conflicts = file_utils.find_merge_conflicts(source_root, dest_root)
+
+    assert conflicts == {pathlib.Path("my-link"): ["different types (symlink, file)"]}
