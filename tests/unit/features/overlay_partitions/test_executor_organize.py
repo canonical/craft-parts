@@ -269,6 +269,14 @@ def test_organize(new_dir, data):
             },
             id="merge-dirs-without-overlay-success",
         ),
+        pytest.param(
+            {
+                "setup_symlinks": [("ext-link", "/usr/bin/true")],
+                "organize_map": {"ext-link": "(overlay)/ext-link"},
+                "expected": [([], ""), (["ext-link"], "../overlay_dir")],
+            },
+            id="symlink-outside-src-root-to-overlay",
+        ),
     ],
 )
 def test_organize_no_overwrite_idempotent(tmp_path, data):

@@ -105,31 +105,39 @@ def organize_files(  # noqa: PLR0912, PLR0915
             if dst_partition_pair.partition == OVERLAY_PARTITION:  # noqa: SIM102
                 # Organizing a symlink to its destination simply deletes the link.
                 if src_path.is_symlink():
-                    relative_src_target = src_path.resolve().relative_to(src_root)
-                    dst_target = (
-                        install_dir_map[OVERLAY_PARTITION] / relative_src_target
-                    )
-                    if dst_path in install_dir_map.values():
-                        real_dst_path = dst_path / src_path.name
+                    try:
+                        # resolve() follows the symlink; relative_to() raises ValueError
+                        # if the target lies outside src_root (e.g. absolute symlinks
+                        # such as /usr/bin/true). Fall through to normal organise in
+                        # that case.
+                        relative_src_target = src_path.resolve().relative_to(src_root)
+                    except ValueError:
+                        pass
                     else:
-                        real_dst_path = dst_path
-                    if dst_target.exists() and (
-                        dst_target.samefile(dst_path) or real_dst_path.is_dir()
-                    ):
+                        dst_target = (
+                            install_dir_map[OVERLAY_PARTITION] / relative_src_target
+                        )
+                        if dst_path in install_dir_map.values():
+                            real_dst_path = dst_path / src_path.name
+                        else:
+                            real_dst_path = dst_path
+                        if dst_target.exists() and (
+                            dst_target.samefile(dst_path) or real_dst_path.is_dir()
+                        ):
+                            src_path.unlink()
+                            continue
+                        if real_dst_path.is_symlink() and real_dst_path.readlink() in (
+                            dst_target,
+                            relative_src_target,
+                        ):
+                            src_path.unlink()
+                            continue
+                        if src_path.readlink().is_absolute():
+                            real_dst_path.symlink_to(dst_target)
+                        else:
+                            real_dst_path.symlink_to(relative_src_target)
                         src_path.unlink()
                         continue
-                    if real_dst_path.is_symlink() and real_dst_path.readlink() in (
-                        dst_target,
-                        relative_src_target,
-                    ):
-                        src_path.unlink()
-                        continue
-                    if src_path.readlink().is_absolute():
-                        real_dst_path.symlink_to(dst_target)
-                    else:
-                        real_dst_path.symlink_to(relative_src_target)
-                    src_path.unlink()
-                    continue
 
             # Organize a dir to a dir
             if not src_path.is_symlink() and src_path.is_dir():
