@@ -205,7 +205,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                         message=(
                             f"trying to organize file {key!r} to "
                             f"{file_map[key]!r} but {dst_string!r} already "
-                            f"exists and the files have {msg}"
+                            f"exists and the files have {', '.join(msg)}"
                         ),
                     )
                 else:
@@ -249,7 +249,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                             message=(
                                 f"trying to organize file {key!r} to "
                                 f"{file_map[key]!r} but {dst_string!r} already "
-                                f"exists and the files have {msg}"
+                                f"exists and the files have {', '.join(msg)}"
                             ),
                         )
                     raise errors.FileOrganizeError(
