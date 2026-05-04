@@ -3,7 +3,7 @@
 npm Use plugin
 ================
 
-The NPM Use plugin packages `npm`_-based projects and, unlike the
+The npm Use plugin packages projects based on npm and, unlike the
 :ref:`craft_parts_npm_plugin`, exports artifacts to a shared local directory.
 
 
@@ -20,9 +20,9 @@ Attributes
 
 This plugin supports the ``self-contained`` build attribute. Declaring this attribute
 prevents access to any npm registries. All dependencies must then be provided in an
-earlier part using the NPM Use plugin.
+earlier part using the npm Use plugin.
 
-When this attribute is declared, NPM Use resolves dependency versions from what is
+When this attribute is declared, the plugin resolves dependency versions from what is
 locally available in the shared directory.
 
 .. _npm_use_self-contained_end:
@@ -33,7 +33,7 @@ locally available in the shared directory.
 Dependencies
 ------------
 
-The NPM Use plugin needs the ``node`` and ``npm`` executables to build npm projects but
+The npm Use plugin needs the ``node`` and ``npm`` executables to build npm projects but
 does not provision them to allow flexibility in the choice of version.
 
 To provide these, one can either specify the appropriate Ubuntu packages as
@@ -83,5 +83,3 @@ must be staged. This dependency is handled by declaring that ``hello-app`` must 
         - self-contained
       after:
         - hello-dep
-
-.. _npm: https://www.npmjs.com/
