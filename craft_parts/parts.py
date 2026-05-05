@@ -33,7 +33,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing_extensions import Self
 
 from craft_parts import errors, plugins
 from craft_parts.constraints import RelativePathStr
@@ -575,15 +574,6 @@ class PartSpec(BaseModel):
         if not Features().enable_overlay:
             raise ValueError("overlays not supported")
         return item
-
-    @model_validator(mode="after")
-    def validate_overlay_mutually_exclusive(self) -> Self:
-        """Check that override-overlay and overlay-script are not both defined."""
-        if self.override_overlay is not None and self.overlay_script is not None:
-            raise ValueError(
-                "override-overlay and overlay-script cannot both be defined"
-            )
-        return self
 
     @model_validator(mode="before")
     @classmethod

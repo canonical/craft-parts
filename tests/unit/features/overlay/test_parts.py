@@ -91,16 +91,15 @@ class TestPartSpecs:
             PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues]
         assert str(raised.value) == "part data is not a dictionary"
 
-    def test_unmarshal_both_overlay_key(self):
+    def test_unmarshal_both_overlay_keys(self):
+        """Both overlay-script and override-overlay can be defined together."""
         data = {
             "overlay-script": "overlay-script",
             "override-overlay": "override-overlay",
         }
-        with pytest.raises(
-            pydantic.ValidationError,
-            match="override-overlay and overlay-script cannot both be defined",
-        ):
-            PartSpec.unmarshal(data)
+        spec = PartSpec.unmarshal(data)
+        assert spec.overlay_script == "overlay-script"
+        assert spec.override_overlay == "override-overlay"
 
     def test_unmarshal_mix_packages_slices(self, mocker):
         """

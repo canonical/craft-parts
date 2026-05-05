@@ -379,38 +379,54 @@ class PartHandler:
                 ) as ctx:
                     ctx.install_packages(overlay_packages)
 
-            if self._part.spec.override_overlay:
+            contents = StepContents()
+
+            # Phase 1: host commands (overlay-script or plugin host commands)
+            if self._part.spec.overlay_script or self._plugin.uses_overlay:
+                with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+                    if self._part.spec.overlay_script:
+                        contents = self._run_step(
+                            step_info=step_info,
+                            scriptlet_name="overlay-script",
+                            work_dir=self._part.part_layer_dir,
+                            stdout=stdout,
+                            stderr=stderr,
+                        )
+                    else:
+                        self._run_overlay_host_commands(
+                            step_info=step_info, stdout=stdout, stderr=stderr
+                        )
+
+            # Phase 2: chroot commands (override-overlay or plugin chroot commands)
+            if self._part.spec.override_overlay or (
+                self._plugin.uses_overlay and self._plugin.get_overlay_chroot_commands()
+            ):
                 with overlays.ChrootMount(
                     self._overlay_manager,
                     top_part=self._part,
                 ) as cm:
-                    contents = cm(
-                        self._run_step,
-                        step_info=step_info,
-                        scriptlet_name="override-overlay",
-                        work_dir="/",
-                        stdout=stdout,
-                        stderr=stderr,
-                    )
-            elif self._part.spec.overlay_script:
-                # execute overlay script
-                with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                    contents = self._run_step(
-                        step_info=step_info,
-                        scriptlet_name="overlay-script",
-                        work_dir=self._part.part_layer_dir,
-                        stdout=stdout,
-                        stderr=stderr,
-                    )
-            elif self._plugin.uses_overlay:
-                # Pure-plugin overlay path: run host commands then chroot commands
-                contents = self._run_plugin_overlay(
-                    step_info=step_info,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
-            else:
-                contents = StepContents()
+                    if self._part.spec.override_overlay:
+                        contents = cm(
+                            self._run_step,
+                            step_info=step_info,
+                            scriptlet_name="override-overlay",
+                            work_dir="/",
+                            stdout=stdout,
+                            stderr=stderr,
+                        )
+                    else:
+                        step_env = generate_step_environment(
+                            part=self._part,
+                            plugin=self._plugin,
+                            step_info=step_info,
+                        )
+                        cm(
+                            _run_overlay_chroot_commands,
+                            commands=self._plugin.get_overlay_chroot_commands(),
+                            env_script=step_env,
+                            part_name=self._part.name,
+                            plugin_name=self._part.plugin_name,
+                        )
 
             # apply overlay filter
             overlay_fileset = filesets.Fileset(
@@ -1334,66 +1350,43 @@ class PartHandler:
         merged = spec_packages | plugin_packages
         return sorted(merged)
 
-    def _run_plugin_overlay(
+    def _run_overlay_host_commands(
         self,
         step_info: StepInfo,
         *,
         stdout: Stream,
         stderr: Stream,
-    ) -> StepContents:
-        """Run the pure-plugin overlay path (host commands + chroot commands).
+    ) -> None:
+        """Run the plugin's overlay host commands with the overlay FS mounted.
 
         :param step_info: Information about the step to execute.
-
-        :return: The overlay step contents.
         """
+        host_commands = self._plugin.get_overlay_host_commands()
+        if not host_commands:
+            return
+
         step_env = generate_step_environment(
             part=self._part, plugin=self._plugin, step_info=step_info
         )
-
-        # Save the overlay environment script
         overlay_env_script_path = self._part.part_run_dir.absolute() / "overlay-env.sh"
         overlay_env_script_path.write_text(step_env)
         overlay_env_script_path.chmod(0o644)
 
-        # Phase 1: host commands with the overlay FS mounted
-        host_commands = self._plugin.get_overlay_host_commands()
-        if host_commands:
-            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                try:
-                    _create_and_run_script(
-                        host_commands,
-                        script_path=(
-                            self._part.part_run_dir.absolute() / "overlay-host.sh"
-                        ),
-                        environment_script_path=overlay_env_script_path,
-                        cwd=self._part.part_layer_dir,
-                        stdout=stdout,
-                        stderr=stderr,
-                    )
-                except process.ProcessError as process_error:
-                    raise errors.PluginOverlayError(
-                        part_name=self._part.name,
-                        plugin_name=self._part.plugin_name,
-                        stderr=process_error.result.stderr,
-                    ) from process_error
-
-        # Phase 2: chroot commands inside the overlay
-        chroot_commands = self._plugin.get_overlay_chroot_commands()
-        if chroot_commands:
-            with overlays.ChrootMount(
-                self._overlay_manager,
-                top_part=self._part,
-            ) as cm:
-                cm(
-                    _run_overlay_chroot_commands,
-                    commands=chroot_commands,
-                    env_script=step_env,
-                    part_name=self._part.name,
-                    plugin_name=self._part.plugin_name,
-                )
-
-        return StepContents()
+        try:
+            _create_and_run_script(
+                host_commands,
+                script_path=(self._part.part_run_dir.absolute() / "overlay-host.sh"),
+                environment_script_path=overlay_env_script_path,
+                cwd=self._part.part_layer_dir,
+                stdout=stdout,
+                stderr=stderr,
+            )
+        except process.ProcessError as process_error:
+            raise errors.PluginOverlayError(
+                part_name=self._part.name,
+                plugin_name=self._part.plugin_name,
+                stderr=process_error.result.stderr,
+            ) from process_error
 
     def _unpack_stage_packages(self) -> None:
         """Extract stage packages contents to the part's install directory."""
