@@ -104,9 +104,8 @@ DATA_DIR = Path(__file__).parent / "data"
         ),
         pytest.param(
             "parts-override-overlay.yaml",
-            ["host-proof.txt", "override-proof.txt"],
+            ["chroot-proof.txt", "override-proof.txt"],
             id="override-overlay",
-            marks=pytest.mark.xfail(reason="craftctl not available in overlay chroot"),
         ),
         pytest.param(
             "parts-overlay-script.yaml",

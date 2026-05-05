@@ -485,3 +485,98 @@ class TestStepHandlerRunScriptlet:
             )
         assert raised.value.stderr is not None
         assert raised.value.stderr.endswith(b"\nuh-oh\n+ false\n")
+
+
+class TestOverlayScriptlet:
+    """Verify override-overlay scriptlet with craftctl bash function."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, new_dir, partitions):
+        # pylint: disable=attribute-defined-outside-init
+        self._part = Part("p1", {"source": "."}, partitions=partitions)
+        self._dirs = ProjectDirs(partitions=partitions)
+        self._project_info = ProjectInfo(
+            project_dirs=self._dirs,
+            application_name="test",
+            cache_dir=new_dir,
+            strict_mode=False,
+            partitions=partitions,
+        )
+        self._part_info = PartInfo(project_info=self._project_info, part=self._part)
+        # pylint: enable=attribute-defined-outside-init
+
+    def test_craftctl_default_runs_chroot_commands(self, new_dir, capfd):
+        """craftctl default in override-overlay runs plugin chroot commands."""
+
+        class _ChrootPlugin(plugins.Plugin):
+            properties_class = plugins.PluginProperties
+            uses_overlay = True
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+            def get_overlay_chroot_commands(self):
+                return ["echo chroot-ran"]
+
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=_ChrootPlugin,
+        )
+        sh.run_scriptlet(
+            "craftctl default",
+            scriptlet_name="override-overlay",
+            step=Step.OVERLAY,
+            work_dir=new_dir,
+        )
+        captured = capfd.readouterr()
+        assert "chroot-ran" in captured.out
+
+    def test_craftctl_unsupported_command_errors(self, new_dir, capfd):
+        """craftctl with non-default command errors in override-overlay."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=OverlayHostPlugin,
+        )
+        with pytest.raises(errors.ScriptletRunError):
+            sh.run_scriptlet(
+                'craftctl set version="1.0"',
+                scriptlet_name="override-overlay",
+                step=Step.OVERLAY,
+                work_dir=new_dir,
+            )
+
+    def test_craftctl_default_no_commands_is_noop(self, new_dir, capfd):
+        """craftctl default with no plugin chroot commands is a no-op."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=FooPlugin,
+        )
+        sh.run_scriptlet(
+            "craftctl default",
+            scriptlet_name="override-overlay",
+            step=Step.OVERLAY,
+            work_dir=new_dir,
+        )
+        captured = capfd.readouterr()
+        assert captured.out == ""

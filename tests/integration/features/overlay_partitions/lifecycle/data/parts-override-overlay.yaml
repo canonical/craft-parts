@@ -7,7 +7,7 @@ parts:
       "*": (overlay)/
   mypart:
     after: [bash-base]
-    plugin: host-overlay
+    plugin: chroot-overlay
     source: .
     override-overlay: |
       craftctl default

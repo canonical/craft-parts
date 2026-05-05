@@ -403,6 +403,10 @@ class StepHandler:
         :param scriptlet: the scriptlet to run.
         :param work_dir: the directory where the script will be executed.
         """
+        if step == Step.OVERLAY and scriptlet_name == "override-overlay":
+            self._run_overlay_scriptlet(scriptlet, work_dir=work_dir)
+            return
+
         with tempfile.TemporaryDirectory() as tempdir:
             ctl_socket_path = os.path.join(tempdir, "craftctl.socket")  # noqa: PTH118
             ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -435,6 +439,61 @@ class StepHandler:
                 ) from process_error
             finally:
                 ctl_socket.close()
+
+    def _run_overlay_scriptlet(self, scriptlet: str, *, work_dir: Path) -> None:
+        """Run an override-overlay scriptlet inside a chroot.
+
+        Since override-overlay runs inside a chroot where the craftctl binary
+        is not available, we inject a bash function that handles 'craftctl default'
+        by calling a separate function containing the plugin's chroot commands.
+        """
+        chroot_commands = self._plugin.get_overlay_chroot_commands()
+        if chroot_commands:
+            indented = "\n".join(f"    {cmd}" for cmd in chroot_commands)
+            default_body = f"\n{indented}\n"
+        else:
+            default_body = "\n    :\n"
+
+        craftctl_preamble = (
+            "__craftctl_default() {"
+            f"{default_body}"
+            "}\n"
+            "\n"
+            "craftctl() {\n"
+            '    if [ "$1" = "default" ]; then\n'
+            "        __craftctl_default\n"
+            "    else\n"
+            '        echo "Error: craftctl $1 is not supported in'
+            ' override-overlay" >&2\n'
+            "        return 1\n"
+            "    fi\n"
+            "}\n"
+            "export -f craftctl\n"
+            "export -f __craftctl_default"
+        )
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            environment = craftctl_preamble + "\n" + self._env
+            environment_script_path = Path(tempdir) / "scriptlet_environment.sh"
+            environment_script_path.write_text(environment)
+            environment_script_path.chmod(0o644)
+
+            try:
+                _create_and_run_script(
+                    [scriptlet],
+                    script_path=Path(tempdir) / "scriptlet.sh",
+                    cwd=work_dir,
+                    stdout=self._stdout,
+                    stderr=self._stderr,
+                    environment_script_path=environment_script_path,
+                )
+            except process.ProcessError as process_error:
+                raise errors.ScriptletRunError(
+                    part_name=self._part.name,
+                    scriptlet_name="override-overlay",
+                    exit_code=process_error.result.returncode,
+                    stderr=process_error.result.stderr,
+                ) from process_error
 
     def _ctl_server_selector(
         self, step: Step, scriptlet_name: str, stream: socket.socket

@@ -1,6 +1,6 @@
 parts:
   mypart:
-    plugin: host-overlay
+    plugin: chroot-overlay
     source: .
     override-overlay: |
       craftctl default
