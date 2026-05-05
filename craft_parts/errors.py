@@ -605,6 +605,28 @@ class PluginBuildError(UserExecutionError):
         super().__init__(brief=brief, resolution=resolution, stderr=stderr)
 
 
+class PluginOverlayError(UserExecutionError):
+    """Plugin overlay script failed at runtime.
+
+    :param part_name: The name of the part being processed.
+    :param plugin_name: The name of the plugin being processed.
+    :param stderr: The contents of the overlay execution error.
+    """
+
+    def __init__(
+        self, *, part_name: str, plugin_name: str, stderr: bytes | None = None
+    ) -> None:
+        self.part_name = part_name
+        self.plugin_name = plugin_name
+        brief = f"Failed to run the overlay commands for part {part_name!r}."
+        resolution = (
+            f"Check the overlay output and verify the project can work "
+            f"with the {plugin_name!r} plugin."
+        )
+
+        super().__init__(brief=brief, resolution=resolution, stderr=stderr)
+
+
 class PluginCleanError(PartsError):
     """Script to clean strict build preparation failed at runtime.
 

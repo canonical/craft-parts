@@ -25,7 +25,7 @@ import selectors
 import socket
 import tempfile
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 from craft_parts import errors, packages
 from craft_parts.infos import StepInfo
@@ -162,8 +162,33 @@ class StepHandler:
 
         return StepContents()
 
-    @staticmethod
-    def _builtin_overlay() -> StepContents:
+    def _builtin_overlay(self, **_kwargs: Any) -> StepContents:
+        if self._plugin.uses_overlay:
+            host_commands = self._plugin.get_overlay_host_commands()
+            if host_commands:
+                overlay_env_script_path = (
+                    self._part.part_run_dir.absolute() / "overlay-env.sh"
+                )
+                overlay_env_script_path.write_text(self._env)
+                overlay_env_script_path.chmod(0o644)
+
+                try:
+                    _create_and_run_script(
+                        host_commands,
+                        script_path=(
+                            self._part.part_run_dir.absolute() / "overlay-host.sh"
+                        ),
+                        environment_script_path=overlay_env_script_path,
+                        cwd=self._part.part_layer_dir,
+                        stdout=self._stdout,
+                        stderr=self._stderr,
+                    )
+                except process.ProcessError as process_error:
+                    raise errors.PluginOverlayError(
+                        part_name=self._part.name,
+                        plugin_name=self._part.plugin_name,
+                        stderr=process_error.result.stderr,
+                    ) from process_error
         return StepContents()
 
     def _builtin_build(self) -> StepContents:
@@ -485,7 +510,7 @@ class StepHandler:
                 raise invalid_control_api_call(
                     message=f"invalid arguments to command {cmd_name!r}",
                 )
-            self._execute_builtin_handler(step)
+            self._execute_builtin_handler(step, scriptlet_name=scriptlet_name)
         elif cmd_name == "set":
             if len(cmd_args) != 1:
                 raise invalid_control_api_call(
@@ -531,11 +556,13 @@ class StepHandler:
 
         return retval
 
-    def _execute_builtin_handler(self, step: Step) -> None:
+    def _execute_builtin_handler(
+        self, step: Step, scriptlet_name: str | None = None
+    ) -> None:
         if step == Step.PULL:
             self._builtin_pull()
         elif step == Step.OVERLAY:
-            self._builtin_overlay()
+            self._builtin_overlay(scriptlet_name=scriptlet_name)
         elif step == Step.BUILD:
             self._builtin_build()
         elif step == Step.STAGE:

@@ -1,0 +1,17 @@
+parts:
+  apt-base:
+    plugin: nil
+    stage-packages:
+      - base-files_base
+      - apt_apt-get
+      - bash_bins
+    override-build: |
+      mkdir -p $CRAFT_PART_INSTALL/dev
+      mkdir -p $CRAFT_PART_INSTALL/proc
+      mkdir -p $CRAFT_PART_INSTALL/sys
+    organize:
+      "*": (overlay)/
+  mypart:
+    after: [apt-base]
+    plugin: package-overlay
+    source: .

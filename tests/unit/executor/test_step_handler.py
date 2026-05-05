@@ -38,6 +38,7 @@ from craft_parts.infos import (
 from craft_parts.parts import Part
 from craft_parts.steps import Step
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.process import ProcessError, ProcessResult
 
 from tests.unit.common_plugins import StrictTestPlugin
 
@@ -58,6 +59,28 @@ class FooPlugin(plugins.Plugin):
 
     def get_build_commands(self) -> list[str]:
         return ["hello"]
+
+
+class OverlayHostPlugin(plugins.Plugin):
+    """A test plugin with overlay host commands."""
+
+    properties_class = plugins.PluginProperties
+    uses_overlay = True
+
+    def get_build_snaps(self) -> set[str]:
+        return set()
+
+    def get_build_packages(self) -> set[str]:
+        return set()
+
+    def get_build_environment(self) -> dict[str, str]:
+        return {}
+
+    def get_build_commands(self) -> list[str]:
+        return []
+
+    def get_overlay_host_commands(self) -> list[str]:
+        return ["touch overlay-host-proof.txt"]
 
 
 def _step_handler_for_step(
@@ -141,6 +164,73 @@ class TestStepHandlerBuiltins:
         )
         result = sh.run_builtin()
         assert result == StepContents()
+
+    def test_run_builtin_overlay_with_host_commands(self, new_dir, mocker):
+        """_builtin_overlay runs plugin host commands when uses_overlay is True."""
+        mock_run = mocker.patch("craft_parts.utils.process.run")
+        Path("parts/p1/run").mkdir(parents=True)
+        Path("parts/p1/layer").mkdir(parents=True)
+
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=OverlayHostPlugin,
+        )
+        result = sh.run_builtin()
+
+        assert result == StepContents()
+        mock_run.assert_called_once()
+        # Verify the script was written with host commands
+        script_path = Path("parts/p1/run/overlay-host.sh")
+        assert script_path.exists()
+        script_content = script_path.read_text()
+        assert "touch overlay-host-proof.txt" in script_content
+
+    def test_run_builtin_overlay_no_commands_when_not_overlay(self, new_dir, mocker):
+        """_builtin_overlay is a no-op when plugin.uses_overlay is False."""
+        mock_run = mocker.patch("craft_parts.utils.process.run")
+
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=FooPlugin,
+        )
+        result = sh.run_builtin()
+
+        assert result == StepContents()
+        mock_run.assert_not_called()
+
+    def test_run_builtin_overlay_error_raises_plugin_overlay_error(
+        self, new_dir, mocker
+    ):
+        """_builtin_overlay wraps ProcessError as PluginOverlayError."""
+        mock_result = mocker.MagicMock(spec=ProcessResult)
+        mock_result.stderr = b"something went wrong"
+        mocker.patch(
+            "craft_parts.utils.process.run",
+            side_effect=ProcessError(result=mock_result),
+        )
+        Path("parts/p1/run").mkdir(parents=True)
+        Path("parts/p1/layer").mkdir(parents=True)
+
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=OverlayHostPlugin,
+        )
+
+        with pytest.raises(errors.PluginOverlayError) as exc_info:
+            sh.run_builtin()
+        assert exc_info.value.part_name == "p1"
 
     def test_run_builtin_build(self, new_dir, partitions, mocker):
         mock_run = mocker.patch("craft_parts.utils.process.run")

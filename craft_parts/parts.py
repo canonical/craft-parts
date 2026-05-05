@@ -925,7 +925,12 @@ class Part:
     @property
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
-        return self.spec.has_overlay
+        if self.spec.has_overlay:
+            return True
+        if self.plugin_name:
+            plugin_class = plugins.get_plugin_class(self.plugin_name)
+            return plugin_class.uses_overlay
+        return False
 
     @property
     def organizes_to_overlay(self) -> bool:

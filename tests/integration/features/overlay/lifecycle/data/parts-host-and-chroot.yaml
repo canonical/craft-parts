@@ -1,0 +1,8 @@
+parts:
+  host-part:
+    plugin: host-overlay
+    source: .
+  chroot-part:
+    after: [host-part]
+    plugin: chroot-overlay
+    source: .

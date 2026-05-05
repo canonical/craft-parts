@@ -1,0 +1,14 @@
+parts:
+  bash-base:
+    plugin: nil
+    stage-packages:
+      - bash_bins
+    organize:
+      "*": (overlay)/
+  mypart:
+    after: [bash-base]
+    plugin: host-overlay
+    source: .
+    overlay-script: |
+      craftctl default
+      touch $CRAFT_OVERLAY/script-proof.txt

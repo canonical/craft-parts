@@ -53,6 +53,9 @@ class Plugin(abc.ABC):
     supports_strict_mode = False
     """Plugins that can run in 'strict' mode must set this classvar to True."""
 
+    uses_overlay = False
+    """Plugins that contribute overlay commands must set this classvar to True."""
+
     def __init__(
         self, *, properties: PluginProperties, part_info: infos.PartInfo
     ) -> None:
@@ -62,6 +65,26 @@ class Plugin(abc.ABC):
 
     def get_pull_commands(self) -> list[str]:
         """Return the commands to retrieve dependencies during the pull step."""
+        return []
+
+    def get_overlay_packages(self) -> set[str]:
+        """Return a set of required packages to install in the overlay layer.
+
+        These are installed into the target filesystem (like stage-packages),
+        not into the build host environment (like build-packages).
+        """
+        return set()
+
+    def get_overlay_environment(self) -> dict[str, str]:
+        """Return a dictionary with the environment to use in the overlay step."""
+        return {}
+
+    def get_overlay_host_commands(self) -> list[str]:
+        """Return a list of commands to run on the host with the overlay FS mounted."""
+        return []
+
+    def get_overlay_chroot_commands(self) -> list[str]:
+        """Return a list of commands to run inside a chroot of the overlay."""
         return []
 
     @abc.abstractmethod

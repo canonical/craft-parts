@@ -450,3 +450,23 @@ class TestPartitionErrors:
             "Wrap the partition name in parentheses, for example "
             "'default/file' should be written as '(default)/file'"
         )
+
+
+class TestPluginOverlayError:
+    """Tests for PluginOverlayError."""
+
+    def test_plugin_overlay_error(self):
+        err = errors.PluginOverlayError(part_name="mypart", plugin_name="my-plugin")
+        assert err.part_name == "mypart"
+        assert err.plugin_name == "my-plugin"
+        assert err.brief == "Failed to run the overlay commands for part 'mypart'."
+        assert err.resolution == (
+            "Check the overlay output and verify the project can work "
+            "with the 'my-plugin' plugin."
+        )
+
+    def test_plugin_overlay_error_with_stderr(self):
+        err = errors.PluginOverlayError(
+            part_name="mypart", plugin_name="my-plugin", stderr=b"command failed"
+        )
+        assert "command failed" in str(err)

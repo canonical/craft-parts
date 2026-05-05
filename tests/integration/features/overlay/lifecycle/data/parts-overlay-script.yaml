@@ -1,0 +1,7 @@
+parts:
+  mypart:
+    plugin: host-overlay
+    source: .
+    overlay-script: |
+      craftctl default
+      touch $CRAFT_OVERLAY/script-proof.txt

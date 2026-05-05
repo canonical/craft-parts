@@ -1,0 +1,15 @@
+parts:
+  bash-base:
+    plugin: nil
+    stage-packages:
+      - bash_bins
+    organize:
+      "*": (overlay)/
+  host-part:
+    after: [bash-base]
+    plugin: host-overlay
+    source: .
+  chroot-part:
+    after: [host-part]
+    plugin: chroot-overlay
+    source: .

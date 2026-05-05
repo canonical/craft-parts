@@ -57,6 +57,8 @@ def generate_step_environment(
     # Plugin's say.
     if step_info.step == Step.BUILD:
         plugin_environment = plugin.get_build_environment()
+    elif step_info.step == Step.OVERLAY:
+        plugin_environment = plugin.get_overlay_environment()
     else:
         plugin_environment = {}
 

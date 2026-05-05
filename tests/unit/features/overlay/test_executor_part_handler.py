@@ -16,7 +16,7 @@
 from pathlib import Path
 
 import pytest
-from craft_parts import errors
+from craft_parts import errors, plugins
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import part_handler
 from craft_parts.executor.part_handler import MigrationContents, PartHandler
@@ -795,3 +795,88 @@ class TestHelpers(test_part_handler.TestHelpers):
 @pytest.mark.usefixtures("new_dir")
 class TestDirs(test_part_handler.TestDirs):
     """Test project dirs handling."""
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestMergedOverlayPackages:
+    """Test _merged_overlay_packages merges spec and plugin packages."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method_fixture(self, mocker, new_dir, partitions):
+        # pylint: disable=attribute-defined-outside-init
+
+        class _OverlayPkgPlugin(plugins.Plugin):
+            properties_class = plugins.PluginProperties
+            uses_overlay = True
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+            def get_overlay_packages(self):
+                return {"plugin-pkg1", "plugin-pkg2"}
+
+        plugins.register({"overlay-pkg-test": _OverlayPkgPlugin})
+        self._part = Part(
+            "foo",
+            {
+                "plugin": "overlay-pkg-test",
+                "source": ".",
+                "overlay-packages": ["spec-pkg1", "plugin-pkg2"],
+            },
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+        part_info = PartInfo(info, self._part)
+        self._handler = PartHandler(
+            self._part,
+            part_info=part_info,
+            part_list=[self._part],
+            overlay_manager=ovmgr,
+        )
+        mocker.patch("craft_parts.utils.os_utils.mount")
+        mocker.patch("craft_parts.utils.os_utils.mount_overlayfs")
+        mocker.patch("craft_parts.utils.os_utils.umount")
+        # pylint: enable=attribute-defined-outside-init
+        yield
+        plugins.unregister("overlay-pkg-test")
+
+    def test_merges_spec_and_plugin_packages(self):
+        result = self._handler._merged_overlay_packages()
+        # Deduplicates and sorts
+        assert result == ["plugin-pkg1", "plugin-pkg2", "spec-pkg1"]
+
+    def test_empty_spec_uses_plugin_only(self, new_dir, partitions, mocker):
+        part = Part(
+            "bar",
+            {"plugin": "overlay-pkg-test", "source": "."},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[part], base_layer_dir=None, cache_level=0
+        )
+        part_info = PartInfo(info, part)
+        handler = PartHandler(
+            part, part_info=part_info, part_list=[part], overlay_manager=ovmgr
+        )
+        result = handler._merged_overlay_packages()
+        assert result == ["plugin-pkg1", "plugin-pkg2"]

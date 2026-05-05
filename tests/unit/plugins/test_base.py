@@ -69,6 +69,69 @@ def test_plugin(new_dir):
     assert plugin.get_build_commands() == ["hello", "world"]
 
 
+def test_plugin_overlay_defaults(new_dir):
+    """Plugin base class returns empty overlay defaults."""
+    part = Part("p1", {})
+    project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=project_info, part=part)
+
+    props = FooPluginProperties.unmarshal({"foo-name": "world"})
+    plugin = FooPlugin(properties=props, part_info=part_info)
+
+    assert plugin.uses_overlay is False
+    assert plugin.get_overlay_packages() == set()
+    assert plugin.get_overlay_host_commands() == []
+    assert plugin.get_overlay_chroot_commands() == []
+    assert plugin.get_overlay_environment() == {}
+
+
+class OverlayPlugin(Plugin):
+    """A plugin that declares overlay participation."""
+
+    properties_class = FooPluginProperties
+    uses_overlay = True
+
+    def get_build_snaps(self) -> set[str]:
+        return set()
+
+    def get_build_packages(self) -> set[str]:
+        return set()
+
+    def get_build_environment(self) -> dict[str, str]:
+        return {}
+
+    def get_build_commands(self) -> list[str]:
+        return []
+
+    def get_overlay_packages(self) -> set[str]:
+        return {"libc6"}
+
+    def get_overlay_host_commands(self) -> list[str]:
+        return ["touch $CRAFT_OVERLAY/host-proof.txt"]
+
+    def get_overlay_chroot_commands(self) -> list[str]:
+        return ["touch /chroot-proof.txt"]
+
+    def get_overlay_environment(self) -> dict[str, str]:
+        return {"OVERLAY_VAR": "overlay_value"}
+
+
+def test_plugin_overlay_methods(new_dir):
+    """Plugin subclass can declare overlay participation and return commands."""
+    part = Part("p1", {})
+    project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=project_info, part=part)
+
+    props = FooPluginProperties.unmarshal({"foo-name": "test"})
+    plugin = OverlayPlugin(properties=props, part_info=part_info)
+
+    assert plugin.uses_overlay is True
+    assert plugin.get_overlay_packages() == {"libc6"}
+    assert plugin.get_overlay_host_commands() == ["touch $CRAFT_OVERLAY/host-proof.txt"]
+    assert plugin.get_overlay_chroot_commands() == ["touch /chroot-proof.txt"]
+    assert plugin.get_overlay_environment() == {"OVERLAY_VAR": "overlay_value"}
+
+
 def test_abstract_methods(new_dir):
     class FaultyPlugin(Plugin):
         """A plugin that doesn't implement abstract methods."""

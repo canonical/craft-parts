@@ -19,7 +19,7 @@ from functools import partial
 
 import pydantic
 import pytest
-from craft_parts import errors, parts
+from craft_parts import errors, parts, plugins
 from craft_parts.dirs import ProjectDirs
 from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
@@ -367,6 +367,37 @@ class TestPartData:
             },
         )
         assert p.has_overlay == result
+
+    def test_part_has_overlay_from_plugin(self):
+        """Part.has_overlay is True when the plugin sets uses_overlay."""
+
+        class _OverlayTestPlugin(plugins.Plugin):
+            properties_class = plugins.PluginProperties
+            uses_overlay = True
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+        plugins.register({"overlay-test": _OverlayTestPlugin})
+        try:
+            p = Part("foo", {"plugin": "overlay-test"})
+            assert p.has_overlay is True
+        finally:
+            plugins.unregister("overlay-test")
+
+    def test_part_has_overlay_false_from_plugin(self):
+        """Part.has_overlay is False when plugin does not set uses_overlay."""
+        p = Part("foo", {"plugin": "nil"})
+        assert p.has_overlay is False
 
 
 class TestPartOrdering:

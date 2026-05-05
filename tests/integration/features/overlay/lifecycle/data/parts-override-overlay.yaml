@@ -1,0 +1,7 @@
+parts:
+  mypart:
+    plugin: host-overlay
+    source: .
+    override-overlay: |
+      craftctl default
+      echo "override ran" > /override-proof.txt

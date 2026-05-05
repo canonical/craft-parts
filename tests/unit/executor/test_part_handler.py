@@ -16,6 +16,7 @@
 
 import logging
 import os
+import subprocess
 from pathlib import Path
 from typing import Any, cast
 from unittest.mock import call
@@ -1417,3 +1418,58 @@ class TestDirs:
         handler._make_dirs()
 
         assert list(part.part_install_dir.iterdir()) == []
+
+
+class TestRunOverlayChrootCommands:
+    """Test _run_overlay_chroot_commands module-level function."""
+
+    def test_runs_commands_via_bash(self, mocker):
+        mock_which = mocker.patch("shutil.which", return_value="/usr/bin/bash")
+        mock_check_call = mocker.patch("subprocess.check_call")
+
+        part_handler._run_overlay_chroot_commands(
+            commands=["echo hello", "touch /proof.txt"],
+            env_script='export FOO="bar"',
+            part_name="mypart",
+            plugin_name="my-plugin",
+        )
+
+        mock_which.assert_called_once_with("bash")
+        mock_check_call.assert_called_once()
+        args = mock_check_call.call_args
+        assert args[0][0][0] == "/usr/bin/bash"
+        assert args[0][0][1] == "-c"
+        script = args[0][0][2]
+        assert "set -e" in script
+        assert 'export FOO="bar"' in script
+        assert "echo hello" in script
+        assert "touch /proof.txt" in script
+
+    def test_raises_file_not_found_when_no_bash(self, mocker):
+        mocker.patch("shutil.which", return_value=None)
+
+        with pytest.raises(FileNotFoundError, match="bash not found"):
+            part_handler._run_overlay_chroot_commands(
+                commands=["echo hello"],
+                env_script="",
+                part_name="mypart",
+                plugin_name="my-plugin",
+            )
+
+    def test_wraps_subprocess_error(self, mocker):
+
+        mocker.patch("shutil.which", return_value="/bin/bash")
+        mocker.patch(
+            "subprocess.check_call",
+            side_effect=subprocess.CalledProcessError(1, "bash"),
+        )
+
+        with pytest.raises(errors.PluginOverlayError) as exc_info:
+            part_handler._run_overlay_chroot_commands(
+                commands=["false"],
+                env_script="",
+                part_name="mypart",
+                plugin_name="my-plugin",
+            )
+        assert exc_info.value.part_name == "mypart"
+        assert exc_info.value.plugin_name == "my-plugin"

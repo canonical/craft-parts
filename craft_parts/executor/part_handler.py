@@ -50,7 +50,7 @@ from craft_parts.state_manager import (
 )
 from craft_parts.state_manager.stage_state import StageState
 from craft_parts.steps import Step
-from craft_parts.utils import file_utils, os_utils
+from craft_parts.utils import file_utils, os_utils, process
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 from . import filesets, migration
@@ -63,6 +63,7 @@ from .step_handler import (
     StepHandler,
     StepPartitionContents,
     Stream,
+    _create_and_run_script,  # pyright: ignore[reportPrivateUsage]
 )
 
 logger = logging.getLogger(__name__)
@@ -370,8 +371,8 @@ class PartHandler:
         self._fetch_overlay_packages()
 
         if self._part.has_overlay:
-            # install overlay packages
-            overlay_packages = self._part.spec.overlay_packages
+            # install overlay packages (user-declared + plugin-declared)
+            overlay_packages = self._merged_overlay_packages()
             if overlay_packages:
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
@@ -391,7 +392,7 @@ class PartHandler:
                         stdout=stdout,
                         stderr=stderr,
                     )
-            else:
+            elif self._part.spec.overlay_script:
                 # execute overlay script
                 with overlays.LayerMount(self._overlay_manager, top_part=self._part):
                     contents = self._run_step(
@@ -401,6 +402,15 @@ class PartHandler:
                         stdout=stdout,
                         stderr=stderr,
                     )
+            elif self._plugin.uses_overlay:
+                # Pure-plugin overlay path: run host commands then chroot commands
+                contents = self._run_plugin_overlay(
+                    step_info=step_info,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
+            else:
+                contents = StepContents()
 
             # apply overlay filter
             overlay_fileset = filesets.Fileset(
@@ -1300,7 +1310,7 @@ class PartHandler:
 
         :raises OverlayPackageNotFound: If a package is not available for download.
         """
-        overlay_packages = self._part.spec.overlay_packages
+        overlay_packages = self._merged_overlay_packages()
         if not overlay_packages:
             return
 
@@ -1311,11 +1321,79 @@ class PartHandler:
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
                 ctx.refresh_packages_list()
-                ctx.download_packages(overlay_packages)
+                ctx.download_packages(list(overlay_packages))
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
             ) from err
+
+    def _merged_overlay_packages(self) -> list[str]:
+        """Return merged overlay packages from spec and plugin."""
+        spec_packages = set(self._part.spec.overlay_packages or [])
+        plugin_packages = self._plugin.get_overlay_packages()
+        merged = spec_packages | plugin_packages
+        return sorted(merged)
+
+    def _run_plugin_overlay(
+        self,
+        step_info: StepInfo,
+        *,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> StepContents:
+        """Run the pure-plugin overlay path (host commands + chroot commands).
+
+        :param step_info: Information about the step to execute.
+
+        :return: The overlay step contents.
+        """
+        step_env = generate_step_environment(
+            part=self._part, plugin=self._plugin, step_info=step_info
+        )
+
+        # Save the overlay environment script
+        overlay_env_script_path = self._part.part_run_dir.absolute() / "overlay-env.sh"
+        overlay_env_script_path.write_text(step_env)
+        overlay_env_script_path.chmod(0o644)
+
+        # Phase 1: host commands with the overlay FS mounted
+        host_commands = self._plugin.get_overlay_host_commands()
+        if host_commands:
+            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+                try:
+                    _create_and_run_script(
+                        host_commands,
+                        script_path=(
+                            self._part.part_run_dir.absolute() / "overlay-host.sh"
+                        ),
+                        environment_script_path=overlay_env_script_path,
+                        cwd=self._part.part_layer_dir,
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
+                except process.ProcessError as process_error:
+                    raise errors.PluginOverlayError(
+                        part_name=self._part.name,
+                        plugin_name=self._part.plugin_name,
+                        stderr=process_error.result.stderr,
+                    ) from process_error
+
+        # Phase 2: chroot commands inside the overlay
+        chroot_commands = self._plugin.get_overlay_chroot_commands()
+        if chroot_commands:
+            with overlays.ChrootMount(
+                self._overlay_manager,
+                top_part=self._part,
+            ) as cm:
+                cm(
+                    _run_overlay_chroot_commands,
+                    commands=chroot_commands,
+                    env_script=step_env,
+                    part_name=self._part.name,
+                    plugin_name=self._part.plugin_name,
+                )
+
+        return StepContents()
 
     def _unpack_stage_packages(self) -> None:
         """Extract stage packages contents to the part's install directory."""
@@ -1564,3 +1642,46 @@ def _conditional_layer_mount(
             yield
     else:
         yield
+
+
+def _run_overlay_chroot_commands(
+    *,
+    commands: list[str],
+    env_script: str,
+    part_name: str,
+    plugin_name: str,
+    **_kwargs: Any,
+) -> None:
+    """Run plugin overlay chroot commands inside the chroot environment.
+
+    This is a module-level function so it can be pickled for multiprocessing.
+
+    :param commands: The commands to run.
+    :param env_script: The environment script content.
+    :param part_name: The part name (for error reporting).
+    :param plugin_name: The plugin name (for error reporting).
+    """
+    import shutil  # noqa: PLC0415
+    import subprocess  # noqa: PLC0415
+
+    bash = shutil.which("bash")
+    if bash is None:
+        raise FileNotFoundError("bash not found in chroot")
+
+    # Build a single script with environment and commands
+    script_lines = ["set -e", env_script]
+    script_lines.extend(commands)
+    script_content = "\n".join(script_lines) + "\n"
+
+    try:
+        subprocess.check_call(
+            [bash, "-c", script_content],
+            cwd="/",
+        )
+    except subprocess.CalledProcessError as err:
+        from craft_parts import errors as _errors  # noqa: PLC0415
+
+        raise _errors.PluginOverlayError(
+            part_name=part_name,
+            plugin_name=plugin_name,
+        ) from err
