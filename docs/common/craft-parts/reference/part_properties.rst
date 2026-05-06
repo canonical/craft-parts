@@ -73,6 +73,9 @@ directory.
 .. kitbash-field:: PartSpec overlay_script
     :label: reference-part-properties-overlay-script
 
+.. kitbash-field:: PartSpec override_overlay
+    :label: reference-part-properties-override-overlay
+
 
 .. _reference-part-properties-build-step-keys:
 

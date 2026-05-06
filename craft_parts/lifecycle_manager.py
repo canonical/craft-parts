@@ -88,6 +88,8 @@ class LifecycleManager:
     :param filesystem_mounts: A dict of filesystem_mounts to apply when migrating files.
     :param usrmerged_by_default: Whether the parts' install dirs should be filled with
         usrmerge-safe directories and symlinks prior to a part's build.
+    :param use_host_sources: Whether overlay steps should also include the repository
+      sources defined on the host.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """
@@ -117,6 +119,7 @@ class LifecycleManager:
         partitions: list[str] | None = None,
         filesystem_mounts: dict[str, Any] | None = None,
         usrmerged_by_default: bool = False,
+        use_host_sources: bool = False,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         # pylint: disable=too-many-locals
@@ -222,6 +225,7 @@ class LifecycleManager:
             track_stage_packages=track_stage_packages,
             base_layer_dir=base_layer_dir,
             base_layer_hash=layer_hash,
+            use_host_sources=use_host_sources,
         )
         self._project_info = project_info
         # pylint: enable=too-many-locals

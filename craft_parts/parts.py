@@ -142,6 +142,9 @@ class PartSpec(BaseModel):
     During the pull step, the part fetches the repository from the specified commit
     up to the target commit, the target tag, or the tip of the target branch.
 
+    If this value is non-zero and ``source-commit`` is set to a full-length commit hash,
+    a shallow clone is pulled.
+
     Equivalent to the
     :literalref:`--depth<https://git-scm.com/docs/git-pull#Documentation/git-pull.txt---depthdepth>`
     parameter of ``git fetch``.
@@ -218,6 +221,8 @@ class PartSpec(BaseModel):
 
         * - Value
           - Description
+        * - ``7z``
+          - 7zip file
         * - ``deb``
           - Debian package
         * - ``git``
@@ -467,6 +472,8 @@ class PartSpec(BaseModel):
 
     If unset, the part's layer will only contain the packages specified
     in ``overlay-packages``.
+
+    This key is mutually incompatible with ``override-overlay``.
     """
 
     override_overlay: str | None = Field(
@@ -477,6 +484,8 @@ class PartSpec(BaseModel):
     """A shell script that runs inside the part's overlay chroot.
 
     This is executed inside the overlay mount namespace using a chroot.
+
+    This key is mutually incompatible with ``overlay-script``.
     """
 
     override_build: str | None = Field(

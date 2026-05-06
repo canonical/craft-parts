@@ -123,7 +123,7 @@ Otherwise, the plugin performs the following actions:
 
 #. Find all JAR files in the staging area or selects jars specified in ``jlink-jars``.
 #. Unpack JAR files to the temporary location and concatenate all embedded jars into
-   `jdeps`_ classpath.
+   `jdeps`_ class path.
 #. Run `jdeps`_ to discover Java modules required for the staged jars.
 #. Run `jlink`_ to create a runtime image from the build JDK.
 

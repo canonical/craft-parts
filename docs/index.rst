@@ -9,7 +9,7 @@ Craft Parts is a Python package to support a family of tools that create
 standalone software packages for deployment on Linux-based systems.
 
 Craft Parts provides a mechanism to obtain data from different sources,
-process it in various ways, and prepare a filesystem subtree suitable for
+process it in various ways, and prepare a filesystem tree suitable for
 deployment. The components used in its project specification are called
 *parts*, which are independently downloaded, built and installed, but can
 also depend on each other.

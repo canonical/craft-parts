@@ -45,7 +45,7 @@ own special variables.
     This section describes how this plugin uses uv-specific environment
     variables. For more information, as well as a complete list of environment
     variables for uv, see the `uv environment documentation
-    <https://docs.astral.sh/uv/configuration/environment/>`_.
+    <https://docs.astral.sh/uv/reference/environment/>`_.
 
 UV_FROZEN
 ~~~~~~~~~
@@ -86,11 +86,20 @@ The version of Python that uv should use.
 UV_PYTHON_PREFERENCE
 ~~~~~~~~~~~~~~~~~~~~
 
-**Type:** ``only-system``, ``only-managed``, ``system``, or ``managed``
+**Choices:** "only-system", "only-managed", "system", or "managed"
 
 **Default:** "only-system"
 
 Whether uv should prefer (or exclusively use) system or uv-managed Python versions.
+
+
+UV_COMPILE_BYTECODE
+~~~~~~~~~~~~~~~~~~~
+
+**Default:** true
+
+Whether uv should compile Python sources to bytecode when creating the virtual
+environment.
 
 
 .. _uv-details-begin:

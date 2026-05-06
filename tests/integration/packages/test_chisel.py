@@ -93,6 +93,7 @@ def test_install_slice(new_homedir_path: pathlib.Path, partitions, caplog):
         text=True,
         capture_output=True,
         check=True,
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
     )
 
     assert result.stdout == "Hello, world!\n"

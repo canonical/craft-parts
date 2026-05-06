@@ -33,7 +33,7 @@ them::
 When executed, the lifecycle manager will download the tarball we specified,
 unpack it, run its configuration script, compile the source code, install
 the resulting artifacts, and extract only the files we want to deploy. The
-final result is a subtree containing the files we wanted to prime::
+final result is a tree containing the files we wanted to prime::
 
   prime
   prime/usr

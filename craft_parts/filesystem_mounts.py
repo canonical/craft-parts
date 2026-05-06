@@ -50,7 +50,7 @@ class FilesystemMountItem(BaseModel):
 
     def __eq__(self, other: object) -> bool:
         if type(other) is type(self):
-            return self.mount == cast(FilesystemMountItem, other).mount
+            return self.mount == other.mount
 
         return False
 

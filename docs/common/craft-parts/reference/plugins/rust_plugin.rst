@@ -203,9 +203,7 @@ below.
   18.1 because it prints an output like this:
 
   .. terminal::
-      :input: rustc -vV
-      :user: dev
-      :host: ubuntu
+      :output-only:
 
       rustc 1.81.0 (eeb90cda1 2024-09-04)
       binary: rustc

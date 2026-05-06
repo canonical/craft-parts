@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import re
+
 import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
@@ -151,6 +153,13 @@ def test_get_out_of_source_build(part_info):
 )
 def test_get_build_commands(mocker, part_info, part_data):
     """Test that go work is created and that work.go is created."""
+
+    # Create a go.mod file
+    part_info.part_src_subdir.mkdir(parents=True, exist_ok=True)
+    (part_info.part_src_subdir / "go.mod").write_text(
+        "module example.com/test\n\ngo 1.21\n"
+    )
+
     properties = GoUsePlugin.properties_class.unmarshal(part_data)
     plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
@@ -160,3 +169,12 @@ def test_get_build_commands(mocker, part_info, part_data):
         f"mkdir -p '{part_info.part_export_dir}/go-use'",
         f"ln -sf '{part_info.part_src_subdir}' '{dest_dir}'",
     ]
+
+
+def test_get_build_commands_missing_go_mod(part_info):
+    """Test that a PartsError is raised when go.mod is missing."""
+    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
+
+    with pytest.raises(errors.PartsError, match=re.escape("go.mod not found")):
+        plugin.get_build_commands()

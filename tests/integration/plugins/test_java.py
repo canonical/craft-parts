@@ -16,13 +16,40 @@
 
 import subprocess
 import textwrap
+import warnings
 from pathlib import Path
 
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
+from craft_parts.utils.os_utils import OsRelease
 
 pytestmark = [pytest.mark.java]
+
+
+@pytest.fixture
+def expected_jdk_version() -> str:
+    """The expected JDK for the current platform.
+
+    This method should be expanded as tests are supported on more platforms."""
+
+    platform = OsRelease().version_id()
+
+    match platform:
+        # Even though 22.04's "default-jdk" virtual package resolves to JDK 11,
+        # the Makefile currently installs many versions of the JDK and JDK 21 seems
+        # to be consistently picked up first on the path
+        case p if p in ("22.04", "24.04", "25.10"):
+            return "21"
+        case "26.04":
+            return "25"
+        case _:
+            warnings.warn(
+                "Cannot determine which version of the JDK to expect on this platform, defaulting to latest.",
+                FutureWarning,
+                stacklevel=3,
+            )
+            return "25"
 
 
 def run_build(new_dir, partitions, application):
@@ -60,7 +87,7 @@ def run_build(new_dir, partitions, application):
     return lf.project_info.prime_dir
 
 
-def test_java_plugin(new_dir, partitions):
+def test_java_plugin(new_dir, partitions, expected_jdk_version):
     """This test validates that java plugin sets JAVA_HOME.
     The JAVA_HOME should be set according to the following rules:
     - Latest version of Java VM is selected
@@ -75,7 +102,7 @@ def test_java_plugin(new_dir, partitions):
     assert java_binary.is_file()
 
     content = (prime_dir / "java_home").read_text()
-    assert "21" in content
+    assert expected_jdk_version in content
 
     output = subprocess.check_output(
         [str(java_binary), "-jar", f"{prime_dir}/jar/HelloWorld-1.0.jar"], text=True

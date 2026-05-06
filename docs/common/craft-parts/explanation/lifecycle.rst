@@ -65,9 +65,9 @@ alphabetically at each stage (even though C is listed before B):
     B:
       plugin: nil
 
-.. details:: craft_parts output
+Result:
 
-  .. code-block:: text
+.. code-block:: text
 
     Execute: Pull A
     Execute: Pull B
@@ -100,9 +100,9 @@ parts being reordered within a step:
     B:
       plugin: nil
 
-.. details:: craft_parts output
+Result:
 
-  .. code-block:: text
+.. code-block:: text
     :emphasize-lines: 7-8
 
     Execute: Pull C
