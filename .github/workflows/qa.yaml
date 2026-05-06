@@ -26,6 +26,7 @@ jobs:
           ["jammy", "arm64", "medium"],
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          ["resolute", "amd64"],
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -36,6 +37,7 @@ jobs:
           ["jammy", "arm64", "medium"],
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          ["resolute", "amd64"],
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -56,6 +58,7 @@ jobs:
           ["jammy", "arm64", "medium"],
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          ["resolute", "amd64"],
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -71,6 +74,7 @@ jobs:
         [
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          ["resolute", "amd64"],
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -101,6 +105,7 @@ jobs:
           ["jammy", "arm64"],
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          ["resolute", "amd64"],
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -113,9 +118,9 @@ jobs:
   test-requires-root:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: '["ubuntu-24.04"]'
+      fast-test-platforms: '["ubuntu-24.04", ["resolute", "amd64"]]'
       fast-test-python-versions: '["3.12"]'
-      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
+      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm", ["resolute", "amd64"]]'
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: requires_root
