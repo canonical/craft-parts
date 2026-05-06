@@ -435,7 +435,11 @@ def are_paths_equivalent(  # noqa: PLR0912
     if a_mode != b_mode:
         differences.append(f"different modes ({a_mode:o}, {b_mode:o})")
 
-    if a.is_file() or b.is_file():
+    if (
+        a.is_file()
+        and b.is_file()
+        and not (stat.S_ISLNK(a_stat.st_mode) or stat.S_ISLNK(b_stat.st_mode))
+    ):
         if a_stat.st_size != b_stat.st_size:
             differences.append(f"different sizes ({a_stat.st_size}, {b_stat.st_size})")
         elif stat.S_ISREG(a_stat.st_mode) and stat.S_ISREG(b_stat.st_mode):

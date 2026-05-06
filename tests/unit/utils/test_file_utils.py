@@ -391,6 +391,21 @@ def test_create_similar_directory_permissions(tmp_path, mock_chown):
             id="symlink_to_wrong_file",
         ),
         pytest.param(
+            pathlib.Path("symlink_to_file"),
+            pathlib.Path("different_symlink_to_file"),
+            (
+                False,
+                ["different symlink targets (empty_file, another_empty_file)"],
+            ),
+            id="two-symlinks-same-content-different-targets",
+        ),
+        pytest.param(
+            pathlib.Path("symlink_to_file"),
+            pathlib.Path("alt_symlink_to_file"),
+            (True, None),
+            id="two-symlinks-same-inode-different-targets",
+        ),
+        pytest.param(
             pathlib.Path("broken_link"),
             pathlib.Path("another_broken_link"),
             (True, None),
@@ -436,6 +451,8 @@ def test_are_paths_equivalent(
     (tmp_path / "another_broken_link").symlink_to("this_does_not_exist")
     (tmp_path / "different_broken_link").symlink_to("that_does_not_exist")
     (tmp_path / "symlink_to_file").symlink_to("empty_file")
+    (tmp_path / "different_symlink_to_file").symlink_to("another_empty_file")
+    (tmp_path / "alt_symlink_to_file").symlink_to("hardlink")
     (tmp_path / "symlink_to_dir").symlink_to("empty_dir")
 
     assert are_paths_equivalent(a, b) == expected
