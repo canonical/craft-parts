@@ -755,6 +755,21 @@ class Part:
 
         self._check_partition_feature()
         self._check_partition_usage()
+        self._check_overlay_script_plugin_conflict()
+
+    def _check_overlay_script_plugin_conflict(self) -> None:
+        """Check that overlay-script is not used with a plugin that uses overlay."""
+        if not self.plugin_name or not self.spec.overlay_script:
+            return
+        plugin_class = plugins.get_plugin_class(self.plugin_name)
+        if plugin_class.uses_overlay:
+            raise errors.PartSpecificationError(
+                part_name=self.name,
+                message=(
+                    f"overlay-script cannot be used with plugin "
+                    f"{self.plugin_name!r} because it declares overlay commands"
+                ),
+            )
 
     def __repr__(self) -> str:
         return f"Part({self.name!r})"
@@ -925,7 +940,13 @@ class Part:
     @property
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
-        return self.spec.has_overlay
+        if self.spec.has_overlay:
+            return True
+        if self.plugin_name:
+            plugin_class = plugins.get_plugin_class(self.plugin_name)
+            if plugin_class.uses_overlay:
+                return True
+        return False
 
     @property
     def organizes_to_overlay(self) -> bool:

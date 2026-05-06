@@ -162,8 +162,9 @@ class StepHandler:
 
         return StepContents()
 
-    @staticmethod
-    def _builtin_overlay() -> StepContents:
+    def _builtin_overlay(self) -> StepContents:
+        """Run the built-in overlay handler (plugin chroot commands)."""
+        self._run_overlay_scriptlet("craftctl default", work_dir=Path("/"))
         return StepContents()
 
     def _builtin_build(self) -> StepContents:
@@ -376,8 +377,16 @@ class StepHandler:
         """Execute a scriptlet.
 
         :param scriptlet: the scriptlet to run.
+        :param scriptlet_name: the name of the scriptlet.
+        :param step: the step this scriptlet belongs to.
         :param work_dir: the directory where the script will be executed.
         """
+        if step == Step.OVERLAY and scriptlet_name != "overlay-script":
+            # override-overlay runs in chroot where craftctl binary is
+            # unavailable; use the bash function injection approach
+            self._run_overlay_scriptlet(scriptlet, work_dir=work_dir)
+            return
+
         with tempfile.TemporaryDirectory() as tempdir:
             ctl_socket_path = os.path.join(tempdir, "craftctl.socket")  # noqa: PTH118
             ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -410,6 +419,68 @@ class StepHandler:
                 ) from process_error
             finally:
                 ctl_socket.close()
+
+    def _run_overlay_scriptlet(
+        self,
+        scriptlet: str,
+        *,
+        work_dir: Path,
+    ) -> None:
+        """Execute an override-overlay scriptlet inside a chroot.
+
+        Since the chroot doesn't have access to the craftctl binary, this
+        injects a bash function that implements ``craftctl default`` by running
+        the plugin's chroot commands inline.
+
+        :param scriptlet: The scriptlet to run.
+        :param work_dir: The directory where the script will be executed.
+        """
+        chroot_commands = self._plugin.get_overlay_chroot_commands()
+        indented_commands = (
+            "\n".join(f"    {cmd}" for cmd in chroot_commands) or "    :"
+        )
+
+        preamble = (
+            "__craftctl_default() {\n"
+            f"{indented_commands}\n"
+            "}\n"
+            "export -f __craftctl_default\n"
+            "\n"
+            "craftctl() {\n"
+            '    if [ "$1" = "default" ]; then\n'
+            "        __craftctl_default\n"
+            "    else\n"
+            '        echo "Error: craftctl $1 cannot be used in override-overlay" >&2\n'
+            "        return 1\n"
+            "    fi\n"
+            "}\n"
+            "export -f craftctl\n"
+        )
+
+        script_content = "#!/bin/bash\nset -euo pipefail\nset -x\n"
+        script_content += preamble + scriptlet + "\n"
+
+        # Save script to host for debugging
+        script_path = self._part.part_run_dir.absolute() / "override_overlay.sh"
+        script_path.parent.mkdir(parents=True, exist_ok=True)
+        script_path.write_text(script_content)
+        script_path.chmod(0o755)
+
+        try:
+            process.run(
+                ["bash", "-c", script_content],
+                cwd=work_dir,
+                stdout=self._stdout,
+                stderr=self._stderr,
+                check=True,
+            )
+        except process.ProcessError as process_error:
+            raise errors.ScriptletRunError(
+                part_name=self._part.name,
+                scriptlet_name="override-overlay",
+                exit_code=process_error.result.returncode,
+                stderr=process_error.result.stderr,
+            ) from process_error
 
     def _ctl_server_selector(
         self, step: Step, scriptlet_name: str, stream: socket.socket
