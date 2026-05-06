@@ -90,6 +90,10 @@ class LifecycleManager:
         usrmerge-safe directories and symlinks prior to a part's build.
     :param use_host_sources: Whether overlay steps should also include the repository
       sources defined on the host.
+    :param native_cross_builds: (Experimental, incomplete) Whether to use native
+        cross-compilation support for cross-builds. When enabled, craft-parts will
+        use host cross-compilation toolchains rather than emulated builds.
+        Defaults to False.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """
@@ -120,6 +124,7 @@ class LifecycleManager:
         filesystem_mounts: dict[str, Any] | None = None,
         usrmerged_by_default: bool = False,
         use_host_sources: bool = False,
+        native_cross_builds: bool = False,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         # pylint: disable=too-many-locals
@@ -226,8 +231,10 @@ class LifecycleManager:
             base_layer_dir=base_layer_dir,
             base_layer_hash=layer_hash,
             use_host_sources=use_host_sources,
+            native_cross_builds=native_cross_builds,
         )
         self._project_info = project_info
+        self._native_cross_builds = native_cross_builds
         # pylint: enable=too-many-locals
 
     @property

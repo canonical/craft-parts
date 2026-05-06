@@ -231,6 +231,7 @@ class PartHandler:
         overlay_manager: OverlayManager,
         ignore_patterns: list[str] | None = None,
         base_layer_hash: LayerHash | None = None,
+        native_cross_builds: bool = False,
     ) -> None:
         self._part = part
         self._part_info = part_info
@@ -238,6 +239,7 @@ class PartHandler:
         self._track_stage_packages = track_stage_packages
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
+        self._native_cross_builds = native_cross_builds
         self._app_environment: dict[str, str] = {}
 
         self._plugin = plugins.get_plugin(
@@ -1272,7 +1274,9 @@ class PartHandler:
             fetched_packages = packages.Repository.fetch_stage_packages(
                 cache_dir=step_info.cache_dir,
                 package_names=stage_packages,
-                arch=step_info.host_arch,
+                arch=step_info.arch_build_for
+                if self._native_cross_builds
+                else step_info.host_arch,
                 base=step_info.base,
                 stage_packages_path=self._part.part_packages_dir,
             )
@@ -1331,6 +1335,7 @@ class PartHandler:
             install_path=Path(self._part.part_install_dir),
             stage_packages=pulled_packages,
             track_stage_packages=self._track_stage_packages,
+            arch=self._part_info.arch_build_for if self._native_cross_builds else None,
         )
 
     def _unpack_stage_snaps(self) -> None:

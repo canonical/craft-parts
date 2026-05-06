@@ -790,13 +790,14 @@ class Ubuntu(BaseRepository):
         install_path: pathlib.Path,
         stage_packages: list[str] | None = None,
         track_stage_packages: bool = False,
+        arch: str | None = None,
     ) -> None:
         """Unpack stage packages to install_path."""
         if stage_packages is None:
             stage_packages = []
         if _is_list_of_slices(stage_packages):
             cls._unpack_stage_slices(
-                stage_packages=stage_packages, install_path=install_path
+                stage_packages=stage_packages, install_path=install_path, arch=arch
             )
         else:
             cls._unpack_stage_debs(
@@ -835,27 +836,34 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     def _unpack_stage_slices(
-        cls, *, stage_packages: list[str], install_path: pathlib.Path
+        cls,
+        *,
+        stage_packages: list[str],
+        install_path: pathlib.Path,
+        arch: str | None = None,
     ) -> None:
         """Cut Chisel slices into a destination path.
 
         :param stage_packages: The list of names of slices to cut.
         :param install_path: The destination directory.
+        :param arch: The target architecture (e.g. "arm64"). If None, chisel
+            defaults to the host architecture.
         """
         output_stream = StringIO()
         handler = logging.StreamHandler(stream=output_stream)
         logger.addHandler(handler)
         try:
-            process_run(
-                [
-                    "chisel",
-                    "cut",
-                    "--ignore=unmaintained",
-                    "--ignore=unstable",
-                    f"--root={install_path}",
-                    *stage_packages,
-                ]
-            )
+            cmd = [
+                "chisel",
+                "cut",
+                "--ignore=unmaintained",
+                "--ignore=unstable",
+                f"--root={install_path}",
+            ]
+            if arch:
+                cmd.append(f"--arch={arch}")
+            cmd.extend(stage_packages)
+            process_run(cmd)
         except subprocess.CalledProcessError as err:
             command_output = output_stream.getvalue()
             raise errors.ChiselError(

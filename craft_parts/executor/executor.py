@@ -18,8 +18,10 @@
 
 import logging
 import shutil
+import subprocess
 from pathlib import Path
 
+import distro
 from typing_extensions import Self
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
@@ -36,6 +38,18 @@ from .part_handler import PartHandler
 from .step_handler import Stream
 
 logger = logging.getLogger(__name__)
+
+
+# Map each architecture to its Ubuntu archive URL.
+_ARCH_ARCHIVE_URL = {
+    "amd64": "http://archive.ubuntu.com/ubuntu",
+    "i386": "http://archive.ubuntu.com/ubuntu",
+    "arm64": "http://ports.ubuntu.com/ubuntu-ports",
+    "armhf": "http://ports.ubuntu.com/ubuntu-ports",
+    "ppc64el": "http://ports.ubuntu.com/ubuntu-ports",
+    "riscv64": "http://ports.ubuntu.com/ubuntu-ports",
+    "s390x": "http://ports.ubuntu.com/ubuntu-ports",
+}
 
 
 class Executor:
@@ -55,6 +69,7 @@ class Executor:
     :param ignore_patterns: File patterns to ignore when pulling local sources.
     :param use_host_sources: Whether overlay steps should also include the repository
       sources defined on the host.
+    :param native_cross_builds: Whether to use native cross-compilation support.
     """
 
     def __init__(  # noqa: PLR0913
@@ -69,6 +84,7 @@ class Executor:
         base_layer_dir: Path | None = None,
         base_layer_hash: LayerHash | None = None,
         use_host_sources: bool = False,
+        native_cross_builds: bool = False,
     ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -79,6 +95,7 @@ class Executor:
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
         self._use_host_sources = use_host_sources
+        self._native_cross_builds = native_cross_builds
 
         # The cache layer level is set to the first part that doesn't organize
         # to the overlay coming after a part that organizes to the overlay.
@@ -105,6 +122,8 @@ class Executor:
 
         This method is called before executing lifecycle actions.
         """
+        if self._native_cross_builds:
+            self._enable_cross_build_architecture()
         self._install_build_packages()
         self._install_build_snaps()
 
@@ -268,10 +287,143 @@ class Executor:
             overlay_manager=self._overlay_manager,
             ignore_patterns=self._ignore_patterns,
             base_layer_hash=self._base_layer_hash,
+            native_cross_builds=self._native_cross_builds,
         )
         self._handler[part.name] = handler
 
         return handler
+
+    def _enable_cross_build_architecture(self) -> None:
+        """Enable the target architecture for cross-building.
+
+        Adds the target architecture via dpkg and configures APT sources
+        for the foreign architecture (handling the archive.ubuntu.com vs
+        ports.ubuntu.com split).  Existing sources are pinned to the host
+        architecture so APT doesn't try to fetch foreign-arch packages from
+        archives that don't carry them.
+        """
+        host_arch = self._project_info.arch_build_on
+        target_arch = self._project_info.arch_build_for
+
+        if host_arch == target_arch:
+            return
+
+        logger.info(
+            "Enabling cross-build architecture: %s (host: %s)", target_arch, host_arch
+        )
+
+        # Add the foreign architecture to dpkg
+        subprocess.run(
+            ["dpkg", "--add-architecture", target_arch],
+            check=True,
+        )
+
+        # Pin existing sources to the host architecture so they don't try
+        # to fetch packages for the foreign architecture (which would 404
+        # on archive.ubuntu.com for ports architectures and vice versa).
+        self._pin_existing_sources_to_host(host_arch)
+
+        # Add APT sources for the target architecture.
+        target_url = _ARCH_ARCHIVE_URL.get(target_arch, "")
+        if target_url:
+            self._add_cross_build_sources(target_arch, target_url)
+
+        # Refresh package lists to include the new architecture.
+        # Clear the lru_cache first so refresh actually runs.
+        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
+        packages.Repository.refresh_packages_list()
+
+    def _pin_existing_sources_to_host(self, host_arch: str) -> None:
+        """Restrict existing APT sources to the host architecture only.
+
+        Without this, adding a foreign architecture via dpkg causes APT to
+        try fetching foreign-arch package lists from all configured sources,
+        which fails with 404 when the archive doesn't carry that architecture
+        (e.g. ports architectures on archive.ubuntu.com).
+
+        For deb822 .sources files, we inject an ``Architectures:`` field.
+        For traditional sources.list, we add ``[arch=<host>]`` markers.
+        """
+        sources_dir = Path("/etc/apt/sources.list.d")
+
+        # Handle deb822 .sources files (24.04+)
+        if sources_dir.is_dir():
+            for sources_file in sources_dir.glob("*.sources"):
+                # Don't modify our own cross-build sources
+                if sources_file.name == "craft-parts-cross-build.sources":
+                    continue
+                content = sources_file.read_text()
+                if "Architectures:" not in content:
+                    # Add Architectures field to each stanza
+                    new_content = self._add_arch_to_deb822(content, host_arch)
+                    sources_file.write_text(new_content)
+                    logger.debug(
+                        "Pinned %s to architecture %s", sources_file, host_arch
+                    )
+
+        # Handle traditional sources.list
+        sources_list = Path("/etc/apt/sources.list")
+        if sources_list.is_file():
+            content = sources_list.read_text()
+            if content.strip() and "[arch=" not in content:
+                new_lines = []
+                for line in content.splitlines(keepends=True):
+                    stripped = line.strip()
+                    if stripped and not stripped.startswith("#"):
+                        # Insert [arch=<host>] after "deb " or "deb-src "
+                        for prefix in ("deb-src ", "deb "):
+                            if stripped.startswith(prefix):
+                                pinned_line = line.replace(
+                                    prefix, f"{prefix}[arch={host_arch}] ", 1
+                                )
+                                line = pinned_line  # noqa: PLW2901
+                                break
+                    new_lines.append(line)
+                sources_list.write_text("".join(new_lines))
+                logger.debug("Pinned %s to architecture %s", sources_list, host_arch)
+
+    @staticmethod
+    def _add_arch_to_deb822(content: str, arch: str) -> str:
+        """Add ``Architectures: <arch>`` to each stanza in a deb822 sources file."""
+        result_lines: list[str] = []
+        for line in content.splitlines(keepends=True):
+            result_lines.append(line)
+            # Insert Architectures after the Types line in each stanza
+            if line.strip().startswith("Types:"):
+                result_lines.append(f"Architectures: {arch}\n")
+        return "".join(result_lines)
+
+    def _add_cross_build_sources(self, target_arch: str, archive_url: str) -> None:
+        """Add APT sources for the target architecture.
+
+        :param target_arch: The target architecture (e.g. "arm64").
+        :param archive_url: The archive URL for the target architecture.
+        """
+        sources_dir = Path("/etc/apt/sources.list.d")
+        sources_dir.mkdir(parents=True, exist_ok=True)
+
+        codename = distro.codename()
+        if not codename:
+            raise RuntimeError(
+                "Cannot determine distribution codename; "
+                "unable to configure cross-build APT sources."
+            )
+
+        suites = f"{codename} {codename}-updates {codename}-security"
+
+        sources_content = (
+            f"Types: deb\n"
+            f"URIs: {archive_url}\n"
+            f"Suites: {suites}\n"
+            f"Components: main universe\n"
+            f"Architectures: {target_arch}\n"
+        )
+
+        sources_file = sources_dir / "craft-parts-cross-build.sources"
+        sources_file.write_text(sources_content)
+        logger.debug(
+            "Added %s sources for %s at %s", archive_url, target_arch, sources_file
+        )
 
     def _install_build_packages(self) -> None:
         for part in self._part_list:

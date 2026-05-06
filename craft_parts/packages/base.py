@@ -164,6 +164,7 @@ class BaseRepository(abc.ABC):
         install_path: Path,
         stage_packages: list[str] | None = None,
         track_stage_packages: bool = False,
+        arch: str | None = None,
     ) -> None:
         """Unpack stage packages.
 
@@ -172,6 +173,8 @@ class BaseRepository(abc.ABC):
         :param install_path: The path stage packages will be unpacked to.
         :param stage_packages: An optional list of the packages that were previously
             pulled.
+        :param arch: The target architecture for chisel slices (e.g. "arm64").
+            If None, defaults to the host architecture.
         """
 
 
@@ -251,6 +254,7 @@ class DummyRepository(BaseRepository):
         install_path: Path,
         stage_packages: list[str] | None = None,
         track_stage_packages: bool = False,
+        arch: str | None = None,
     ) -> None:
         """Unpack stage packages to install_path."""
 
