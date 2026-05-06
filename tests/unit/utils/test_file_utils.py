@@ -24,7 +24,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
-from craft_parts.utils.file_utils import are_paths_equivalent
+from craft_parts.utils.file_utils import get_path_differences
 from pyfakefs.fake_filesystem import FakeFilesystem
 from typing_extensions import Any
 
@@ -285,150 +285,142 @@ def test_create_similar_directory_permissions(tmp_path, mock_chown):
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("empty_file"),
-            (True, None),
+            [],
             id="same-file",
         ),
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("another_empty_file"),
-            (True, None),
+            [],
             id="identical-files",
         ),
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("other_file"),
-            (False, ["different sizes (0, 23)"]),
+            ["different sizes (0, 23)"],
             id="different-files",
         ),
         pytest.param(
             pathlib.Path("other_file"),
             pathlib.Path("other_file2"),
-            (False, ["different contents"]),
+            ["different contents"],
             id="different-file-contents",
         ),
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("nonexistent"),
-            (True, None),
+            [],
             id="file-and-nonexistent",
         ),
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("hardlink"),
-            (True, None),
+            [],
             id="hardlink",
         ),
         pytest.param(
             pathlib.Path("empty_dir"),
             pathlib.Path("empty_dir"),
-            (True, None),
+            [],
             id="same-dir",
         ),
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("permissive_file"),
-            (False, ["different modes (600, 640)"]),
+            ["different modes (600, 640)"],
             id="file-permissions",
         ),
         pytest.param(
             pathlib.Path("empty_dir"),
             pathlib.Path("permissive_dir"),
-            (False, ["different modes (700, 750)"]),
+            ["different modes (700, 750)"],
             id="dir-permissions",
         ),
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("empty_dir"),
-            (False, ["different types (file, dir)"]),
+            ["different types (file, dir)"],
             id="file-vs-dir",
         ),
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("broken_link"),
-            (False, ["different types (file, symlink)"]),
+            ["different types (file, symlink)"],
             id="file-vs-link",
         ),
         pytest.param(
             pathlib.Path("empty_dir"),
             pathlib.Path("broken_link"),
-            (False, ["different types (dir, symlink)"]),
+            ["different types (dir, symlink)"],
             id="dir-vs-link",
         ),
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("symlink_to_file"),
-            (True, None),
+            [],
             id="symlink_to_file",
         ),
         pytest.param(
             pathlib.Path("empty_dir"),
             pathlib.Path("symlink_to_dir"),
-            (True, None),
+            [],
             id="symlink_to_dir",
         ),
         pytest.param(
             pathlib.Path("empty_file"),
             pathlib.Path("symlink_to_dir"),
-            (False, ["different types (file, symlink)"]),
+            ["different types (file, symlink)"],
             id="wrong_symlink_to_file",
         ),
         pytest.param(
             pathlib.Path("empty_dir"),
             pathlib.Path("symlink_to_file"),
-            (False, ["different types (dir, symlink)"]),
+            ["different types (dir, symlink)"],
             id="wrong_symlink_to_dir",
         ),
         pytest.param(
             pathlib.Path("other_dir"),
             pathlib.Path("symlink_to_file"),
-            (False, ["different types (dir, symlink)"]),
+            ["different types (dir, symlink)"],
             id="symlink_to_wrong_dir",
         ),
         pytest.param(
             pathlib.Path("other_file"),
             pathlib.Path("symlink_to_file"),
-            (False, ["different types (file, symlink)"]),
+            ["different types (file, symlink)"],
             id="symlink_to_wrong_file",
         ),
         pytest.param(
             pathlib.Path("symlink_to_file"),
             pathlib.Path("different_symlink_to_file"),
-            (
-                False,
-                ["different symlink targets (empty_file, another_empty_file)"],
-            ),
+            ["different symlink targets (empty_file, another_empty_file)"],
             id="two-symlinks-same-content-different-targets",
         ),
         pytest.param(
             pathlib.Path("symlink_to_file"),
             pathlib.Path("alt_symlink_to_file"),
-            (True, None),
+            [],
             id="two-symlinks-same-inode-different-targets",
         ),
         pytest.param(
             pathlib.Path("broken_link"),
             pathlib.Path("another_broken_link"),
-            (True, None),
+            [],
             id="two-broken-links-same-target",
         ),
         pytest.param(
             pathlib.Path("broken_link"),
             pathlib.Path("different_broken_link"),
-            (
-                False,
-                [
-                    "different symlink targets (this_does_not_exist, that_does_not_exist)"
-                ],
-            ),
+            ["different symlink targets (this_does_not_exist, that_does_not_exist)"],
             id="two-broken-links-different-targets",
         ),
     ],
 )
-def test_are_paths_equivalent(
+def test_get_path_differences(
     tmp_path: pathlib.Path,
     a: pathlib.Path,
     b: pathlib.Path,
-    expected: tuple[bool, list[str] | None],
+    expected: list[str],
 ):
     a = tmp_path / a
     b = tmp_path / b
@@ -455,10 +447,10 @@ def test_are_paths_equivalent(
     (tmp_path / "alt_symlink_to_file").symlink_to("hardlink")
     (tmp_path / "symlink_to_dir").symlink_to("empty_dir")
 
-    assert are_paths_equivalent(a, b) == expected
+    assert get_path_differences(a, b) == expected
 
     # The message may vary, but the truth value should remain the same.
-    assert are_paths_equivalent(b, a)[0] == expected[0]
+    assert (not get_path_differences(b, a)) == (not expected)
 
 
 def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):

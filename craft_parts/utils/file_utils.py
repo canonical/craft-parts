@@ -28,7 +28,6 @@ import stat
 import sys
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Literal
 
 from craft_parts import errors
 from craft_parts.permissions import Permissions, apply_permissions
@@ -374,10 +373,10 @@ def _get_file_type_str(result: os.stat_result) -> str:
     return file_type
 
 
-def are_paths_equivalent(  # noqa: PLR0912
+def get_path_differences(  # noqa: PLR0912
     a: Path, b: Path
-) -> tuple[Literal[True], None] | tuple[Literal[False], list[str]]:
-    """Check whether two paths are equivalent.
+) -> list[str]:
+    """Get a list of differences between two paths.
 
     This is a more forgiving test than ``Path.samefile()``, checking whether the
     files referenced by these two paths are equivalent for the purpose of organizing.
@@ -392,16 +391,17 @@ def are_paths_equivalent(  # noqa: PLR0912
     - Have the same size
     - Have the same contents
 
+    :returns: A list of differences. An empty list means the paths are equivalent.
     """
     try:
         if a.samefile(b):
-            return True, None
+            return []
     except FileNotFoundError:
         # Broken symlinks will get a FileNotFoundError, but for our use case a broken
         # symlink is considered to be an extant file. For example, a broken symlink
         # could point to /snap/<project>/current/usr/bin/true
         if not a.is_symlink() and not b.is_symlink():
-            return True, None
+            return []
 
     a_stat = a.stat(follow_symlinks=False)
     b_stat = b.stat(follow_symlinks=False)
@@ -424,7 +424,7 @@ def are_paths_equivalent(  # noqa: PLR0912
         differences.append(f"different gids ({a_stat.st_gid}, {b_stat.st_gid})")
 
     if differences:
-        return False, differences
+        return differences
 
     if stat.S_ISLNK(a_stat.st_mode) and stat.S_ISLNK(b_stat.st_mode):
         a_target = a.readlink()
@@ -453,10 +453,7 @@ def are_paths_equivalent(  # noqa: PLR0912
                         differences.append("different contents")
                         break
 
-    if differences:
-        return False, differences
-
-    return True, None
+    return differences
 
 
 def find_merge_conflicts(
@@ -482,13 +479,13 @@ def find_merge_conflicts(
                 continue
         except FileNotFoundError:
             # samefile() follows symlinks and raises if either path is a broken
-            # symlink. Fall through so are_paths_equivalent() can compare them.
+            # symlink. Fall through so get_path_differences() can compare them.
             pass
 
         if strict and dest_path.is_file():
             conflicts.setdefault(relative_path, []).append("exists")
         else:
-            _, msg = are_paths_equivalent(source_path, dest_path)
+            msg = get_path_differences(source_path, dest_path)
             if msg:
                 conflicts.setdefault(relative_path, []).extend(msg)
 

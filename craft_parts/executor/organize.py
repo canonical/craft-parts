@@ -202,10 +202,8 @@ def organize_files(  # noqa: PLR0912, PLR0915
                         ),
                     )
                 elif dst_partition_pair.partition == OVERLAY_PARTITION:
-                    equivalent, msg = file_utils.are_paths_equivalent(
-                        src_path, dst_path
-                    )
-                    if equivalent:
+                    msg = file_utils.get_path_differences(src_path, dst_path)
+                    if not msg:
                         src_path.unlink()
                         continue
                     raise errors.FileOrganizeError(
@@ -213,7 +211,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                         message=(
                             f"trying to organize file {key!r} to "
                             f"{file_map[key]!r} but {dst_string!r} already "
-                            f"exists and the files have {', '.join(msg or [])}"
+                            f"exists and the files have {', '.join(msg)}"
                         ),
                     )
                 else:
@@ -243,10 +241,8 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     if dst_partition_pair.partition == OVERLAY_PARTITION:
                         src_path = pathlib.Path(src)
                         real_dst_path = pathlib.Path(real_dst)
-                        equivalent, msg = file_utils.are_paths_equivalent(
-                            src_path, real_dst_path
-                        )
-                        if equivalent:
+                        msg = file_utils.get_path_differences(src_path, real_dst_path)
+                        if not msg:
                             if src_path.is_dir():
                                 file_utils.move(src, real_dst)
                             else:
@@ -257,7 +253,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                             message=(
                                 f"trying to organize file {key!r} to "
                                 f"{file_map[key]!r} but {dst_string!r} already "
-                                f"exists and the files have {', '.join(msg or [])}"
+                                f"exists and the files have {', '.join(msg)}"
                             ),
                         )
                     raise errors.FileOrganizeError(
