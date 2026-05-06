@@ -28,6 +28,9 @@ from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar
 
+import distro
+
+from craft_parts import errors as parts_errors
 from craft_parts.utils import os_utils
 
 from . import errors
@@ -108,24 +111,27 @@ def _runner(
     conn.send((res, None))
 
 
-def _compare_os_release(host: os_utils.OsRelease, chroot: os_utils.OsRelease) -> None:
-    """Compare OsRelease objects from host and chroot for compatibility. See _host_compatible_chroot."""
-    if (host_val := host.id()) != (chroot_val := chroot.id()):
+def _compare_os_release(chroot_release: distro.LinuxDistribution) -> None:
+    """Compare host and chroot os-release data for compatibility."""
+    host_val = distro.id()
+    chroot_val = chroot_release.id()
+    if not host_val or not chroot_val:
+        raise parts_errors.OsReleaseIdError
+    if host_val != chroot_val:
         raise errors.IncompatibleChrootError("id", host_val, chroot_val)
 
-    if (host_val := host.version_id()) != (chroot_val := chroot.version_id()):
-        raise errors.IncompatibleChrootError("version_id", host_val, chroot_val)
+    host_val = distro.version()
+    chroot_val = chroot_release.version()
+    if not host_val or not chroot_val:
+        raise parts_errors.OsReleaseVersionIdError
+    if host_val != chroot_val:
+        raise errors.IncompatibleChrootError("version", host_val, chroot_val)
 
 
 def _host_compatible_chroot(path: Path) -> None:
     """Raise exception if host and chroot are not the same distribution and release."""
-    # Note: /etc/os-release is symlinked to /usr/lib/os-release
-    # This could cause an issue if /etc/os-release is removed at any point.
-    host_os_release = os_utils.OsRelease()
-    chroot_os_release = os_utils.OsRelease(
-        os_release_file=str(path / "/etc/os-release")
-    )
-    _compare_os_release(host_os_release, chroot_os_release)
+    chroot_os_release = distro.LinuxDistribution(root_dir=str(path))
+    _compare_os_release(chroot_os_release)
 
 
 def _setup_chroot(path: Path, *, use_host_sources: bool) -> None:

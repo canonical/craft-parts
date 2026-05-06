@@ -20,11 +20,11 @@ import textwrap
 from pathlib import Path
 
 import craft_parts
+import distro
 import pytest
 import yaml
 from craft_parts import Step
 from craft_parts.packages import deb, errors
-from craft_parts.utils import os_utils
 
 IS_CI: bool = os.getenv("CI") == "true"
 
@@ -36,9 +36,9 @@ SUPPORTED_UBUNTU_VERSIONS = frozenset(
 
 def _current_release_supported() -> bool:
     """Whether Chisel supports the current running OS release."""
-    release = os_utils.OsRelease()
     return (
-        release.id() == "ubuntu" and release.version_id() in SUPPORTED_UBUNTU_VERSIONS
+        distro.id() == "ubuntu"
+        and distro.version(best=True) in SUPPORTED_UBUNTU_VERSIONS
     )
 
 

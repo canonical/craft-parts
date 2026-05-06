@@ -66,13 +66,13 @@ class OverlayChrootExecutionError(OverlayError):
 class IncompatibleChrootError(OverlayError):
     """Failed to use host package sources because chroot is incompatible.
 
-    :param key: os-release key which was tested.
-    :param host: value from host os-release which was tested.
-    :param chroot: value from chroot os-release which was tested.
+    :param key: Distribution attribute which was tested.
+    :param host: Value from the host distribution which was tested.
+    :param chroot: Value from the chroot distribution which was tested.
     """
 
     def __init__(self, key: str, host: str, chroot: str) -> None:
-        self.message = f"key {key} in os-release expected to be {host} found {chroot}"
+        self.message = f"attribute {key} expected to be {host} found {chroot}"
         brief = f"Unable to use host sources: {self.message}"
 
         super().__init__(brief=brief)
