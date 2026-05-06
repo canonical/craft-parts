@@ -43,6 +43,46 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+def _check_overlay_equivalence(
+    *,
+    part_name: str,
+    key: str,
+    file_map: dict[str, str],
+    src_path: pathlib.Path,
+    dst_path: pathlib.Path,
+    dst_string: str,
+) -> bool:
+    """Check if source and destination are equivalent on the overlay partition.
+
+    If equivalent, removes the source (or merges if it's a directory) and returns True.
+    If not equivalent, raises FileOrganizeError.
+
+    :param part_name: The name of the part being organized.
+    :param key: The organize key (source pattern).
+    :param file_map: The organize file map.
+    :param src_path: The source path.
+    :param dst_path: The destination path.
+    :param dst_string: A display string for the destination.
+    :returns: True if the paths were equivalent and the source was handled.
+    :raises FileOrganizeError: If the paths are not equivalent.
+    """
+    msg = file_utils.get_path_differences(src_path, dst_path)
+    if not msg:
+        if src_path.is_dir():
+            file_utils.move(src_path, dst_path)
+        else:
+            src_path.unlink()
+        return True
+    raise errors.FileOrganizeError(
+        part_name=part_name,
+        message=(
+            f"trying to organize file {key!r} to "
+            f"{file_map[key]!r} but {dst_string!r} already "
+            f"exists and the files have {', '.join(msg)}"
+        ),
+    )
+
+
 def organize_files(  # noqa: PLR0912, PLR0915
     *,
     part_name: str,
@@ -166,17 +206,11 @@ def organize_files(  # noqa: PLR0912, PLR0915
                             strict=dst_partition_pair.partition != OVERLAY_PARTITION,
                         )
                         if conflicts:
-                            conflicts_list = "\n".join(
-                                f" - {path}: {msg}" for path, msg in conflicts.items()
-                            )
-                            raise errors.FileOrganizeError(
+                            raise errors.FileOrganizeError.from_merge_conflicts(
                                 part_name=part_name,
-                                message=(
-                                    f"trying to organize directory {key!r} to "
-                                    f"{file_map[key]!r} but conflicts exist while "
-                                    f"merging the directories:\n"
-                                    f"{conflicts_list}"
-                                ),
+                                key=key,
+                                destination=file_map[key],
+                                conflicts=conflicts,
                             )
                     # Where the key is a glob, we get the contents of the dir to
                     # organize, so we need to add the source's name back in.
@@ -202,18 +236,15 @@ def organize_files(  # noqa: PLR0912, PLR0915
                         ),
                     )
                 elif dst_partition_pair.partition == OVERLAY_PARTITION:
-                    msg = file_utils.get_path_differences(src_path, dst_path)
-                    if not msg:
-                        src_path.unlink()
-                        continue
-                    raise errors.FileOrganizeError(
+                    _check_overlay_equivalence(
                         part_name=part_name,
-                        message=(
-                            f"trying to organize file {key!r} to "
-                            f"{file_map[key]!r} but {dst_string!r} already "
-                            f"exists and the files have {', '.join(msg)}"
-                        ),
+                        key=key,
+                        file_map=file_map,
+                        src_path=src_path,
+                        dst_path=dst_path,
+                        dst_string=dst_string,
                     )
+                    continue
                 else:
                     raise errors.FileOrganizeError(
                         part_name=part_name,
@@ -239,23 +270,15 @@ def organize_files(  # noqa: PLR0912, PLR0915
                 elif os.path.exists(real_dst):  # noqa: PTH110
                     rel_dst_string = os.path.join(dst_string, os.path.basename(src))  # noqa: PTH118, PTH119
                     if dst_partition_pair.partition == OVERLAY_PARTITION:
-                        src_path = pathlib.Path(src)
-                        real_dst_path = pathlib.Path(real_dst)
-                        msg = file_utils.get_path_differences(src_path, real_dst_path)
-                        if not msg:
-                            if src_path.is_dir():
-                                file_utils.move(src, real_dst)
-                            else:
-                                src_path.unlink()
-                            continue
-                        raise errors.FileOrganizeError(
+                        _check_overlay_equivalence(
                             part_name=part_name,
-                            message=(
-                                f"trying to organize file {key!r} to "
-                                f"{file_map[key]!r} but {dst_string!r} already "
-                                f"exists and the files have {', '.join(msg)}"
-                            ),
+                            key=key,
+                            file_map=file_map,
+                            src_path=pathlib.Path(src),
+                            dst_path=pathlib.Path(real_dst),
+                            dst_string=dst_string,
                         )
+                        continue
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
