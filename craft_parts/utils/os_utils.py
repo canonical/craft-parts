@@ -222,7 +222,7 @@ def get_system_info() -> str:
     return uname
 
 
-def mount(device: Path, mountpoint: Path | None, *args: str) -> None:
+def mount(device: Path | str, mountpoint: Path | None, *args: str) -> None:
     """Mount a filesystem.
 
     :param device: The device to mount.
@@ -231,6 +231,7 @@ def mount(device: Path, mountpoint: Path | None, *args: str) -> None:
 
     :raises subprocess.CalledProcessError: on error.
     """
+    device = Path(device)
     logger.debug(
         "mount device=%r, mountpoint=%r, args=%r", device.as_posix(), mountpoint, args
     )
@@ -242,7 +243,7 @@ def mount(device: Path, mountpoint: Path | None, *args: str) -> None:
     subprocess.check_call(call)
 
 
-def mount_overlayfs(mountpoint: Path, *args: str) -> None:
+def mount_overlayfs(mountpoint: Path | str, *args: str) -> None:
     """Mount an overlay filesystem using fuse-overlayfs.
 
     :param mountpoint: Where the device will be mounted.
@@ -250,6 +251,7 @@ def mount_overlayfs(mountpoint: Path, *args: str) -> None:
 
     :raises subprocess.CalledProcessError: on error.
     """
+    mountpoint = Path(mountpoint)
     logger.debug("fuse-overlayfs mountpoint=%r, args=%r", mountpoint.as_posix(), args)
     subprocess.check_call(["fuse-overlayfs", *args, mountpoint.as_posix()])
 
@@ -257,13 +259,14 @@ def mount_overlayfs(mountpoint: Path, *args: str) -> None:
 _UMOUNT_RETRIES = 5
 
 
-def umount(mountpoint: Path, *args: str) -> None:
+def umount(mountpoint: Path | str, *args: str) -> None:
     """Unmount a filesystem.
 
     :param mountpoint: The mount point or device to unmount.
 
     :raises subprocess.CalledProcessError: on error.
     """
+    mountpoint = Path(mountpoint)
     logger.debug("umount mountpoint=%r, args=%r", mountpoint.as_posix(), args)
     attempt = 0
     while True:  # unmount in Github CI fails randomly and needs a retry
