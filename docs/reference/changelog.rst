@@ -167,7 +167,7 @@ New features:
 
 Bug fixes:
 
-- The Maven Use plugin now correctly infers a ``groupId`` when there is a parent pom to
+- The Maven-use plugin now correctly infers a ``groupId`` when there is a parent pom to
   infer from.
 - The ``make clean`` command now deletes ``docs/reference/gen``, which fixes
   documentation builds that break because of outdated and leftover files in that
@@ -334,7 +334,7 @@ For a complete list of commits, check out the `2.22.0`_ release on GitHub.
 
 New features:
 
-- Previously, when the Maven Use plugin updated ``pom.xml`` for self-contained projects,
+- Previously, when the Maven-use plugin updated ``pom.xml`` for self-contained projects,
   it wouldn't reliably find the correct dependency versions on the host. It could
   unpredictably declare the wrong package version, or select a vastly different version
   despite a similar one being available.
@@ -868,7 +868,7 @@ New features:
 
 - Add a :ref:`uv plugin<craft_parts_uv_plugin>` for projects that use the `uv
   <https://docs.astral.sh/uv/>`_ build system.
-- Add a :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a
+- Add a :ref:`Go-use plugin<craft_parts_go_use_plugin>` for setting up a
   `workspace <https://go.dev/ref/mod#workspaces>`_ for Go modules.
 - Add new ``poetry-export-extra-args`` and ``poetry-pip-extra-args`` keys
   to the :ref:`poetry plugin<craft_parts_poetry_plugin>`.
