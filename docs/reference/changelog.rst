@@ -99,7 +99,7 @@ New features:
   shared local cache for ``self-contained`` builds.
 - Add support for the ``override-overlay`` key, which runs a script
   inside a chroot environment during the overlay step.
-- The ``go-use`` plugin returns an error if a ``go.mod`` file doesn't exist.
+- The Go-use plugin returns an error if a ``go.mod`` file doesn't exist.
   This prevents the error going unnoticed & appearing at build-time (when the
   module doesn't appear in the Go workspace)
 - Add support for copying Apt configuration from the host into the overlay system
@@ -805,7 +805,7 @@ New features:
 
 Bug fixes:
 
-- Correctly handle ``source-subdir`` values on the ``go-use`` plugin.
+- Correctly handle ``source-subdir`` values on the Go-use plugin.
 
 Documentation:
 
