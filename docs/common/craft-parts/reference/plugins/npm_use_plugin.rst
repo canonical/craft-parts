@@ -1,9 +1,9 @@
 .. _craft_parts_npm_use_plugin:
 
-npm Use plugin
-================
+npm-use plugin
+==============
 
-The npm Use plugin packages projects based on npm and, unlike the
+The npm-use plugin packages projects based on npm and, unlike the
 :ref:`craft_parts_npm_plugin`, exports artifacts to a shared local directory.
 
 
@@ -20,7 +20,7 @@ Attributes
 
 This plugin supports the ``self-contained`` build attribute. Declaring this attribute
 prevents access to any npm registries. All dependencies must then be provided in an
-earlier part using the npm Use plugin.
+earlier part using the npm-use plugin.
 
 When this attribute is declared, the plugin resolves dependency versions from what is
 locally available in the shared directory.
@@ -33,7 +33,7 @@ locally available in the shared directory.
 Dependencies
 ------------
 
-The npm Use plugin needs the ``node`` and ``npm`` executables to build npm projects but
+The npm-use plugin needs the ``node`` and ``npm`` executables to build npm projects but
 does not provision them to allow flexibility in the choice of version.
 
 To provide these, one can either specify the appropriate Ubuntu packages as
