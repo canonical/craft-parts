@@ -250,8 +250,8 @@ def _check_for_stage_collisions_per_partition(
 
 
 def paths_collide(
-    path1: Path,
-    path2: Path,
+    path1: Path | str,
+    path2: Path | str,
     permissions_path1: list[Permissions] | None = None,
     permissions_path2: list[Permissions] | None = None,
     *,
@@ -273,6 +273,9 @@ def paths_collide(
     :param path1_is_overlay: Indicates if path1 comes from the overlay.
     :param path2_is_overlay: Indicates if path2 comes from the overlay.
     """
+    path1 = Path(path1)
+    path2 = Path(path2)
+
     if rel_dirname is None:
         rel_dirname = Path()
 
