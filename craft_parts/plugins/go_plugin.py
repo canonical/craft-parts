@@ -134,7 +134,7 @@ class GoPlugin(Plugin):
                     f'"{module_dir.relative_to(modules_root).as_posix()}={module_dir}"'
                 )
                 for module_dir in module_dirs
-            ]
+            ] + ["go mod tidy"]
         else:
             setup_cmds = ["go mod download all"]
 
