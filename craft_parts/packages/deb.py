@@ -850,7 +850,6 @@ class Ubuntu(BaseRepository):
                 [
                     "chisel",
                     "cut",
-                    "--release=ubuntu-bins-26.04",
                     "--ignore=unmaintained",
                     "--ignore=unstable",
                     f"--root={install_path}",
