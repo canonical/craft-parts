@@ -219,11 +219,9 @@ def test_get_build_commands_go_use(project_info, part_data):
     )
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
-    (part_info.backstage_dir / "go-use" / "some-go-dep").mkdir(parents=True)
+    (part_info.stage_dir / "usr/share/gocode/src/some-go-dep").mkdir(parents=True)
 
     assert plugin.get_build_commands() == [
-        "go work init .",
-        "go work use .",
         'go install -p "1"  ./...',
     ]
 
@@ -242,12 +240,13 @@ def test_get_build_commands_go_use_with_go_dependency(project_info, part_data):
     )
     plugin = GoPlugin(properties=properties, part_info=part_info)
 
-    dependency_backstage = part_info.backstage_dir / "go-use" / "some-go-dep"
-    dependency_backstage.mkdir(parents=True)
+    dependency_module = (
+        part_info.stage_dir / "usr/share/gocode/src/example.com/some-go-dep"
+    )
+    dependency_module.mkdir(parents=True)
+    (dependency_module / "go.mod").write_text("module example.com/some-go-dep\n")
 
     assert plugin.get_build_commands() == [
-        "go work init .",
-        "go work use .",
-        f"go work use '{dependency_backstage}'",
+        (f'go mod edit -replace "example.com/some-go-dep={dependency_module}"'),
         'go install -p "1"  ./...',
     ]

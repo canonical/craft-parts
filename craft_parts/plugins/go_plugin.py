@@ -116,6 +116,7 @@ class GoPlugin(Plugin):
         """Return a dictionary with the environment to use in the build step."""
         return {
             "GOBIN": f"{self._part_info.part_install_dir}/bin",
+            "GOPROXY": "off",
         }
 
     @override
@@ -123,17 +124,16 @@ class GoPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(GoPluginProperties, self._options)
 
-        # Matches go-use plugin expectation.
-        dependencies_dir: pathlib.Path = self._part_info.backstage_dir / "go-use"
-        if dependencies_dir.is_dir():
+        # Local modules staged from deb-like packages live under this root.
+        modules_root: pathlib.Path = self._part_info.stage_dir / "usr/share/gocode/src"
+        if modules_root.is_dir():
+            module_dirs = sorted(path.parent for path in modules_root.glob("**/go.mod"))
             setup_cmds = [
-                "go work init .",
-                "go work use .",
-                *(
-                    f"go work use '{dependencies_dir}/{dep_part}'"
-                    for dep_part in self._part_info.part_dependencies
-                    if (dependencies_dir / dep_part).exists()
-                ),
+                (
+                    "go mod edit -replace "
+                    f'"{module_dir.relative_to(modules_root).as_posix()}={module_dir}"'
+                )
+                for module_dir in module_dirs
             ]
         else:
             setup_cmds = ["go mod download all"]
