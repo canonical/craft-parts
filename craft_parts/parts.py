@@ -317,6 +317,12 @@ class PartSpec(BaseModel):
     currently supported.
     """
 
+    stage_slices: list[str] = Field(
+        default=[],
+        description="The bin slices to include in the stage environment.",
+        examples=["[bin-curl=80, bin-flask=3-26.4/beta]"],
+    )
+
     build_snaps: list[str] = Field(
         default=[],
         description="The snaps to install in the build environment.",

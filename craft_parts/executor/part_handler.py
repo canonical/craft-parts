@@ -1263,7 +1263,7 @@ class PartHandler:
 
         :raises StagePackageNotFound: If a package is not available for download.
         """
-        stage_packages = self._part.spec.stage_packages
+        stage_packages = self._part.spec.stage_packages or self._part.spec.stage_slices
         if not stage_packages:
             return None
 
