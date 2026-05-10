@@ -125,7 +125,8 @@ class GoPlugin(Plugin):
         options = cast(GoPluginProperties, self._options)
 
         # Local modules staged from deb-like packages live under this root.
-        modules_root: pathlib.Path = self._part_info.stage_dir / "usr/share/gocode/src"
+        slices_dir = self._part_info.dirs.parts_dir / "craft/build-slices/build"
+        modules_root: pathlib.Path = slices_dir / "usr/share/gocode/src"
         if modules_root.is_dir():
             module_dirs = sorted(path.parent for path in modules_root.glob("**/go.mod"))
             setup_cmds = [
