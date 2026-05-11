@@ -290,16 +290,16 @@ class PartSpec(BaseModel):
     stage_snaps: list[str] = Field(
         default=[],
         description="The snaps to include in the stage environment.",
-        examples=["[go==1.17, chisel==latest/candidate, mir-kiosk-x11]"],
+        examples=["[go=1.17, chisel=latest/candidate, mir-kiosk-x11]"],
     )
     """During the stage step, these snaps are included in the stage environment.
 
     Entries can be in one of four formats:
 
     * ``<snap-name>``
-    * ``<snap-name>==<channel>``
-    * ``<snap-name>/<channel-name>`` (deprecated, use ``==`` instead)
-    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``==`` instead)
+    * ``<snap-name>=<channel>``
+    * ``<snap-name>/<channel-name>`` (deprecated, use ``=`` instead)
+    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``=`` instead)
 
     If an entry contains no version or channel, ``latest/stable`` is used.
     """
@@ -321,7 +321,7 @@ class PartSpec(BaseModel):
     build_snaps: list[str] = Field(
         default=[],
         description="The snaps to install in the build environment.",
-        examples=["[go==latest/stable, node==stable]"],
+        examples=["[go=latest/stable, node=stable]"],
     )
     """The snaps to install during the build step, before the build starts. The part
     makes them available in the build environment.
@@ -329,9 +329,9 @@ class PartSpec(BaseModel):
     Entries can be listed in one of four formats.
 
     * ``<snap-name>``
-    * ``<snap-name>==<channel>``
-    * ``<snap-name>/<channel-name>`` (deprecated, use ``==`` instead)
-    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``==`` instead)
+    * ``<snap-name>=<channel>``
+    * ``<snap-name>/<channel-name>`` (deprecated, use ``=`` instead)
+    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``=`` instead)
 
     If no version or channel is provided, ``latest/stable`` is used.
     """
