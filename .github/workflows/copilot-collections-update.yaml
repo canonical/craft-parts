@@ -3,6 +3,9 @@ on:
   schedule:
     - cron: "0 9 * * 1" # Run every Monday at 09:00 UTC
   workflow_dispatch:
+  push:
+    branches:
+      - work/copilot-collections
 
 jobs:
   check-update:
