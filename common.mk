@@ -5,9 +5,9 @@ SOURCES=$(wildcard *.py) $(PROJECT) tests
 
 # Env vars for the docs Starter Pack. They must be exported so make can pass them to the
 # docs Makefile.
-export BUILDDIR ?= _build
-export VENVDIR ?= ../.venv
-export VALEDIR ?= $(VENVDIR)/lib/python*/site-packages/vale
+export DOCS_BUILDDIR ?= _build
+export DOCS_VENVDIR ?= ../.venv
+export VALE_DIR ?= $(DOCS_VENVDIR)/lib/python*/site-packages/vale
 
 ifneq ($(OS),Windows_NT)
 	OS := $(shell uname)
@@ -37,7 +37,7 @@ export UV_FROZEN := true
 help: ## Show this help.
 	@printf "\e[1m%-30s\e[0m | \e[1m%s\e[0m\n" "Target" "Description"
 	printf "\e[2m%-30s + %-41s\e[0m\n" "------------------------------" "------------------------------------------------"
-	egrep '^[^:]+\: [^#]*##' $$(echo $(MAKEFILE_LIST) | tac --separator=' ') | sed -e 's/^[^:]*://' -e 's/:[^#]*/ /' | sort -V| awk -F '[: ]*' \
+	egrep '^[^:]+\: [^#]*##' $$(echo $(MAKEFILE_LIST) | tac --separator=' ') | sed -e 's/:[^#]*/ /' | sort -V | awk -F '[: ]*' \
 	'{
 		if ($$2 == "##")
 		{
@@ -55,12 +55,18 @@ help: ## Show this help.
 	}' | uniq
 
 .PHONY: setup
-setup: install-uv _setup-docs _setup-lint _setup-tests setup-precommit install-build-deps  ## Set up the development environment
+setup: install-uv _setup-docs _setup-lint _setup-tests setup-precommit install-build-deps  ## Set up a development environment
 	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_DOCS_GROUPS)
 
 .PHONY: setup-docs
-setup-docs: _setup-docs  # Set up the documentation environment
+setup-docs: _setup-docs  ##- Set up the documentation environment
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	uv sync --no-dev $(UV_DOCS_GROUPS)
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: _setup-docs
 _setup-docs: install-uv
@@ -70,7 +76,7 @@ setup-lint: _setup-lint  ##- Set up a linting-only environment
 	uv sync $(UV_LINT_GROUPS)
 
 .PHONY: _setup-lint
-_setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps
+_setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps install-actionlint
 
 .PHONY: setup-tests
 setup-tests: _setup-tests ##- Set up a testing environment without linters
@@ -98,7 +104,7 @@ endif
 .PHONY: clean
 clean:  ## Clean up the development environment
 	uv tool run pyclean .
-	rm -rf dist/ build/ docs/_build/ docs/_linkcheck docs/reference/gen *.snap .coverage*
+	rm -rf dist build docs/_build docs/_linkcheck docs/reference/gen *.snap .coverage* .venv
 
 .PHONY: autoformat
 autoformat: format  # Hidden alias for 'format'
@@ -168,11 +174,11 @@ ifneq ($(CI),)
 endif
 
 .PHONY: lint-ty
-lint-ty: install-ty  ##- Check types with Astral ty (disabled by default)
+lint-ty: install-ty  ##- Check types with Astral ty
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	ty check --python .venv/bin/python $(SOURCES)
+	ty check --python .venv $(SOURCES)
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
@@ -200,6 +206,16 @@ ifneq ($(CI),)
 	@echo ::group::$@
 endif
 	$(PRETTIER) --check $(PRETTIER_FILES)
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
+
+.PHONY: lint-actions
+lint-actions: install-actionlint  ##- Lint GitHub actions with actionlint
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
+	actionlint
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
@@ -252,9 +268,15 @@ test-find-slow:  ##- Identify slow tests. Set cutoff time in seconds with SLOW_C
 # replace it.
 .PHONY: docs
 docs: docs-install  ## Render the documentation to disk
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	$(MAKE) -C docs html --no-print-directory
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
-# Alias for `run` target in docs project
+# Alias for `serve` target in docs project
 .PHONY: docs-auto
 docs-auto: docs-install  ##- Render the documentation in a live session
 	$(MAKE) -C docs run --no-print-directory
@@ -262,8 +284,14 @@ docs-auto: docs-install  ##- Render the documentation in a live session
 # Override for `install` target in docs project. We still need the Vale setup, so we
 # run that after the parent docs setup.
 .PHONY: docs-install
-docs-install: setup-docs  ##- Set up documentation packages
+docs-install: _setup-docs  ##- Set up documentation packages
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	$(MAKE) -C docs vale-install --no-print-directory
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 # Alias for `setup-docs`
 .PHONY: docs-setup
@@ -300,7 +328,7 @@ docs-%: docs-install
 
 # Run our own docs linting, then pass to the docs
 .PHONY: docs-lint
-docs-lint: docs  ##- Lint the documentation
+docs-lint: docs-install  ##- Lint the documentation
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
@@ -341,6 +369,17 @@ else ifeq ($(OS),Windows_NT)
 	pwsh -c "irm https://astral.sh/uv/install.ps1 | iex"
 else
 	curl -LsSf https://astral.sh/uv/install.sh | sh
+endif
+
+.PHONY: install-actionlint
+install-actionlint:
+ifneq ($(shell which actionlint),)
+else ifneq ($(shell which snap),)
+	sudo snap install actionlint
+else ifneq ($(shell which brew),)
+	brew install actionlint
+else
+	$(warning Actionlint not installed. Please install it yourself.)
 endif
 
 .PHONY: install-codespell
@@ -391,7 +430,7 @@ endif
 install-ty:
 ifneq ($(shell which ty),)
 else ifneq ($(shell which snap),)
-	sudo snap install --classic --edge astral-ty
+	sudo snap install --beta astral-ty
 	sudo snap alias astral-ty.ty ty
 else
 	make install-uv

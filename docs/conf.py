@@ -4,13 +4,9 @@ import os
 import pathlib
 import re
 import sys
-import yaml
 
 # Configuration for the Sphinx documentation builder.
 # All configuration specific to your project should be done in this file.
-#
-# If you're new to Sphinx and don't want any advanced or custom features,
-# just go through the items marked 'TODO'.
 #
 # A complete list of built-in Sphinx configuration values:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
@@ -18,7 +14,6 @@ import yaml
 # Our starter pack uses the custom Canonical Sphinx extension
 # to keep all documentation based on it consistent and on brand:
 # https://github.com/canonical/canonical-sphinx
-
 
 #######################
 # Project information #
@@ -29,31 +24,35 @@ project = "Craft Parts"
 author = "Canonical Ltd."
 
 # Sidebar documentation title; best kept reasonably short
-html_title = project + " documentation"
+html_title = f"{project} documentation"
 
 # Copyright string; shown at the bottom of the page
-copyright = "2023-%s, %s" % (datetime.date.today().year, author)
+copyright = f"2023-{datetime.date.today().year}, {author}"
 
 # Documentation website URL
-ogp_site_url = "https://canonical-craft-parts.readthedocs-hosted.com"
+ogp_site_url = "https://canonical-craft-parts.readthedocs-hosted.com/"
 
 # Preview name of the documentation website
 ogp_site_name = project
 
 # Preview image URL
+#
+# TODO: To customise the preview image, update as needed.
 ogp_image = "https://assets.ubuntu.com/v1/cc828679-docs_illustration.svg"
+
+# Product favicon; shown in bookmarks, browser tabs, etc.
+# html_favicon = ".sphinx/_static/favicon.png"
 
 # Dictionary of values to pass into the Sphinx context for all pages:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-html_context
-
 html_context = {
     # Product page URL; can be different from product docs URL
     "product_page": "github.com/canonical/craft-parts",
     # Product tag image; the orange part of your logo, shown in the page header
-    # 'product_tag': '_static/tag.png',
+    # "product_tag": "_static/tag.png",
     "discourse": "",
     # Your Mattermost channel URL
-    "mattermost": "",
+    "mattermost": "https://chat.canonical.com/canonical/channels/documentation",
     # Your Matrix channel URL
     "matrix": "https://matrix.to/#/#starcraft-development:ubuntu.com",
     # Your documentation GitHub repository URL
@@ -68,19 +67,20 @@ html_context = {
     "github_issues": "enabled",
 }
 
-# html_extra_path = []
+#html_extra_path = []
 
 # Enable the edit button on pages
 html_theme_options = {
     "source_edit_link": "https://github.com/canonical/craft-parts",
 }
 
-# slug = ''
+# Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
+# slug = ""
 
 
-#######################
-# Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
-#######################
+#########################
+# Sitemap configuration #
+#########################
 
 # Use RTD canonical URL to ensure duplicate pages have a specific canonical URL
 html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
@@ -99,9 +99,9 @@ sitemap_excludes = [
 ]
 
 
-#######################
-# Template and asset locations
-#######################
+################################
+# Template and asset locations #
+################################
 
 html_static_path = ["_static"]
 templates_path = ["_templates"]
@@ -118,25 +118,19 @@ rediraffe_redirects = "redirects.txt"
 # Link checker exceptions #
 ###########################
 
-# A regex list of URLs that are ignored by 'make linkcheck'
-# A regex list of URLs that are ignored by 'make linkcheck'
-linkcheck_anchors_ignore = [
-    "#",
-    ":",
-    r"https://github\.com/.*",
-]
-
+# Whole sites and individual URLs to ignore
 linkcheck_ignore = [
-    # Ignore releases, since we'll include the next release before it exists.
-    r"^https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
     # Entire domains to ignore due to flakiness or issues
+    r"^https://github.com",
     r"^https://www.gnu.org/",
     r"^https://crates.io/",
     r"^https://([\w-]*\.)?npmjs.(org|com)",
     r"^https://rsync.samba.org",
     r"^https://ubuntu.com",
+    r"^https://matrix.to/#",
+    r"^https://gitlab.gnome.org",
     # Known good links that if they break we'll hear it in the news.
-    r"^https://([\w-]*\.)?apache.org\/?$",
+    r"^https://([\w-]*\.)?apache.org/?$",
     r"^https://canonical.com/legal/contributors$",
     r"^https://([\w-]*\.)?cmake.org/?$",
     r"^https://([\w-]*\.)?curl.se/?$",
@@ -156,15 +150,15 @@ linkcheck_ignore = [
     r"^https://([\w-]*\.)?yum.baseurl.org/?$",
     # Fake link
     r"^https://foo.org/?$",
-    # Add project-specific ignores below
-    re.escape(
-        r"^https://github.com/canonical/craft-parts/blob/main/craft_parts/main.py$"
-    ),
-    re.escape(r"^https://github.com/opencontainers/image-spec/blob/main/layer.md$"),
 ]
 
-# give linkcheck multiple tries on failure
-# linkcheck_timeout = 30
+# Anchor strings to ignore
+linkcheck_anchors_ignore = [
+    "#",
+    ":",
+]
+
+# Give linkcheck multiple tries on failure
 linkcheck_retries = 20
 
 
@@ -174,7 +168,7 @@ linkcheck_retries = 20
 
 # Custom Sphinx extensions; see
 # https://www.sphinx-doc.org/en/master/usage/extensions/index.html
-
+# NOTE: The canonical_sphinx extension is required for the starter pack.
 extensions = [
     "canonical_sphinx",
     "notfound.extension",
@@ -185,7 +179,7 @@ extensions = [
     # "sphinx_config_options",
     # "sphinx_contributor_listing",
     # "sphinx_filtered_toctree",
-    # "sphinx_related_links",
+    "sphinx_related_links",
     "sphinx_roles",
     "sphinx_terminal",
     # "sphinx_ubuntu_images",
@@ -199,21 +193,21 @@ extensions = [
     "sphinxext.rediraffe",
     "sphinx.ext.autodoc",
     "sphinx_autodoc_typehints",
-    # "sphinx.ext.doctest",
+    "sphinx.ext.doctest",
     "sphinx.ext.ifconfig",
-    # "sphinx.ext.viewcode",
+    "sphinx.ext.viewcode",
     "sphinx_substitution_extensions",
 ]
 
 # Excludes files or directories from processing
-
 exclude_patterns = [
-    "README.md",
+    "README.md",  # Docs README
     "_build",
     "Thumbs.db",
     ".DS_Store",
     "**venv",
     "base",
+    "reuse",
     "sphinx-docs-starter-pack",
     "common/README.md",
     # These RST files are explicitly excluded here because they are included by
@@ -226,12 +220,12 @@ exclude_patterns = [
     "common/craft-parts/reference/step_output_directories.rst",
 ]
 
-# Adds custom CSS files, located under 'html_static_path'
+# Adds custom CSS files, located under html_static_path
 html_css_files = [
     "css/cookie-banner.css",
 ]
 
-# Adds custom JavaScript files, located under 'html_static_path'
+# Adds custom JavaScript files, located under html_static_path
 html_js_files = [
     "js/bundle.js",
 ]
@@ -245,8 +239,8 @@ rst_epilog = """
 # disable_feedback_button = True
 
 # Your manpage URL
-# manpages_url = 'https://manpages.ubuntu.com/manpages/{codename}/en/' + \
-#     'man{section}/{page}.{section}.html'
+# manpages_url = "https://manpages.ubuntu.com/manpages/{codename}/en/" + \
+#     "man{section}/{page}.{section}.html"
 
 # Specifies a reST snippet to be prepended to each .rst file
 # This defines a :center: role that centers table cell content.
@@ -264,10 +258,12 @@ rst_prolog = """
 
 # Workaround for https://github.com/canonical/canonical-sphinx/issues/34
 if "discourse_prefix" not in html_context and "discourse" in html_context:
-    html_context["discourse_prefix"] = html_context["discourse"] + "/t/"
+    html_context["discourse_prefix"] = f"{html_context['discourse']}/t/"
 
 # Add configuration for intersphinx mapping
 intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
     "starter-pack": (
         "https://canonical-example-product-documentation.readthedocs-hosted.com/en/latest",
         None,
@@ -278,6 +274,9 @@ intersphinx_mapping = {
     ),
 }
 
+# Block Intersphinx from looking up external sources with internal references. In other
+# words, only :external+<project>... will search in other projects.
+intersphinx_disabled_reftypes = ["std:*"]
 
 ##############################
 # Custom Craft configuration #
