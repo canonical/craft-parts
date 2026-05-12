@@ -20,7 +20,6 @@ import dataclasses
 import functools
 import json
 import logging
-import os
 import selectors
 import socket
 import tempfile
@@ -49,16 +48,16 @@ Stream = TextIO | int | None
 class StepPartitionContents:
     """Files and directories to be added to the step's state."""
 
-    files: set[str] = dataclasses.field(default_factory=set[str])
-    dirs: set[str] = dataclasses.field(default_factory=set[str])
+    files: set[Path] = dataclasses.field(default_factory=set[Path])
+    dirs: set[Path] = dataclasses.field(default_factory=set[Path])
 
 
 @dataclasses.dataclass(frozen=True)
 class StagePartitionContents(StepPartitionContents):
     """Files and directories for both stage and backstage in the step's state."""
 
-    backstage_files: set[str] = dataclasses.field(default_factory=set[str])
-    backstage_dirs: set[str] = dataclasses.field(default_factory=set[str])
+    backstage_files: set[Path] = dataclasses.field(default_factory=set[Path])
+    backstage_dirs: set[Path] = dataclasses.field(default_factory=set[Path])
 
 
 @dataclasses.dataclass(init=False)
@@ -202,14 +201,14 @@ class StepHandler:
             default_partition=self._step_info.default_partition,
         )
 
-        def pkgconfig_fixup(file_path: str) -> None:
-            if os.path.islink(file_path):  # noqa: PTH114
+        def pkgconfig_fixup(file_path: Path) -> None:
+            if file_path.is_symlink():
                 return
-            if not file_path.endswith(".pc"):
+            if file_path.suffix != ".pc":
                 return
             packages.fix_pkg_config(
                 prefix_prepend=self._part.stage_dir,
-                pkg_config_file=Path(file_path),
+                pkg_config_file=file_path,
                 prefix_trim=self._part.part_install_dir,
             )
 
@@ -222,14 +221,14 @@ class StepHandler:
                     name="backstage",
                     default_partition=self._step_info.default_partition,
                 ),
-                str(self._part.part_export_dir),
+                self._part.part_export_dir,
                 self._step_info.default_partition,
                 self._step_info.default_partition,
             )
             for partition in self._partitions:
                 partition_files, partition_dirs = filesets.migratable_filesets(
                     stage_fileset,
-                    str(self._part.part_install_dirs[partition]),
+                    self._part.part_install_dirs[partition],
                     self._step_info.default_partition,
                     partition,
                 )
@@ -265,7 +264,7 @@ class StepHandler:
         else:
             files, dirs = filesets.migratable_filesets(
                 stage_fileset,
-                str(self._part.part_install_dir),
+                self._part.part_install_dir,
                 DEFAULT_PARTITION,
             )
             files, dirs = migrate_files(
@@ -277,7 +276,7 @@ class StepHandler:
             )
             backstage_files, backstage_dirs = filesets.migratable_filesets(
                 Fileset(["*"], name="backstage"),
-                str(self._part.part_export_dir),
+                self._part.part_export_dir,
                 DEFAULT_PARTITION,
             )
             backstage_files, backstage_dirs = migrate_files(
@@ -326,7 +325,7 @@ class StepHandler:
             for partition in self._partitions:
                 partition_files, partition_dirs = filesets.migratable_filesets(
                     prime_fileset,
-                    str(self._part.part_install_dirs[partition]),
+                    self._part.part_install_dirs[partition],
                     self._step_info.default_partition,
                     partition,
                 )
@@ -349,7 +348,7 @@ class StepHandler:
         else:
             files, dirs = filesets.migratable_filesets(
                 prime_fileset,
-                str(self._part.part_install_dir),
+                self._part.part_install_dir,
                 DEFAULT_PARTITION,
             )
             files, dirs = migrate_files(
@@ -379,14 +378,16 @@ class StepHandler:
         :param work_dir: the directory where the script will be executed.
         """
         with tempfile.TemporaryDirectory() as tempdir:
-            ctl_socket_path = os.path.join(tempdir, "craftctl.socket")  # noqa: PTH118
+            ctl_socket_path = Path(tempdir, "craftctl.socket")
             ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            ctl_socket.bind(ctl_socket_path)
+            ctl_socket.bind(ctl_socket_path.as_posix())
             ctl_socket.listen(1)
 
             selector = self._ctl_server_selector(step, scriptlet_name, ctl_socket)
 
-            environment = f"export PARTS_CTL_SOCKET={ctl_socket_path}\n" + self._env
+            environment = (
+                f"export PARTS_CTL_SOCKET={str(ctl_socket_path)}\n" + self._env
+            )
             environment_script_path = Path(tempdir) / "scriptlet_environment.sh"
             environment_script_path.write_text(environment)
             environment_script_path.chmod(0o644)
@@ -555,16 +556,16 @@ def _create_and_run_script(
 ) -> None:
     """Create a script with step-specific commands and execute it."""
     with script_path.open("w") as run_file:
-        print("#!/bin/bash", file=run_file)
-        print("set -euo pipefail", file=run_file)
+        run_file.write("#!/bin/bash\n")
+        run_file.write("set -euo pipefail\n")
 
         if environment_script_path:
-            print(f"source {environment_script_path}", file=run_file)
+            run_file.write(f"source {environment_script_path}\n")
 
-        print("set -x", file=run_file)
+        run_file.write("set -x\n")
 
         for cmd in commands:
-            print(cmd, file=run_file)
+            run_file.write(f"{cmd}\n")
 
     script_path.chmod(0o755)
     logger.debug("Executing %r", script_path)
