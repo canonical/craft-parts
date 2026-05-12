@@ -208,12 +208,18 @@ endif
 ifeq ($(wildcard /usr/share/doc/bison/copyright),)
 APT_PACKAGES += bison
 endif
-# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
-# 22.04 -> 25.10 (and possibly 26.04).
+# We'll check for any dotnet SDK. Use dotnet 8 through Ubuntu 25.04, and
+# dotnet 10 on newer releases where that is the common SDK.
 # On focal, we'll get the snap instead.
+DOTNET_SDK_PACKAGE := dotnet-sdk-8.0
+ifneq ($(VERSION_ID),)
+ifneq ($(shell [ "$(VERSION_ID)" != "25.04" ] && [ "$(VERSION_ID)" = "$$(printf '%s\n%s\n' "25.04" "$(VERSION_ID)" | sort -V | tail -n1)" ] && echo yes),)
+DOTNET_SDK_PACKAGE := dotnet-sdk-10.0
+endif
+endif
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
 ifneq ($(UBUNTU_CODENAME),focal)
-APT_PACKAGES += dotnet-sdk-8.0
+APT_PACKAGES += $(DOTNET_SDK_PACKAGE)
 endif
 endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)

@@ -220,18 +220,30 @@ endif
 
 .PHONY: test
 test:  ## Run all tests
+ifneq ($(TMPDIR),)
+	mkdir -p $(TMPDIR)
+endif
 	uv run pytest
 
 .PHONY: test-fast
 test-fast:  ##- Run fast tests
+ifneq ($(TMPDIR),)
+	mkdir -p $(TMPDIR)
+endif
 	uv run pytest -m 'not slow'
 
 .PHONY: test-slow
 test-slow:  ##- Run slow tests
+ifneq ($(TMPDIR),)
+	mkdir -p $(TMPDIR)
+endif
 	uv run pytest -m 'slow'
 
 .PHONY: test-coverage
 test-coverage:  ## Generate coverage report
+ifneq ($(TMPDIR),)
+	mkdir -p $(TMPDIR)
+endif
 ifeq ($(COVERAGE_SOURCE),)
 	uv run coverage run --source $(PROJECT),tests -m pytest
 else
@@ -246,6 +258,9 @@ endif
 
 .PHONY: test-find-slow
 test-find-slow:  ##- Identify slow tests. Set cutoff time in seconds with SLOW_CUTOFF_TIME
+ifneq ($(TMPDIR),)
+	mkdir -p $(TMPDIR)
+endif
 	uv run pytest --durations 0 --durations-min $(SLOW_CUTOFF_TIME)
 
 # Alias for `html` target in docs project. We want to use our own `.venv`, so we
