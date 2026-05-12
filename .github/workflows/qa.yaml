@@ -23,7 +23,7 @@ jobs:
       fast-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
+          "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
@@ -33,7 +33,7 @@ jobs:
       slow-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
+          "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
@@ -53,7 +53,7 @@ jobs:
       slow-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
+          "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
@@ -85,7 +85,7 @@ jobs:
       slow-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
+          "ubuntu-22.04-arm",
         ]
       slow-test-python-versions: '["3.10"]'
       lowest-python-version: ""
@@ -98,7 +98,7 @@ jobs:
       slow-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64"],
+          "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
