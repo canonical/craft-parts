@@ -377,11 +377,11 @@ class PartSpec(BaseModel):
     organize_files: dict[str, str] = Field(
         default_factory=dict,
         alias="organize",
-        description="A map of files from the build directory to their destinations in the stage directory.",
+        description="A map of files from the part's install directory to their destinations in the stage directory.",
         examples=["{hello.py: bin/hello}"],
     )
-    """A map of files from the build directory to their destinations in the stage
-    directory.
+    """A map of files from the part's install directory to their destinations in the
+    stage directory.
 
     Each pair of source and destination paths is represented as a nested key of the form
     ``<source-path>: <destination-path>``.
