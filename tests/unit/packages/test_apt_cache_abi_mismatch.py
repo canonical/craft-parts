@@ -63,15 +63,13 @@ class _EmptyCache:
 class TestAbiMismatchEmptyCache:
     """Tests for issue #1554: BuildPackageNotFound with ABI-mismatched apt."""
 
-    def test_mark_packages_raises_buildpackagenotfound_on_empty_cache(self):
-        """Demonstrate the bug: an empty cache causes BuildPackageNotFound.
+    def test_empty_cache_breaks_package_lookups(self):
+        """Document the current (broken) behaviour on an ABI-mismatched cache.
 
-        When the apt cache is empty due to an ABI mismatch (e.g. core24 snap
-        on Ubuntu 26.04), mark_packages raises PackageNotFound for every
-        package, which deb.py wraps as BuildPackageNotFound.
-
-        This test documents the current (broken) behaviour: valid packages
-        like 'python3-dev' are reported as not found.
+        When python-apt opens an empty cache (ABI mismatch), every method that
+        checks for packages reports them as missing or invalid. This single
+        test covers mark_packages, is_package_valid, and get_installed_packages
+        to show the scope of the problem without repeating the same setup.
         """
         cache = AptCache()
         cache.cache = _EmptyCache()
@@ -79,18 +77,7 @@ class TestAbiMismatchEmptyCache:
         with pytest.raises(errors.PackageNotFound, match="python3-dev"):
             cache.mark_packages({"python3-dev"})
 
-    def test_is_package_valid_returns_false_on_empty_cache(self):
-        """Demonstrate the bug: all packages appear invalid with an empty cache."""
-        cache = AptCache()
-        cache.cache = _EmptyCache()
-
         assert cache.is_package_valid("python3-dev") is False
-
-    def test_get_installed_packages_returns_empty_on_empty_cache(self):
-        """An empty cache reports zero installed packages."""
-        cache = AptCache()
-        cache.cache = _EmptyCache()
-
         assert cache.get_installed_packages() == {}
 
     def test_empty_cache_should_not_raise_buildpackagenotfound(self):
@@ -110,7 +97,6 @@ class TestAbiMismatchEmptyCache:
             ctx = MagicMock()
             ctx.__enter__ = MagicMock(return_value=MagicMock())
             ctx.__enter__.return_value.cache = mock_cache
-            # Simulate mark_packages raising PackageNotFound (current behaviour)
             ctx.__enter__.return_value.mark_packages.side_effect = (
                 errors.PackageNotFound("python3-dev")
             )
@@ -120,22 +106,17 @@ class TestAbiMismatchEmptyCache:
                 "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
                 return_value=False,
             ):
-                # The bug: this raises BuildPackageNotFound for a valid package.
-                # After the fix, this should NOT raise BuildPackageNotFound;
-                # it should either succeed (by falling back to apt-get) or
-                # raise an error specifically about the cache/ABI mismatch.
-                try:
+                # The bug: _get_packages_marked_for_installation wraps
+                # PackageNotFound as BuildPackageNotFound (deb.py line 582).
+                # After the fix this path should detect the broken cache and
+                # NOT surface BuildPackageNotFound for valid host packages.
+                with pytest.raises(Exception) as exc_info:  # noqa: PT011
                     deb.Ubuntu.install_packages(["python3-dev"])
-                except errors.BuildPackageNotFound:
-                    pytest.fail(
-                        "BuildPackageNotFound should not be raised when the apt "
-                        "cache is empty/broken due to an ABI mismatch (issue #1554). "
-                        "The fix should detect the broken cache and either fall back "
-                        "to subprocess-based package resolution or raise a more "
-                        "specific error about the ABI mismatch."
-                    )
-                except Exception:
-                    # Any other exception is acceptable for now — the important
-                    # thing is that BuildPackageNotFound is not raised for
-                    # packages that actually exist on the host.
-                    pass
+
+                assert not isinstance(exc_info.value, errors.BuildPackageNotFound), (
+                    "BuildPackageNotFound should not be raised when the apt "
+                    "cache is empty/broken due to an ABI mismatch (issue #1554). "
+                    "The fix should detect the broken cache and either fall back "
+                    "to subprocess-based package resolution or raise a more "
+                    "specific error about the ABI mismatch."
+                )
