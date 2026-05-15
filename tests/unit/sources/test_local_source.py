@@ -114,6 +114,24 @@ class TestLocal:
         assert os.path.islink(os.path.join("destination", "dir")) is False  # noqa: PTH114, PTH118
         assert os.stat(os.path.join("destination", "dir", "file")).st_nlink > 1  # noqa: PTH116, PTH118
 
+    def test_pulling_twice_removes_deleted_source_files(self, new_dir, partitions):
+        os.makedirs("src")  # noqa: PTH103
+        Path("src/kept").write_text("kept")
+        Path("src/removed").write_text("removed")
+
+        os.mkdir("destination")  # noqa: PTH102
+
+        dirs = ProjectDirs(partitions=partitions)
+        local = LocalSource("src", "destination", cache_dir=new_dir, project_dirs=dirs)
+        local.pull()
+
+        Path("src/removed").unlink()
+
+        local.pull()
+
+        assert Path("destination/kept").is_file()
+        assert Path("destination/removed").exists() is False
+
     def test_pull_ignores_own_work_data(self, new_dir, partitions):
         # Make the snapcraft-specific directories
         os.makedirs("parts/foo/src")  # noqa: PTH103
