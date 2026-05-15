@@ -94,13 +94,10 @@ class TestAbiMismatchEmptyCache:
         mock_cache = _EmptyCache()
 
         with patch("craft_parts.packages.deb.AptCache") as mock_apt_cache_cls:
-            ctx = MagicMock()
-            ctx.__enter__ = MagicMock(return_value=MagicMock())
-            ctx.__enter__.return_value.cache = mock_cache
-            ctx.__enter__.return_value.mark_packages.side_effect = (
-                errors.PackageNotFound("python3-dev")
-            )
-            mock_apt_cache_cls.return_value = ctx
+            mock_ctx = MagicMock()
+            mock_ctx.cache = mock_cache
+            mock_ctx.mark_packages.side_effect = errors.PackageNotFound("python3-dev")
+            mock_apt_cache_cls.return_value.__enter__.return_value = mock_ctx
 
             with patch(
                 "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
@@ -110,7 +107,7 @@ class TestAbiMismatchEmptyCache:
                 # PackageNotFound as BuildPackageNotFound (deb.py line 582).
                 # After the fix this path should detect the broken cache and
                 # NOT surface BuildPackageNotFound for valid host packages.
-                with pytest.raises(Exception) as exc_info:  # noqa: PT011
+                with pytest.raises((errors.BuildPackageNotFound, errors.PackageNotFound)) as exc_info:
                     deb.Ubuntu.install_packages(["python3-dev"])
 
                 assert not isinstance(exc_info.value, errors.BuildPackageNotFound), (
