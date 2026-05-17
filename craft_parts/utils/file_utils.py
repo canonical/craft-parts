@@ -366,7 +366,7 @@ def _get_file_type_str(result: os.stat_result) -> str:
         file_type = "socket"
     elif stat.S_ISREG(result.st_mode):
         file_type = "file"
-    elif stat.S_ISWHT(result.st_mode):
+    elif hasattr(stat, "S_ISWHT") and stat.S_ISWHT(result.st_mode):
         file_type = "whiteout"
     else:
         file_type = "unknown"

@@ -51,10 +51,10 @@ def _check_overlay_equivalence(
     src_path: pathlib.Path,
     dst_path: pathlib.Path,
     dst_string: str,
-) -> bool:
+) -> None:
     """Check if source and destination are equivalent on the overlay partition.
 
-    If equivalent, removes the source (or merges if it's a directory) and returns True.
+    If equivalent, removes the source (or merges if it's a directory).
     If not equivalent, raises FileOrganizeError.
 
     :param part_name: The name of the part being organized.
@@ -63,16 +63,16 @@ def _check_overlay_equivalence(
     :param src_path: The source path.
     :param dst_path: The destination path.
     :param dst_string: A display string for the destination.
-    :returns: True if the paths were equivalent and the source was handled.
     :raises FileOrganizeError: If the paths are not equivalent.
     """
     msg = file_utils.get_path_differences(src_path, dst_path)
     if not msg:
-        if src_path.is_dir():
-            file_utils.move(src_path, dst_path)
+        if not src_path.is_symlink() and src_path.is_dir():
+            file_utils.link_or_copy_tree(src_path, dst_path)
+            shutil.rmtree(src_path)
         else:
             src_path.unlink()
-        return True
+        return
     raise errors.FileOrganizeError(
         part_name=part_name,
         message=(
@@ -140,44 +140,45 @@ def organize_files(  # noqa: PLR0912, PLR0915
             src_count += 1
             src_path = pathlib.Path(src)
 
-            # Special behaviour for the overlay partition to allow idempotence without
-            # needing overwrite to be True.
-            if dst_partition_pair.partition == OVERLAY_PARTITION:  # noqa: SIM102
-                # Organizing a symlink to its destination simply deletes the link.
-                if src_path.is_symlink():
-                    try:
-                        # resolve() follows the symlink; relative_to() raises ValueError
-                        # if the target lies outside src_root (e.g. absolute symlinks
-                        # such as /usr/bin/true). Fall through to normal organise in
-                        # that case.
-                        relative_src_target = src_path.resolve().relative_to(src_root)
-                    except ValueError:
-                        pass
+            # Organizing a symlink to the overlay partition simply deletes the link.
+            if (
+                dst_partition_pair.partition == OVERLAY_PARTITION
+                and src_path.is_symlink()
+            ):
+                try:
+                    # resolve() follows the symlink; relative_to() raises ValueError
+                    # if the target lies outside src_root (e.g. absolute symlinks
+                    # such as /usr/bin/true). Fall through to normal organise in
+                    # that case.
+                    relative_src_target = src_path.resolve().relative_to(src_root)
+                except ValueError:
+                    pass
+                else:
+                    dst_target = (
+                        install_dir_map[OVERLAY_PARTITION] / relative_src_target
+                    )
+                    if dst_path in install_dir_map.values():
+                        real_dst_path = dst_path / src_path.name
                     else:
-                        dst_target = (
-                            install_dir_map[OVERLAY_PARTITION] / relative_src_target
-                        )
-                        if dst_path in install_dir_map.values():
-                            real_dst_path = dst_path / src_path.name
-                        else:
-                            real_dst_path = dst_path
-                        if dst_target.exists() and (
-                            dst_target.samefile(dst_path) or real_dst_path.is_dir()
-                        ):
-                            src_path.unlink()
-                            continue
-                        if real_dst_path.is_symlink() and real_dst_path.readlink() in (
-                            dst_target,
-                            relative_src_target,
-                        ):
-                            src_path.unlink()
-                            continue
-                        if src_path.readlink().is_absolute():
-                            real_dst_path.symlink_to(dst_target)
-                        else:
-                            real_dst_path.symlink_to(relative_src_target)
+                        real_dst_path = dst_path
+
+                    if dst_target.exists() and (
+                        dst_target.samefile(dst_path) or real_dst_path.is_dir()
+                    ):
                         src_path.unlink()
                         continue
+                    if real_dst_path.is_symlink() and real_dst_path.readlink() in (
+                        dst_target,
+                        relative_src_target,
+                    ):
+                        src_path.unlink()
+                        continue
+                    if src_path.readlink().is_absolute():
+                        real_dst_path.symlink_to(dst_target)
+                    else:
+                        real_dst_path.symlink_to(relative_src_target)
+                    src_path.unlink()
+                    continue
 
             # Organize a dir to a dir
             if not src_path.is_symlink() and src_path.is_dir():
@@ -202,7 +203,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     if not overwrite:
                         conflicts = file_utils.find_merge_conflicts(
                             src_path,
-                            dst_path,
+                            real_dst_path,
                             strict=dst_partition_pair.partition != OVERLAY_PARTITION,
                         )
                         if conflicts:

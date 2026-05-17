@@ -25,7 +25,6 @@ from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
 from craft_parts.utils.file_utils import get_path_differences
-from pyfakefs.fake_filesystem import FakeFilesystem
 from typing_extensions import Any
 
 
@@ -633,8 +632,8 @@ def _create_tree(root: pathlib.Path, files: dict[pathlib.Path, dict[str, Any]]):
         ),
     ],
 )
+@pytest.mark.usefixtures("fs")
 def test_find_merge_conflicts(
-    fs: FakeFilesystem,
     source_files: dict[pathlib.Path, dict[str, Any]],
     dest_files: dict[pathlib.Path, dict[str, Any]],
     expected_conflicts: dict[pathlib.Path, list[str]],
