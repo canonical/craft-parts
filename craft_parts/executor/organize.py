@@ -26,20 +26,64 @@ from __future__ import annotations
 
 import contextlib
 import os
+import pathlib
 import shutil
 from glob import iglob
 from typing import TYPE_CHECKING
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import (
+    DEFAULT_PARTITION,
+    OVERLAY_PARTITION,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from pathlib import Path
 
 
-def organize_files(  # noqa: PLR0912
+def _check_overlay_equivalence(
+    *,
+    part_name: str,
+    key: str,
+    file_map: dict[str, str],
+    src_path: pathlib.Path,
+    dst_path: pathlib.Path,
+    dst_string: str,
+) -> None:
+    """Check if source and destination are equivalent on the overlay partition.
+
+    If equivalent, removes the source (or merges if it's a directory).
+    If not equivalent, raises FileOrganizeError.
+
+    :param part_name: The name of the part being organized.
+    :param key: The organize key (source pattern).
+    :param file_map: The organize file map.
+    :param src_path: The source path.
+    :param dst_path: The destination path.
+    :param dst_string: A display string for the destination.
+    :raises FileOrganizeError: If the paths are not equivalent.
+    """
+    msg = file_utils.get_path_differences(src_path, dst_path)
+    if not msg:
+        if not src_path.is_symlink() and src_path.is_dir():
+            file_utils.link_or_copy_tree(src_path, dst_path)
+            shutil.rmtree(src_path)
+        else:
+            src_path.unlink()
+        return
+    raise errors.FileOrganizeError(
+        part_name=part_name,
+        message=(
+            f"trying to organize file {key!r} to "
+            f"{file_map[key]!r} but {dst_string!r} already "
+            f"exists and the files have {', '.join(msg)}"
+        ),
+    )
+
+
+def organize_files(  # noqa: PLR0912, PLR0915
     *,
     part_name: str,
     file_map: dict[str, str],
@@ -67,9 +111,25 @@ def organize_files(  # noqa: PLR0912
     """
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
         src = get_src_path(key, part_name, install_dir_map, default_partition)
+        src_root = install_dir_map.get(None) or install_dir_map[default_partition]
+
+        # Remove the leading slash so the path actually joins
+        # Also trailing slash is significant, be careful if using pathlib!
+        dst_partition_pair = path_utils.get_partition_and_path(
+            file_map[key].lstrip("/"), default_partition
+        )
         dst, dst_string = get_dst_path(
             key, file_map, install_dir_map, default_partition
         )
+        dst_path = pathlib.Path(dst)
+
+        # If the destination is a symlink to itself, unlink it and we'll replace it
+        # with the real thing.
+        if (
+            dst_path.is_symlink()
+            and (dst_path.parent / dst_path.readlink()) == dst_path
+        ):
+            dst_path.unlink()
 
         sources = iglob(src, recursive=True)  # noqa: PTH207
 
@@ -78,12 +138,86 @@ def organize_files(  # noqa: PLR0912
         src_count = 0
         for src in sources:
             src_count += 1
+            src_path = pathlib.Path(src)
+
+            # Organizing a symlink to the overlay partition simply deletes the link.
+            if (
+                dst_partition_pair.partition == OVERLAY_PARTITION
+                and src_path.is_symlink()
+            ):
+                try:
+                    # resolve() follows the symlink; relative_to() raises ValueError
+                    # if the target lies outside src_root (e.g. absolute symlinks
+                    # such as /usr/bin/true). Fall through to normal organise in
+                    # that case.
+                    relative_src_target = src_path.resolve().relative_to(src_root)
+                except ValueError:
+                    pass
+                else:
+                    dst_target = (
+                        install_dir_map[OVERLAY_PARTITION] / relative_src_target
+                    )
+                    if dst_path in install_dir_map.values():
+                        real_dst_path = dst_path / src_path.name
+                    else:
+                        real_dst_path = dst_path
+
+                    if dst_target.exists() and (
+                        dst_target.samefile(dst_path) or real_dst_path.is_dir()
+                    ):
+                        src_path.unlink()
+                        continue
+                    if real_dst_path.is_symlink() and real_dst_path.readlink() in (
+                        dst_target,
+                        relative_src_target,
+                    ):
+                        src_path.unlink()
+                        continue
+                    if src_path.readlink().is_absolute():
+                        real_dst_path.symlink_to(dst_target)
+                    else:
+                        real_dst_path.symlink_to(relative_src_target)
+                    src_path.unlink()
+                    continue
 
             # Organize a dir to a dir
-            if os.path.isdir(src) and "*" not in key:  # noqa: PTH112
-                file_utils.link_or_copy_tree(src, dst)
-                shutil.rmtree(src)
-                continue
+            if not src_path.is_symlink() and src_path.is_dir():
+                if "*" not in key:  # Key is explicit
+                    if dst_path.is_symlink():
+                        real_dst_path = dst_path.resolve()
+                    else:
+                        real_dst_path = dst_path
+                    file_utils.link_or_copy_tree(src, real_dst_path)
+                    shutil.rmtree(src)
+                    continue
+                # Key is a glob
+                # Organizing to the root of a partition in overwrite mode.
+                if (
+                    dst_path in install_dir_map.values()
+                    or dst_partition_pair.partition == OVERLAY_PARTITION
+                ):
+                    if dst_path in install_dir_map.values():
+                        real_dst_path = dst_path / src_path.name
+                    else:
+                        real_dst_path = dst_path
+                    if not overwrite:
+                        conflicts = file_utils.find_merge_conflicts(
+                            src_path,
+                            real_dst_path,
+                            strict=dst_partition_pair.partition != OVERLAY_PARTITION,
+                        )
+                        if conflicts:
+                            raise errors.FileOrganizeError.from_merge_conflicts(
+                                part_name=part_name,
+                                key=key,
+                                destination=file_map[key],
+                                conflicts=conflicts,
+                            )
+                    # Where the key is a glob, we get the contents of the dir to
+                    # organize, so we need to add the source's name back in.
+                    file_utils.link_or_copy_tree(src_path, real_dst_path)
+                    shutil.rmtree(src)
+                    continue
 
             # Organize a "not dir" (file, character device, etc.) to a "not dir"
             if os.path.isfile(dst):  # noqa: PTH113
@@ -102,6 +236,16 @@ def organize_files(  # noqa: PLR0912
                             "supposed to be a directory, end it with a slash."
                         ),
                     )
+                elif dst_partition_pair.partition == OVERLAY_PARTITION:
+                    _check_overlay_equivalence(
+                        part_name=part_name,
+                        key=key,
+                        file_map=file_map,
+                        src_path=src_path,
+                        dst_path=dst_path,
+                        dst_string=dst_string,
+                    )
+                    continue
                 else:
                     raise errors.FileOrganizeError(
                         part_name=part_name,
@@ -126,6 +270,16 @@ def organize_files(  # noqa: PLR0912
                             os.remove(real_dst)  # noqa: PTH107
                 elif os.path.exists(real_dst):  # noqa: PTH110
                     rel_dst_string = os.path.join(dst_string, os.path.basename(src))  # noqa: PTH118, PTH119
+                    if dst_partition_pair.partition == OVERLAY_PARTITION:
+                        _check_overlay_equivalence(
+                            part_name=part_name,
+                            key=key,
+                            file_map=file_map,
+                            src_path=pathlib.Path(src),
+                            dst_path=pathlib.Path(real_dst),
+                            dst_string=dst_string,
+                        )
+                        continue
                     raise errors.FileOrganizeError(
                         part_name=part_name,
                         message=(
