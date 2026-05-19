@@ -40,6 +40,7 @@ from craft_parts.constraints import RelativePathStr
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.packages import platform
+from craft_parts.packages.snaps import _get_parsed_snap
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
@@ -290,16 +291,16 @@ class PartSpec(BaseModel):
     stage_snaps: list[str] = Field(
         default=[],
         description="The snaps to include in the stage environment.",
-        examples=["[go=1.17, chisel=latest/candidate, mir-kiosk-x11]"],
+        examples=["[go @ 1.17/stable, chisel @ latest/candidate, mir-kiosk-x11]"],
     )
     """During the stage step, these snaps are included in the stage environment.
 
     Entries can be in one of four formats:
 
     * ``<snap-name>``
-    * ``<snap-name>=<channel>``
-    * ``<snap-name>/<channel-name>`` (deprecated, use ``=`` instead)
-    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``=`` instead)
+    * ``<snap-name> @ <channel>`` (spaces around ``@`` are optional)
+    * ``<snap-name>/<channel-name>`` (deprecated, use ``@`` instead)
+    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``@`` instead)
 
     If an entry contains no version or channel, ``latest/stable`` is used.
     """
@@ -321,7 +322,7 @@ class PartSpec(BaseModel):
     build_snaps: list[str] = Field(
         default=[],
         description="The snaps to install in the build environment.",
-        examples=["[go=latest/stable, node=stable]"],
+        examples=["[go @ latest/stable, node @ stable]"],
     )
     """The snaps to install during the build step, before the build starts. The part
     makes them available in the build environment.
@@ -329,9 +330,9 @@ class PartSpec(BaseModel):
     Entries can be listed in one of four formats.
 
     * ``<snap-name>``
-    * ``<snap-name>=<channel>``
-    * ``<snap-name>/<channel-name>`` (deprecated, use ``=`` instead)
-    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``=`` instead)
+    * ``<snap-name> @ <channel>`` (spaces around ``@`` are optional)
+    * ``<snap-name>/<channel-name>`` (deprecated, use ``@`` instead)
+    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``@`` instead)
 
     If no version or channel is provided, ``latest/stable`` is used.
     """
@@ -690,9 +691,7 @@ class PartSpec(BaseModel):
         """Return whether the part has chisel as build snap."""
         if not self.build_snaps:
             return False
-        return any(
-            p for p in self.build_snaps if p == "chisel" or p.startswith("chisel/")
-        )
+        return any(_get_parsed_snap(p)[0] == "chisel" for p in self.build_snaps)
 
 
 # pylint: disable=too-many-public-methods

@@ -38,7 +38,7 @@ def test_stage_snap(new_dir, partitions, fake_snap_command, foo_install_dir):
         parts:
           foo:
             plugin: nil
-            stage-snaps: [basic]
+            stage-snaps: ["basic @ latest/stable"]
         """
     )
 
@@ -78,7 +78,7 @@ def test_stage_snap_download_error(new_dir, partitions, fake_snap_command):
         parts:
           foo:
             plugin: nil
-            stage-snaps: [basic]
+            stage-snaps: ["basic @ latest/stable"]
         """
     )
 
@@ -113,7 +113,7 @@ def test_stage_snap_unpack_error(new_dir, partitions, fake_snap_command):
         parts:
           foo:
             plugin: nil
-            stage-snaps: [bad-snap]
+            stage-snaps: ["bad-snap @ latest/stable"]
         """
     )
 

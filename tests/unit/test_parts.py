@@ -382,6 +382,20 @@ class TestPartData:
         p = Part("foo", tc_spec, partitions=partitions)
         assert p.spec.has_chisel_as_build_snap == tc_result
 
+    @pytest.mark.parametrize(
+        ("tc_spec", "tc_result"),
+        [
+            ({"build-snaps": ["chisel @ latest/candidate"]}, True),
+            ({"build-snaps": ["chisel @ stable"]}, True),
+            ({"build-snaps": ["chiselhelper @ stable"]}, False),
+        ],
+    )
+    def test_part_has_chisel_as_build_snap_new_separator(
+        self, partitions, tc_spec, tc_result
+    ):
+        p = Part("foo", tc_spec, partitions=partitions)
+        assert p.spec.has_chisel_as_build_snap == tc_result
+
 
 class TestPartOrdering:
     """Test part ordering.

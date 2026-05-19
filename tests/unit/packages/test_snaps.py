@@ -21,17 +21,17 @@ from craft_parts.packages import errors, snaps
 
 
 class TestGetParsedSnap:
-    """Tests for _get_parsed_snap with both = and / separators."""
+    """Tests for _get_parsed_snap with @ and / separators."""
 
     @pytest.mark.parametrize(
         ("snap", "expected_name", "expected_channel"),
         [
             # No channel
             ("curl", "curl", ""),
-            # New "=" separator
-            ("curl=latest/stable", "curl", "latest/stable"),
-            ("curl=stable", "curl", "stable"),
-            ("curl=1.17/stable", "curl", "1.17/stable"),
+            # New "@" separator
+            ("curl@latest/stable", "curl", "latest/stable"),
+            ("curl @ stable", "curl", "stable"),
+            ("curl @ 1.17/stable", "curl", "1.17/stable"),
             # Legacy "/" separator (backwards compatible)
             ("curl/latest/stable", "curl", "latest/stable"),
             ("curl/stable", "curl", "stable"),
@@ -60,7 +60,7 @@ class TestSnapPackageCurrentChannel:
 
     def test_risk_new_separator(self, fake_snapd):
         self.assert_channels(
-            snap="fake-snap-stable=stable",
+            snap="fake-snap-stable @ stable",
             installed_snaps=[{"name": "fake-snap-stable", "channel": "stable"}],
             expected="latest/stable",
             fake_snapd=fake_snapd,
@@ -318,7 +318,7 @@ class TestSnapPackageLifecycle:
             {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
         ]
 
-        snap_pkg = snaps.SnapPackage("fake-snap=strict/stable")
+        snap_pkg = snaps.SnapPackage("fake-snap @ strict/stable")
         snap_pkg.install()
         assert fake_snap_command.calls == [
             [
@@ -420,7 +420,7 @@ class TestSnapPackageLifecycle:
             {"fake-snap": {"channels": {"strict/edge": {"confinement": "strict"}}}}
         ]
 
-        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
+        snap_pkg = snaps.SnapPackage("fake-snap @ strict/stable")
         snap_pkg.download()
         assert fake_snap_command.calls == [
             ["snap", "download", "fake-snap", "--channel", "strict/stable"]
@@ -446,7 +446,7 @@ class TestSnapPackageLifecycle:
         ]
 
         snaps.download_snaps(
-            snaps_list=["fake-snap", "other-fake-snap/latest/stable"],
+            snaps_list=["fake-snap", "other-fake-snap @ latest/stable"],
             directory="fakedir",
         )
         assert fake_snap_command.calls == [
