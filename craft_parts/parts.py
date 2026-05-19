@@ -40,7 +40,6 @@ from craft_parts.constraints import RelativePathStr
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.packages import platform
-from craft_parts.packages.snaps import _get_parsed_snap
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
@@ -691,7 +690,15 @@ class PartSpec(BaseModel):
         """Return whether the part has chisel as build snap."""
         if not self.build_snaps:
             return False
-        return any(_get_parsed_snap(p)[0] == "chisel" for p in self.build_snaps)
+        for build_snap in self.build_snaps:
+            normalized_snap = build_snap.strip()
+            if "@" in normalized_snap:
+                snap_name = re.split(r"\s*@\s*", normalized_snap, maxsplit=1)[0]
+            else:
+                snap_name = normalized_snap.split("/", maxsplit=1)[0]
+            if snap_name == "chisel":
+                return True
+        return False
 
 
 # pylint: disable=too-many-public-methods
