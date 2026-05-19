@@ -164,7 +164,9 @@ class StepHandler:
 
     def _builtin_overlay(self) -> StepContents:
         """Run the built-in overlay handler (plugin chroot commands)."""
-        self._run_overlay_scriptlet("craftctl default", work_dir=Path("/"))
+        self._run_overlay_scriptlet(
+            "craftctl default", work_dir=Path("/"), scriptlet_name="overlay"
+        )
         return StepContents()
 
     def _builtin_build(self) -> StepContents:
@@ -425,6 +427,7 @@ class StepHandler:
         scriptlet: str,
         *,
         work_dir: Path,
+        scriptlet_name: str = "override-overlay",
     ) -> None:
         """Execute an override-overlay scriptlet inside a chroot.
 
@@ -434,6 +437,7 @@ class StepHandler:
 
         :param scriptlet: The scriptlet to run.
         :param work_dir: The directory where the script will be executed.
+        :param scriptlet_name: The name of the scriptlet for error reporting.
         """
         chroot_commands = self._plugin.get_overlay_chroot_commands()
         indented_commands = (
@@ -447,10 +451,10 @@ class StepHandler:
             "export -f __craftctl_default\n"
             "\n"
             "craftctl() {\n"
-            '    if [ "$1" = "default" ]; then\n'
+            '    if [ "${1-}" = "default" ]; then\n'
             "        __craftctl_default\n"
             "    else\n"
-            '        echo "Error: craftctl $1 cannot be used in override-overlay" >&2\n'
+            '        echo "Error: craftctl ${1-} cannot be used in override-overlay" >&2\n'
             "        return 1\n"
             "    fi\n"
             "}\n"
@@ -459,12 +463,6 @@ class StepHandler:
 
         script_content = "#!/bin/bash\nset -euo pipefail\nset -x\n"
         script_content += preamble + scriptlet + "\n"
-
-        # Save script to host for debugging
-        script_path = self._part.part_run_dir.absolute() / "override_overlay.sh"
-        script_path.parent.mkdir(parents=True, exist_ok=True)
-        script_path.write_text(script_content)
-        script_path.chmod(0o755)
 
         try:
             process.run(
@@ -477,7 +475,7 @@ class StepHandler:
         except process.ProcessError as process_error:
             raise errors.ScriptletRunError(
                 part_name=self._part.name,
-                scriptlet_name="override-overlay",
+                scriptlet_name=scriptlet_name,
                 exit_code=process_error.result.returncode,
                 stderr=process_error.result.stderr,
             ) from process_error
