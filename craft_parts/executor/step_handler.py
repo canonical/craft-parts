@@ -451,10 +451,10 @@ class StepHandler:
             "export -f __craftctl_default\n"
             "\n"
             "craftctl() {\n"
-            '    if [ "${1-}" = "default" ]; then\n'
+            '    if [ "$#" -eq 1 ] && [ "$1" = "default" ]; then\n'
             "        __craftctl_default\n"
             "    else\n"
-            '        echo "Error: craftctl ${1-} cannot be used in override-overlay" >&2\n'
+            f'        echo "Error: craftctl ${{1-}} cannot be used in {scriptlet_name}" >&2\n'
             "        return 1\n"
             "    fi\n"
             "}\n"

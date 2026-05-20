@@ -767,7 +767,7 @@ class Part:
                 part_name=self.name,
                 message=(
                     f"overlay-script cannot be used with plugin "
-                    f"{self.plugin_name!r} because it declares overlay commands"
+                    f"{self.plugin_name!r} because it participates in the overlay step"
                 ),
             )
 
