@@ -298,8 +298,8 @@ class PartSpec(BaseModel):
 
     * ``<snap-name>``
     * ``<snap-name> @ <channel>`` (spaces around ``@`` are optional)
-    * ``<snap-name>/<channel-name>`` (deprecated, use ``@`` instead)
-    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``@`` instead)
+    * ``<snap-name>/<track>/<risk>`` (deprecated, use ``@`` instead)
+    * ``<snap-name>/<track>/<risk>/<branch>`` (deprecated, use ``@`` instead)
 
     If an entry contains no version or channel, ``latest/stable`` is used.
     """
