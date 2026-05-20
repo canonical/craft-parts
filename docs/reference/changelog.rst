@@ -978,7 +978,7 @@ For a complete list of commits, check out the `2.1.1`_ release on GitHub.
 1.33.1 (2024-09-13)
 -------------------
 
-- Fix NPM plugin to be stateless, allowing lifecycle steps to be
+- Fix npm plugin to be stateless, allowing lifecycle steps to be
   executed in separate runs.
 
 For a complete list of commits, check out the `1.33.1`_ release on GitHub.
