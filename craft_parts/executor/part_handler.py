@@ -461,7 +461,10 @@ class PartHandler:
 
             # Copy source from the part source dir to the part build dir
             shutil.copytree(
-                self._part.part_src_dir, self._part.part_build_dir, symlinks=True
+                self._part.part_src_dir,
+                self._part.part_build_dir,
+                symlinks=True,
+                copy_function=file_utils.copy,
             )
 
         # Perform the build step
