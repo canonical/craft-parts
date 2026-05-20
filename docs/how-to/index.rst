@@ -3,6 +3,9 @@
 How-to guides
 =============
 
+These pages provide directions for completing tasks and solving problems with
+Craft Parts.
+
 .. toctree::
    :maxdepth: 1
 

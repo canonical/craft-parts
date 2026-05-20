@@ -9,6 +9,7 @@ can be used, and the lifecycle of the different steps performed on them.
 .. toctree::
    :maxdepth: 1
 
+   Documentation <documentation>
    /common/craft-parts/explanation/parts
    /common/craft-parts/explanation/lifecycle
    /common/craft-parts/explanation/file-migration

@@ -29,7 +29,6 @@ similar view of how data should be processed and prepared for deployment.
    reference/index
    explanation/index
 
-
 .. list-table::
 
     * - | :ref:`Tutorial <tutorials>`
@@ -49,5 +48,4 @@ that warmly welcomes community projects, contributions, suggestions, fixes
 and constructive feedback.
 
 * `Ubuntu Code of Conduct <https://ubuntu.com/community/docs/ethos/code-of-conduct>`_
-* `Canonical Contributor License Agreement
-  <https://canonical.com/legal/contributors>`_
+* `Canonical Contributor License Agreement <https://ubuntu.com/legal/contributors>`_

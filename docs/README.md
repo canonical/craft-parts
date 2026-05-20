@@ -32,6 +32,17 @@ make docs-setup
 uv add -r docs/requirements.txt --group docs-starter-pack
 ```
 
+In `docs/Makefile`, make sure these lines are changed like so:
+
+```diff
+- DOCS_BUILDDIR        = _build
++ DOCS_BUILDDIR        ?= _build
+...
+
+- VALE_DIR         = $(SPHINXDIR)/venv/lib/python*/site-packages/vale
++ VALE_DIR         ?= $(SPHINXDIR)/venv/lib/python*/site-packages/vale
+```
+
 For safety, test the three main doc commands:
 
 ```bash
