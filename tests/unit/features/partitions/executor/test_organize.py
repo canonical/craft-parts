@@ -18,7 +18,12 @@ import os
 import pytest
 from craft_parts import errors
 
-from tests.unit.executor.test_organize import organize_and_assert
+# Although it's not explicitly used, randomize_iglob is used here as it's an auto-use
+# fixture that checks that the order of an organize doesn't matter.
+from tests.unit.executor.test_organize import (
+    organize_and_assert,
+    randomize_iglob,  # noqa: F401
+)
 
 
 @pytest.mark.parametrize(
@@ -35,6 +40,105 @@ from tests.unit.executor.test_organize import organize_and_assert
             },
             "expected": [(["bar1", "baz1", "foo1", "qux1"], "")],
         },
+        # Actual behaviour in snapcraft 8.14. The next few tests ensure that our current
+        # behaviour is unchanged when we're handling moving a file to a file and a dir
+        # to a dir.
+        pytest.param(
+            {
+                "setup_dirs": ["my-dir", "other-dir"],
+                "setup_files": ["my-dir/foo.txt", "bar.txt"],
+                "organize_map": {
+                    "bar.txt": "other-dir",
+                    "my-dir": "other-dir",
+                },
+                "expected": [
+                    (["other-dir"], ""),
+                    (["bar.txt", "foo.txt"], "other-dir"),
+                ],
+            },
+            id="file-and-directory-to-directory",
+        ),
+        pytest.param(
+            {
+                "setup_dirs": ["my-dir", "other-dir"],
+                "setup_files": ["my-dir/foo.txt", "bar.txt"],
+                "organize_map": {
+                    "my-dir": "other-dir",
+                },
+                "expected": [
+                    (["bar.txt", "other-dir"], ""),
+                    (["foo.txt"], "other-dir"),
+                ],
+            },
+            id="rename-directory-only",
+        ),
+        pytest.param(
+            {
+                "setup_dirs": ["my-dir"],
+                "setup_files": ["my-dir/foo.txt", "bar.txt"],
+                "organize_map": {
+                    "my-dir": "(mypart)/",
+                },
+                "expected": [
+                    (["bar.txt"], ""),
+                    (["foo.txt"], "../partitions/mypart/parts/part-name/install"),
+                ],
+            },
+            id="directory-to-partition-root",
+        ),
+        pytest.param(
+            {
+                "setup_dirs": [],
+                "setup_files": ["bar.txt"],
+                "organize_map": {
+                    "*": "(mypart)/",
+                },
+                "expected": [
+                    ([], ""),
+                    (["bar.txt"], "../partitions/mypart/parts/part-name/install"),
+                ],
+            },
+            id="wildcard-to-partition-root-with-file-only",
+        ),
+        pytest.param(
+            {
+                "setup_dirs": ["my-dir"],
+                "setup_files": ["my-dir/foo.txt", "bar.txt"],
+                "organize_map": {
+                    "*": "(mypart)/",
+                },
+                "expected": [
+                    ([], ""),
+                    (
+                        ["bar.txt", "my-dir"],
+                        "../partitions/mypart/parts/part-name/install",
+                    ),
+                    (
+                        ["foo.txt"],
+                        "../partitions/mypart/parts/part-name/install/my-dir",
+                    ),
+                ],
+            },
+            id="wildcard-to-partition-root-with-file-and-directory",
+        ),
+        pytest.param(
+            {
+                "setup_dirs": ["my-dir"],
+                "setup_files": ["my-dir/foo.txt"],
+                "organize_map": {
+                    "*": "(mypart)/",
+                },
+                "expected": [
+                    ([], ""),
+                    (["my-dir"], "../partitions/mypart/parts/part-name/install"),
+                    (
+                        ["foo.txt"],
+                        "../partitions/mypart/parts/part-name/install/my-dir",
+                    ),
+                ],
+            },
+            id="wildcard-to-partition-root-with-directory-only",
+        ),
         # Raise an error for files sourced from a non-default partition
         {
             "organize_map": {
@@ -198,6 +302,26 @@ from tests.unit.executor.test_organize import organize_and_assert
                 (["foo"], os.path.join("nested", "dir")),  # noqa: PTH118
             ],
         },
+        # from_*_to_partition
+        pytest.param(
+            {
+                "setup_dirs": ["my-dir", "my-dir/subdir"],
+                "setup_files": ["my-dir/subdir/foo", "my-dir/bar"],
+                "organize_map": {"(default)/*": "(mypart)/"},
+                "expected": [
+                    (["my-dir"], "../partitions/mypart/parts/part-name/install"),
+                    (
+                        ["bar", "subdir"],
+                        "../partitions/mypart/parts/part-name/install/my-dir",
+                    ),
+                    (
+                        ["foo"],
+                        "../partitions/mypart/parts/part-name/install/my-dir/subdir",
+                    ),
+                ],
+            },
+            id="all-to-partition",
+        ),
     ],
 )
 def test_organize(new_dir, data):
