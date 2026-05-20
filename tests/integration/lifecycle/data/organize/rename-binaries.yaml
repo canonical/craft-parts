@@ -1,0 +1,28 @@
+# Organize pattern from the craft-parts documentation (Dump plugin how-to,
+# section "To include a remote third-party pre-compiled archive from a URL").
+# The same rename-to-explicit-path style is common in snaps that redistribute
+# pre-built binaries alongside other files and want them at predictable paths.
+#
+# Source: https://github.com/canonical/craft-parts/blob/main/docs/common/craft-parts/how-to/include_files.rst
+
+description: Rename individual pre-built binaries to their final usr/bin/ locations.
+
+parts:
+  ffmpeg-part:
+    plugin: dump
+    source: src
+    organize:
+      ffmpeg: usr/bin/ffmpeg
+      ffprobe: usr/bin/ffprobe
+
+setup_files:
+  - src/ffmpeg
+  - src/ffprobe
+
+expected_prime_present:
+  - usr/bin/ffmpeg
+  - usr/bin/ffprobe
+
+expected_prime_absent:
+  - ffmpeg
+  - ffprobe

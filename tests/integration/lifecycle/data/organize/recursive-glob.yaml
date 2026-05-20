@@ -1,0 +1,37 @@
+# Organize pattern that uses the '**' recursive glob to hoist files from a
+# nested directory tree to a single flat destination.  Upstream projects
+# sometimes install configuration files or locale catalogues deep inside an
+# arch-specific or version-specific hierarchy; the recursive glob collapses
+# those levels in one rule.
+#
+# This pattern can be found in the SerialPortAssistant snap, where arch-specific
+# library paths are flattened during organization:
+# Source: https://github.com/KangLin/SerialPortAssistant/blob/db917543e0548628127c38a3d9d54b0fb06e9806/snap/snapcraft.yaml
+
+description: >
+  Use the '**' recursive glob to match files nested at arbitrary depth under a
+  common prefix and copy them into a flat destination directory.  Here, '.conf'
+  files scattered across sub-directories are all moved to etc/myapp/.
+
+parts:
+  my-part:
+    plugin: dump
+    source: src
+    organize:
+      '**/conf/*.conf': etc/myapp/
+
+setup_dirs:
+  - src/a/conf
+  - src/b/sub/conf
+
+setup_files:
+  - src/a/conf/alpha.conf
+  - src/b/sub/conf/beta.conf
+
+expected_prime_present:
+  - etc/myapp/alpha.conf
+  - etc/myapp/beta.conf
+
+expected_prime_absent:
+  - a/conf/alpha.conf
+  - b/sub/conf/beta.conf
