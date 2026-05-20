@@ -18,21 +18,15 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import distro
 import pytest
 import yaml
-from craft_parts import LifecycleManager, Step, errors, plugins
+from craft_parts import LifecycleManager, Step, plugins
 from craft_parts.plugins.colcon_plugin import ColconPlugin
-from craft_parts.utils import os_utils
 
 
 def is_ubuntu_jammy_or_focal() -> bool:
-    release = os_utils.OsRelease()
-    try:
-        return release.id() == "ubuntu" and (
-            release.version_id() == "22.04" or release.version_id() == "20.04"
-        )
-    except errors.OsReleaseIdError:
-        return False
+    return distro.id() == "ubuntu" and distro.version(best=True) in {"22.04", "20.04"}
 
 
 pytestmark = [

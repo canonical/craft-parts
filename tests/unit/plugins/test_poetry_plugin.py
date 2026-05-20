@@ -151,9 +151,9 @@ def test_include_export_plugin(
     plugin: PoetryPlugin, mocker: MockFixture, version: str, should_install: bool
 ) -> None:
     """Make sure that the export command plugin is included on 25.04+"""
-    mocker.patch("craft_parts.utils.os_utils.OsRelease.name", return_value="Ubuntu")
+    mocker.patch("craft_parts.plugins.poetry_plugin.distro.id", return_value="ubuntu")
     mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
+        "craft_parts.plugins.poetry_plugin.distro.version", return_value=version
     )
 
     build_packages = plugin.get_build_packages()

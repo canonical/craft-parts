@@ -22,6 +22,7 @@ import os
 import subprocess
 import sys
 import time
+import warnings
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -275,13 +276,22 @@ def umount(mountpoint: str, *args: str) -> None:
 
 
 class OsRelease:
-    """A class to intelligently determine the OS on which we're running."""
+    """Deprecated wrapper around os-release data.
+
+    Use the `distro` module instead.
+    """
 
     def __init__(self, *, os_release_file: str = "/etc/os-release") -> None:
         """Create a new OsRelease instance.
 
         :param os_release_file: Path to os-release file to be parsed.
         """
+        warnings.warn(
+            DeprecationWarning(
+                "'OsRelease' is deprecated. Use the 'distro' module instead."
+            ),
+            stacklevel=2,
+        )
         self._os_release: dict[str, str] = {}
         with contextlib.suppress(FileNotFoundError):
             with open(os_release_file) as file:  # noqa: PTH123

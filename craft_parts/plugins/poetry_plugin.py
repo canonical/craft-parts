@@ -21,11 +21,11 @@ import shlex
 import subprocess
 from typing import Literal
 
+import distro
 import pydantic
 from typing_extensions import override
 
 from craft_parts.plugins import validator
-from craft_parts.utils import os_utils
 
 from .base import BasePythonPlugin
 from .properties import PluginProperties
@@ -107,8 +107,7 @@ class PoetryPlugin(BasePythonPlugin):
 
         # In 25.04+, Poetry 2 is included which deprecated the built-in `export` subcommand
         # and moved it to an optional plugin.
-        os_release = os_utils.OsRelease()
-        if os_release.name() == "Ubuntu" and os_release.version_id() >= "25.04":
+        if distro.id() == "ubuntu" and distro.version(best=True) >= "25.04":
             build_packages |= {"python3-poetry-plugin-export"}
 
         return build_packages
