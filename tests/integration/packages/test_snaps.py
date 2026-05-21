@@ -45,13 +45,13 @@ def test_get_installed_snaps_success(check: CheckContextManager):
     "snaps_list",
     [
         {"snapcraft", "ruff"},
-        {"snapcraft/7.x/stable"},
+        {"snapcraft @ 7.x/stable"},
     ],
 )
 def test_download_snaps_success(new_path: pathlib.Path, snaps_list: Sequence[str]):
     snaps.download_snaps(snaps_list=snaps_list, directory=new_path)
 
     for snap in snaps_list:
-        snap_name, _, snap_channel = snap.partition("/")
+        snap_name, _ = snaps._get_parsed_snap(snap)
         assert len(list(new_path.glob(f"{snap_name}*.snap"))) == 1
         assert len(list(new_path.glob(f"{snap_name}*.assert"))) == 1

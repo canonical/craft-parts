@@ -32,15 +32,21 @@ def foo_install_dir(new_dir):
     return Path(new_dir, "parts", "foo", "install")
 
 
-def test_stage_snap(new_dir, partitions, fake_snap_command, foo_install_dir):
+@pytest.mark.parametrize(
+    "stage_snap",
+    ["basic @ latest/stable", "basic/latest/stable"],
+)
+def test_stage_snap(
+    new_dir, partitions, fake_snap_command, foo_install_dir, stage_snap
+):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
           foo:
             plugin: nil
-            stage-snaps: [basic]
+            stage-snaps: ["{stage_snap}"]
         """
-    )
+    ).format(stage_snap=stage_snap)
 
     parts = yaml.safe_load(_parts_yaml)
 
@@ -78,7 +84,7 @@ def test_stage_snap_download_error(new_dir, partitions, fake_snap_command):
         parts:
           foo:
             plugin: nil
-            stage-snaps: [basic]
+            stage-snaps: ["basic @ latest/stable"]
         """
     )
 
@@ -113,7 +119,7 @@ def test_stage_snap_unpack_error(new_dir, partitions, fake_snap_command):
         parts:
           foo:
             plugin: nil
-            stage-snaps: [bad-snap]
+            stage-snaps: ["bad-snap @ latest/stable"]
         """
     )
 

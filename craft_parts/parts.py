@@ -290,15 +290,16 @@ class PartSpec(BaseModel):
     stage_snaps: list[str] = Field(
         default=[],
         description="The snaps to include in the stage environment.",
-        examples=["[go/1.17, chisel/latest/candidate, mir-kiosk-x11]"],
+        examples=["[go @ 1.17/stable, chisel @ latest/candidate, mir-kiosk-x11]"],
     )
     """During the stage step, these snaps are included in the stage environment.
 
-    Entries can be in one of three formats:
+    Entries can be in one of four formats:
 
     * ``<snap-name>``
-    * ``<snap-name>/<channel-name>``
-    * ``<snap-name>/<channel-name>/<version-name>``
+    * ``<snap-name> @ <channel>`` (spaces around ``@`` are optional)
+    * ``<snap-name>/<track>/<risk>`` (deprecated, use ``@`` instead)
+    * ``<snap-name>/<track>/<risk>/<branch>`` (deprecated, use ``@`` instead)
 
     If an entry contains no version or channel, ``latest/stable`` is used.
     """
@@ -320,16 +321,17 @@ class PartSpec(BaseModel):
     build_snaps: list[str] = Field(
         default=[],
         description="The snaps to install in the build environment.",
-        examples=["[go/latest/stable, node/stable]"],
+        examples=["[go @ latest/stable, node @ stable]"],
     )
     """The snaps to install during the build step, before the build starts. The part
     makes them available in the build environment.
 
-    Entries can be listed in one of three formats.
+    Entries can be listed in one of four formats.
 
     * ``<snap-name>``
-    * ``<snap-name>/<channel-name>``
-    * ``<snap-name>/<channel-name>/<version-name>``
+    * ``<snap-name> @ <channel>`` (spaces around ``@`` are optional)
+    * ``<snap-name>/<channel-name>`` (deprecated, use ``@`` instead)
+    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``@`` instead)
 
     If no version or channel is provided, ``latest/stable`` is used.
     """
@@ -688,9 +690,15 @@ class PartSpec(BaseModel):
         """Return whether the part has chisel as build snap."""
         if not self.build_snaps:
             return False
-        return any(
-            p for p in self.build_snaps if p == "chisel" or p.startswith("chisel/")
-        )
+        for build_snap in self.build_snaps:
+            normalized_snap = build_snap.strip()
+            if "@" in normalized_snap:
+                snap_name = re.split(r"\s*@\s*", normalized_snap, maxsplit=1)[0]
+            else:
+                snap_name = normalized_snap.split("/", maxsplit=1)[0]
+            if snap_name == "chisel":
+                return True
+        return False
 
 
 # pylint: disable=too-many-public-methods
