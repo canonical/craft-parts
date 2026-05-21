@@ -43,6 +43,7 @@ class TestPartSpecs:
             "source-commit": "2514f9533ec9b45d07883e10a561b248497a8e3c",
             "source-depth": 3,
             "source-subdir": "src",
+            "patches": ["patches/fix-build.patch", "patches/adjust-paths.patch"],
             "source-submodules": ["submodule_1", "dir/submodule_2"],
             "source-tag": "v2.3",
             "source-type": "tar",
@@ -231,6 +232,17 @@ class TestPartData:
 
         p = Part("foo", {"source": "foobar"}, partitions=partitions)
         assert p.spec.source == "foobar"
+
+    def test_part_patches(self, partitions):
+        p = Part(
+            "foo",
+            {"patches": ["patches/fix-build.patch", "patches/adjust-paths.patch"]},
+            partitions=partitions,
+        )
+        assert p.spec.patches == [
+            "patches/fix-build.patch",
+            "patches/adjust-paths.patch",
+        ]
 
     def test_part_stage_files(self, partitions):
         p = Part("foo", {"stage": ["a", "b", "c"]}, partitions=partitions)

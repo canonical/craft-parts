@@ -131,6 +131,77 @@ class TestStepHandlerBuiltins:
         mock_source_pull.assert_called_once_with()
         assert result == StepContents()
 
+    def test_run_builtin_pull_applies_patches(self, new_dir, mocker, partitions):
+        mock_source_pull = mocker.patch(
+            "craft_parts.sources.local_source.LocalSource.pull"
+        )
+        mock_run = mocker.patch("craft_parts.executor.source_patches.process.run")
+
+        patch_path = Path("patches/fix.patch")
+        patch_path.parent.mkdir(parents=True)
+        patch_path.write_text("fake patch")
+
+        part = Part(
+            "p2",
+            {
+                "plugin": "nil",
+                "source": ".",
+                "patches": ["patches/fix.patch"],
+            },
+            partitions=partitions,
+        )
+        part_info = PartInfo(project_info=self._project_info, part=part)
+        sh = _step_handler_for_step(
+            Step.PULL,
+            cache_dir=new_dir,
+            part_info=part_info,
+            part=part,
+            dirs=self._dirs,
+        )
+
+        result = sh.run_builtin()
+
+        mock_source_pull.assert_called_once_with()
+        mock_run.assert_called_once_with(
+            [
+                "patch",
+                "--strip",
+                "1",
+                "--forward",
+                "--batch",
+                "--input",
+                str(new_dir / "patches/fix.patch"),
+            ],
+            cwd=part.part_src_dir,
+            stdout=None,
+            stderr=None,
+        )
+        assert result == StepContents()
+
+    def test_run_builtin_pull_missing_patch_file(self, new_dir, mocker, partitions):
+        mocker.patch("craft_parts.sources.local_source.LocalSource.pull")
+
+        part = Part(
+            "p2",
+            {
+                "plugin": "nil",
+                "source": ".",
+                "patches": ["patches/missing.patch"],
+            },
+            partitions=partitions,
+        )
+        part_info = PartInfo(project_info=self._project_info, part=part)
+        sh = _step_handler_for_step(
+            Step.PULL,
+            cache_dir=new_dir,
+            part_info=part_info,
+            part=part,
+            dirs=self._dirs,
+        )
+
+        with pytest.raises(errors.PatchApplyError):
+            sh.run_builtin()
+
     def test_run_builtin_overlay(self, new_dir, mocker):
         sh = _step_handler_for_step(
             Step.OVERLAY,
