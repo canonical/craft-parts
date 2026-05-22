@@ -74,7 +74,7 @@ build tools and which build tools are used to download and verify dependencies.
     - Build tools used
     - Method of provisioning the build tools
 
-  * - :ref:`Cargo Use <craft_parts_cargo_use_plugin>`
+  * - :ref:`Cargo-use <craft_parts_cargo_use_plugin>`
 
       :ref:`Rust <craft_parts_rust_plugin>`
     - `Cargo <https://doc.rust-lang.org/stable/cargo/>`_
@@ -86,7 +86,7 @@ build tools and which build tools are used to download and verify dependencies.
 
   * - :ref:`Go <craft_parts_go_plugin>`
 
-      :ref:`Go Use <craft_parts_go_use_plugin>`
+      :ref:`Go-use <craft_parts_go_use_plugin>`
     - `Go toolchain <https://go.dev/ref/mod>`_
     - not provisioned
 
