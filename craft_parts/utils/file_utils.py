@@ -193,6 +193,8 @@ def link_or_copy_tree(
     destination_tree: str | Path,
     ignore: Callable[[str, list[str]], list[str]] | None = None,
     copy_function: Callable[..., None] = link_or_copy,
+    *,
+    overwrite_metadata: bool = True,
 ) -> None:
     """Copy a source tree into a destination, hard-linking if possible.
 
@@ -202,6 +204,8 @@ def link_or_copy_tree(
     :param ignore: If given, called with two params, source dir and dir contents,
         for every dir copied. Should return list of contents to NOT copy.
     :param copy_function: Callable that actually copies.
+    :param overwrite_metadata: Whether to overwrite metadata (mode, ownership)
+        of existing destination directories.
     """
     if not os.path.isdir(source_tree):  # noqa: PTH112
         raise errors.CopyTreeError(f"{source_tree!r} is not a directory")
@@ -214,7 +218,9 @@ def link_or_copy_tree(
             f"directory {source_tree!r}"
         )
 
-    create_similar_directory(source_tree, destination_tree)
+    create_similar_directory(
+        source_tree, destination_tree, overwrite_metadata=overwrite_metadata
+    )
 
     destination_basename = os.path.basename(destination_tree)  # noqa: PTH119
 
@@ -246,7 +252,9 @@ def link_or_copy_tree(
                 destination_tree, os.path.relpath(source, source_tree)
             )
 
-            create_similar_directory(source, destination)
+            create_similar_directory(
+                source, destination, overwrite_metadata=overwrite_metadata
+            )
 
         for file_name in set(files) - ignored:
             source = os.path.join(root, file_name)  # noqa: PTH118
@@ -283,6 +291,8 @@ def create_similar_directory(
     source: str | Path,
     destination: str | Path,
     permissions: list[Permissions] | None = None,
+    *,
+    overwrite_metadata: bool = True,
 ) -> None:
     """Create a directory with the same permission bits and owner information.
 
@@ -293,11 +303,18 @@ def create_similar_directory(
     :param permissions: The permission definitions to apply to the new directory.
         If omitted, the new directory will have the same permissions and ownership
         of ``source``.
+    :param overwrite_metadata: Whether to overwrite metadata (mode, ownership)
+        of existing destination directories.
     """
+    exists = pathlib.Path(destination).exists()
+    os.makedirs(destination, exist_ok=True)  # noqa: PTH103
+
+    if exists and not overwrite_metadata:
+        return
+
     stat = os.stat(source, follow_symlinks=False)  # noqa: PTH116
     uid = stat.st_uid
     gid = stat.st_gid
-    os.makedirs(destination, exist_ok=True)  # noqa: PTH103
 
     # Windows does not have "os.chown" implementation and copystat
     # is unlikely to be useful, so just bail after creating directory.
