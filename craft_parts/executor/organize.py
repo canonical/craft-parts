@@ -232,8 +232,9 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     file_utils.link_or_copy_tree(
                         src_path,
                         real_dst_path,
-                        overwrite_metadata=dst_partition_pair.partition
-                        != OVERLAY_PARTITION,
+                        overwrite_metadata=(
+                            dst_partition_pair.partition != OVERLAY_PARTITION
+                        ),
                     )
                     shutil.rmtree(src)
                     continue
