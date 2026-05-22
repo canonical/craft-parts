@@ -69,6 +69,20 @@ def test_plugin(new_dir):
     assert plugin.get_build_commands() == ["hello", "world"]
 
 
+def test_plugin_overlay_defaults(new_dir):
+    """Base Plugin overlay methods return empty defaults."""
+    part = Part("p1", {})
+    project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=project_info, part=part)
+
+    props = FooPluginProperties.unmarshal({"foo-name": "world"})
+    plugin = FooPlugin(properties=props, part_info=part_info)
+
+    assert plugin.uses_overlay is False
+    assert plugin.get_overlay_packages() == set()
+    assert plugin.get_overlay_chroot_commands() == []
+
+
 def test_abstract_methods(new_dir):
     class FaultyPlugin(Plugin):
         """A plugin that doesn't implement abstract methods."""
