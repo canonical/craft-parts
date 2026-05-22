@@ -819,7 +819,7 @@ class PartitionUsageError(PartitionError):
         super().__init__(
             brief=brief or "Invalid usage of partitions",
             details="\n".join(error_list) + valid_partitions,
-            resolution="Correct the invalid partition name(s) and try again.",
+            resolution="Correct the invalid partition usage and try again.",
         )
 
 
