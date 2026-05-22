@@ -306,14 +306,15 @@ def create_similar_directory(
     :param overwrite_metadata: Whether to overwrite metadata (mode, ownership)
         of existing destination directories.
     """
-    stat = os.stat(source, follow_symlinks=False)  # noqa: PTH116
-    uid = stat.st_uid
-    gid = stat.st_gid
     exists = pathlib.Path(destination).exists()
     os.makedirs(destination, exist_ok=True)  # noqa: PTH103
 
     if exists and not overwrite_metadata:
         return
+
+    stat = os.stat(source, follow_symlinks=False)  # noqa: PTH116
+    uid = stat.st_uid
+    gid = stat.st_gid
 
     # Windows does not have "os.chown" implementation and copystat
     # is unlikely to be useful, so just bail after creating directory.
