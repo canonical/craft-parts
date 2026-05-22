@@ -66,9 +66,11 @@ def _check_overlay_equivalence(
     :raises FileOrganizeError: If the paths are not equivalent.
     """
     msg = file_utils.get_path_differences(src_path, dst_path)
-    if not msg:
+    if not msg or (
+        not src_path.is_symlink() and src_path.is_dir() and dst_path.is_dir()
+    ):
         if not src_path.is_symlink() and src_path.is_dir():
-            file_utils.link_or_copy_tree(src_path, dst_path)
+            file_utils.link_or_copy_tree(src_path, dst_path, overwrite_metadata=False)
             shutil.rmtree(src_path)
         else:
             src_path.unlink()
@@ -207,15 +209,33 @@ def organize_files(  # noqa: PLR0912, PLR0915
                             strict=dst_partition_pair.partition != OVERLAY_PARTITION,
                         )
                         if conflicts:
-                            raise errors.FileOrganizeError.from_merge_conflicts(
-                                part_name=part_name,
-                                key=key,
-                                destination=file_map[key],
-                                conflicts=conflicts,
-                            )
+                            if dst_partition_pair.partition == OVERLAY_PARTITION:
+                                conflicts = {
+                                    p: msg
+                                    for p, msg in conflicts.items()
+                                    if not (
+                                        (src_path / p).is_dir()
+                                        and not (src_path / p).is_symlink()
+                                        and (real_dst_path / p).is_dir()
+                                        and not (real_dst_path / p).is_symlink()
+                                    )
+                                }
+                            if conflicts:
+                                raise errors.FileOrganizeError.from_merge_conflicts(
+                                    part_name=part_name,
+                                    key=key,
+                                    destination=file_map[key],
+                                    conflicts=conflicts,
+                                )
                     # Where the key is a glob, we get the contents of the dir to
                     # organize, so we need to add the source's name back in.
-                    file_utils.link_or_copy_tree(src_path, real_dst_path)
+                    file_utils.link_or_copy_tree(
+                        src_path,
+                        real_dst_path,
+                        overwrite_metadata=(
+                            dst_partition_pair.partition != OVERLAY_PARTITION
+                        ),
+                    )
                     shutil.rmtree(src)
                     continue
 
