@@ -343,7 +343,10 @@ def get_src_path(
     base_dir = Path(install_dir_map[src_partition]).resolve()
     src_path = base_dir / src_inner_path
 
-    if not src_path.resolve().is_relative_to(base_dir):
+    # Resolve only the parent path so symlinks being organized are preserved.
+    # Resolving the full source path would follow the final symlink target and
+    # reject valid symlinks that point outside the install directory.
+    if not src_path.parent.resolve().is_relative_to(base_dir):
         raise errors.FileOrganizeError(
             part_name=part_name,
             message=(
