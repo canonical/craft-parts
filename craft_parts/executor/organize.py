@@ -29,6 +29,7 @@ import os
 import pathlib
 import shutil
 from glob import iglob
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from craft_parts import errors
@@ -40,7 +41,6 @@ from craft_parts.utils.partition_utils import (
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from pathlib import Path
 
 
 def _check_overlay_equivalence(
@@ -340,7 +340,22 @@ def get_src_path(
     if src_partition == DEFAULT_PARTITION:
         src_partition = default_partition
 
-    return os.path.join(install_dir_map[src_partition], src_inner_path)  # noqa: PTH118
+    base_dir = Path(install_dir_map[src_partition]).resolve()
+    src_path = base_dir / src_inner_path
+
+    # Resolve only the parent path so symlinks being organized are preserved.
+    # Resolving the full source path would follow the final symlink target and
+    # reject valid symlinks that point outside the install directory.
+    if not src_path.parent.resolve().is_relative_to(base_dir):
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize from {key!r}, but source paths must stay within "
+                f"the install directory"
+            ),
+        )
+
+    return str(src_path)
 
 
 def get_dst_path(
