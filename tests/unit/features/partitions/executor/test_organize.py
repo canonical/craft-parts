@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+from pathlib import Path
 
 import pytest
 from craft_parts import errors
+from craft_parts.executor.organize import organize_files
 
 # Although it's not explicitly used, randomize_iglob is used here as it's an auto-use
 # fixture that checks that the order of an organize doesn't matter.
@@ -403,3 +405,72 @@ def test_organize_no_overwrite(new_dir, data):
         overwrite=False,
         install_dirs=install_dirs,
     )
+
+
+def test_organize_file_from_build_copies_and_keeps_source(tmp_path: Path):
+    install_dir = tmp_path / "install"
+    build_dir = tmp_path / "build"
+    install_dir.mkdir()
+    build_dir.mkdir()
+
+    source = build_dir / "README"
+    source.write_text("hello from build")
+
+    organize_files(
+        part_name="part-name",
+        file_map={"(build)/README": "usr/share/doc/README"},
+        install_dir_map={None: install_dir, "default": install_dir, "build": build_dir},
+        overwrite=False,
+        default_partition="default",
+    )
+
+    assert source.read_text() == "hello from build"
+    assert (install_dir / "usr/share/doc/README").read_text() == "hello from build"
+
+
+def test_organize_directory_from_build_copies_and_keeps_source(tmp_path: Path):
+    install_dir = tmp_path / "install"
+    build_dir = tmp_path / "build"
+    install_dir.mkdir()
+    build_dir.mkdir()
+
+    source_dir = build_dir / "examples"
+    source_dir.mkdir()
+    source_file = source_dir / "demo.txt"
+    source_file.write_text("example")
+
+    organize_files(
+        part_name="part-name",
+        file_map={"(build)/examples": "usr/share/doc/examples"},
+        install_dir_map={None: install_dir, "default": install_dir, "build": build_dir},
+        overwrite=False,
+        default_partition="default",
+    )
+
+    assert source_file.read_text() == "example"
+    assert (install_dir / "usr/share/doc/examples/demo.txt").read_text() == "example"
+
+
+def test_organize_into_build_errors(tmp_path: Path):
+    install_dir = tmp_path / "install"
+    build_dir = tmp_path / "build"
+    install_dir.mkdir()
+    build_dir.mkdir()
+
+    (install_dir / "README").write_text("installed")
+
+    with pytest.raises(
+        errors.FileOrganizeError,
+        match="Cannot organize files into the build directory",
+    ):
+        organize_files(
+            part_name="part-name",
+            file_map={"README": "(build)/README"},
+            install_dir_map={
+                None: install_dir,
+                "default": install_dir,
+                "build": build_dir,
+            },
+            overwrite=False,
+            default_partition="default",
+        )
