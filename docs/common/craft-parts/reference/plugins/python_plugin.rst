@@ -34,9 +34,7 @@ listed here.
 A part does not need this key when its dependencies are already declared by the
 project metadata used during package installation. For example, when the source
 contains a ``setup.py`` or ``pyproject.toml`` file, the plugin installs the
-project and pip resolves the dependencies declared by the package itself. For
-setuptools projects, that metadata may also come from configuration files such as
-``setup.cfg``.
+project and pip resolves the dependencies declared by the package itself. That metadata may also come from configuration files such as ``setup.cfg``.
 
 
 python-constraints
