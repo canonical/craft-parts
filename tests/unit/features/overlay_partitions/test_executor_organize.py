@@ -250,10 +250,12 @@ def test_organize(new_dir, data):
                 },
                 "expected": [
                     (["dir"], "../overlay_dir"),
-                    (["child"], "../overlay_dir/dir"),
+                    (["dir1", "dir2"], "../overlay_dir/dir"),
+                    (["child"], "../overlay_dir/dir/dir1"),
+                    (["child"], "../overlay_dir/dir/dir2"),
                 ],
             },
-            id="merge-dir-globs-in-overlay-success",
+            id="nest-dir-globs-in-overlay-success",
         ),
         pytest.param(
             {

@@ -198,10 +198,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     dst_path in install_dir_map.values()
                     or dst_partition_pair.partition == OVERLAY_PARTITION
                 ):
-                    if dst_path in install_dir_map.values():
-                        real_dst_path = dst_path / src_path.name
-                    else:
-                        real_dst_path = dst_path
+                    real_dst_path = dst_path / src_path.name
                     if not overwrite:
                         conflicts = file_utils.find_merge_conflicts(
                             src_path,
