@@ -22,16 +22,20 @@ from pathlib import Path
 
 from craft_parts import errors, features
 
-# Allow alphanumeric characters, hyphens and slashes, not starting or ending
-# with a hyphen or a slash
-VALID_PARTITION_REGEX = re.compile(r"(?!-|/)[a-z0-9-/]+(?<!-|/)", re.ASCII)
+# Allow alphanumeric characters, hyphens, plus signs and slashes, not starting
+# or ending with a hyphen, a plus sign or a slash
+PARTITION_SEGMENT_REGEX = r"[a-z0-9](?:[a-z0-9+-]*[a-z0-9])?"
+VALID_PARTITION_REGEX = re.compile(
+    rf"{PARTITION_SEGMENT_REGEX}(?:/{PARTITION_SEGMENT_REGEX})*", re.ASCII
+)
 VALID_NAMESPACED_PARTITION_REGEX = re.compile(
     r"[a-z0-9]+/" + VALID_PARTITION_REGEX.pattern, re.ASCII
 )
 
 PARTITION_INVALID_MSG = (
-    "Partitions must only contain lowercase letters, numbers,"
-    "hyphens and slashes, and may not begin or end with a hyphen or a slash."
+    "Partitions must only contain lowercase letters, numbers, "
+    "hyphens, plus signs and slashes, and may not begin or end with "
+    "a hyphen, a plus sign or a slash."
 )
 
 DEFAULT_PARTITION = "default"
@@ -156,7 +160,12 @@ def _validate_partitions_conflicts(partitions: Sequence[str]) -> None:
 
     raise errors.FeatureError(
         message=f"Partition name conflicts:\n{msg}",
-        details="Hyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.",
+        details=(
+            "Hyphens, plus signs and slashes are converted to underscores to "
+            "associate partitions names with environment variables. "
+            "'foo-bar', 'foo+bar' and 'foo/bar' would result in "
+            "environment variable FOO_BAR."
+        ),
     )
 
 
@@ -169,11 +178,12 @@ def _detect_conflicts(partitions: Sequence[str]) -> list[set[str]]:
         - `foo/bar` and 'foo/bar/baz' conflict
       2: environment variables derived from partition names must not conflicts
         - `foo/bar-baz` and `foo/bar/baz` conflict (would be converted to FOO_BAR_BAZ)
+        - `foo/bar+baz` and `foo/bar/baz` conflict (would be converted to FOO_BAR_BAZ)
         - `foo/bar/baz-qux` and `foo/bar-baz/qux` conflict (would be converted to FOO_BAR_BAZ_QUX)
 
     """
     conflict_sets: list[set[str]] = []
-    env_var_translation = {ord("-"): "_", ord("/"): "_"}
+    env_var_translation = {ord("-"): "_", ord("+"): "_", ord("/"): "_"}
 
     for candidate_partition, partition in itertools.combinations(partitions, 2):
         candidate_underscored = candidate_partition.translate(env_var_translation)

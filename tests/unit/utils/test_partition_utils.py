@@ -50,6 +50,8 @@ def test_validate_partitions_failure_feature_disabled(partitions, message):
         ["default", "mypart"],
         ["default", "mypart1"],
         ["default", "my-part"],
+        ["default", "my+part"],
+        ["mypart", "test/foo+bar"],
         ["mypart", "mypart2"],
         ["mypart2", "mypart"],
         ["mypart", "test/foo"],
@@ -78,10 +80,14 @@ def test_validate_partitions_success_feature_enabled(partitions):
         (["default", "!!!"], "Partition '!!!' is invalid."),
         (["default", "-"], "Partition '-' is invalid."),
         (["default", "woop-"], "Partition 'woop-' is invalid."),
+        (["default", "woop+"], "Partition 'woop+' is invalid."),
+        (["default", "+woop"], "Partition '+woop' is invalid."),
         (["default", "woop."], "Partition 'woop.' is invalid."),
         (["default", "/"], "Namespaced partition '/' is invalid."),
         (["default", "test/!!!"], "Namespaced partition 'test/!!!' is invalid."),
         (["default", "test/-"], "Namespaced partition 'test/-' is invalid."),
+        (["default", "test/+"], "Namespaced partition 'test/+' is invalid."),
+        (["default", "test/+foo"], "Namespaced partition 'test/+foo' is invalid."),
         (["default", "te-st/foo"], "Namespaced partition 'te-st/foo' is invalid."),
         (
             ["default", "test", "test/foo"],
@@ -98,6 +104,10 @@ def test_validate_partitions_success_feature_enabled(partitions):
         (
             ["default", "test-foo", "test/foo"],
             ("Partition name conflicts:\n- 'test-foo', 'test/foo'"),
+        ),
+        (
+            ["default", "test+foo", "test/foo"],
+            ("Partition name conflicts:\n- 'test+foo', 'test/foo'"),
         ),
         (
             ["default", "test/foo", "test-foo"],

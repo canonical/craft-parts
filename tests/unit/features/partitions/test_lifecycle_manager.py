@@ -50,7 +50,7 @@ def valid_partition_namespace_strategy():
 def valid_partition_name_strategy():
     """A strategy for valid partition names."""
     return strategies.text(
-        strategies.sampled_from(ascii_lowercase + digits + "-"), min_size=1
+        strategies.sampled_from(ascii_lowercase + digits + "-+"), min_size=1
     )
 
 
@@ -61,8 +61,8 @@ def valid_namespaced_partition_strategy(draw):
 
     partition_strategy = valid_partition_name_strategy().filter(
         lambda partition: (
-            not partition.startswith("-")
-            and not partition.endswith("-")
+            not partition.startswith(("-", "+"))
+            and not partition.endswith(("-", "+"))
             and partition != "default"
         )
     )
