@@ -238,8 +238,48 @@ class FileSourceHandler(SourceHandler):
             **kwargs,
         )
         self._file = Path()
+        self._updated_files: set[str] = set()
+        self._updated_directories: set[str] = set()
 
     # pylint: enable=too-many-arguments
+
+    @override
+    def check_if_outdated(
+        self, target: str, *, ignore_files: list[str] | None = None
+    ) -> bool:
+        """Check if the source file changed since target was created."""
+        if url_utils.is_url(self.source):
+            return False
+
+        try:
+            target_mtime = os.lstat(target).st_mtime
+            source_mtime = os.lstat(self.source).st_mtime
+        except FileNotFoundError:
+            return False
+
+        self._updated_files = set()
+        self._updated_directories = set()
+
+        source_name = Path(self.source).name
+
+        if source_name in (ignore_files or []):
+            return False
+
+        if source_mtime >= target_mtime:
+            self._updated_files.add(source_name)
+            return True
+
+        return False
+
+    @override
+    def get_outdated_files(self) -> tuple[list[str], list[str]]:
+        """Obtain lists of outdated files and directories."""
+        return (sorted(self._updated_files), sorted(self._updated_directories))
+
+    @override
+    def update(self) -> None:
+        """Update pulled source."""
+        self.pull()
 
     @abc.abstractmethod
     def provision(
