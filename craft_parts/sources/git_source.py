@@ -291,12 +291,13 @@ class GitSource(SourceHandler):
             "advice.detachedHead=false",
             "clone",
         ]
-        if self.source_submodules is None:
-            command.append("--recursive")
-        else:
-            command.extend(
-                ["--recursive=" + submodule for submodule in self.source_submodules]
-            )
+        if not self.source_commit:
+            if self.source_submodules is None:
+                command.append("--recursive")
+            else:
+                command.extend(
+                    ["--recursive=" + submodule for submodule in self.source_submodules]
+                )
         if self.source_tag or self.source_branch:
             command.extend(
                 ["--branch", cast(str, self.source_tag or self.source_branch)]
@@ -321,6 +322,23 @@ class GitSource(SourceHandler):
                 "checkout",
                 full_commit,
             ]
+            logger.debug("Executing: %s", " ".join([str(i) for i in command]))
+            self._run(command)
+            command_prefix = [get_git_command(), "-C", str(self.part_src_dir)]
+            self._update_submodules(command_prefix)
+
+    def _update_submodules(self, command_prefix: list[str]) -> None:
+        """Update configured submodules after the repository is at the right ref."""
+        if self.source_submodules is None or self.source_submodules:
+            command = [
+                *command_prefix,
+                "submodule",
+                "update",
+                "--init",
+                "--recursive",
+            ]
+            if self.source_submodules:
+                command.extend(self.source_submodules)
             logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)
 

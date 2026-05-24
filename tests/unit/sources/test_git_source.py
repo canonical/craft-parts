@@ -220,13 +220,23 @@ class TestGitSource:
                         "-c",
                         "advice.detachedHead=false",
                         "clone",
-                        "--recursive",
                         "git://my-source",
                         "source_dir",
                     ]
                 ),
                 mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
                 mock.call(["git", "-C", "source_dir", "checkout", commit]),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "submodule",
+                        "update",
+                        "--init",
+                        "--recursive",
+                    ]
+                ),
             ]
         )
 
