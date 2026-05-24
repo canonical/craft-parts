@@ -189,6 +189,9 @@ def organize_files(  # noqa: PLR0912, PLR0915
                         real_dst_path = dst_path.resolve()
                     else:
                         real_dst_path = dst_path
+                    if real_dst_path == src_path:
+                        # Trying to organize a directory to the same place, skipping
+                        continue
                     file_utils.link_or_copy_tree(src, real_dst_path)
                     shutil.rmtree(src)
                     continue
@@ -346,7 +349,11 @@ def get_src_path(
     # Resolve only the parent path so symlinks being organized are preserved.
     # Resolving the full source path would follow the final symlink target and
     # reject valid symlinks that point outside the install directory.
-    if not src_path.parent.resolve().is_relative_to(base_dir):
+    #
+    # Empty source paths refer to the install directory itself, so validate the
+    # source path directly instead of its parent.
+    src_parent = src_path if not src_inner_path else src_path.parent
+    if not src_parent.resolve().is_relative_to(base_dir):
         raise errors.FileOrganizeError(
             part_name=part_name,
             message=(
