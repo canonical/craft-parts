@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 from craft_parts.infos import ProjectInfo
@@ -439,3 +440,62 @@ class TestPackageManagement:
             use_host_sources=False,
         )
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
+
+    class TestRun:
+        """Verify calls to OverlayManager.run()."""
+
+        @pytest.fixture(autouse=True)
+        def setup_method_fixture(self, mocker, new_dir):
+            # pylint: disable=attribute-defined-outside-init
+            info = ProjectInfo(application_name="test", cache_dir=new_dir)
+            self.p1 = Part("p1", {"plugin": "nil"})
+            self.p2 = Part("p2", {"plugin": "nil"})
+            base_layer_dir = Path("base_dir")
+            base_layer_dir.mkdir()
+            self.om = OverlayManager(
+                project_info=info,
+                part_list=[self.p1, self.p2],
+                base_layer_dir=base_layer_dir,
+                cache_level=1,  # Order is base, p1, cache, p2
+            )
+            self.mock_chroot = mocker.patch(
+                "craft_parts.overlays.chroot.chroot",
+                side_effect=lambda path, target, *args, **kwargs: target(
+                    *args, **kwargs
+                ),
+                autospec=True,
+            )
+            self.om._overlay_fs = OverlayFS(
+                lower_dirs=[Path("base_dir"), new_dir / "overlay/packages"],
+                upper_dir=new_dir / "parts/p1/layer",
+                work_dir=new_dir / "overlay/work",
+            )
+
+        def test_use_host_sources_default(self, new_dir):
+            def dummy(*args, **kwargs):
+                pass
+
+            self.om.run(dummy)
+            self.om.run(dummy, use_host_sources=True)
+            self.om.run(dummy, use_host_sources=False)
+
+            assert self.mock_chroot.mock_calls == [
+                # Default behavior
+                call(
+                    Path(new_dir / "overlay/overlay"),
+                    dummy,
+                    use_host_sources=False,
+                ),
+                # Passing use_host_sources=True
+                call(
+                    Path(new_dir / "overlay/overlay"),
+                    dummy,
+                    use_host_sources=True,
+                ),
+                # Passing use_host_sources=False
+                call(
+                    Path(new_dir / "overlay/overlay"),
+                    dummy,
+                    use_host_sources=False,
+                ),
+            ]

@@ -62,6 +62,11 @@ def test_slice_error_has_details(new_dir: pathlib.Path, partitions, caplog):
     )
 
 
+@pytest.mark.flaky(
+    reruns=3,
+    only_rerun="ChiselError",
+    reason="Fails on network issues or if digests change.",
+)
 def test_install_slice(new_homedir_path: pathlib.Path, partitions, caplog):
     caplog.set_level(logging.DEBUG)
     part_yaml = textwrap.dedent(
@@ -93,6 +98,7 @@ def test_install_slice(new_homedir_path: pathlib.Path, partitions, caplog):
         text=True,
         capture_output=True,
         check=True,
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
     )
 
     assert result.stdout == "Hello, world!\n"

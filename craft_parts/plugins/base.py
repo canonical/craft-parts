@@ -53,6 +53,9 @@ class Plugin(abc.ABC):
     supports_strict_mode = False
     """Plugins that can run in 'strict' mode must set this classvar to True."""
 
+    uses_overlay = False
+    """Plugins that participate in the overlay step must set this to True."""
+
     def __init__(
         self, *, properties: PluginProperties, part_info: infos.PartInfo
     ) -> None:
@@ -100,6 +103,23 @@ class Plugin(abc.ABC):
         override this to declare support for specific attributes.
         """
         return set()
+
+    def get_overlay_packages(self) -> set[str]:
+        """Return a set of packages to install in the overlay.
+
+        Plugins that set ``uses_overlay = True`` can override this method to
+        declare packages that should be installed into the overlay filesystem.
+        """
+        return set()
+
+    def get_overlay_chroot_commands(self) -> list[str]:
+        """Return commands to run inside the overlay chroot.
+
+        Plugins that set ``uses_overlay = True`` can override this method to
+        declare commands that run inside the overlay chroot during the overlay
+        step.
+        """
+        return []
 
 
 class BasePythonPlugin(Plugin):

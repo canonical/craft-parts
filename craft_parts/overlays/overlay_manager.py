@@ -221,8 +221,14 @@ class OverlayManager:
         if not self._overlay_fs:
             raise RuntimeError("overlay filesystem not mounted")
 
+        # Allow callers to override the default behavior of using host sources per-call.
+        kwargs.setdefault("use_host_sources", self._use_host_sources)
+
         return chroot.chroot(
-            self._project_info.overlay_mount_dir, target, *args, **kwargs
+            self._project_info.overlay_mount_dir,
+            target,
+            *args,
+            **kwargs,
         )
 
 

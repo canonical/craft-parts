@@ -17,7 +17,7 @@ Permissions
 -----------
 
 Parts can declare read/write/execute permissions and ownership for the files
-they produce. This is achieved by adding a ``permissions`` subkey in the
+they produce. This is achieved by adding a ``permissions`` key in the
 specific part:
 
 .. code-block:: yaml
@@ -32,7 +32,7 @@ specific part:
             group: 2222
             mode: "755"
 
-The ``permissions`` subkey is a list of permissions definitions, each with the
+The ``permissions`` key is a list of permissions definitions, each with the
 following keys:
 
 * ``path``: a string describing the file(s) and dir(s) that this definition

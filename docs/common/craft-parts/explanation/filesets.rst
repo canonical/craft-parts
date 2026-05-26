@@ -63,7 +63,7 @@ a path with the ``-`` character, as in these examples:
 * ``-usr/bin/hello``
 * ``-usr/share/**/*.gz``
 
-The second example selects and discards gzipped files in all nested directories
+The second example selects and discards ``.gzip`` files in all nested directories
 inside the ``usr/share`` directory.
 
 Hidden files
