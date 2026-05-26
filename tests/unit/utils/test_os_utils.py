@@ -245,21 +245,25 @@ class TestOsRelease:
             f.write(contents)
         return path
 
+    def _new_release(self, contents: str) -> os_utils.OsRelease:
+        with pytest.deprecated_call(
+            match=r"'OsRelease' is deprecated\. Use the 'distro' module instead\."
+        ):
+            return os_utils.OsRelease(os_release_file=self._write_os_release(contents))
+
     def test_blank_lines(self):
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                NAME="Arch Linux"
+        release = self._new_release(
+            textwrap.dedent(
+                """\
+            NAME="Arch Linux"
 
-                PRETTY_NAME="Arch Linux"
-                ID=arch
-                ID_LIKE=archlinux
-                VERSION_ID="foo"
-                VERSION_CODENAME="bar"
+            PRETTY_NAME="Arch Linux"
+            ID=arch
+            ID_LIKE=archlinux
+            VERSION_ID="foo"
+            VERSION_CODENAME="bar"
 
-            """
-                )
+        """
             )
         )
 
@@ -268,17 +272,15 @@ class TestOsRelease:
         assert release.version_id() == "foo"
 
     def test_no_id(self):
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                NAME="Arch Linux"
-                PRETTY_NAME="Arch Linux"
-                ID_LIKE=archlinux
-                VERSION_ID="foo"
-                VERSION_CODENAME="bar"
-            """
-                )
+        release = self._new_release(
+            textwrap.dedent(
+                """\
+            NAME="Arch Linux"
+            PRETTY_NAME="Arch Linux"
+            ID_LIKE=archlinux
+            VERSION_ID="foo"
+            VERSION_CODENAME="bar"
+        """
             )
         )
 
@@ -286,17 +288,15 @@ class TestOsRelease:
             release.id()
 
     def test_no_name(self):
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                ID=arch
-                PRETTY_NAME="Arch Linux"
-                ID_LIKE=archlinux
-                VERSION_ID="foo"
-                VERSION_CODENAME="bar"
-            """
-                )
+        release = self._new_release(
+            textwrap.dedent(
+                """\
+            ID=arch
+            PRETTY_NAME="Arch Linux"
+            ID_LIKE=archlinux
+            VERSION_ID="foo"
+            VERSION_CODENAME="bar"
+        """
             )
         )
 
@@ -304,17 +304,15 @@ class TestOsRelease:
             release.name()
 
     def test_no_version_id(self):
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                NAME="Arch Linux"
-                ID=arch
-                PRETTY_NAME="Arch Linux"
-                ID_LIKE=archlinux
-                VERSION_CODENAME="bar"
-            """
-                )
+        release = self._new_release(
+            textwrap.dedent(
+                """\
+            NAME="Arch Linux"
+            ID=arch
+            PRETTY_NAME="Arch Linux"
+            ID_LIKE=archlinux
+            VERSION_CODENAME="bar"
+        """
             )
         )
 

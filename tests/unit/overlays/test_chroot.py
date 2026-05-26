@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import multiprocessing
+import textwrap
 from pathlib import Path, PosixPath
 from unittest.mock import ANY, call
 
@@ -49,6 +50,17 @@ def fake_conn():
 @pytest.mark.usefixtures("new_dir")
 class TestChroot:
     """Fork process and execute in chroot."""
+
+    def _write_os_release(self, root: Path, distro_id: str, version_id: str) -> None:
+        (root / "etc").mkdir(parents=True, exist_ok=True)
+        (root / "etc/os-release").write_text(
+            textwrap.dedent(
+                f"""\
+                ID={distro_id}
+                VERSION_ID="{version_id}"
+                """
+            )
+        )
 
     def test_chroot(self, mocker, new_dir, mock_chroot):
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
@@ -193,6 +205,8 @@ class TestChroot:
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         mock_copytree = mocker.patch("shutil.copytree")
+        mocker.patch("craft_parts.overlays.chroot.distro.id", return_value="ubuntu")
+        mocker.patch("craft_parts.overlays.chroot.distro.version", return_value="24.04")
 
         spy_process = mocker.spy(multiprocessing, "Process")
         new_root = Path(new_dir, "dir1")
@@ -201,6 +215,7 @@ class TestChroot:
         Path("dir1").mkdir()
         for subdir in ["etc", "proc", "sys", "dev", "dev/shm"]:
             Path(new_root, subdir).mkdir()
+        self._write_os_release(new_root, "ubuntu", "24.04")
 
         chroot.chroot(new_root, target_func, "content", use_host_sources=True)
 
@@ -256,3 +271,36 @@ class TestChroot:
                 dirs_exist_ok=True,
             )
         ]
+
+    def test_host_compatible_chroot_reads_chroot_os_release_path(
+        self, mocker, new_dir
+    ) -> None:
+        mocker.patch("craft_parts.overlays.chroot.distro.id", return_value="ubuntu")
+        mocker.patch("craft_parts.overlays.chroot.distro.version", return_value="24.04")
+        chroot_release = mocker.Mock()
+        chroot_release.id.return_value = "ubuntu"
+        chroot_release.version.return_value = "24.04"
+        linux_distribution = mocker.patch(
+            "craft_parts.overlays.chroot.distro.LinuxDistribution",
+            return_value=chroot_release,
+        )
+
+        new_root = Path(new_dir, "dir1")
+
+        chroot._host_compatible_chroot(new_root)
+
+        linux_distribution.assert_called_once_with(
+            root_dir=str(new_root),
+        )
+
+    def test_host_compatible_chroot_rejects_incompatible_version(
+        self, mocker, new_dir
+    ) -> None:
+        mocker.patch("craft_parts.overlays.chroot.distro.id", return_value="ubuntu")
+        mocker.patch("craft_parts.overlays.chroot.distro.version", return_value="24.04")
+
+        new_root = Path(new_dir, "dir1")
+        self._write_os_release(new_root, "ubuntu", "22.04")
+
+        with pytest.raises(chroot.errors.IncompatibleChrootError, match="version"):
+            chroot._host_compatible_chroot(new_root)

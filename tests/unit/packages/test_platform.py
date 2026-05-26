@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from craft_parts import errors, packages
+from craft_parts import packages
 from craft_parts.packages import platform
 from craft_parts.packages.base import DummyRepository
 from craft_parts.packages.deb import Ubuntu
@@ -49,14 +49,12 @@ def test_is_deb_based():
 
 def test_is_deb_based_default(mocker):
     for distro in _all_distros:
-        mocker.patch("craft_parts.utils.os_utils.OsRelease.id", return_value=distro)
+        mocker.patch("craft_parts.packages.platform.distro.id", return_value=distro)
         assert platform.is_deb_based() == (distro in _deb_distros)
 
 
-def test_is_deb_based_error(mocker):
-    mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.id", side_effect=errors.OsReleaseIdError()
-    )
+def test_is_deb_based_unknown(mocker):
+    mocker.patch("craft_parts.packages.platform.distro.id", return_value="")
     assert platform.is_deb_based() is False
 
 
@@ -71,14 +69,12 @@ def test_is_yum_based():
 
 def test_is_yum_based_default(mocker):
     for distro in _all_distros:
-        mocker.patch("craft_parts.utils.os_utils.OsRelease.id", return_value=distro)
+        mocker.patch("craft_parts.packages.platform.distro.id", return_value=distro)
         assert platform.is_yum_based() == (distro in _yum_distros)
 
 
-def test_is_yum_based_error(mocker):
-    mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.id", side_effect=errors.OsReleaseIdError()
-    )
+def test_is_yum_based_unknown(mocker):
+    mocker.patch("craft_parts.packages.platform.distro.id", return_value="")
     assert platform.is_yum_based() is False
 
 
@@ -93,14 +89,12 @@ def test_is_dnf_based():
 
 def test_is_dnf_based_default(mocker):
     for distro in _all_distros:
-        mocker.patch("craft_parts.utils.os_utils.OsRelease.id", return_value=distro)
+        mocker.patch("craft_parts.packages.platform.distro.id", return_value=distro)
         assert platform.is_dnf_based() == (distro in _dnf_distros)
 
 
-def test_is_dnf_based_error(mocker):
-    mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.id", side_effect=errors.OsReleaseIdError()
-    )
+def test_is_dnf_based_unknown(mocker):
+    mocker.patch("craft_parts.packages.platform.distro.id", return_value="")
     assert platform.is_dnf_based() is False
 
 
@@ -114,5 +108,5 @@ def test_is_dnf_based_error(mocker):
     ],
 )
 def test_get_repository_for_platform(mocker, distro, repo):
-    mocker.patch("craft_parts.utils.os_utils.OsRelease.id", return_value=distro)
+    mocker.patch("craft_parts.packages.platform.distro.id", return_value=distro)
     assert packages._get_repository_for_platform() == repo

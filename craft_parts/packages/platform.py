@@ -17,26 +17,22 @@
 
 """Helpers to determine the repository for the platform."""
 
-from craft_parts import errors
-from craft_parts.utils import os_utils
+import distro
 
 _DEB_BASED_PLATFORM = ["ubuntu", "debian", "elementary OS", "elementary", "neon"]
 _YUM_BASED_PLATFORM = ["centos"]
 _DNF_BASED_PLATFORM = ["almalinux"]
 
 
-def _check(distro: str | None, platform_distros: list[str]) -> bool:
-    """Check if `distro` is included in the specified platform distros.
+def _check(distro_name: str | None, platform_distros: list[str]) -> bool:
+    """Check if `distro_name` is included in the specified platform distros.
 
-    If the indicated `distro` is None it will be retrieved from OsRelease or
-    return "unknown" on error.
+    If the indicated distro is None it will be retrieved from the `distro`
+    module or treated as "unknown" when unavailable.
     """
-    if not distro:
-        try:
-            distro = os_utils.OsRelease().id()
-        except errors.OsReleaseIdError:
-            distro = "unknown"
-    return distro in platform_distros
+    if not distro_name:
+        distro_name = distro.id() or "unknown"
+    return distro_name in platform_distros
 
 
 def is_deb_based(distro: str | None = None) -> bool:

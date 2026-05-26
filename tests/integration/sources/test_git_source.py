@@ -19,10 +19,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import distro
 import pytest
 from craft_parts import ProjectDirs
 from craft_parts.sources.git_source import GitSource
-from craft_parts.utils.os_utils import OsRelease
 
 
 def _call(cmd: list[str]) -> None:
@@ -116,7 +116,7 @@ class TestGitSource(GitBaseTestCase):
         assert Path(working_tree / "test.txt").read_text() == "Howdy, Partner!"
 
     @pytest.mark.skipif(
-        OsRelease().id() == "ubuntu" and OsRelease().version_id() <= "20.04",
+        distro.id() == "ubuntu" and distro.version(best=True) <= "20.04",
         reason="Need git >= 2.28.0",
     )
     def test_pull_existing_with_branch_after_update(self, new_dir, monkeypatch):
