@@ -1,9 +1,9 @@
 .. _craft_parts_gradle_use_plugin:
 
-Gradle Use plugin
+Gradle-use plugin
 =================
 
-The Gradle Use plugin builds Java projects using the Gradle build tool and, unlike
+The Gradle-use plugin builds Java projects using the Gradle build tool and, unlike
 the :ref:`craft_parts_gradle_plugin`, publishes the artifacts to a local `Maven
 repository`_.
 
