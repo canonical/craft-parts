@@ -184,7 +184,7 @@ class LifecycleManager:
         if self._needs_chisel and not self._has_chisel:
             if extra_build_snaps is None:
                 extra_build_snaps = []
-            extra_build_snaps.append("chisel/latest/stable")
+            extra_build_snaps.append("chisel @ latest/stable")
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay or self._organizes_to_overlay:

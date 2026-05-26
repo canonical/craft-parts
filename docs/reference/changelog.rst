@@ -28,6 +28,8 @@ New features:
 
 - Add a ``gradle-use`` plugin for publishing Gradle artifacts to a local Maven
   repository.
+- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
+  snap name and channel.
 
 .. _release-2.33.0:
 
