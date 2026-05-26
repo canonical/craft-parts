@@ -38,7 +38,7 @@ docs = [
 # We disable the unused but default SP dependencies slated for removal
 # https://warthogs.atlassian.net/browse/DOCPR-2387
 docs-starter-pack = [
-    "canonical-sphinx>=0.5.1",
+    "canonical-sphinx~=0.6",
     "myst-parser>=4.0.1",
     "packaging>=25.0",
     "rst2html>=2020.7.4",
@@ -49,9 +49,9 @@ docs-starter-pack = [
     # "sphinx-filtered-toctree>=0.1.0",
     # "sphinx-last-updated-by-git>=0.3.8",
     "sphinx-notfound-page>=1.1.0",
-    # "sphinx-related-links>=0.1.1",
+    "sphinx-related-links>=0.1.2",
     "sphinx-roles>=0.1.0",
-    "sphinx-sitemap>=2.6.0",
+    "sphinx-sitemap==2.9.0",
     # "sphinx-tabs>=3.4.5",
     "sphinx-terminal>=1.0.2",
     # "sphinx-ubuntu-images>=0.1.0",
@@ -62,7 +62,7 @@ docs-starter-pack = [
     "vale>=3.13.0.0",
 ]
 dev = [
-    "build",
+    "build>=0.7.0",
     "coverage[toml]~=7.4",
     "pyfakefs~=6.1",
     "pytest~=9.0",
@@ -408,8 +408,8 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
     "PLR0913", # Allow many arguments for test functions (useful if we need many fixtures)
     "PLR2004", # Allow magic values in tests
     "SLF",     # Allow accessing private members from tests.
-    # Custom configurations for craft-parts
-    "FBT",     # Many fixtures return bools
+    "FBT001",  # Boolean-typed positional arguments are common in tests (e.g. parametrize)
+    "FBT002",  # Boolean default values are common in test helper functions
 ]
 "__init__.py" = [
     "I001", # isort leaves init files alone by default, this makes ruff ignore them too.

@@ -202,6 +202,12 @@ done browsing, press `Q` to exit the interactive log.
 > - docs
 > - chore
 
+Committing triggers the pre-commit hook, which runs the automatic code formatter and the
+fast linters.
+
+If the linters reformatted any of the files, the commit was cancelled. To make the
+changes stick, restage the modified files with `git add -A` and commit again.
+
 ### Test the change
 
 All nontrivial code changes should be accompanied by a reasonable set of tests.
@@ -284,10 +290,14 @@ Once your work is committed to your branch, push it to your fork:
 git push -u origin <branch-name>
 ```
 
-Finally, [open a PR](https://github.com/canonical/craft-parts/compare) for it on
-GitHub. If your branch has one commit, GitHub will title the PR after it. If your branch
-has more than one commit, name the PR after the most significant. Once open, reviewers
-are assigned automatically to your work.
+On GitHub, [open a PR](https://github.com/canonical/craft-parts/compare) for your
+branch in Craft Parts.
+
+Format the PR title as a conventional commit. If your branch has only one commit, GitHub
+handles this automatically. If your branch has multiple commits, copy the title of the
+most important one.
+
+Once open, reviewers are assigned automatically to your work.
 
 ### Follow up for the review
 
