@@ -368,15 +368,17 @@ class PartHandler:
         self._fetch_overlay_packages()
 
         if self._part.has_overlay:
-            # install overlay packages
-            overlay_packages = self._part.spec.overlay_packages
+            # install overlay packages (from spec and plugin)
+            overlay_packages = self._merged_overlay_packages()
             if overlay_packages:
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
                 ) as ctx:
                     ctx.install_packages(overlay_packages)
 
-            if self._part.spec.override_overlay:
+            if self._part.spec.override_overlay or self._plugin.uses_overlay:
+                # Run in chroot: either override-overlay scriptlet or
+                # plugin builtin (via _builtin_overlay)
                 with overlays.ChrootMount(
                     self._overlay_manager,
                     top_part=self._part,
@@ -390,7 +392,7 @@ class PartHandler:
                         stderr=stderr,
                     )
             else:
-                # execute overlay script
+                # execute overlay script on host
                 with overlays.LayerMount(self._overlay_manager, top_part=self._part):
                     contents = self._run_step(
                         step_info=step_info,
@@ -1293,12 +1295,18 @@ class PartHandler:
 
         return stage_snaps
 
+    def _merged_overlay_packages(self) -> list[str]:
+        """Return overlay packages from both the part spec and the plugin."""
+        spec_packages = list(self._part.spec.overlay_packages)
+        plugin_packages = sorted(self._plugin.get_overlay_packages())
+        return spec_packages + [p for p in plugin_packages if p not in spec_packages]
+
     def _fetch_overlay_packages(self) -> None:
         """Download overlay packages to the local package cache.
 
         :raises OverlayPackageNotFound: If a package is not available for download.
         """
-        overlay_packages = self._part.spec.overlay_packages
+        overlay_packages = self._merged_overlay_packages()
         if not overlay_packages:
             return
 

@@ -23,6 +23,7 @@ from craft_parts import errors, parts
 from craft_parts.dirs import ProjectDirs
 from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
+from craft_parts.plugins import Plugin, PluginProperties, register, unregister
 from craft_parts.steps import Step
 
 # pylint: disable=too-many-public-methods
@@ -592,3 +593,86 @@ class TestPartValidation:
         error = r"source\s+Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
             parts.validate_part(data)
+
+
+class TestPluginOverlay:
+    """Tests for plugin overlay integration with parts."""
+
+    def test_part_has_overlay_from_plugin(self, new_dir):
+        """A part using a plugin with uses_overlay=True has overlay."""
+
+        class _Props(PluginProperties, frozen=True):
+            pass
+
+        class _OverlayPlugin(Plugin):
+            properties_class = _Props
+            uses_overlay = True
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+        register({"test-overlay-plugin": _OverlayPlugin})
+        try:
+            p = Part(
+                "mypart",
+                {"plugin": "test-overlay-plugin", "source": "."},
+                project_dirs=ProjectDirs(work_dir=new_dir),
+            )
+            assert p.has_overlay is True
+        finally:
+            unregister("test-overlay-plugin")
+
+    def test_part_has_overlay_false_from_plugin(self, new_dir):
+        """A part using a plugin with uses_overlay=False does not get overlay from plugin."""
+        p = Part(
+            "mypart",
+            {"plugin": "nil", "source": "."},
+            project_dirs=ProjectDirs(work_dir=new_dir),
+        )
+        assert p.has_overlay is False
+
+    def test_overlay_script_with_overlay_plugin_raises(self, new_dir):
+        """overlay-script cannot be used with a plugin that declares overlay commands."""
+
+        class _Props(PluginProperties, frozen=True):
+            pass
+
+        class _OverlayPlugin(Plugin):
+            properties_class = _Props
+            uses_overlay = True
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+        register({"test-overlay-plugin": _OverlayPlugin})
+        try:
+            with pytest.raises(errors.PartSpecificationError, match="overlay-script"):
+                Part(
+                    "mypart",
+                    {
+                        "plugin": "test-overlay-plugin",
+                        "source": ".",
+                        "overlay-script": "echo hello",
+                    },
+                    project_dirs=ProjectDirs(work_dir=new_dir),
+                )
+        finally:
+            unregister("test-overlay-plugin")

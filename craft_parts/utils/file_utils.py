@@ -19,8 +19,10 @@
 import contextlib
 import errno
 import hashlib
+import itertools
 import logging
 import os
+import pathlib
 import shutil
 import stat
 import sys
@@ -192,6 +194,8 @@ def link_or_copy_tree(
     destination_tree: Path,
     ignore: Callable[[str, list[str]], list[str]] | None = None,
     copy_function: Callable[..., None] = link_or_copy,
+    *,
+    overwrite_metadata: bool = True,
 ) -> None:
     """Copy a source tree into a destination, hard-linking if possible.
 
@@ -201,6 +205,8 @@ def link_or_copy_tree(
     :param ignore: If given, called with two params, source dir and dir contents,
         for every dir copied. Should return list of contents to NOT copy.
     :param copy_function: Callable that actually copies.
+    :param overwrite_metadata: Whether to overwrite metadata (mode, ownership)
+        of existing destination directories.
     """
     if not source_tree.is_dir():
         raise errors.CopyTreeError(f"{source_tree.as_posix()!r} is not a directory")
@@ -213,7 +219,9 @@ def link_or_copy_tree(
             f"directory {source_tree.as_posix()!r}"
         )
 
-    create_similar_directory(source_tree, destination_tree)
+    create_similar_directory(
+        source_tree, destination_tree, overwrite_metadata=overwrite_metadata
+    )
 
     destination_basename = destination_tree.name
 
@@ -243,7 +251,9 @@ def link_or_copy_tree(
 
             destination = Path(destination_tree, source.relative_to(source_tree))
 
-            create_similar_directory(source, destination)
+            create_similar_directory(
+                source, destination, overwrite_metadata=overwrite_metadata
+            )
 
         for file_name in set(files) - ignored:
             source = Path(root, file_name)
@@ -275,6 +285,8 @@ def create_similar_directory(
     source: Path,
     destination: Path,
     permissions: list[Permissions] | None = None,
+    *,
+    overwrite_metadata: bool = True,
 ) -> None:
     """Create a directory with the same permission bits and owner information.
 
@@ -285,11 +297,18 @@ def create_similar_directory(
     :param permissions: The permission definitions to apply to the new directory.
         If omitted, the new directory will have the same permissions and ownership
         of ``source``.
+    :param overwrite_metadata: Whether to overwrite metadata (mode, ownership)
+        of existing destination directories.
     """
+    exists = destination.exists()
+    destination.mkdir(parents=True, exist_ok=True)
+
+    if exists and not overwrite_metadata:
+        return
+
     stat = source.stat(follow_symlinks=False)
     uid = stat.st_uid
     gid = stat.st_gid
-    destination.mkdir(parents=True, exist_ok=True)
 
     # Windows does not have "os.chown" implementation and copystat
     # is unlikely to be useful, so just bail after creating directory.
@@ -340,3 +359,145 @@ def _file_reader_iter(
         while len(block) > 0:
             yield block
             block = file.read(block_size)
+
+
+def _get_file_type_str(result: os.stat_result) -> str:
+    """Get the type of a file pointed to by path, as a string."""
+    if stat.S_ISDIR(result.st_mode):
+        file_type = "dir"
+    elif stat.S_ISLNK(result.st_mode):
+        file_type = "symlink"
+    elif stat.S_ISFIFO(result.st_mode):
+        file_type = "fifo"
+    elif stat.S_ISBLK(result.st_mode):
+        file_type = "blk"
+    elif stat.S_ISCHR(result.st_mode):
+        file_type = "chr"
+    elif stat.S_ISSOCK(result.st_mode):
+        file_type = "socket"
+    elif stat.S_ISREG(result.st_mode):
+        file_type = "file"
+    elif hasattr(stat, "S_ISWHT") and stat.S_ISWHT(result.st_mode):
+        file_type = "whiteout"
+    else:
+        file_type = "unknown"
+    return file_type
+
+
+def get_path_differences(  # noqa: PLR0912
+    a: Path, b: Path
+) -> list[str]:
+    """Get a list of differences between two paths.
+
+    This is a more forgiving test than ``Path.samefile()``, checking whether the
+    files referenced by these two paths are equivalent for the purpose of organizing.
+    If either file does not exist, they are considered to be equivalent.
+
+    To be equivalent, they must:
+    - Be of the same type (or one must be a symlink to the other).
+    - Have the same owner and group
+    - Have the same mode.
+
+    For regular files, they must also:
+    - Have the same size
+    - Have the same contents
+
+    :returns: A list of differences. An empty list means the paths are equivalent.
+    """
+    try:
+        if a.samefile(b):
+            return []
+    except FileNotFoundError:
+        # Broken symlinks will get a FileNotFoundError, but for our use case a broken
+        # symlink is considered to be an extant file. For example, a broken symlink
+        # could point to /snap/<project>/current/usr/bin/true
+        if not a.is_symlink() and not b.is_symlink():
+            return []
+
+    a_stat = a.stat(follow_symlinks=False)
+    b_stat = b.stat(follow_symlinks=False)
+
+    # Mode is in the lower 12 bits, type is in the upper 4 bits.
+    a_mode = a_stat.st_mode & 0o7777
+    b_mode = b_stat.st_mode & 0o7777
+    a_type = _get_file_type_str(a_stat)
+    b_type = _get_file_type_str(b_stat)
+
+    differences: list[str] = []
+
+    if a_type != b_type:
+        differences.append(f"different types ({a_type}, {b_type})")
+
+    if a_stat.st_uid != b_stat.st_uid:
+        differences.append(f"different uids ({a_stat.st_uid}, {b_stat.st_uid})")
+
+    if a_stat.st_gid != b_stat.st_gid:
+        differences.append(f"different gids ({a_stat.st_gid}, {b_stat.st_gid})")
+
+    if differences:
+        return differences
+
+    if stat.S_ISLNK(a_stat.st_mode) and stat.S_ISLNK(b_stat.st_mode):
+        a_target = a.readlink()
+        b_target = b.readlink()
+        if a_target != b_target:
+            differences.append(f"different symlink targets ({a_target}, {b_target})")
+
+    if a_mode != b_mode:
+        differences.append(f"different modes ({a_mode:o}, {b_mode:o})")
+
+    if (
+        a.is_file()
+        and b.is_file()
+        and not (stat.S_ISLNK(a_stat.st_mode) or stat.S_ISLNK(b_stat.st_mode))
+    ):
+        if a_stat.st_size != b_stat.st_size:
+            differences.append(f"different sizes ({a_stat.st_size}, {b_stat.st_size})")
+        elif stat.S_ISREG(a_stat.st_mode) and stat.S_ISREG(b_stat.st_mode):
+            with a.open("rb") as a_f, b.open("rb") as b_f:
+                while True:
+                    a_read = a_f.read(2**24)  # 16 MiB
+                    b_read = b_f.read(2**24)  # 16 MiB
+                    if not a_read and not b_read:
+                        break
+                    if a_read != b_read:
+                        differences.append("different contents")
+                        break
+
+    return differences
+
+
+def find_merge_conflicts(
+    src_root: Path, dst_root: Path, *, strict: bool = False
+) -> dict[pathlib.Path, list[str]]:
+    """Check that the given directories can be merged.
+
+    Checks that the two directories provided can be merged without overwriting files.
+
+    :param strict: if True, errors if overwriting a file, even if it's identical.
+    """
+    conflicts: dict[pathlib.Path, list[str]] = {}
+    for source_path in itertools.chain(src_root.rglob("*"), (src_root,)):
+        relative_path = source_path.relative_to(src_root)
+        dest_path = dst_root / relative_path
+        # exists() follows symlinks and returns False for broken symlinks, so
+        # we also check is_symlink() to ensure broken-link destinations are not
+        # silently skipped as if they were absent.
+        if not dest_path.exists() and not dest_path.is_symlink():
+            continue
+        try:
+            if dest_path.samefile(source_path):
+                continue
+        except FileNotFoundError:
+            # samefile() follows symlinks and raises if either path is a broken
+            # symlink. Fall through so get_path_differences() can compare them.
+            pass
+
+        if strict and dest_path.is_file():
+            conflicts.setdefault(relative_path, []).append("exists")
+        else:
+            msg = get_path_differences(source_path, dest_path)
+            if msg:
+                conflicts.setdefault(relative_path, []).extend(msg)
+
+    return conflicts

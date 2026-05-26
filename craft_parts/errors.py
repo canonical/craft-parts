@@ -421,6 +421,35 @@ class FileOrganizeError(PartsError):
 
         super().__init__(brief=brief)
 
+    @classmethod
+    def from_merge_conflicts(
+        cls,
+        *,
+        part_name: str,
+        key: str,
+        destination: str,
+        conflicts: dict[pathlib.Path, list[str]],
+    ) -> FileOrganizeError:
+        """Create from directory merge conflicts.
+
+        :param part_name: The name of the part being processed.
+        :param key: The organize key (source pattern).
+        :param destination: The organize destination value.
+        :param conflicts: A mapping of paths to their conflict descriptions.
+        """
+        conflicts_list = "\n".join(
+            f" - {path}: {msg}" for path, msg in conflicts.items()
+        )
+        return cls(
+            part_name=part_name,
+            message=(
+                f"trying to organize directory {key!r} to "
+                f"{destination!r} but conflicts exist while "
+                f"merging the directories:\n"
+                f"{conflicts_list}"
+            ),
+        )
+
 
 class PartFilesConflict(PartsError):  # noqa: N818
     """Different parts list the same files with different contents.

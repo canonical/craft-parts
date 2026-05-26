@@ -24,6 +24,8 @@ from craft_parts.executor.step_handler import StagePartitionContents, StepConten
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
+from craft_parts.plugins.base import Plugin
+from craft_parts.plugins.properties import PluginProperties
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
@@ -791,6 +793,94 @@ class TestHelpers(test_part_handler.TestHelpers):
 
         res = part_handler._parts_with_overlay_in_step(step, part_list=[p1, p2, p3, p4])
         assert res == [p2, p3, p4]
+
+
+class TestMergedOverlayPackages:
+    """Test _merged_overlay_packages combines spec and plugin packages."""
+
+    def test_merged_overlay_packages_deduplicates(self, new_dir, partitions):
+        """Plugin packages already in spec are not duplicated."""
+
+        class PkgPlugin(Plugin):
+            properties_class = PluginProperties
+            uses_overlay = True
+
+            def get_overlay_packages(self):
+                return {"pkg4", "pkg5", "pkg6"}
+
+            def get_overlay_chroot_commands(self):
+                return []
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+        part = Part(
+            "foo",
+            {
+                "plugin": "nil",
+                "source": ".",
+                "overlay-packages": ["pkg4", "pkg1"],
+            },
+            partitions=partitions,
+        )
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[part],
+            base_layer_dir=Path("/base"),
+            cache_level=0,
+        )
+        part_info = PartInfo(info, part)
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+        # Inject our plugin
+        handler._plugin = PkgPlugin(properties=PluginProperties(), part_info=part_info)
+
+        merged = handler._merged_overlay_packages()
+        # spec packages come first, then plugin packages not in spec
+        assert merged == ["pkg4", "pkg1", "pkg5", "pkg6"]
+
+    def test_merged_overlay_packages_no_plugin(self, new_dir, partitions):
+        """Without plugin overlay packages, only spec packages returned."""
+        part = Part(
+            "foo",
+            {
+                "plugin": "nil",
+                "source": ".",
+                "overlay-packages": ["pkg1", "pkg2"],
+            },
+            partitions=partitions,
+        )
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[part],
+            base_layer_dir=Path("/base"),
+            cache_level=0,
+        )
+        part_info = PartInfo(info, part)
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+
+        merged = handler._merged_overlay_packages()
+        assert merged == ["pkg1", "pkg2"]
 
 
 @pytest.mark.usefixtures("new_dir")

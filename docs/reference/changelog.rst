@@ -99,7 +99,7 @@ New features:
   shared local cache for ``self-contained`` builds.
 - Add support for the ``override-overlay`` key, which runs a script
   inside a chroot environment during the overlay step.
-- The ``go-use`` plugin returns an error if a ``go.mod`` file doesn't exist.
+- The Go-use plugin returns an error if a ``go.mod`` file doesn't exist.
   This prevents the error going unnoticed & appearing at build-time (when the
   module doesn't appear in the Go workspace)
 - Add support for copying Apt configuration from the host into the overlay system
@@ -171,7 +171,7 @@ New features:
 
 Bug fixes:
 
-- The Maven Use plugin now correctly infers a ``groupId`` when there is a parent pom to
+- The Maven-use plugin now correctly infers a ``groupId`` when there is a parent pom to
   infer from.
 - The ``make clean`` command now deletes ``docs/reference/gen``, which fixes
   documentation builds that break because of outdated and leftover files in that
@@ -338,7 +338,7 @@ For a complete list of commits, check out the `2.22.0`_ release on GitHub.
 
 New features:
 
-- Previously, when the Maven Use plugin updated ``pom.xml`` for self-contained projects,
+- Previously, when the Maven-use plugin updated ``pom.xml`` for self-contained projects,
   it wouldn't reliably find the correct dependency versions on the host. It could
   unpredictably declare the wrong package version, or select a vastly different version
   despite a similar one being available.
@@ -809,7 +809,7 @@ New features:
 
 Bug fixes:
 
-- Correctly handle ``source-subdir`` values on the ``go-use`` plugin.
+- Correctly handle ``source-subdir`` values on the Go-use plugin.
 
 Documentation:
 
@@ -872,7 +872,7 @@ New features:
 
 - Add a :ref:`uv plugin<craft_parts_uv_plugin>` for projects that use the `uv
   <https://docs.astral.sh/uv/>`_ build system.
-- Add a :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a
+- Add a :ref:`Go-use plugin<craft_parts_go_use_plugin>` for setting up a
   `workspace <https://go.dev/ref/mod#workspaces>`_ for Go modules.
 - Add new ``poetry-export-extra-args`` and ``poetry-pip-extra-args`` keys
   to the :ref:`poetry plugin<craft_parts_poetry_plugin>`.
@@ -982,7 +982,7 @@ For a complete list of commits, check out the `2.1.1`_ release on GitHub.
 1.33.1 (2024-09-13)
 -------------------
 
-- Fix NPM plugin to be stateless, allowing lifecycle steps to be
+- Fix npm plugin to be stateless, allowing lifecycle steps to be
   executed in separate runs.
 
 For a complete list of commits, check out the `1.33.1`_ release on GitHub.

@@ -1,12 +1,12 @@
 .. _craft_parts_maven_use_plugin:
 
-Maven Use plugin
+Maven-use plugin
 ================
 
-The Maven Use plugin packages `Maven`_-based projects and, unlike the
+The Maven-use plugin packages `Maven`_-based projects and, unlike the
 :ref:`craft_parts_maven_plugin`, deploys the artifact to an internal `Maven
 repository`_. From this repository, the artifacts can be accessed by any other parts
-using the Maven or Maven Use plugins.
+using the Maven or Maven-use plugins.
 
 
 Keys
@@ -24,10 +24,10 @@ This plugin supports the ``self-contained`` build attribute. Declaring this attr
 prevents access to the default `Maven Central repository`_. All dependencies, including
 plugins, must then be provided as build packages or in an earlier part.
 
-When this attribute is declared, Maven Use may rewrite the version specification of
+When this attribute is declared, Maven-use may rewrite the version specification of
 project dependencies based on what is locally available. This can be avoided by
 provisioning the specified version prior to build time — for example, by building it
-with the Maven Use plugin in an earlier part. For more information on this behavior, see
+with the Maven-use plugin in an earlier part. For more information on this behavior, see
 :ref:`maven_use_version_rewriting`.
 
 .. _maven_use_self-contained_end:
@@ -56,15 +56,15 @@ version of Maven is desired but unavailable as a snap or Ubuntu package.
 Version rewriting
 -----------------
 
-When building a :ref:`self-contained <maven_use_self-contained_start>` part, the Maven
-Use plugin selects dependency versions as follows:
+When building a :ref:`self-contained <maven_use_self-contained_start>` part, the
+Maven-use plugin selects dependency versions as follows:
 
 If the version of the dependency specified in the project's ``pom.xml`` file exists
 locally, that version is selected.
 
-If the requested version doesn't exist locally, Maven Use compares the locally available
+If the requested version doesn't exist locally, Maven-use compares the locally available
 versions that follow `semantic versioning`_ and selects the earliest subsequent release.
-If no such version is found, Maven Use selects the latest release that precedes the
+If no such version is found, Maven-use selects the latest release that precedes the
 requested version.
 
 If no prior conditions were satisfied, no version was requested, or the requested
