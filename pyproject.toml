@@ -212,6 +212,7 @@ markers = [
     "java: tests that require the Java build tools to be installed (includes maven, gradle, etc.)",
     "python: tests that require the Python build tools (poetry, uv, pip)",
     "plugin: tests that require plugin dependencies other than java or python",
+    "flaky: tests that are known to be flaky and may need reruns (e.g. network-dependent)",
 ]
 
 [tool.coverage.run]

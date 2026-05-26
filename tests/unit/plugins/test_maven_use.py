@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for the Maven use plugin."""
+"""Unit tests for the Maven-use plugin."""
 
 import re
 from pathlib import Path
