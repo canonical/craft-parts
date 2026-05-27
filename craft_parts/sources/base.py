@@ -304,6 +304,7 @@ class FileSourceHandler(SourceHandler):
                 self.source, stream=True, allow_redirects=True, timeout=3600
             )
             request.raise_for_status()
+            url_utils.download_request(request, self._file)
         except requests.HTTPError as err:
             if err.response.status_code == requests.codes.not_found:
                 raise errors.SourceNotFound(source=self.source) from err
@@ -319,8 +320,6 @@ class FileSourceHandler(SourceHandler):
                 f"response={err.response!r})",
                 source=self.source,
             ) from err
-
-        url_utils.download_request(request, self._file)
 
         # if source_checksum is defined cache the file for future reuse
         if self.source_checksum:

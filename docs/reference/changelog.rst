@@ -33,6 +33,10 @@ New features:
   replaced with ``pathlib.Path``. In the public APIs, this change only impacts the
   ``files`` and ``directories`` variables of the ``MigrationState`` class.
 
+Bug fixes:
+
+- Wrap streaming request errors for file sources in ``NetworkRequestError``.
+
 .. _release-2.33.0:
 
 2.33.0 (2026-04-15)
