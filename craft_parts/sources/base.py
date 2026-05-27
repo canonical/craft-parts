@@ -21,6 +21,7 @@ import logging
 import os
 import shutil
 import subprocess
+import urllib.parse
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar
@@ -248,19 +249,22 @@ class FileSourceHandler(SourceHandler):
         self, target: str, *, ignore_files: list[str] | None = None
     ) -> bool:
         """Check if the source file changed since target was created."""
-        if url_utils.is_url(self.source):
-            return False
-
-        try:
-            target_mtime = os.lstat(target).st_mtime
-            source_mtime = os.lstat(self.source).st_mtime
-        except FileNotFoundError:
-            return False
-
         self._updated_files = set()
         self._updated_directories = set()
 
-        source_name = Path(self.source).name
+        source = self.source
+        if url_utils.is_url(source):
+            if url_utils.get_url_scheme(source) != "file":
+                return False
+            source = urllib.parse.unquote(urllib.parse.urlparse(source).path)
+
+        try:
+            target_mtime = os.lstat(target).st_mtime
+            source_mtime = os.lstat(source).st_mtime
+        except FileNotFoundError:
+            return False
+
+        source_name = Path(source).name
 
         if source_name in (ignore_files or []):
             return False
@@ -273,7 +277,10 @@ class FileSourceHandler(SourceHandler):
 
     @override
     def get_outdated_files(self) -> tuple[list[str], list[str]]:
-        """Obtain lists of outdated files and directories."""
+        """Obtain lists of outdated files and directories.
+
+        Call :meth:`check_if_outdated` first to populate the lists.
+        """
         return (sorted(self._updated_files), sorted(self._updated_directories))
 
     @override

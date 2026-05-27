@@ -141,6 +141,20 @@ class TestFileSourceHandler:
         assert self.source.check_if_outdated(str(state_file)) is True
         assert self.source.get_outdated_files() == (["my_file"], [])
 
+    def test_check_file_url_if_outdated(self, new_dir):
+        Path("src").mkdir()
+        source_file = Path("src/my_file")
+        source_file.write_text("content")
+        self.set_source(source=source_file.resolve().as_uri(), cache_dir=new_dir)
+        state_file = Path("state")
+        state_file.touch()
+
+        state_mtime = state_file.stat().st_mtime
+        os.utime(source_file, (state_mtime + 1, state_mtime + 1))
+
+        assert self.source.check_if_outdated(str(state_file)) is True
+        assert self.source.get_outdated_files() == (["my_file"], [])
+
     def test_check_file_if_outdated_ignores_file(self, new_dir):
         self.set_source(source="src/my_file", cache_dir=new_dir)
         Path("src").mkdir()
