@@ -28,6 +28,14 @@ New features:
 
 - Add a ``gradle-use`` plugin for publishing Gradle artifacts to a local Maven
   repository.
+- For explicit typing of file system operations, switch to the `pathlib module
+  <https://docs.python.org/3/library/pathlib.html>`_. All uses of ``str`` for paths are
+  replaced with ``pathlib.Path``. In the public APIs, this change only impacts the
+  ``files`` and ``directories`` variables of the ``MigrationState`` class.
+
+Bug fixes:
+
+- Wrap streaming request errors for file sources in ``NetworkRequestError``.
 
 .. _release-2.33.0:
 
@@ -978,7 +986,7 @@ For a complete list of commits, check out the `2.1.1`_ release on GitHub.
 1.33.1 (2024-09-13)
 -------------------
 
-- Fix NPM plugin to be stateless, allowing lifecycle steps to be
+- Fix npm plugin to be stateless, allowing lifecycle steps to be
   executed in separate runs.
 
 For a complete list of commits, check out the `1.33.1`_ release on GitHub.

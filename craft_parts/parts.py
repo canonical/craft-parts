@@ -376,13 +376,13 @@ class PartSpec(BaseModel):
     """
 
     organize_files: dict[str, str] = Field(
-        default_factory=dict,
+        default_factory=dict[str, str],
         alias="organize",
-        description="A map of files from the build directory to their destinations in the stage directory.",
+        description="A map of files from the part's install directory to their destinations in the stage directory.",
         examples=["{hello.py: bin/hello}"],
     )
-    """A map of files from the build directory to their destinations in the stage
-    directory.
+    """A map of files from the part's install directory to their destinations in the
+    stage directory.
 
     Each pair of source and destination paths is represented as a nested key of the form
     ``<source-path>: <destination-path>``.
@@ -672,7 +672,7 @@ class PartSpec(BaseModel):
         if not Features().enable_partitions or not Features().enable_overlay:
             return False
         for dest in self.organize_files.values():
-            partition, _ = get_partition_and_path(dest, DEFAULT_PARTITION)
+            partition, _ = get_partition_and_path(Path(dest), DEFAULT_PARTITION)
             if partition == OVERLAY_PARTITION:
                 return True
         return False

@@ -28,7 +28,8 @@ import contextlib
 import os
 import pathlib
 import shutil
-from glob import iglob
+from itertools import takewhile
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from craft_parts import errors
@@ -41,7 +42,6 @@ from craft_parts.utils.partition_utils import (
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from pathlib import Path
 
 
 def _check_overlay_equivalence(
@@ -115,7 +115,11 @@ def organize_files(  # noqa: PLR0912, PLR0915
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
         src_partition_pair = path_utils.get_partition_and_path(key, default_partition)
         src = get_src_path(
-            src_partition_pair, part_name, install_dir_map, default_partition
+            src_partition_pair,
+            key,
+            part_name,
+            install_dir_map,
+            default_partition,
         )
         src_root = install_dir_map.get(None) or install_dir_map[default_partition]
 
@@ -137,7 +141,10 @@ def organize_files(  # noqa: PLR0912, PLR0915
         ):
             dst_path.unlink()
 
-        sources = iglob(src, recursive=True)  # noqa: PTH207
+        base = src.parent
+        if "*" in str(src):
+            base = Path(*takewhile(lambda part: "*" not in part, src.parts))
+        sources = base.glob(str(src.relative_to(base)))
 
         # Keep track of the number of glob expansions so we can properly error if more
         # than one tries to organize to the same file
@@ -246,13 +253,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     continue
 
             # Organize a "not dir" (file, character device, etc.) to a "not dir"
-            if os.path.isfile(dst):  # noqa: PTH113
-                if os.path.abspath(dst) == os.path.abspath(src):  # noqa: PTH100
+            if dst.is_file():
+                if dst.absolute().as_posix() == os.path.normpath(src.absolute()):
                     # Trying to organize a file to the same place, skipping
                     continue
                 if overwrite and src_count <= 1:
                     with contextlib.suppress(FileNotFoundError):
-                        os.remove(dst)  # noqa: PTH107
+                        dst.unlink()
                 elif src_count > 1:
                     raise errors.FileOrganizeError(
                         part_name=part_name,
@@ -283,13 +290,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     )
 
             # Organize a "not dir" to a dir
-            if os.path.isdir(dst):  # noqa: PTH112
-                real_dst = os.path.join(dst, os.path.basename(src))  # noqa: PTH118, PTH119
-                if os.path.abspath(real_dst) == os.path.abspath(src):  # noqa: PTH100
+            if dst.is_dir():
+                real_dst = dst / src.name
+                if real_dst.resolve() == src.resolve():
                     # Trying to organize a file to the same place, skipping
                     continue
                 if overwrite:
-                    if os.path.isdir(real_dst):  # noqa: PTH112
+                    if real_dst.is_dir():
                         shutil.rmtree(real_dst)
                     else:
                         with contextlib.suppress(FileNotFoundError):
@@ -315,7 +322,11 @@ def organize_files(  # noqa: PLR0912, PLR0915
                         ),
                     )
 
-            os.makedirs(os.path.dirname(dst), exist_ok=True)  # noqa: PTH103, PTH120
+            if dst_string.endswith("/"):
+                dst.mkdir(parents=True, exist_ok=True)
+            else:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+
             if src_partition_pair.partition == BUILD_PARTITION:
                 if src_path.is_dir():
                     file_utils.link_or_copy_tree(src, dst)
@@ -327,10 +338,11 @@ def organize_files(  # noqa: PLR0912, PLR0915
 
 def get_src_path(
     src_partition_path: path_utils.PartitionPathPair,
+    key: str,
     part_name: str,
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
-) -> str:
+) -> Path:
     """Return the full path for a relative source."""
     src_partition, src_inner_path = src_partition_path
 
@@ -351,7 +363,22 @@ def get_src_path(
     if src_partition == DEFAULT_PARTITION:
         src_partition = default_partition
 
-    return os.path.join(install_dir_map[src_partition], src_inner_path)  # noqa: PTH118
+    base_dir = Path(install_dir_map[src_partition]).resolve()
+    src_path = base_dir / src_inner_path
+
+    # Resolve only the parent path so symlinks being organized are preserved.
+    # Resolving the full source path would follow the final symlink target and
+    # reject valid symlinks that point outside the install directory.
+    if not src_path.parent.resolve().is_relative_to(base_dir):
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize from {key!r}, but source paths must stay within "
+                f"the install directory"
+            ),
+        )
+
+    return src_path
 
 
 def get_dst_path(
@@ -360,7 +387,7 @@ def get_dst_path(
     part_name: str,
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
-) -> tuple[str, str]:
+) -> tuple[Path, str]:
     """Return the full destination path and log-friendly representation of a destination."""
     # Remove the leading slash so the path actually joins
     # Also trailing slash is significant, be careful if using pathlib!
@@ -386,4 +413,4 @@ def get_dst_path(
     else:
         dst_string = str(dst_inner_path)
 
-    return os.path.join(install_dir_map[dst_partition], dst_inner_path), dst_string  # noqa: PTH118
+    return install_dir_map[dst_partition] / dst_inner_path, dst_string
