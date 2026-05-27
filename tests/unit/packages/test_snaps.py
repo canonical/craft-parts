@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+
 import pytest
 from craft_parts.packages import errors, snaps
 
@@ -398,7 +400,7 @@ class TestSnapPackageLifecycle:
 
         snaps.download_snaps(
             snaps_list=["fake-snap", "other-fake-snap/latest/stable"],
-            directory="fakedir",
+            directory=Path("fakedir"),
         )
         assert fake_snap_command.calls == [
             ["snap", "download", "fake-snap"],
@@ -419,7 +421,7 @@ class TestSnapPackageLifecycle:
 
         with pytest.raises(errors.SnapDownloadError):
             snaps.download_snaps(
-                snaps_list=["fake-snap", "other-invalid"], directory="fakedir"
+                snaps_list=["fake-snap", "other-invalid"], directory=Path("fakedir")
             )
 
         assert fake_snap_command.calls == [
