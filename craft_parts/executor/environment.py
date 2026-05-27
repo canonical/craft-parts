@@ -197,7 +197,7 @@ def _translate_partition_env(partition: str) -> str:
 
     :returns: The translated name
     """
-    return partition.upper().translate({ord("-"): "_", ord("/"): "_"})
+    return partition.upper().translate({ord("-"): "_", ord("+"): "_", ord("/"): "_"})
 
 
 def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:

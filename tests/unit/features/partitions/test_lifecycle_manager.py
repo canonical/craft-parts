@@ -287,7 +287,7 @@ class TestPartitionsSupport:
         with pytest.raises(
             errors.FeatureError,
             match=(
-                r"Partition name conflicts:\n[\w\s/\-,']*\nHyphens, plus signs and slashes are converted to underscores to associate partitions names with environment variables. 'foo-bar', 'foo\+bar' and 'foo/bar' would result in environment variable FOO_BAR.\nThis operation cannot be executed"
+                r"Partition name conflicts:\n[\w\s/\-,']*\nHyphens, plus signs and slashes are converted to underscores when deriving partition environment variable names. 'foo-bar', 'foo\+bar' and 'foo/bar' would result in environment variable FOO_BAR.\nThis operation cannot be executed"
             ),
         ):
             lifecycle_manager.LifecycleManager(

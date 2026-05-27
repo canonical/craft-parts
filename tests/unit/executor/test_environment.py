@@ -204,6 +204,32 @@ def test_generate_step_environment_build_features(
     )
 
 
+def test_generate_step_environment_translates_partition_plus_sign(
+    host_arch: str, host_triplet: str, new_dir, enable_all_features
+):
+    partitions = ["default", "foo+bar"]
+    p1 = Part("p1", {}, partitions=partitions)
+    info = ProjectInfo(
+        arch="arm64",
+        application_name="xyz",
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+    part_info = PartInfo(project_info=info, part=p1)
+    step_info = StepInfo(part_info=part_info, step=Step.PULL)
+    props = plugins.PluginProperties()
+    plugin = FooPlugin(properties=props, part_info=part_info)
+
+    env = environment.generate_step_environment(
+        part=p1, plugin=plugin, step_info=step_info
+    )
+
+    assert f'export CRAFT_FOO_BAR_STAGE="{new_dir}/partitions/foo+bar/stage"' in env
+    assert f'export CRAFT_FOO_BAR_PRIME="{new_dir}/partitions/foo+bar/prime"' in env
+    assert "CRAFT_FOO+BAR_STAGE" not in env
+    assert "CRAFT_FOO+BAR_PRIME" not in env
+
+
 def test_generate_step_environment_no_project_name(
     host_arch: str, host_triplet: str, new_dir
 ):
