@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from craft_parts import errors
@@ -144,9 +145,9 @@ def test_copy_file_not_found():
 
 
 def test_xattribute_read_error():
-    err = errors.XAttributeError(key="name", path="path")
+    err = errors.XAttributeError(key="name", path=Path("path"))
     assert err.key == "name"
-    assert err.path == "path"
+    assert err.path == Path("path")
     assert err.is_write is False
     assert err.brief == "Unable to read extended attribute."
     assert err.details == "Failed to read attribute 'name' on 'path'."
@@ -154,9 +155,9 @@ def test_xattribute_read_error():
 
 
 def test_xattribute_write_error():
-    err = errors.XAttributeError(key="name", path="path", is_write=True)
+    err = errors.XAttributeError(key="name", path=Path("path"), is_write=True)
     assert err.key == "name"
-    assert err.path == "path"
+    assert err.path == Path("path")
     assert err.is_write is True
     assert err.brief == "Unable to write extended attribute."
     assert err.details == "Failed to write attribute 'name' on 'path'."
@@ -243,11 +244,13 @@ def test_file_organize_error():
 
 def test_part_files_conflict():
     err = errors.PartFilesConflict(
-        part_name="foo", other_part_name="bar", conflicting_files=["file1", "file2"]
+        part_name="foo",
+        other_part_name="bar",
+        conflicting_files=[Path("file1"), Path("file2")],
     )
     assert err.part_name == "foo"
     assert err.other_part_name == "bar"
-    assert err.conflicting_files == ["file1", "file2"]
+    assert err.conflicting_files == [Path("file1"), Path("file2")]
     assert err.brief == (
         "Failed to stage: parts list the same file with different contents or permissions."
     )
@@ -265,12 +268,12 @@ def test_part_files_conflict_with_partitions():
     err = errors.PartFilesConflict(
         part_name="foo",
         other_part_name="bar",
-        conflicting_files=["file1", "file2"],
+        conflicting_files=[Path("file1"), Path("file2")],
         partition="test",
     )
     assert err.part_name == "foo"
     assert err.other_part_name == "bar"
-    assert err.conflicting_files == ["file1", "file2"]
+    assert err.conflicting_files == [Path("file1"), Path("file2")]
     assert err.partition == "test"
     assert err.brief == (
         "Failed to stage: parts list the same file with different contents or permissions."
@@ -286,10 +289,10 @@ def test_part_files_conflict_with_partitions():
 
 def test_stage_files_conflict():
     err = errors.StageFilesConflict(
-        part_name="foo", conflicting_files=["file1", "file2"]
+        part_name="foo", conflicting_files=[Path("file1"), Path("file2")]
     )
     assert err.part_name == "foo"
-    assert err.conflicting_files == ["file1", "file2"]
+    assert err.conflicting_files == [Path("file1"), Path("file2")]
     assert err.brief == (
         "Failed to stage: part files conflict with files already being staged."
     )
