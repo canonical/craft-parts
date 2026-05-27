@@ -329,6 +329,10 @@ class GitSource(SourceHandler):
 
     def _update_submodules(self, command_prefix: list[str]) -> None:
         """Update configured submodules after the repository is at the right ref."""
+        # source_submodules can either be None or [], which behave differently.
+        # submodule update doesn't have the `--recursive=` syntax that clone does,
+        # so we only run this command for the default behavior
+        # (None = all modules) or for explicitly requested modules.
         if self.source_submodules is None or self.source_submodules:
             command = [
                 *command_prefix,
