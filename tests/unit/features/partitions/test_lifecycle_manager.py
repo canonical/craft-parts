@@ -193,12 +193,14 @@ class TestPartitionsSupport:
         ],
     )
     def test_partitions_invalid(self, new_dir, parts_data, partitions):
-        """Raise an error if partitions are not lowercase alphabetical characters."""
+        """Raise an error if partitions are invalid."""
         with pytest.raises(
             errors.FeatureError,
             match=(
-                r"Partition '[\w-]*' is invalid.\n"
-                r"Partitions must only contain lowercase letters.*"
+                r"Partition .+ is invalid\.\n"
+                r"Partition names may contain lowercase letters, numbers, hyphens, "
+                r"plus signs and slashes\. Names must begin and end with a lowercase "
+                r"letter or number\."
             ),
         ):
             lifecycle_manager.LifecycleManager(
