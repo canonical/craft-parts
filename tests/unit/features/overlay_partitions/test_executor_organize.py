@@ -24,7 +24,7 @@ from craft_parts.executor.organize import organize_files
 # fixture that checks that the order of an organize doesn't matter.
 from tests.unit.executor.test_organize import (
     organize_and_assert,
-    randomize_iglob,  # noqa: F401
+    randomize_globs,  # noqa: F401
 )
 
 
@@ -45,7 +45,7 @@ from tests.unit.executor.test_organize import (
         ),
         # simple_file
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "bar"},
             "expected": [(["bar"], "")],
         },
@@ -58,7 +58,7 @@ from tests.unit.executor.test_organize import (
         },
         # organize into overlay
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "(overlay)/bar"},
             "expected": [([], ""), (["bar"], "../overlay_dir")],
         },

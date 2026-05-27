@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import glob
 import os
+import pathlib
 import random
 import re
 from pathlib import Path
@@ -23,12 +23,11 @@ from typing import Any, cast
 
 import pytest
 from craft_parts import errors
-from craft_parts.executor import organize
 from craft_parts.executor.organize import organize_files
 
 
 @pytest.fixture(autouse=True, params=range(6))
-def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
+def randomize_globs(monkeypatch, request: pytest.FixtureRequest):
     """Replace the system's iglob function with a function that randomizes the glob.
 
     It also runs each test case multiple  times to increase the chance of a test failing
@@ -37,13 +36,22 @@ def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
     This will catch issues that occur due to order being important.
     """
 
-    def random_glob(pathname: str, recursive: bool = False):
-        result = glob.glob(pathname, recursive=recursive)  # noqa: PTH207
+    rglob_old = Path.rglob
+    glob_old = Path.glob
+
+    def rglob(slf, pat: str, **_kwargs):
+        result = list(rglob_old(slf, pat))
+        random.shuffle(result)
+        return result
+
+    def glob(slf, pat: str, **_kwargs):
+        result = list(glob_old(slf, pat))
         random.shuffle(result)
         return result
 
     if request.param != 0:  # In one case we use the real iglob.
-        monkeypatch.setattr(organize, "iglob", random_glob)
+        monkeypatch.setattr(pathlib.Path, "glob", glob)
+        monkeypatch.setattr(pathlib.Path, "rglob", rglob)
 
 
 @pytest.mark.parametrize(
@@ -51,23 +59,23 @@ def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
     [
         # simple_file
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "bar"},
             "expected": [(["bar"], "")],
         },
         # simple_dir_with_file
         {
-            "setup_dirs": ["foodir"],
-            "setup_files": [os.path.join("foodir", "foo")],  # noqa: PTH118
+            "setup_dirs": [Path("foodir")],
+            "setup_files": [Path("foodir", "foo")],
             "organize_map": {"foodir": "bardir"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize_to_the_same_directory
         {
-            "setup_dirs": ["bardir", "foodir"],
+            "setup_dirs": [Path("bardir"), Path("foodir")],
             "setup_files": [
-                os.path.join("foodir", "foo"),  # noqa: PTH118
-                os.path.join("bardir", "bar"),  # noqa: PTH118
+                Path("foodir", "foo"),
+                Path("bardir", "bar"),
                 "basefoo",
             ],
             "organize_map": {
@@ -79,13 +87,13 @@ def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
         },
         # leading_slash_in_value
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "/bar"},
             "expected": [(["bar"], "")],
         },
         # overwrite_existing_file
         {
-            "setup_files": ["foo", "bar"],
+            "setup_files": [Path("foo"), Path("bar")],
             "organize_map": {"foo": "bar"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
@@ -95,13 +103,13 @@ def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
         },
         # *_for_files
         {
-            "setup_files": ["foo.conf", "bar.conf"],
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
             "organize_map": {"*.conf": "dir/"},
             "expected": [(["dir"], ""), (["bar.conf", "foo.conf"], "dir")],
         },
         # *_for_files_with_non_dir_dst
         {
-            "setup_files": ["foo.conf", "bar.conf"],
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
             "organize_map": {"*.conf": "dir"},
             "expected": errors.FileOrganizeError,
             "expected_message": r".*multiple files to be organized into 'dir'.*",
@@ -163,28 +171,55 @@ def randomize_iglob(monkeypatch, request: pytest.FixtureRequest):
         ),
         # organize a file to itself
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "foo"},
             "expected": [(["foo"], "")],
         },
         # organize a file to itself with different path
         {
-            "setup_dirs": ["bardir"],
-            "setup_files": ["foo"],
+            "setup_dirs": [Path("bardir")],
+            "setup_files": [Path("foo")],
             "organize_map": {"bardir/../foo": "foo"},
             "expected": [(["bardir", "foo"], "")],
         },
+        # absolute source paths are rejected
+        {
+            "setup_files": ["foo"],
+            "organize_map": {"/etc/apt": ""},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize from '/etc/apt', but source paths must stay within "
+                r"the install directory.*"
+            ),
+        },
+        # traversal outside install dir is rejected
+        {
+            "setup_files": ["foo"],
+            "organize_map": {"../foo": "foo"},
+            "expected": errors.FileOrganizeError,
+            "expected_message": (
+                r".*trying to organize from '\.\./foo', but source paths must stay within "
+                r"the install directory.*"
+            ),
+        },
+        # normalized traversal that stays within install dir is allowed
+        {
+            "setup_dirs": ["dir"],
+            "setup_files": ["foo"],
+            "organize_map": {"dir/../foo": "bar"},
+            "expected": [(["bar", "dir"], "")],
+        },
         # organize a set with a file to itself
         {
-            "setup_dirs": ["bardir"],
-            "setup_files": ["bardir/foo"],
+            "setup_dirs": [Path("bardir")],
+            "setup_files": [Path("bardir/foo")],
             "organize_map": {"bardir/*": "bardir/"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize from subdirs to itself
         {
-            "setup_dirs": ["foodir", "foodir/bardir"],
-            "setup_files": ["foodir/bardir/foo"],
+            "setup_dirs": [Path("foodir"), Path("foodir/bardir")],
+            "setup_files": [Path("foodir/bardir/foo")],
             "organize_map": {"**/bardir/*": "bardir/"},
             "expected": [(["bardir", "foodir"], ""), (["foo"], "bardir")],
         },
@@ -227,7 +262,7 @@ def test_organize(new_dir, data):
         # and replace it with the symlink, effectively pointing at itself.
         # This is the current behavior but might not be the intended one.
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "setup_symlinks": [("foo-link", "foo")],
             "organize_map": {"foo-link": "foo"},
             "expected": errors.FileOrganizeError,
@@ -237,7 +272,7 @@ def test_organize(new_dir, data):
         },
         # organize a file under a symlinked directory to the symlink target
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "setup_symlinks": [("bardir", ".")],
             "organize_map": {"bardir/foo": "foo"},
             "expected": errors.FileOrganizeError,
@@ -247,7 +282,7 @@ def test_organize(new_dir, data):
         },
         # organize a file under a symlinked directory to the symlink target
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "setup_symlinks": [("bardir", ".")],
             "organize_map": {"foo": "bardir/foo"},
             "expected": errors.FileOrganizeError,
@@ -257,10 +292,10 @@ def test_organize(new_dir, data):
         },
         # Organize 2 files to the same destination, one with a dir as a destination
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "foo"),  # noqa: PTH118
+                Path("dir1", "foo"),
+                Path("dir2", "foo"),
             ],
             "organize_map": {"dir1/foo": "dir/foo", "dir2/foo": "dir/"},
             "expected": errors.FileOrganizeError,
@@ -270,10 +305,10 @@ def test_organize(new_dir, data):
         },
         # Organize 2 files to the same destination, one referenced with a wildcard
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "foo"),  # noqa: PTH118
+                Path("dir1", "foo"),
+                Path("dir2", "foo"),
             ],
             "organize_map": {"dir1/foo": "dir/foo", "dir2/*": "dir/"},
             "expected": errors.FileOrganizeError,
@@ -413,7 +448,6 @@ def organize_and_assert(
         )
         expected = cast(list[tuple[list[str], str]], expected)
         for expect in expected:
-            dir_path = (install_dir / expect[1]).as_posix()
-            dir_contents = os.listdir(dir_path)  # noqa: PTH208
-            dir_contents.sort()
+            dir_path = install_dir / expect[1]
+            dir_contents = sorted(path.name for path in dir_path.iterdir())
             assert dir_contents == expect[0]
