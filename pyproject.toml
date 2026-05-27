@@ -22,6 +22,7 @@ dependencies = [
     "requests>=2.32.4,<3.0",
     "semver>=3.0.4",
     "tomli >= 1.1.0 ; python_version < '3.11'",
+    "zstandard>=0.25",
 ]
 license-files = ["LICENSE"]
 
@@ -68,7 +69,7 @@ dev = [
     "pytest-cov~=7.0",
     "pytest-mock~=3.12",
     "pytest-rerunfailures>=16.0.1",
-    "mypy[reports]~=1.19.1",
+    "mypy[reports]~=1.20.0",
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
@@ -210,6 +211,7 @@ markers = [
     "java: tests that require the Java build tools to be installed (includes maven, gradle, etc.)",
     "python: tests that require the Python build tools (poetry, uv, pip)",
     "plugin: tests that require plugin dependencies other than java or python",
+    "flaky: tests that are known to be flaky and may need reruns (e.g. network-dependent)",
 ]
 
 [tool.coverage.run]

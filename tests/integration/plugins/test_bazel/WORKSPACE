@@ -1,0 +1,1 @@
+workspace(name = "craft_parts_test_bazel")

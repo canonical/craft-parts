@@ -23,7 +23,7 @@ jobs:
       fast-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
+          "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
@@ -33,7 +33,7 @@ jobs:
       slow-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
+          "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
@@ -44,7 +44,23 @@ jobs:
       # correctly on said EOL base.
       lowest-python-platform: '["amd64", "focal"]'
       lowest-python-version: "3.10"
-      pytest-markers: not java and not python and not plugin
+      pytest-markers: not java and not python and not plugin and not flaky
+      setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
+  test-flaky:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: "[]"
+      slow-test-platforms: >
+        [
+          "ubuntu-22.04",
+          "ubuntu-22.04-arm",
+          "ubuntu-24.04",
+          "ubuntu-24.04-arm",
+        ]
+      slow-test-python-versions: '["3.12"]'
+      lowest-python-platform: '["amd64", "focal"]'
+      lowest-python-version: "3.10"
+      pytest-markers: flaky
       setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
   test-java-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
@@ -53,7 +69,7 @@ jobs:
       slow-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
+          "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],
@@ -85,7 +101,7 @@ jobs:
       slow-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64", "medium"],
+          "ubuntu-22.04-arm",
         ]
       slow-test-python-versions: '["3.10"]'
       lowest-python-version: ""
@@ -98,7 +114,7 @@ jobs:
       slow-test-platforms: >
         [
           "ubuntu-22.04",
-          ["jammy", "arm64"],
+          "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
           ["noble", "s390x", "edge"],

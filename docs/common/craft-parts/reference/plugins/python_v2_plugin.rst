@@ -99,3 +99,35 @@ During the build step, the plugin performs the following actions:
 #. A `sitecustomize <https://docs.python.org/3/library/site.html>`_ file is created,
    which adds the files from the part's install directory to Python's runtime import
    path.
+
+Examples
+--------
+
+The following example declares a part using the Python plugin with a Git source.
+It installs the ``pyfiglet`` package from a remote Git repository:
+
+.. code-block:: yaml
+
+  parts:
+    pyfiglet:
+      plugin: python
+      source-type: git
+      source: https://github.com/snapcraft-docs/pyfiglet
+
+The following example declares a part using the Python plugin with an index mirror.
+It selects the project's ``requirements.txt`` file with the ``python-requirements`` key:
+
+.. code-block:: yaml
+
+   parts:
+     my-part:
+       plugin: python
+       python-requirements:
+         - requirements.txt
+
+The ``requirements.txt`` declares a custom mirror for its package index:
+
+.. code-block:: text
+
+   -i https://example-mirror.com
+

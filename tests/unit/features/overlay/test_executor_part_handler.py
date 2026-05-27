@@ -24,6 +24,8 @@ from craft_parts.executor.step_handler import StagePartitionContents, StepConten
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
+from craft_parts.plugins.base import Plugin
+from craft_parts.plugins.properties import PluginProperties
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
@@ -144,14 +146,14 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         )
 
         self._mock_mount_overlayfs.assert_called_with(
-            f"{self._part_info.overlay_mount_dir}",
+            self._part_info.overlay_mount_dir,
             (
                 f"-olowerdir={self._part_info.overlay_packages_dir}:/base,"
                 f"upperdir={self._part.part_layer_dir},"
                 f"workdir={self._part_info.overlay_work_dir}"
             ),
         )
-        self._mock_umount.assert_called_with(f"{self._part_info.overlay_mount_dir}")
+        self._mock_umount.assert_called_with(self._part_info.overlay_mount_dir)
 
     def test_run_build_without_overlay_visibility(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
@@ -177,10 +179,10 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         default_partition = partitions[0] if partitions is not None else "default"
         mock_step_contents.partitions_contents[default_partition] = (
             StagePartitionContents(
-                files={"file"},
-                dirs={"dir"},
-                backstage_files={"back_file"},
-                backstage_dirs={"back_dir"},
+                files={Path("file")},
+                dirs={Path("dir")},
+                backstage_files={Path("back_file")},
+                backstage_dirs={Path("back_dir")},
             )
         )
         partitions_migration_contents = {}
@@ -206,11 +208,11 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
-            directories={"dir"},
+            files={Path("file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
-            backstage_files={"back_file"},
-            backstage_directories={"back_dir"},
+            backstage_files={Path("back_file")},
+            backstage_directories={Path("back_dir")},
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
 
@@ -562,14 +564,15 @@ class TestOverlayMigration:
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"),
+        [(Step.STAGE, Path("stage")), (Step.PRIME, Path("prime"))],
     )
     def test_migrate_overlay(self, step, step_dir):
         _run_step_migration(self._p1_handler, step)
-        assert Path(f"{step_dir}/dir1/foo").exists()
-        assert Path(f"{step_dir}/bar").exists()
-        assert Path(f"{step_dir}/dir1/baz").exists()
-        assert Path(f"overlay/{step_dir}_overlay").exists()
+        assert (step_dir / "dir1/foo").exists()
+        assert (step_dir / "bar").exists()
+        assert (step_dir / "dir1/baz").exists()
+        assert Path(f"overlay/{step_dir.name}_overlay").exists()
 
     @pytest.mark.parametrize(
         ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
@@ -790,6 +793,94 @@ class TestHelpers(test_part_handler.TestHelpers):
 
         res = part_handler._parts_with_overlay_in_step(step, part_list=[p1, p2, p3, p4])
         assert res == [p2, p3, p4]
+
+
+class TestMergedOverlayPackages:
+    """Test _merged_overlay_packages combines spec and plugin packages."""
+
+    def test_merged_overlay_packages_deduplicates(self, new_dir, partitions):
+        """Plugin packages already in spec are not duplicated."""
+
+        class PkgPlugin(Plugin):
+            properties_class = PluginProperties
+            uses_overlay = True
+
+            def get_overlay_packages(self):
+                return {"pkg4", "pkg5", "pkg6"}
+
+            def get_overlay_chroot_commands(self):
+                return []
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+        part = Part(
+            "foo",
+            {
+                "plugin": "nil",
+                "source": ".",
+                "overlay-packages": ["pkg4", "pkg1"],
+            },
+            partitions=partitions,
+        )
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[part],
+            base_layer_dir=Path("/base"),
+            cache_level=0,
+        )
+        part_info = PartInfo(info, part)
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+        # Inject our plugin
+        handler._plugin = PkgPlugin(properties=PluginProperties(), part_info=part_info)
+
+        merged = handler._merged_overlay_packages()
+        # spec packages come first, then plugin packages not in spec
+        assert merged == ["pkg4", "pkg1", "pkg5", "pkg6"]
+
+    def test_merged_overlay_packages_no_plugin(self, new_dir, partitions):
+        """Without plugin overlay packages, only spec packages returned."""
+        part = Part(
+            "foo",
+            {
+                "plugin": "nil",
+                "source": ".",
+                "overlay-packages": ["pkg1", "pkg2"],
+            },
+            partitions=partitions,
+        )
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[part],
+            base_layer_dir=Path("/base"),
+            cache_level=0,
+        )
+        part_info = PartInfo(info, part)
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+
+        merged = handler._merged_overlay_packages()
+        assert merged == ["pkg1", "pkg2"]
 
 
 @pytest.mark.usefixtures("new_dir")

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+from pathlib import Path
 
 import pydantic
 import pytest
@@ -28,7 +28,7 @@ from craft_parts.permissions import (
 
 def get_mode(path) -> int:
     """Shortcut the retrieve the read/write/execute mode for a given path."""
-    return os.stat(path).st_mode & 0o777  # noqa: PTH116
+    return Path(path).stat().st_mode & 0o777
 
 
 def test_owner_group_error():
@@ -43,7 +43,7 @@ def test_owner_group_error():
 def test_apply_permissions_mode(tmp_path):
     target = tmp_path / "a.txt"
     target.touch()
-    os.chmod(target, 0)  # noqa: PTH101
+    target.chmod(0)
 
     perm = Permissions()
     perm.apply_permissions(target)
@@ -90,15 +90,15 @@ def test_filter_permissions():
 
     permissions = [p1, p2, p3]
 
-    assert filter_permissions("etc", permissions) == [p1]
-    assert filter_permissions("etc/file2.bin", permissions) == [p1, p2]
-    assert filter_permissions("etc/file1.txt", permissions) == [p1, p2, p3]
+    assert filter_permissions(Path("etc"), permissions) == [p1]
+    assert filter_permissions(Path("etc/file2.bin"), permissions) == [p1, p2]
+    assert filter_permissions(Path("etc/file1.txt"), permissions) == [p1, p2, p3]
 
 
 def test_apply_permissions(tmp_path, mock_chown):
     target = tmp_path / "a.txt"
     target.touch()
-    os.chmod(target, 0)  # noqa: PTH101
+    target.chmod(0)
 
     p1 = Permissions(mode="755")
     p2 = Permissions(owner=1111, group=2222)

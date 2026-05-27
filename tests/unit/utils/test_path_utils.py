@@ -25,7 +25,7 @@ from craft_parts.utils.path_utils import (
     get_partition_and_path,
 )
 
-PATH_CLASSES = [Path, PurePosixPath, str]
+PATH_CLASSES = [Path, PurePosixPath]
 
 NON_PARTITION_PATHS = [
     "/absolute/path",
@@ -74,23 +74,23 @@ PARTITION_EXPECTED_PARTITIONS = [
 ]
 
 PARTITION_EXPECTED_INNER_PATHS = [
-    "",
-    "",
-    "",
-    "path",
-    "path",
-    "path",
-    "path",
-    "path",
-    "path",
-    "",
-    "",
-    "",
-    "path",
-    "path",
-    "path",
-    "path",
-    "path",
+    Path(),
+    Path(),
+    Path(),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path(),
+    Path(),
+    Path(),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
 ]
 
 # Prevent us from adding nonmatching paths for tests below.

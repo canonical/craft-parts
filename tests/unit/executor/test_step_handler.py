@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import itertools
-import os
 from pathlib import Path
 from textwrap import dedent
 
@@ -91,7 +90,7 @@ def _step_handler_for_step(
 
 def get_mode(path) -> int:
     """Shortcut the retrieve the read/write/execute mode for a given path."""
-    return os.stat(path).st_mode & 0o777  # noqa: PTH116
+    return Path(path).stat().st_mode & 0o777
 
 
 class TestStepHandlerBuiltins:
@@ -216,11 +215,11 @@ class TestStepHandlerBuiltins:
         )
 
         assert get_mode(environment_script_path) == 0o644
-        with open(environment_script_path) as file:  # noqa: PTH123
+        with environment_script_path.open() as file:
             assert file.read() == expected_script
 
         assert get_mode(build_script_path) == 0o755
-        with open(build_script_path) as file:  # noqa: PTH123
+        with build_script_path.open() as file:
             assert file.read() == dedent(
                 f"""\
                 #!/bin/bash
@@ -264,10 +263,10 @@ class TestStepHandlerBuiltins:
         step_contents = StepContents(stage=True)
         default_partition = partitions[0] if partitions else "default"
         step_contents.partitions_contents[default_partition] = StagePartitionContents(
-            files={"subdir/bar", "foo"},
-            dirs={"subdir"},
-            backstage_files={"foo", "subdir/bar"},
-            backstage_dirs={"subdir"},
+            files={Path("subdir/bar"), Path("foo")},
+            dirs={Path("subdir")},
+            backstage_files={Path("foo"), Path("subdir/bar")},
+            backstage_dirs={Path("subdir")},
         )
         if partitions:
             for partition in partitions[1:]:
@@ -297,7 +296,7 @@ class TestStepHandlerBuiltins:
         step_contents = StepContents()
         default_partition = partitions[0] if partitions else "default"
         step_contents.partitions_contents[default_partition] = StepPartitionContents(
-            files={"subdir/bar", "foo"}, dirs={"subdir"}
+            files={Path("subdir/bar"), Path("foo")}, dirs={Path("subdir")}
         )
         if partitions:
             for partition in partitions[1:]:
@@ -395,3 +394,146 @@ class TestStepHandlerRunScriptlet:
             )
         assert raised.value.stderr is not None
         assert raised.value.stderr.endswith(b"\nuh-oh\n+ false\n")
+
+
+class OverlayChrootPlugin(plugins.Plugin):
+    """A test plugin with overlay chroot commands."""
+
+    properties_class = plugins.PluginProperties
+    uses_overlay = True
+
+    def get_overlay_chroot_commands(self):
+        return ["echo chroot-ran > /tmp/chroot-proof.txt"]
+
+    def get_build_snaps(self) -> set[str]:
+        return set()
+
+    def get_build_packages(self) -> set[str]:
+        return set()
+
+    def get_build_environment(self) -> dict[str, str]:
+        return {}
+
+    def get_build_commands(self) -> list[str]:
+        return []
+
+
+class TestOverlayScriptlet:
+    """Test the overlay scriptlet injection for override-overlay."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, new_dir):
+        p_info = ProjectInfo(
+            project_dirs=ProjectDirs(work_dir=new_dir),
+            application_name="test",
+            cache_dir=new_dir,
+        )
+        self._dirs = p_info.dirs
+        self._part = Part(
+            "mypart", {"plugin": "nil", "source": "."}, project_dirs=self._dirs
+        )
+        self._part_info = PartInfo(project_info=p_info, part=self._part)
+        self._part.part_run_dir.mkdir(parents=True, exist_ok=True)
+
+    def test_run_overlay_scriptlet_craftctl_default(self, new_dir):
+        """craftctl default runs plugin chroot commands."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=OverlayChrootPlugin,
+        )
+        sh._run_overlay_scriptlet(
+            "craftctl default",
+            work_dir=new_dir,
+        )
+        assert (Path("/tmp/chroot-proof.txt")).exists()
+        Path("/tmp/chroot-proof.txt").unlink()
+
+    def test_run_overlay_scriptlet_craftctl_invalid(self, new_dir):
+        """craftctl with non-default command fails."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=OverlayChrootPlugin,
+        )
+        with pytest.raises(errors.ScriptletRunError):
+            sh._run_overlay_scriptlet(
+                "craftctl set version=1.0",
+                work_dir=new_dir,
+            )
+
+    def test_run_overlay_scriptlet_with_user_commands(self, new_dir):
+        """User commands in override-overlay run alongside craftctl default."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=OverlayChrootPlugin,
+        )
+        sh._run_overlay_scriptlet(
+            "craftctl default\ntouch /tmp/user-proof.txt",
+            work_dir=new_dir,
+        )
+        assert Path("/tmp/chroot-proof.txt").exists()
+        assert Path("/tmp/user-proof.txt").exists()
+        Path("/tmp/chroot-proof.txt").unlink()
+        Path("/tmp/user-proof.txt").unlink()
+
+    def test_run_overlay_scriptlet_no_plugin_overlay(self, new_dir):
+        """override-overlay without overlay plugin: craftctl default is no-op."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=FooPlugin,
+        )
+        # Should succeed — craftctl default does nothing (`:` no-op)
+        sh._run_overlay_scriptlet(
+            "craftctl default\ntouch /tmp/no-plugin-proof.txt",
+            work_dir=new_dir,
+        )
+        assert Path("/tmp/no-plugin-proof.txt").exists()
+        Path("/tmp/no-plugin-proof.txt").unlink()
+
+    def test_builtin_overlay_empty_commands(self, new_dir):
+        """Plugin with uses_overlay=True but empty chroot commands: no-op."""
+
+        class EmptyOverlayPlugin(plugins.Plugin):
+            properties_class = plugins.PluginProperties
+            uses_overlay = True
+
+            def get_overlay_chroot_commands(self):
+                return []
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=EmptyOverlayPlugin,
+        )
+        # Should succeed without error (no-op function body runs `:`)
+        sh.run_builtin()

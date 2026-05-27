@@ -44,8 +44,6 @@ allprojects {{
         maven {{ url = uri("{local_maven_repo}") }}
     }}
 }}
-
-{publish_block}
 """
 )
 

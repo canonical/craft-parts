@@ -16,6 +16,7 @@
 
 """Exceptions raised by the packages handling subsystem."""
 
+import pathlib
 from collections.abc import Sequence
 
 from craft_parts.errors import PartsError
@@ -273,6 +274,22 @@ class SnapdConnectionError(PackagesError):
         )
 
         super().__init__(brief=brief)
+
+
+class BaseManifestError(PackagesError):
+    """Failed to read the base snap package manifest.
+
+    :param manifest_path: Path to the manifest file.
+    :param reason: A description of the failure.
+    """
+
+    def __init__(self, manifest_path: pathlib.Path, reason: str) -> None:
+        self.manifest_path = manifest_path
+        self.reason = reason
+        super().__init__(
+            brief=f"Failed to read package manifest {str(manifest_path)!r}.",
+            details=reason,
+        )
 
 
 class ChiselError(PackagesError):
