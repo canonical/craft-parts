@@ -28,6 +28,10 @@ New features:
 
 - Add a ``gradle-use`` plugin for publishing Gradle artifacts to a local Maven
   repository.
+- For explicit typing of file system operations, switch to the `pathlib module
+  <https://docs.python.org/3/library/pathlib.html>`_. All uses of ``str`` for paths are
+  replaced with ``pathlib.Path``. In the public APIs, this change only impacts the
+  ``files`` and ``directories`` variables of the ``MigrationState`` class.
 
 Bug fixes:
 
