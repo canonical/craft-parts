@@ -392,22 +392,7 @@ class GitSource(SourceHandler):
         command = [*command_prefix, "checkout", full_commit]
         self._run(command)
 
-        # source_submodules can either be None or [], which behave differently.
-        # submodule update doesn't have the `--recursive=` syntax that clone does,
-        # so instead we just only run this command for the default behavior
-        # (None = all modules) or for explicitly requested modules.
-        if self.source_submodules is None or self.source_submodules:
-            command = [
-                *command_prefix,
-                "submodule",
-                "update",
-                "--init",
-                "--recursive",
-            ]
-            if self.source_submodules:
-                command.extend(self.source_submodules)
-            logger.debug("Executing: %s", " ".join([str(i) for i in command]))
-            self._run(command)
+        self._update_submodules(command_prefix)
 
     def is_local(self) -> bool:
         """Verify whether the git repository is on the local filesystem."""
