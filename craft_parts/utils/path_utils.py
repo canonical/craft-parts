@@ -64,7 +64,7 @@ def get_partition_and_path(
 
     if _has_partition(str_path):
         partition, inner_path = _split_partition_and_inner_path(str_path)
-        return PartitionPathPair(partition.strip("()"), path.__class__(inner_path))
+        return PartitionPathPair(partition.strip("()"), type(path)(inner_path))
 
     return PartitionPathPair(default_partition, path)
 

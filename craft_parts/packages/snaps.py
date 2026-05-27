@@ -18,7 +18,6 @@
 
 import contextlib
 import logging
-import os
 import pathlib
 import subprocess
 import sys
@@ -271,12 +270,12 @@ class SnapPackage:
         self._is_installed = None
 
 
-def download_snaps(*, snaps_list: Sequence[str], directory: str | pathlib.Path) -> None:
+def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> None:
     """Download snaps of the format <snap-name>/<channel> into directory.
 
     The target directory is created if it does not exist.
     """
-    os.makedirs(directory, exist_ok=True)  # noqa: PTH103
+    directory.mkdir(parents=True, exist_ok=True)
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
         logger.debug("Downloading snap %s", snap_pkg.name)

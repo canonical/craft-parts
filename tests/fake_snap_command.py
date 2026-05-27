@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import shutil
 import subprocess
+from pathlib import Path
 
 import craft_parts.packages.snaps
 
@@ -100,7 +100,7 @@ class FakeSnapCommand:
 
         if cmd == "download":
             if self.fake_download:
-                dest = os.path.join(kwargs["cwd"], params[0] + ".snap")  # noqa: PTH118
+                dest = Path(kwargs["cwd"], f"{params[0]}.snap")
                 shutil.copyfile(self.fake_download, dest)
             return b"Downloaded  "
 
