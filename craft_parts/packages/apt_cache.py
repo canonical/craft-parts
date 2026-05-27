@@ -404,7 +404,6 @@ def _set_pkg_version(package: apt.package.Package, version: str) -> None:
         raise errors.PackageNotFound(f"{package.name}={version}")
 
 
-
 def _file_is_same_order_independent(
     path: str, size: int, hashes: apt_pkg.HashStringList
 ) -> bool:

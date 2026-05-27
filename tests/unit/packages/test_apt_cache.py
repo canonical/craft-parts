@@ -319,7 +319,6 @@ class TestMockedApt:
             call.cache.Cache().close(),
         ]
 
-
     def test_file_is_same_order_independent(self, tmp_path, mocker):
         deb_path = tmp_path / "package.deb"
         deb_path.write_bytes(b"deb-data")
@@ -380,9 +379,7 @@ class TestMockedApt:
             downloaded = cache.fetch_archives(fetch_dir)
 
         assert apt_cache.apt.package._file_is_same is original
-        assert downloaded == [
-            ("mock-pkg", "1.0", fetch_dir / "mock-pkg_1.0.deb")
-        ]
+        assert downloaded == [("mock-pkg", "1.0", fetch_dir / "mock-pkg_1.0.deb")]
 
 
 class TestAptReadonlyHostCache:
