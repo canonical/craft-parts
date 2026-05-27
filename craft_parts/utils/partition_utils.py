@@ -22,8 +22,8 @@ from pathlib import Path
 
 from craft_parts import errors, features
 
-# Allow alphanumeric characters, hyphens, plus signs and slashes, not starting
-# or ending with a hyphen, a plus sign or a slash
+# Lowercase letters, numbers, hyphens, plus signs and slashes are allowed.
+# Names must begin and end with a lowercase letter or number.
 PARTITION_SEGMENT_REGEX = r"[a-z0-9](?:[a-z0-9+-]*[a-z0-9])?"
 VALID_PARTITION_REGEX = re.compile(
     rf"{PARTITION_SEGMENT_REGEX}(?:/{PARTITION_SEGMENT_REGEX})*", re.ASCII
@@ -33,9 +33,9 @@ VALID_NAMESPACED_PARTITION_REGEX = re.compile(
 )
 
 PARTITION_INVALID_MSG = (
-    "Partitions must only contain lowercase letters, numbers, "
-    "hyphens, plus signs and slashes, and may not begin or end with "
-    "a hyphen, a plus sign or a slash."
+    "Partition names may contain lowercase letters, numbers, hyphens, "
+    "plus signs and slashes. Names must begin and end with a lowercase "
+    "letter or number."
 )
 
 DEFAULT_PARTITION = "default"
@@ -46,8 +46,9 @@ def validate_partition_names(partitions: Sequence[str] | None) -> None:
     """Validate the partition feature set.
 
     If the partition feature is enabled, then:
-      - each partition name must contain only lowercase alphanumeric characters
-        hyphens and slashes, but not begin or end with a hyphen or a slash
+      - each partition name may contain lowercase letters, numbers, hyphens,
+        plus signs and slashes, and must begin and end with a lowercase
+        letter or number
       - partitions are unique
       - only the first partition can be named "default"
 
@@ -161,8 +162,8 @@ def _validate_partitions_conflicts(partitions: Sequence[str]) -> None:
     raise errors.FeatureError(
         message=f"Partition name conflicts:\n{msg}",
         details=(
-            "Hyphens, plus signs and slashes are converted to underscores to "
-            "associate partitions names with environment variables. "
+            "Hyphens, plus signs and slashes are converted to underscores "
+            "when deriving partition environment variable names. "
             "'foo-bar', 'foo+bar' and 'foo/bar' would result in "
             "environment variable FOO_BAR."
         ),
