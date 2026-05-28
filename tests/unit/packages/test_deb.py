@@ -26,7 +26,11 @@ from unittest.mock import Mock, call
 import pytest
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
-from craft_parts.packages.deb import Ubuntu, _dpkg_installed_version
+from craft_parts.packages.deb import (
+    Ubuntu,
+    _dpkg_installed_version,
+    _get_packages_marked_for_installation_apt_get,
+)
 from craft_parts.packages.deb_package import DebPackage
 from pytest_mock import MockerFixture
 
@@ -949,6 +953,45 @@ def test_dpkg_installed_version_installed(monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     assert _dpkg_installed_version("bash") == "5.2.15-2ubuntu1"
+
+
+def test_get_packages_marked_for_installation_apt_get_uses_simulate(monkeypatch):
+    def fake_run(cmd, check, capture_output, text):
+        assert cmd[:2] == ["apt-get", "--simulate"]
+        assert check is True
+        assert capture_output is True
+        assert text is True
+        return CompletedProcess(
+            args=cmd,
+            returncode=0,
+            stdout="Inst package (1.0 Ubuntu:24.04/noble [amd64])\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    assert _get_packages_marked_for_installation_apt_get(["package"]) == [
+        ("package", "1.0")
+    ]
+
+
+def test_get_packages_marked_for_installation_apt_get_parses_upgrade(monkeypatch):
+    def fake_run(cmd, check, capture_output, text):
+        return CompletedProcess(
+            args=cmd,
+            returncode=0,
+            stdout=(
+                "Inst systemd [255.4-1ubuntu8.14] "
+                "(255.4-1ubuntu8.15 Ubuntu:24.04/noble-updates [amd64])\n"
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    assert _get_packages_marked_for_installation_apt_get(["systemd"]) == [
+        ("systemd", "255.4-1ubuntu8.15")
+    ]
 
 
 def test_get_installed_packages_uses_dpkg_query_when_available(monkeypatch):

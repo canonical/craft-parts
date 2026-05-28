@@ -284,8 +284,6 @@ _IGNORE_FILTERS: dict[str, set[str]] = {
 
 _T_wrapper = TypeVar("_T_wrapper")
 
-_DPKG_QUERY_INSTALLED_FIELDS = 3
-
 
 def _apt_cache_wrapper(method: Callable[..., _T_wrapper]) -> Callable[..., _T_wrapper]:
     """Decorate a method to handle apt availability."""
@@ -377,11 +375,12 @@ def _parse_installed_dpkg_query_line(line: str) -> str | None:
     if not line.strip():
         return None
 
-    parts = line.split("\t", 2)
-    if len(parts) != _DPKG_QUERY_INSTALLED_FIELDS:
+    try:
+        pkg_name, pkg_status, pkg_version = (
+            part.strip() for part in line.split("\t", 2)
+        )
+    except ValueError:
         return None
-
-    pkg_name, pkg_status, pkg_version = (part.strip() for part in parts)
     if not pkg_name or not pkg_version:
         return None
     if "install ok installed" not in pkg_status:
@@ -391,13 +390,7 @@ def _parse_installed_dpkg_query_line(line: str) -> str | None:
 
 
 def _get_installed_packages_dpkg_query() -> list[str]:
-    """Return installed packages using dpkg-query.
-
-    Prefer dpkg-query because python-apt may try to create
-    /etc/apt/sources.list when it is missing, which fails in unprivileged
-    environments. Fall back to parsing /var/lib/dpkg/status when dpkg-query
-    is unavailable or fails.
-    """
+    """Return installed packages using dpkg-query."""
     output = subprocess.check_output(
         ["dpkg-query", "-W", "-f=${Package}\t${Status}\t${Version}\n"],
         text=True,
@@ -466,6 +459,35 @@ def _dpkg_installed_version(pkg_name: str) -> str | None:
     return version or None
 
 
+def _parse_apt_get_simulation_inst_line(line: str) -> tuple[str, str] | None:
+    """Parse an apt-get simulation Inst line into package and target version."""
+    if not line.startswith("Inst "):
+        return None
+
+    pkg_name, _, package_details = line.removeprefix("Inst ").partition(" ")
+    if not pkg_name or "(" not in package_details:
+        return None
+
+    version = package_details.split("(", 1)[1].split(")", 1)[0].split()[0]
+    if not version:
+        return None
+
+    return pkg_name, version
+
+
+def _get_apt_get_error_package(
+    package_names: list[str], err: subprocess.CalledProcessError
+) -> str:
+    """Return the package name mentioned by apt-get, if detectable."""
+    output = f"{err.stdout or ''}\n{err.stderr or ''}"
+    for package_name in package_names:
+        pkg_name, _ = get_pkg_name_parts(package_name)
+        if package_name in output or pkg_name in output:
+            return pkg_name
+
+    return get_pkg_name_parts(package_names[0])[0]
+
+
 def _get_packages_marked_for_installation_apt_get(
     package_names: list[str],
 ) -> list[tuple[str, str]]:
@@ -473,7 +495,7 @@ def _get_packages_marked_for_installation_apt_get(
     result = subprocess.run(
         [
             "apt-get",
-            "-s",
+            "--simulate",
             "--no-install-recommends",
             "--allow-downgrades",
             "install",
@@ -484,21 +506,11 @@ def _get_packages_marked_for_installation_apt_get(
         text=True,
     )
 
-    marked: list[tuple[str, str]] = []
-    for line in result.stdout.splitlines():
-        if not line.startswith("Inst "):
-            continue
-
-        parts = line.split()
-        if len(parts) < _DPKG_QUERY_INSTALLED_FIELDS:
-            continue
-
-        pkg_name = parts[1]
-        version = parts[2].strip("()")
-        if pkg_name and version:
-            marked.append((pkg_name, version))
-
-    return marked
+    return [
+        marked_package
+        for line in result.stdout.splitlines()
+        if (marked_package := _parse_apt_get_simulation_inst_line(line))
+    ]
 
 
 class Ubuntu(BaseRepository):
@@ -654,7 +666,8 @@ class Ubuntu(BaseRepository):
             try:
                 marked = _get_packages_marked_for_installation_apt_get(package_names)
             except subprocess.CalledProcessError as err:
-                raise errors.BuildPackageNotFound(package_names[0]) from err
+                failed_package = _get_apt_get_error_package(package_names, err)
+                raise errors.BuildPackageNotFound(failed_package) from err
             # For list-only, report what apt would install (deterministic).
             return [f"{name}={version}" for name, version in sorted(marked)]
 
@@ -665,7 +678,8 @@ class Ubuntu(BaseRepository):
             try:
                 marked = _get_packages_marked_for_installation_apt_get(package_names)
             except subprocess.CalledProcessError as err:
-                raise errors.BuildPackageNotFound(package_names[0]) from err
+                failed_package = _get_apt_get_error_package(package_names, err)
+                raise errors.BuildPackageNotFound(failed_package) from err
             cls._install_packages(package_names)
             installed_package_names = [name for name, _ in marked]
         else:
