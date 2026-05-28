@@ -29,6 +29,7 @@ from craft_parts.packages import deb, errors
 from craft_parts.packages.deb import (
     Ubuntu,
     _dpkg_installed_version,
+    _get_apt_get_error_package,
     _get_packages_marked_for_installation_apt_get,
 )
 from craft_parts.packages.deb_package import DebPackage
@@ -992,6 +993,31 @@ def test_get_packages_marked_for_installation_apt_get_parses_upgrade(monkeypatch
     assert _get_packages_marked_for_installation_apt_get(["systemd"]) == [
         ("systemd", "255.4-1ubuntu8.15")
     ]
+
+
+def test_get_apt_get_error_package_uses_package_reported_by_apt_get():
+    err = subprocess.CalledProcessError(
+        100,
+        ["apt-get", "--simulate", "install"],
+        stderr="E: Unable to locate package missing-package\n",
+    )
+
+    assert (
+        _get_apt_get_error_package(["valid-package", "missing-package"], err)
+        == "missing-package"
+    )
+
+
+def test_get_apt_get_error_package_falls_back_to_first_package_name():
+    err = subprocess.CalledProcessError(
+        100,
+        ["apt-get", "--simulate", "install"],
+        stderr="E: Something went wrong\n",
+    )
+
+    assert (
+        _get_apt_get_error_package(["fallback-package=1.0"], err) == "fallback-package"
+    )
 
 
 def test_get_installed_packages_uses_dpkg_query_when_available(monkeypatch):
