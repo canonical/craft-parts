@@ -188,7 +188,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
             # Organize a dir to a dir
             if not src_path.is_symlink() and src_path.is_dir():
                 # When an explicit key is used the source directory is moved
-                # directly to the destination path, replacing it. Multiple
+                # directly to the destination path, replace it. Multiple
                 # explicit keys mapping to the same destination merge their contents.
                 # If a glob key is used, each matching directory is nested inside
                 # the destination preserving its name.
