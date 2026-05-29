@@ -195,6 +195,11 @@ def organize_files(  # noqa: PLR0912, PLR0915
 
             # Organize a dir to a dir
             if not src_path.is_symlink() and src_path.is_dir():
+                # When an explicit key is used the source directory is moved
+                # directly to the destination path, replace it. Multiple
+                # explicit keys mapping to the same destination merge their contents.
+                # If a glob key is used, each matching directory is nested inside
+                # the destination preserving its name.
                 if "*" not in key:  # Key is explicit
                     if dst_path.is_symlink():
                         real_dst_path = dst_path.resolve()
@@ -204,16 +209,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     if src_partition_pair.partition != BUILD_PARTITION:
                         shutil.rmtree(src)
                     continue
+
                 # Key is a glob
                 # Organizing to the root of a partition in overwrite mode.
-                if (
-                    dst_path in install_dir_map.values()
-                    or dst_partition_pair.partition == OVERLAY_PARTITION
-                ):
-                    if dst_path in install_dir_map.values():
-                        real_dst_path = dst_path / src_path.name
-                    else:
-                        real_dst_path = dst_path
+                organize_to_overlay = dst_partition_pair.partition == OVERLAY_PARTITION
+
+                if dst_path in install_dir_map.values() or organize_to_overlay:
+                    real_dst_path = dst_path / src_path.name
                     if not overwrite:
                         conflicts = file_utils.find_merge_conflicts(
                             src_path,
