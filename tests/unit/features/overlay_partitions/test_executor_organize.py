@@ -415,7 +415,7 @@ def test_organize_merge_overlay_directories(new_path):
 
 def _partition_dirs(base: Path) -> dict[str | None, Path]:
     base = Path(base)
-    dirs = {
+    dirs: dict[str | None, Path] = {
         "default": base / "install",
         OVERLAY_PARTITION: base / "overlay_dir",
         BUILD_PARTITION: base / "build_dir",
