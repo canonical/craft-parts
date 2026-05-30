@@ -52,11 +52,12 @@ def _check_overlay_equivalence(
     src_path: pathlib.Path,
     dst_path: pathlib.Path,
     dst_string: str,
+    preserve_source: bool = False,
 ) -> None:
     """Check if source and destination are equivalent on the overlay partition.
 
-    If equivalent, removes the source (or merges if it's a directory).
-    If not equivalent, raises FileOrganizeError.
+    If equivalent, removes the source (or merges if it's a directory), unless
+    preserve_source is true. If not equivalent, raises FileOrganizeError.
 
     :param part_name: The name of the part being organized.
     :param key: The organize key (source pattern).
@@ -64,6 +65,7 @@ def _check_overlay_equivalence(
     :param src_path: The source path.
     :param dst_path: The destination path.
     :param dst_string: A display string for the destination.
+    :param preserve_source: Whether to keep the source after a successful equivalence check.
     :raises FileOrganizeError: If the paths are not equivalent.
     """
     msg = file_utils.get_path_differences(src_path, dst_path)
@@ -72,8 +74,9 @@ def _check_overlay_equivalence(
     ):
         if not src_path.is_symlink() and src_path.is_dir():
             file_utils.link_or_copy_tree(src_path, dst_path, overwrite_metadata=False)
-            shutil.rmtree(src_path)
-        else:
+            if not preserve_source:
+                shutil.rmtree(src_path)
+        elif not preserve_source:
             src_path.unlink()
         return
     raise errors.FileOrganizeError(
@@ -152,6 +155,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
         for src in sources:
             src_count += 1
             src_path = pathlib.Path(src)
+            src_is_build_partition = src_partition_pair.partition == BUILD_PARTITION
 
             # Organizing a symlink to the overlay partition simply deletes the link.
             if (
@@ -178,19 +182,22 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     if dst_target.exists() and (
                         dst_target.samefile(dst_path) or real_dst_path.is_dir()
                     ):
-                        src_path.unlink()
+                        if not src_is_build_partition:
+                            src_path.unlink()
                         continue
                     if real_dst_path.is_symlink() and real_dst_path.readlink() in (
                         dst_target,
                         relative_src_target,
                     ):
-                        src_path.unlink()
+                        if not src_is_build_partition:
+                            src_path.unlink()
                         continue
                     if src_path.readlink().is_absolute():
                         real_dst_path.symlink_to(dst_target)
                     else:
                         real_dst_path.symlink_to(relative_src_target)
-                    src_path.unlink()
+                    if not src_is_build_partition:
+                        src_path.unlink()
                     continue
 
             # Organize a dir to a dir
@@ -279,6 +286,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                         src_path=src_path,
                         dst_path=dst_path,
                         dst_string=dst_string,
+                        preserve_source=src_is_build_partition,
                     )
                     continue
                 else:
@@ -313,6 +321,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                             src_path=pathlib.Path(src),
                             dst_path=pathlib.Path(real_dst),
                             dst_string=dst_string,
+                            preserve_source=src_is_build_partition,
                         )
                         continue
                     raise errors.FileOrganizeError(

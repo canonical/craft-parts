@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 from craft_parts import errors
 from craft_parts.executor.organize import organize_files
+from craft_parts.utils.partition_utils import BUILD_PARTITION, OVERLAY_PARTITION
 
 # Although it's not explicitly used, randomize_iglob is used here as it's an auto-use
 # fixture that checks that the order of an organize doesn't matter.
@@ -410,3 +411,63 @@ def test_organize_merge_overlay_directories(new_path):
     # Check that metadata of my-dir was PRESERVED (from Part A)
     # Part A had 0o755, Part B had 0o700
     assert ((overlay_dir / "my-dir").stat().st_mode & 0o777) == 0o755
+
+
+def _partition_dirs(base: Path) -> dict[str | None, Path]:
+    base = Path(base)
+    dirs = {
+        "default": base / "install",
+        OVERLAY_PARTITION: base / "overlay_dir",
+        BUILD_PARTITION: base / "build_dir",
+    }
+    for directory in dirs.values():
+        directory.mkdir(parents=True, exist_ok=True)
+    return dirs
+
+
+def test_organize_build_file_to_existing_overlay_preserves_build_source(
+    new_dir: Path,
+):
+    """Organizing equivalent files from (build) to (overlay) preserves the source."""
+    install_dirs = _partition_dirs(new_dir)
+    build_file = install_dirs[BUILD_PARTITION] / "foo"
+    overlay_file = install_dirs[OVERLAY_PARTITION] / "foo"
+    build_file.write_text("content", encoding="utf-8")
+    overlay_file.write_text("content", encoding="utf-8")
+
+    organize_files(
+        part_name="part",
+        file_map={"(build)/foo": "(overlay)/foo"},
+        install_dir_map=install_dirs,
+        overwrite=False,
+        default_partition="default",
+    )
+
+    assert build_file.read_text(encoding="utf-8") == "content"
+    assert overlay_file.read_text(encoding="utf-8") == "content"
+
+
+def test_organize_build_symlink_to_overlay_preserves_build_source(
+    new_dir: Path,
+):
+    """Organizing a symlink from (build) to (overlay) preserves the source."""
+    install_dirs = _partition_dirs(new_dir)
+    default_target = install_dirs["default"] / "target"
+    default_target.write_text("content", encoding="utf-8")
+    build_link = install_dirs[BUILD_PARTITION] / "target-link"
+    build_link.symlink_to(default_target)
+
+    organize_files(
+        part_name="part",
+        file_map={"(build)/target-link": "(overlay)/target-link"},
+        install_dir_map=install_dirs,
+        overwrite=False,
+        default_partition="default",
+    )
+
+    overlay_link = install_dirs[OVERLAY_PARTITION] / "target-link"
+
+    assert build_link.is_symlink()
+    assert build_link.readlink() == default_target
+    assert overlay_link.is_symlink()
+    assert overlay_link.readlink() == install_dirs[OVERLAY_PARTITION] / "target"
