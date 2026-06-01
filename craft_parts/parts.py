@@ -290,7 +290,9 @@ class PartSpec(BaseModel):
     stage_snaps: list[str] = Field(
         default=[],
         description="The snaps to include in the stage environment.",
-        examples=["[go/1.17, chisel/latest/candidate, mir-kiosk-x11]"],
+        examples=[
+            "[go/1.17, chisel/latest/candidate, mir-kiosk-x11, pc-kernel+nouveau-ko]"
+        ],
     )
     """During the stage step, these snaps are included in the stage environment.
 
@@ -299,6 +301,9 @@ class PartSpec(BaseModel):
     * ``<snap-name>``
     * ``<snap-name>/<channel-name>``
     * ``<snap-name>/<channel-name>/<version-name>``
+
+    To fetch a snap component, a component name can be appended to the snap name with a '+'.
+    Multiple components can be specified by appending multiple names, like ``<snap-name>+<c1>+<c2>``.
 
     If an entry contains no version or channel, ``latest/stable`` is used.
     """
