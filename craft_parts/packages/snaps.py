@@ -209,10 +209,11 @@ class SnapPackage:
             self.name,
             ", ".join(self.components),
         )
+        comp_segment = f"+{'+'.join(self.components)}" if self.components else ""
         snap_download_cmd = [
             "snap",
             "download",
-            f"{self.name}+{'+'.join(self.components)}",
+            f"{self.name}{comp_segment}",
         ]
         if self._original_channel:
             snap_download_cmd.extend(["--channel", self._original_channel])
