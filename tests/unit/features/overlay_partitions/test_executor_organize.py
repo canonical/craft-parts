@@ -471,3 +471,28 @@ def test_organize_build_symlink_to_overlay_preserves_build_source(
     assert build_link.readlink() == default_target
     assert overlay_link.is_symlink()
     assert overlay_link.readlink() == install_dirs[OVERLAY_PARTITION] / "target"
+
+
+def test_organize_build_file_to_new_overlay_directory(new_dir: Path):
+    """Organizing from (build) to a new overlay directory preserves the source."""
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[],
+        setup_files=[],
+        setup_symlinks=[],
+        setup_build_files=["generated.txt"],
+        organize_map={"(build)/generated.txt": "(overlay)/generated/generated.txt"},
+        expected=[
+            (["generated"], "../overlay_dir"),
+            (["generated.txt"], "../overlay_dir/generated"),
+            (["generated.txt"], "../build_dir"),
+        ],
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={
+            "default": Path(new_dir / "install"),
+            OVERLAY_PARTITION: Path(new_dir / "overlay_dir"),
+            BUILD_PARTITION: Path(new_dir / "build_dir"),
+        },
+    )

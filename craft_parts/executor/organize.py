@@ -119,7 +119,6 @@ def organize_files(  # noqa: PLR0912, PLR0915
         src_partition_pair = path_utils.get_partition_and_path(key, default_partition)
         src = get_src_path(
             src_partition_pair,
-            key,
             part_name,
             install_dir_map,
             default_partition,
@@ -132,7 +131,10 @@ def organize_files(  # noqa: PLR0912, PLR0915
             file_map[key].lstrip("/"), default_partition
         )
         dst, dst_string = get_dst_path(
-            key, file_map, part_name, install_dir_map, default_partition
+            dst_partition_pair,
+            part_name,
+            install_dir_map,
+            default_partition,
         )
         dst_path = pathlib.Path(dst)
 
@@ -221,7 +223,11 @@ def organize_files(  # noqa: PLR0912, PLR0915
                 # Organizing to the root of a partition in overwrite mode.
                 organize_to_overlay = dst_partition_pair.partition == OVERLAY_PARTITION
 
-                if dst_path in install_dir_map.values() or organize_to_overlay:
+                if (
+                    dst_path in install_dir_map.values()
+                    or organize_to_overlay
+                    or (src_is_build_partition and dst_path.is_dir())
+                ):
                     real_dst_path = dst_path / src_path.name
                     if not overwrite:
                         conflicts = file_utils.find_merge_conflicts(
@@ -349,7 +355,6 @@ def organize_files(  # noqa: PLR0912, PLR0915
 
 def get_src_path(
     src_partition_path: path_utils.PartitionPathPair,
-    key: str,
     part_name: str,
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
@@ -376,6 +381,10 @@ def get_src_path(
 
     base_dir = Path(install_dir_map[src_partition]).resolve()
     src_path = base_dir / src_inner_path
+    if src_partition and src_partition != default_partition:
+        src_string = f"({src_partition})/{src_inner_path}"
+    else:
+        src_string = str(src_inner_path)
 
     # Resolve only the parent path so symlinks being organized are preserved.
     # Resolving the full source path would follow the final symlink target and
@@ -384,7 +393,7 @@ def get_src_path(
         raise errors.FileOrganizeError(
             part_name=part_name,
             message=(
-                f"trying to organize from {key!r}, but source paths must stay within "
+                f"trying to organize from {src_string!r}, but source paths must stay within "
                 f"the install directory"
             ),
         )
@@ -393,19 +402,13 @@ def get_src_path(
 
 
 def get_dst_path(
-    key: str,
-    file_map: dict[str, str],
+    dst_partition_path: path_utils.PartitionPathPair,
     part_name: str,
     install_dir_map: Mapping[str | None, Path],
     default_partition: str,
 ) -> tuple[Path, str]:
     """Return the full destination path and log-friendly representation of a destination."""
-    # Remove the leading slash so the path actually joins
-    # Also trailing slash is significant, be careful if using pathlib!
-    dst_partition, dst_inner_path = path_utils.get_partition_and_path(
-        file_map[key].lstrip("/"),
-        default_partition,
-    )
+    dst_partition, dst_inner_path = dst_partition_path
 
     if dst_partition == BUILD_PARTITION:
         raise errors.FileOrganizeError(
