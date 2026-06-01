@@ -16,6 +16,7 @@
 
 """Definitions and helpers for part handlers."""
 
+import itertools
 import logging
 import os
 import shutil
@@ -1361,8 +1362,19 @@ class PartHandler:
             for s in snap_files
         )
 
-        for snap_source in snap_sources:
-            snap_source.provision(install_dir, keep=True)
+        comp_files = snaps_dir.glob("*.comp")
+        comp_sources = (
+            sources.ComponentSource(
+                source=c,
+                part_src_dir=snaps_dir,
+                cache_dir=self._part_info.cache_dir,
+                project_dirs=self._part.dirs,
+            )
+            for c in comp_files
+        )
+
+        for source in itertools.chain(snap_sources, comp_sources):
+            source.provision(install_dir, keep=True)
 
 
 def _remove(filename: Path) -> None:

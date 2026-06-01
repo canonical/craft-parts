@@ -1,0 +1,117 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright 2021 Canonical Ltd.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""The component source handler."""
+
+import shutil
+import tempfile
+from pathlib import Path
+from typing import Literal, cast
+
+import yaml
+from typing_extensions import override
+
+from craft_parts.utils import file_utils
+
+from . import errors
+from .base import (
+    BaseFileSourceModel,
+    FileSourceHandler,
+    get_json_extra_schema,
+    get_model_config,
+)
+
+
+class ComponentSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+    """Pydantic model for a snap file source."""
+
+    pattern = r"\.snap$"
+    model_config = get_model_config(get_json_extra_schema(pattern))
+    source_type: Literal["snap"] = "snap"
+
+
+class ComponentSource(FileSourceHandler):
+    """Handles downloading and extractions for a component source.
+
+    On provision, the meta directory is renamed to meta.<component-name> and, if present,
+    the same applies for the snap directory which shall be renamed to
+    snap.<component-name>.
+    """
+
+    source_model = ComponentSourceModel
+
+    @override
+    def provision(
+        self,
+        dst: Path,
+        keep: bool = False,
+        src: Path | None = None,
+    ) -> None:
+        """Provision the snap source.
+
+        :param dst: The destination directory to provision to.
+        :param keep: Whether to keep the snap after provisioning is complete.
+        :param src: Force a new source to use for extraction.
+
+        raises errors.InvalidSnap: If trying to provision an invalid snap.
+        """
+        comp_file = src if src else self.part_src_dir / Path(self.source).name
+        comp_file = comp_file.resolve()
+
+        # unsquashfs [options] filesystem [directories or files to extract]
+        # options:
+        # -force: if file already exists then overwrite
+        # -dest <pathname>: unsquash to <pathname>
+        with tempfile.TemporaryDirectory(prefix=str(comp_file.parent)) as temp_dir:
+            extract_command: list[str | Path] = [
+                "unsquashfs",
+                "-force",
+                "-dest",
+                temp_dir,
+                comp_file,
+            ]
+            self._run_output(extract_command)
+            temp_path = Path(temp_dir)
+            comp_name = _get_comp_name(comp_file.name, temp_path)
+            # Rename meta and snap dirs from the component
+            rename_paths = ((temp_path / d) for d in ("meta", "snap"))
+            rename_paths = (d for d in rename_paths if d.exists())
+            for rename in rename_paths:
+                shutil.move(rename, f"{str(rename)}.{comp_name}")
+
+            snap_name, comp_name = comp_name.split("+")
+            file_utils.link_or_copy_tree(
+                source_tree=temp_path,
+                destination_tree=dst / snap_name / "components" / "mnt" / comp_name,
+            )
+
+        if not keep:
+            comp_file.unlink()
+
+
+def _get_comp_name(comp: str, comp_dir: Path) -> str:
+    """Obtain the component name from the component details file.
+
+    :param snap: The component package file.
+    :param snap_dir: The location of the unsquashed component contents.
+
+    :return: The component name.
+    """
+    try:
+        with (comp_dir / "meta" / "component.yaml").open() as comp_yaml:
+            return cast(str, yaml.safe_load(comp_yaml)["component"])
+    except (FileNotFoundError, KeyError) as comp_error:
+        raise errors.InvalidComponentPackage(comp) from comp_error
