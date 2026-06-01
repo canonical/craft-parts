@@ -359,38 +359,57 @@ class TestSnapPackageLifecycle:
             ],
         ]
 
-    def test_download(self, fake_snapd, fake_snap_command):
+    @pytest.mark.parametrize(
+        ("input_snaps", "expected_calls"),
+        [
+            pytest.param(
+                ["fake-snap"], [["snap", "download", "fake-snap"]], id="simple"
+            ),
+            pytest.param(
+                ["fake-snap/strict/stable"],
+                [["snap", "download", "fake-snap", "--channel", "strict/stable"]],
+                id="explicit",
+            ),
+            pytest.param(
+                ["fake-classic"], [["snap", "download", "fake-classic"]], id="classic"
+            ),
+            pytest.param(
+                ["fake-snap", "other-fake-snap/latest/stable"],
+                [
+                    ["snap", "download", "fake-snap"],
+                    [
+                        "snap",
+                        "download",
+                        "other-fake-snap",
+                        "--channel",
+                        "latest/stable",
+                    ],
+                ],
+                id="multi",
+            ),
+        ],
+    )
+    def test_download(
+        self,
+        fake_snapd,
+        fake_snap_command,
+        input_snaps: list[str],
+        expected_calls: list[list[str]],
+    ):
         fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
-        ]
-
-        snap_pkg = snaps.SnapPackage("fake-snap")
-        snap_pkg.download()
-        assert fake_snap_command.calls == [["snap", "download", "fake-snap"]]
-
-    def test_download_channel(self, fake_snapd, fake_snap_command):
-        fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"strict/edge": {"confinement": "strict"}}}}
-        ]
-
-        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
-        snap_pkg.download()
-        assert fake_snap_command.calls == [
-            ["snap", "download", "fake-snap", "--channel", "strict/stable"]
-        ]
-
-    def test_download_classic(self, fake_snapd, fake_snap_command):
-        fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
-        ]
-
-        snap_pkg = snaps.SnapPackage("fake-snap")
-        snap_pkg.download()
-        assert fake_snap_command.calls == [["snap", "download", "fake-snap"]]
-
-    def test_download_snaps(self, fake_snapd, fake_snap_command):
-        fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"latest/stable": {"confinement": "strict"}}}},
+            {
+                "fake-snap": {
+                    "channels": {
+                        "strict/stable": {"confinement": "strict"},
+                        "strict/edge": {"confinement": "strict"},
+                    }
+                },
+            },
+            {
+                "fake-classic": {
+                    "channels": {"classic/stable": {"confinement": "classic"}}
+                },
+            },
             {
                 "other-fake-snap": {
                     "channels": {"latest/stable": {"confinement": "strict"}}
@@ -398,20 +417,10 @@ class TestSnapPackageLifecycle:
             },
         ]
 
-        snaps.download_snaps(
-            snaps_list=["fake-snap", "other-fake-snap/latest/stable"],
-            directory=Path("fakedir"),
-        )
-        assert fake_snap_command.calls == [
-            ["snap", "download", "fake-snap"],
-            [
-                "snap",
-                "download",
-                "other-fake-snap",
-                "--channel",
-                "latest/stable",
-            ],
-        ]
+        for snap in input_snaps:
+            snaps.SnapPackage(snap).download()
+
+        assert fake_snap_command.calls == expected_calls
 
     def test_download_snaps_with_invalid(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
