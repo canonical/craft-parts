@@ -85,6 +85,7 @@ class ComponentSource(FileSourceHandler):
             file_utils.link_or_copy_tree(
                 source_tree=temp_path,
                 destination_tree=dst
+                / "snap"
                 / snap_name
                 / "components"
                 / "mnt"

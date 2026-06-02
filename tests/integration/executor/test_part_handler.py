@@ -320,7 +320,8 @@ def test_stage_snap_unpack_with_components(
     assert (install_dir / f"meta.{_SNAP_NAME}" / "snap.yaml").is_file()
     for comp in component_names:
         comp_meta_path = (
-            Path(_SNAP_NAME)
+            Path("snap")
+            / _SNAP_NAME
             / "components"
             / "mnt"
             / comp
