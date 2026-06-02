@@ -31,8 +31,8 @@ class FakeSnapCommand:
         self.calls = []
         self.install_success = True
         self.refresh_success = True
-        self.download_side_effect = None
-        self.fake_download = None
+        self.download_side_effect: list[bool] | None = None
+        self.fake_download: str | Path | None = None
         self.fake_comp_downloads: dict[str, str | Path] = {}
         self._email = "-"
 
