@@ -16,6 +16,7 @@
 
 from pathlib import Path
 
+import pytest
 from craft_parts.packages import errors
 
 
@@ -137,12 +138,26 @@ def test_snap_install_error():
 
 
 def test_snap_download_error():
-    err = errors.SnapDownloadError(snap_name="word-salad", snap_channel="stable")
+    err = errors.SnapDownloadError(
+        snap_name="word-salad", snap_channel="stable", snap_components=[]
+    )
     assert err.snap_name == "word-salad"
     assert err.snap_channel == "stable"
     assert err.brief == "Error downloading snap 'word-salad' from channel 'stable'."
     assert err.details is None
     assert err.resolution is None
+
+
+@pytest.mark.parametrize(("use_components"), [True, False])
+def test_snap_download_error_comps(use_components: bool) -> None:
+    name = "foo"
+    comps = ["c1", "c2", "c3"] if use_components else []
+    channel = "latest/stable"
+
+    err = errors.SnapDownloadError(
+        snap_name=name, snap_components=comps, snap_channel=channel
+    )
+    assert ("with the following components" in err.brief) == use_components
 
 
 def test_snap_refresh_error():

@@ -16,7 +16,6 @@
 
 """The component source handler."""
 
-import shutil
 import tempfile
 from pathlib import Path
 from typing import Literal, cast
@@ -36,20 +35,15 @@ from .base import (
 
 
 class ComponentSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
-    """Pydantic model for a snap file source."""
+    """Pydantic model for a component file source."""
 
-    pattern = r"\.snap$"
+    pattern = r"\.comp$"
     model_config = get_model_config(get_json_extra_schema(pattern))
-    source_type: Literal["snap"] = "snap"
+    source_type: Literal["comp"] = "comp"
 
 
 class ComponentSource(FileSourceHandler):
-    """Handles downloading and extractions for a component source.
-
-    On provision, the meta directory is renamed to meta.<component-name> and, if present,
-    the same applies for the snap directory which shall be renamed to
-    snap.<component-name>.
-    """
+    """Handles downloading and extractions for a component source."""
 
     source_model = ComponentSourceModel
 
@@ -86,16 +80,16 @@ class ComponentSource(FileSourceHandler):
             self._run_output(extract_command)
             temp_path = Path(temp_dir)
             comp_name = _get_comp_name(comp_file.name, temp_path)
-            # Rename meta and snap dirs from the component
-            rename_paths = ((temp_path / d) for d in ("meta", "snap"))
-            rename_paths = (d for d in rename_paths if d.exists())
-            for rename in rename_paths:
-                shutil.move(rename, f"{str(rename)}.{comp_name}")
-
             snap_name, comp_name = comp_name.split("+")
+            comp_revision = comp_file.stem.rsplit("_", 1)[1]
             file_utils.link_or_copy_tree(
                 source_tree=temp_path,
-                destination_tree=dst / snap_name / "components" / "mnt" / comp_name,
+                destination_tree=dst
+                / snap_name
+                / "components"
+                / "mnt"
+                / comp_name
+                / comp_revision,
             )
 
         if not keep:

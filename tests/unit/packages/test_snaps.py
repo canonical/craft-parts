@@ -387,6 +387,36 @@ class TestSnapPackageLifecycle:
                 ],
                 id="multi",
             ),
+            pytest.param(
+                ["fake-snap+with-components"],
+                [
+                    ["snap", "download", "fake-snap+with-components"],
+                ],
+                id="component",
+            ),
+            pytest.param(
+                [
+                    "fake-snap+with-components/stable",
+                    "fake-classic+with-components/classic/stable",
+                ],
+                [
+                    [
+                        "snap",
+                        "download",
+                        "fake-snap+with-components",
+                        "--channel",
+                        "stable",
+                    ],
+                    [
+                        "snap",
+                        "download",
+                        "fake-classic+with-components",
+                        "--channel",
+                        "classic/stable",
+                    ],
+                ],
+                id="components-and-channels",
+            ),
         ],
     )
     def test_download(

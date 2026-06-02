@@ -33,6 +33,7 @@ class FakeSnapCommand:
         self.refresh_success = True
         self.download_side_effect = None
         self.fake_download = None
+        self.fake_comp_downloads: dict[str, str | Path] = {}
         self._email = "-"
 
         original_run = craft_parts.packages.snaps.subprocess.run
@@ -102,6 +103,16 @@ class FakeSnapCommand:
             if self.fake_download:
                 dest = Path(kwargs["cwd"], f"{params[0]}.snap")
                 shutil.copyfile(self.fake_download, dest)
+            if self.fake_comp_downloads:
+                snap_name, *components = params[0].split("+")
+                for comp in components:
+                    comp_spec = f"{snap_name}+{comp}"
+                    if comp_spec in self.fake_comp_downloads:
+                        comp_dest = Path(
+                            kwargs["cwd"],
+                            Path(self.fake_comp_downloads[comp_spec]).name,
+                        )
+                        shutil.copyfile(self.fake_comp_downloads[comp_spec], comp_dest)
             return b"Downloaded  "
 
         return None
