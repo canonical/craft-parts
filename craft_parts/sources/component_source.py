@@ -54,13 +54,13 @@ class ComponentSource(FileSourceHandler):
         keep: bool = False,
         src: Path | None = None,
     ) -> None:
-        """Provision the snap source.
+        """Provision the component source.
 
         :param dst: The destination directory to provision to.
-        :param keep: Whether to keep the snap after provisioning is complete.
+        :param keep: Whether to keep the component after provisioning is complete.
         :param src: Force a new source to use for extraction.
 
-        raises errors.InvalidSnap: If trying to provision an invalid snap.
+        raises errors.InvalidComponentPackage: If trying to provision an invalid component.
         """
         comp_file = src if src else self.part_src_dir / Path(self.source).name
         comp_file = comp_file.resolve()
