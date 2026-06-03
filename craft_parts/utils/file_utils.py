@@ -148,8 +148,8 @@ def link(
 
 
 def copy(
-    source: Path,
-    destination: Path,
+    source: Path | str,
+    destination: Path | str,
     *,
     follow_symlinks: bool = False,
     permissions: list[Permissions] | None = None,
@@ -167,6 +167,9 @@ def copy(
 
     :raises CopyFileNotFound: If source doesn't exist.
     """
+    source = Path(source)
+    destination = Path(destination)
+
     # If os.link raised an I/O error, it may have left a file behind. Skip on
     # OSError in case it doesn't exist or is a directory.
     with contextlib.suppress(OSError):
