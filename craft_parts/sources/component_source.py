@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -79,9 +79,10 @@ class ComponentSource(FileSourceHandler):
             ]
             self._run_output(extract_command)
             temp_path = Path(temp_dir)
-            comp_name = _get_comp_name(comp_file.name, temp_path)
-            snap_name, comp_name = comp_name.split("+")
+            full_comp_name = _get_full_comp_name(comp_file.name, temp_path)
+            snap_name, comp_name = full_comp_name.split("+")
             comp_revision = comp_file.stem.rsplit("_", 1)[1]
+            # This destination path is where snapd mounts components normally
             file_utils.link_or_copy_tree(
                 source_tree=temp_path,
                 destination_tree=dst
@@ -97,13 +98,13 @@ class ComponentSource(FileSourceHandler):
             comp_file.unlink()
 
 
-def _get_comp_name(comp: str, comp_dir: Path) -> str:
+def _get_full_comp_name(comp: str, comp_dir: Path) -> str:
     """Obtain the component name from the component details file.
 
     :param snap: The component package file.
     :param snap_dir: The location of the unsquashed component contents.
 
-    :return: The component name.
+    :return: The component name, in the form of <parent-snap>+<component>.
     """
     try:
         with (comp_dir / "meta" / "component.yaml").open() as comp_yaml:
