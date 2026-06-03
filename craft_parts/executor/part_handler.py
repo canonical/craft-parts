@@ -19,7 +19,7 @@
 import logging
 import os
 import shutil
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
@@ -229,6 +229,7 @@ class PartHandler:
         overlay_manager: OverlayManager,
         ignore_patterns: list[str] | None = None,
         base_layer_hash: LayerHash | None = None,
+        build_environment: Iterable[str] | None = None,
     ) -> None:
         self._part = part
         self._part_info = part_info
@@ -236,7 +237,7 @@ class PartHandler:
         self._track_stage_packages = track_stage_packages
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
-        self._app_environment: dict[str, str] = {}
+        self._build_environment = build_environment
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -661,6 +662,9 @@ class PartHandler:
         )
 
         if step_info.step == Step.BUILD:
+            # Prepend environment set by the application.
+            step_env = self._prepend_build_environment(step_env)
+
             # Validate build environment. Unlike the pre-validation we did in
             # the execution prologue, we don't assume that a different part
             # can add elements to the build environment. All part dependencies
@@ -1363,6 +1367,15 @@ class PartHandler:
 
         for snap_source in snap_sources:
             snap_source.provision(install_dir, keep=True)
+
+    def _prepend_build_environment(self, content: str) -> str:
+        if not self._build_environment:
+            return content
+
+        env_list = ["# Build environment from application"]
+        env_list.extend(list(self._build_environment))
+        env_list.extend(["", content])
+        return "\n".join(env_list)
 
 
 def _remove(filename: Path) -> None:

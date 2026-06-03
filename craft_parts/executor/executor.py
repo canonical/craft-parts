@@ -18,6 +18,7 @@
 
 import logging
 import shutil
+from collections.abc import Iterable
 from pathlib import Path
 
 from typing_extensions import Self
@@ -55,6 +56,7 @@ class Executor:
     :param ignore_patterns: File patterns to ignore when pulling local sources.
     :param use_host_sources: Whether overlay steps should also include the repository
       sources defined on the host.
+    :param build_environment: The environment variables to be set during build.
     """
 
     def __init__(  # noqa: PLR0913
@@ -69,6 +71,7 @@ class Executor:
         base_layer_dir: Path | None = None,
         base_layer_hash: LayerHash | None = None,
         use_host_sources: bool = False,
+        build_environment: Iterable[str] | None = None,
     ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -79,6 +82,7 @@ class Executor:
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
         self._use_host_sources = use_host_sources
+        self._build_environment = build_environment
 
         # The cache layer level is set to the first part that doesn't organize
         # to the overlay coming after a part that organizes to the overlay.
@@ -268,6 +272,7 @@ class Executor:
             overlay_manager=self._overlay_manager,
             ignore_patterns=self._ignore_patterns,
             base_layer_hash=self._base_layer_hash,
+            build_environment=self._build_environment,
         )
         self._handler[part.name] = handler
 
