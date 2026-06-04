@@ -271,6 +271,28 @@ class TestFileSourceHandler:
         with pytest.raises(errors.HttpRequestError, match=expected):
             self.source.pull()
 
+    def test_pull_url_streaming_request_error(self, mocker, new_dir):
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        response = mocker.Mock()
+        response.raise_for_status.return_value = None
+        response.headers = {}
+        response.iter_content.side_effect = requests.exceptions.ChunkedEncodingError(
+            "stream interrupted"
+        )
+
+        mocker.patch("craft_parts.sources.base.requests.get", return_value=response)
+
+        expected = escape(
+            "Network request error: network request failed "
+            "(request=None, response=None).\n"
+            f"Source: {self.source.source!r}\n"
+            "Check network connection and source, and try again."
+        )
+        with pytest.raises(errors.NetworkRequestError, match=expected):
+            self.source.pull()
+
     def test_file_source_abstract_methods(self):
         class FaultyFileSource(FileSourceHandler):
             """A file source handler that doesn't implement abstract methods."""
