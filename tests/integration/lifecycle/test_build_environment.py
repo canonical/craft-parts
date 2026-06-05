@@ -49,4 +49,3 @@ def test_build_environment(new_dir, capfd):
 
     captured = capfd.readouterr()
     assert captured.out == "hello there\n"
-
