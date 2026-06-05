@@ -46,4 +46,4 @@ class TestPluginNil:
         assert self._plugin.get_build_commands() == []
 
     def test_get_out_of_source_build(self):
-        assert self._plugin.get_out_of_source_build() is False
+        assert self._plugin.get_out_of_source_build() is True

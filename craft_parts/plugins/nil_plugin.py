@@ -80,3 +80,8 @@ class NilPlugin(Plugin):
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
         return []
+
+    @classmethod
+    def get_out_of_source_build(cls) -> bool:
+        """Return whether the plugin performs out-of-source-tree builds."""
+        return True
