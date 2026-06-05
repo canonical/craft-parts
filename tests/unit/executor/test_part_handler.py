@@ -1436,8 +1436,8 @@ class TestDirs:
 
         assert step_env == textwrap.dedent("""\
             # Build environment from application
-            FOO=foo value
-            BAR=bar value
+            export FOO=foo value
+            export BAR=bar value
 
             content""")
 
@@ -1460,7 +1460,7 @@ class TestDirs:
 
         assert step_env == textwrap.dedent("""\
             # Build environment from application
-            FOO=foo value
-            BAR=bar value
+            export FOO=foo value
+            export BAR=bar value
 
             content""")

@@ -1373,7 +1373,7 @@ class PartHandler:
             return content
 
         env_list = ["# Build environment from application"]
-        env_list.extend(list(self._build_environment))
+        env_list.extend([f"export {x}" for x in self._build_environment])
         env_list.extend(["", content])
         return "\n".join(env_list)
 
