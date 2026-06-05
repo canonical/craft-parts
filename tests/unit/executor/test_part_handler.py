@@ -137,6 +137,27 @@ class TestPartHandling:
         assert self._mock_mount_overlayfs.mock_calls == []
         assert self._mock_umount.mock_calls == []
 
+    def test_run_build_passes_build_dir_to_organize(self, mocker):
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
+        mocker.patch(
+            "craft_parts.packages.Repository.get_installed_packages",
+            return_value=[],
+        )
+        mocker.patch(
+            "craft_parts.packages.snaps.get_installed_snaps",
+            return_value=[],
+        )
+        mocker.patch("subprocess.check_output", return_value=b"os-info")
+        mock_organize = mocker.patch("craft_parts.executor.part_handler.organize_files")
+
+        self._handler._run_build(
+            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None
+        )
+
+        organize_install_dirs = mock_organize.call_args.kwargs["install_dir_map"]
+        assert organize_install_dirs["build"] == self._part.part_build_dir
+        assert "build" not in self._part.part_install_dirs
+
     @pytest.mark.usefixtures("new_dir")
     @pytest.mark.parametrize("out_of_source", [True, False])
     def test_run_build_out_of_source_behavior(self, mocker, out_of_source):

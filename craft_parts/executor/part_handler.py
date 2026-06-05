@@ -49,7 +49,7 @@ from craft_parts.state_manager import (
 from craft_parts.state_manager.stage_state import StageState
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import BUILD_PARTITION, DEFAULT_PARTITION
 
 from . import filesets, migration
 from .environment import generate_step_environment
@@ -498,10 +498,15 @@ class PartHandler:
             # time around. We can be confident that this won't overwrite anything else,
             # because to do so would require changing the `organize` keyword, which will
             # make the build step dirty and require a clean instead of an update.
+            organize_install_dirs = {
+                **self._part.part_install_dirs,
+                BUILD_PARTITION: self._part.part_build_dir,
+            }
+
             organize_files(
                 part_name=self._part.name,
                 file_map=self._part.spec.organize_files,
-                install_dir_map=self._part.part_install_dirs,
+                install_dir_map=organize_install_dirs,
                 overwrite=update,
                 default_partition=step_info.default_partition,
             )

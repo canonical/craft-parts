@@ -153,6 +153,34 @@ def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class
     assert isinstance(actual_inner_path, path_class)
 
 
+@pytest.mark.parametrize("path_class", PATH_CLASSES)
+def test_get_partition_compatible_filepath_disabled_build_partition(path_class):
+    """Build pseudo-partition paths are parsed even when partitions are disabled."""
+    actual_partition, actual_inner_path = get_partition_and_path(
+        path_class("(build)/generated.txt"), "default"
+    )
+
+    assert actual_partition == "build"
+    assert actual_inner_path == path_class("generated.txt")
+    assert isinstance(actual_inner_path, path_class)
+
+
+@pytest.mark.parametrize("path", ["(default)/generated.txt", "(overlay)/generated.txt"])
+@pytest.mark.parametrize("path_class", PATH_CLASSES)
+def test_get_partition_compatible_filepath_disabled_non_build_passthrough(
+    path,
+    path_class,
+):
+    """Only the build pseudo-partition is parsed when partitions are disabled."""
+    actual_partition, actual_inner_path = get_partition_and_path(
+        path_class(path), "default"
+    )
+
+    assert actual_partition is None
+    assert actual_inner_path == path_class(path)
+    assert isinstance(actual_inner_path, path_class)
+
+
 @pytest.mark.parametrize("path", ["*"])
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
 @pytest.mark.usefixtures("enable_partitions_feature")
