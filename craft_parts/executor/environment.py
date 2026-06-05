@@ -148,8 +148,9 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
         )
 
     if pkg_config_paths:
-        part_environment["PKG_CONFIG_PATH"] = '${PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH "}' + _combine_paths(
-            pkg_config_paths, prepend="", separator=":"
+        part_environment["PKG_CONFIG_PATH"] = (
+            '${PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH "}'
+            + _combine_paths(pkg_config_paths, prepend="", separator=":")
         )
 
     return part_environment
