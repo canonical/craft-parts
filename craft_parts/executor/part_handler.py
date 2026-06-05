@@ -1377,9 +1377,15 @@ class PartHandler:
         if not self._build_environment:
             return content
 
-        env_list = ["# Build environment from application"]
-        env_list.extend([f"export {x}" for x in self._build_environment])
-        env_list.extend(["", content])
+        current_dir = Path.cwd()
+        try:
+            os.chdir(self._part.part_build_dir)
+            env_list = ["# Build environment from application"]
+            env_list.extend([f"export {x}" for x in self._build_environment])
+            env_list.extend(["", content])
+        finally:
+            os.chdir(current_dir)
+
         return "\n".join(env_list)
 
 
