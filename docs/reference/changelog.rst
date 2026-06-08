@@ -32,6 +32,8 @@ New features:
   <https://docs.python.org/3/library/pathlib.html>`_. All uses of ``str`` for paths are
   replaced with ``pathlib.Path``. In the public APIs, this change only impacts the
   ``files`` and ``directories`` variables of the ``MigrationState`` class.
+- The plus sign is allowed in package names. More restrictive rules must be
+  enforced at application level.
 
 Bug fixes:
 

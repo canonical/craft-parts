@@ -22,9 +22,9 @@ from pathlib import Path
 
 from craft_parts import errors, features
 
-# Allow alphanumeric characters, hyphens and slashes, not starting or ending
-# with a hyphen or a slash
-VALID_PARTITION_REGEX = re.compile(r"(?!-|/)[a-z0-9-/]+(?<!-|/)", re.ASCII)
+# Allow alphanumeric characters, plus sign, hyphens and slashes, not starting or
+# ending with a plus sign, hyphen or a slash.
+VALID_PARTITION_REGEX = re.compile(r"(?![-/+])[a-z0-9/+-]+(?<![-/+])", re.ASCII)
 VALID_NAMESPACED_PARTITION_REGEX = re.compile(
     r"[a-z0-9]+/" + VALID_PARTITION_REGEX.pattern, re.ASCII
 )
