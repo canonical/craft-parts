@@ -86,7 +86,10 @@ def test_validate_partitions_success_feature_enabled(partitions):
         (["default", "test/-"], "Namespaced partition 'test/-' is invalid."),
         (["default", "test/+"], "Namespaced partition 'test/+' is invalid."),
         (["default", "te-st/foo"], "Namespaced partition 'te-st/foo' is invalid."),
-        (["default", "te+st/foo"], "Namespaced partition 'te+st/foo' is invalid."),  # codespell:ignore te
+        (
+            ["default", "te+st/foo"],  # codespell:ignore te
+            "Namespaced partition 'te+st/foo' is invalid.",  # codespell:ignore te
+        ),
         (
             ["default", "test", "test/foo"],
             "Partition name conflicts:\n- 'test', 'test/foo'",
