@@ -159,7 +159,7 @@ def _validate_partitions_conflicts(partitions: Sequence[str]) -> None:
 
     raise errors.FeatureError(
         message=f"Partition name conflicts:\n{msg}",
-        details="Hyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.",
+        details="Plus signs, hyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo+bar', 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.",
     )
 
 
@@ -176,7 +176,7 @@ def _detect_conflicts(partitions: Sequence[str]) -> list[set[str]]:
 
     """
     conflict_sets: list[set[str]] = []
-    env_var_translation = {ord("-"): "_", ord("/"): "_"}
+    env_var_translation = {ord("+"): "_", ord("-"): "_", ord("/"): "_"}
 
     for candidate_partition, partition in itertools.combinations(partitions, 2):
         candidate_underscored = candidate_partition.translate(env_var_translation)

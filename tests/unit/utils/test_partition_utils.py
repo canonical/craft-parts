@@ -104,8 +104,8 @@ def test_validate_partitions_success_feature_enabled(partitions):
             ("Partition name conflicts:\n- 'test-foo', 'test/foo'"),
         ),
         (
-            ["default", "test/foo", "test-foo"],
-            ("Partition name conflicts:\n- 'test-foo', 'test/foo'"),
+            ["default", "test/foo", "test+foo"],
+            ("Partition name conflicts:\n- 'test+foo', 'test/foo'"),
         ),
         (
             [
