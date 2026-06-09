@@ -18,7 +18,8 @@
 
 import logging
 import shutil
-from collections.abc import Iterable
+import itertools
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 
 from typing_extensions import Self
@@ -263,6 +264,12 @@ class Executor:
         """Instantiate a part handler for a new part."""
         if part.name in self._handler:
             return self._handler[part.name]
+
+        build_environment = self._build_environment
+        if isinstance(self._build_environment, Iterator):
+            # Give a new generator instance to each part
+            build_environment, next_gen = itertools.tee(self._build_environment, 2)
+            self._build_environment = next_gen
 
         handler = PartHandler(
             part,
