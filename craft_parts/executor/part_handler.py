@@ -1379,6 +1379,9 @@ class PartHandler:
 
         current_dir = Path.cwd()
         try:
+            # Set the current working directory to the build directory. Build
+            # environment generators may produce different results depending
+            # on the current path.
             os.chdir(self._part.part_build_dir)
             env_list = ["# Build environment from application"]
             env_list.extend([f"export {x}" for x in self._build_environment])
