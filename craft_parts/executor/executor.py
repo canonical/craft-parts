@@ -16,9 +16,9 @@
 
 """Definitions and helpers for the action executor."""
 
+import itertools
 import logging
 import shutil
-import itertools
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
