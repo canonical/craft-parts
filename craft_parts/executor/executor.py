@@ -279,7 +279,7 @@ class Executor:
             overlay_manager=self._overlay_manager,
             ignore_patterns=self._ignore_patterns,
             base_layer_hash=self._base_layer_hash,
-            build_environment=self._build_environment,
+            build_environment=build_environment,
         )
         self._handler[part.name] = handler
 
