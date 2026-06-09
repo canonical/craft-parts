@@ -1449,7 +1449,7 @@ class TestDirs:
             new_dir=new_dir,
             partitions=partitions,
             plugin="nil",
-            build_environment=["FOO=foo value", "BAR=bar value"],
+            build_environment=['FOO="foo value"', 'BAR="bar value"'],
         )
 
         handler._make_dirs()
@@ -1457,8 +1457,8 @@ class TestDirs:
 
         assert step_env == textwrap.dedent("""\
             # Build environment from application
-            export FOO=foo value
-            export BAR=bar value
+            export FOO="foo value"
+            export BAR="bar value"
 
             content""")
 
@@ -1466,7 +1466,7 @@ class TestDirs:
         """Test application-specified build environment variables."""
 
         def envgen() -> Generator[str]:
-            yield from ["FOO=foo value", "BAR=bar value"]
+            yield from ['FOO="foo value"', 'BAR="bar value"']
 
         part, handler = self._part_and_handler(
             usrmerged_by_default=True,
@@ -1481,7 +1481,7 @@ class TestDirs:
 
         assert step_env == textwrap.dedent("""\
             # Build environment from application
-            export FOO=foo value
-            export BAR=bar value
+            export FOO="foo value"
+            export BAR="bar value"
 
             content""")
