@@ -130,7 +130,7 @@ def test_generate_step_environment_build(
         export CFLAGS="${{CFLAGS:+"$CFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
         export CXXFLAGS="${{CXXFLAGS:+"$CXXFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
         export LDFLAGS="${{LDFLAGS:+"$LDFLAGS "}}-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH "}}{new_dir}/stage/usr/share/pkgconfig"
+        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}}{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         ## User environment
         export PART_ENVVAR="from_part"
@@ -188,7 +188,7 @@ def test_generate_step_environment_no_project_name(
         export CFLAGS="${{CFLAGS:+"$CFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
         export CXXFLAGS="${{CXXFLAGS:+"$CXXFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
         export LDFLAGS="${{LDFLAGS:+"$LDFLAGS "}}-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH "}}{new_dir}/stage/usr/share/pkgconfig"
+        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}}{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         export PLUGIN_ENVVAR="from_plugin"
         ## User environment
@@ -250,7 +250,7 @@ def test_generate_step_environment_no_build(
         export CFLAGS="${{CFLAGS:+"$CFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
         export CXXFLAGS="${{CXXFLAGS:+"$CXXFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
         export LDFLAGS="${{LDFLAGS:+"$LDFLAGS "}}-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH "}}{new_dir}/stage/usr/share/pkgconfig"
+        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}}{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         ## User environment
         export PART_ENVVAR="from_part"
@@ -307,7 +307,7 @@ def test_generate_step_environment_no_user_env(
         export CFLAGS="${{CFLAGS:+"$CFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
         export CXXFLAGS="${{CXXFLAGS:+"$CXXFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
         export LDFLAGS="${{LDFLAGS:+"$LDFLAGS "}}-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH "}}{new_dir}/stage/usr/share/pkgconfig"
+        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}}{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         ## User environment
         """
