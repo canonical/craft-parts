@@ -19,6 +19,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+2.35.0 (2026-XX-YY)
+-------------------
+
+New features:
+
+- Applications can define default parameters for autoconf and make when subclassing
+  the plugins.
+
 .. _release-2.34.0:
 
 2.34.0 (2026-06-10)
