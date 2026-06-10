@@ -30,9 +30,9 @@ VALID_NAMESPACED_PARTITION_REGEX = re.compile(
 )
 
 PARTITION_INVALID_MSG = (
-    "Partitions must only contain lowercase letters, numbers, plus sign, "
-    "hyphens and slashes, and may not begin or end with a plus sign, "
-    "hyphen or slash."
+    "Partition names may contain lowercase letters, numbers, hyphens, "
+    "plus signs and slashes. Names must begin and end with a lowercase "
+    "letter or number."
 )
 
 DEFAULT_PARTITION = "default"
