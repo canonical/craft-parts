@@ -35,6 +35,8 @@ New features:
   <https://docs.python.org/3/library/pathlib.html>`_. All uses of ``str`` for paths are
   replaced with ``pathlib.Path``. In the public APIs, this change only impacts the
   ``files`` and ``directories`` variables of the ``MigrationState`` class.
+- Allow applications to set up build environment variables when creating the
+  lifecycle manager.
 
 Bug fixes:
 - Reject organize source entries that resolve outside the part install directory.
