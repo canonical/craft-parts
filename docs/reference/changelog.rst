@@ -26,6 +26,9 @@ Changelog
 
 New features:
 
+- Plugins can now define overlay commands.
+- Add support for organizing files from the build directory using the ``(build)``
+  pseudo-partition.
 - Add a ``gradle-use`` plugin for publishing Gradle artifacts to a local Maven
   repository.
 - For explicit typing of file system operations, switch to the `pathlib module
@@ -34,7 +37,9 @@ New features:
   ``files`` and ``directories`` variables of the ``MigrationState`` class.
 
 Bug fixes:
-
+- Reject organize source entries that resolve outside the part install directory.
+- Fix edge cases when organizing files to the overlay partition.
+- Track ``override-overlay`` changes in part state.
 - Wrap streaming request errors for file sources in ``NetworkRequestError``.
 
 For a complete list of commits, check out the `2.34.0`_ release on GitHub.
