@@ -39,6 +39,7 @@ New features:
   lifecycle manager.
 
 Bug fixes:
+
 - Reject organize source entries that resolve outside the part install directory.
 - Fix edge cases when organizing files to the overlay partition.
 - Track ``override-overlay`` changes in part state.
