@@ -34,6 +34,8 @@ New features:
   ``files`` and ``directories`` variables of the ``MigrationState`` class.
 - The plus sign is allowed in partition names. More restrictive rules must be
   enforced at application level.
+- Allow applications to set up build environment variables when creating the
+  lifecycle manager.
 
 Bug fixes:
 

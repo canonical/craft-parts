@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import textwrap
+from collections.abc import Generator, Iterable
 from pathlib import Path
 from typing import Any, cast
 from unittest.mock import call
@@ -1344,6 +1346,7 @@ class TestDirs:
         new_dir,
         plugin: str = "make",
         part_spec: dict[str, Any] | None = None,
+        build_environment: Iterable[str] | None = None,
     ) -> tuple[Part, PartHandler]:
         spec = part_spec or {}
         part = Part(
@@ -1366,6 +1369,7 @@ class TestDirs:
             part_info=part_info,
             part_list=[part],
             overlay_manager=ovmgr,
+            build_environment=build_environment,
         )
 
         return part, handler
@@ -1437,3 +1441,47 @@ class TestDirs:
         handler._make_dirs()
 
         assert list(part.part_install_dir.iterdir()) == []
+
+    def test_build_environment(self, new_dir, partitions):
+        """Test application-specified build environment variables."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin="nil",
+            build_environment=['FOO="foo value"', 'BAR="bar value"'],
+        )
+
+        handler._make_dirs()
+        step_env = handler._prepend_build_environment("content")
+
+        assert step_env == textwrap.dedent("""\
+            # Build environment from application
+            export FOO="foo value"
+            export BAR="bar value"
+
+            content""")
+
+    def test_build_environment_from_generator(self, new_dir, partitions):
+        """Test application-specified build environment variables."""
+
+        def envgen() -> Generator[str]:
+            yield from ['FOO="foo value"', 'BAR="bar value"']
+
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin="nil",
+            build_environment=envgen(),
+        )
+
+        handler._make_dirs()
+        step_env = handler._prepend_build_environment("content")
+
+        assert step_env == textwrap.dedent("""\
+            # Build environment from application
+            export FOO="foo value"
+            export BAR="bar value"
+
+            content""")
