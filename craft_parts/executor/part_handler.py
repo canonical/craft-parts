@@ -546,6 +546,8 @@ class PartHandler:
         """
         self._make_dirs()
 
+        self._migrate_overlay_files_to_stage()
+
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
@@ -553,8 +555,6 @@ class PartHandler:
             stdout=stdout,
             stderr=stderr,
         )
-
-        self._migrate_overlay_files_to_stage()
 
         # Overlay integrity is checked based by the hash of its last (topmost) layer,
         # so we compute it for all parts. The overlay hash is added to the stage state
@@ -603,6 +603,8 @@ class PartHandler:
         """
         self._make_dirs()
 
+        self._migrate_overlay_files_to_prime()
+
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
@@ -611,7 +613,6 @@ class PartHandler:
             stderr=stderr,
         )
 
-        self._migrate_overlay_files_to_prime()
         default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
         primed_stage_packages: set[str]

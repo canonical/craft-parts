@@ -19,6 +19,24 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+.. _release-2.35.0:
+
+2.35.0 (unreleased)
+-------------------
+
+New features:
+
+- The plus sign is allowed in partition names. More restrictive rules must be
+  enforced at application level.
+
+Bug fixes:
+
+- Always migrate overlay files to Stage and Prime first, even if the part being staged
+  or primed also has contents coming from the install directory.
+
+For a complete list of commits, check out the `2.35.0`_ release on GitHub.
+
 .. _release-2.34.0:
 
 2.34.0 (2026-06-10)
@@ -35,8 +53,6 @@ New features:
   <https://docs.python.org/3/library/pathlib.html>`_. All uses of ``str`` for paths are
   replaced with ``pathlib.Path``. In the public APIs, this change only impacts the
   ``files`` and ``directories`` variables of the ``MigrationState`` class.
-- The plus sign is allowed in partition names. More restrictive rules must be
-  enforced at application level.
 - Allow applications to set up build environment variables when creating the
   lifecycle manager.
 
@@ -1724,6 +1740,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
 .. _2.34.0: https://github.com/canonical/craft-parts/releases/tag/2.34.0
 .. _2.33.0: https://github.com/canonical/craft-parts/releases/tag/2.33.0
 .. _2.32.0: https://github.com/canonical/craft-parts/releases/tag/2.32.0
