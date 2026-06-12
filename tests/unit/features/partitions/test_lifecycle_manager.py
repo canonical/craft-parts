@@ -198,7 +198,7 @@ class TestPartitionsSupport:
             errors.FeatureError,
             match=(
                 r"Partition '[\w-]*' is invalid.\n"
-                r"Partitions must only contain lowercase letters.*"
+                r"Partitions names may contain lowercase letters.*"
             ),
         ):
             lifecycle_manager.LifecycleManager(
