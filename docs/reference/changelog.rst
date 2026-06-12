@@ -21,11 +21,14 @@ Changelog
 
 .. _release-2.34.0:
 
-2.34.0 (Unreleased)
+2.34.0 (2026-06-10)
 -------------------
 
 New features:
 
+- Plugins can now define overlay commands.
+- Add support for organizing files from the build directory using the ``(build)``
+  pseudo-partition.
 - Add a ``gradle-use`` plugin for publishing Gradle artifacts to a local Maven
   repository.
 - For explicit typing of file system operations, switch to the `pathlib module
@@ -39,7 +42,12 @@ New features:
 
 Bug fixes:
 
+- Reject organize source entries that resolve outside the part install directory.
+- Fix edge cases when organizing files to the overlay partition.
+- Track ``override-overlay`` changes in part state.
 - Wrap streaming request errors for file sources in ``NetworkRequestError``.
+
+For a complete list of commits, check out the `2.34.0`_ release on GitHub.
 
 .. _release-2.33.0:
 
@@ -1716,6 +1724,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.34.0: https://github.com/canonical/craft-parts/releases/tag/2.34.0
 .. _2.33.0: https://github.com/canonical/craft-parts/releases/tag/2.33.0
 .. _2.32.0: https://github.com/canonical/craft-parts/releases/tag/2.32.0
 .. _2.31.0: https://github.com/canonical/craft-parts/releases/tag/2.31.0
