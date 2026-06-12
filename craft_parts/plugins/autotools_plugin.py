@@ -66,7 +66,7 @@ class AutotoolsPlugin(Plugin):
     """
 
     properties_class = AutotoolsPluginProperties
-    default_configure_parameters = []
+    default_configure_parameters: list[str] = []
 
     @override
     def get_build_snaps(self) -> set[str]:

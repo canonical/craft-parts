@@ -56,7 +56,7 @@ class MakePlugin(Plugin):
     """
 
     properties_class = MakePluginProperties
-    default_parameters = []
+    default_parameters: list[str] = []
 
     @override
     def get_build_snaps(self) -> set[str]:
