@@ -585,6 +585,10 @@ class Ubuntu(BaseRepository):
         get_pkg_name_parts().  Used as an optimization to skip installation
         and cache refresh if dependencies are already satisfied.
 
+        This check uses dpkg-query and does not resolve virtual packages. If a
+        virtual package is requested, apt-get may still make a later install
+        call that resolves to a no-op when the dependency is already satisfied.
+
         :return True if _all_ packages are installed (with correct versions).
         """
         for package in package_names:
@@ -662,12 +666,15 @@ class Ubuntu(BaseRepository):
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
+        try:
+            marked = _get_packages_marked_for_installation_apt_get(package_names)
+        except subprocess.CalledProcessError as err:
+            failed_package = _get_apt_get_error_package(package_names, err)
+            raise errors.BuildPackageNotFound(failed_package) from err
+
+        marked_package_names = {name for name, _ in marked}
+
         if list_only:
-            try:
-                marked = _get_packages_marked_for_installation_apt_get(package_names)
-            except subprocess.CalledProcessError as err:
-                failed_package = _get_apt_get_error_package(package_names, err)
-                raise errors.BuildPackageNotFound(failed_package) from err
             # For list-only, report what apt would install (deterministic).
             return [f"{name}={version}" for name, version in sorted(marked)]
 
@@ -675,24 +682,22 @@ class Ubuntu(BaseRepository):
             cls.refresh_packages_list()
 
         if install_required:
-            try:
-                marked = _get_packages_marked_for_installation_apt_get(package_names)
-            except subprocess.CalledProcessError as err:
-                failed_package = _get_apt_get_error_package(package_names, err)
-                raise errors.BuildPackageNotFound(failed_package) from err
             cls._install_packages(package_names)
-            installed_package_names = [name for name, _ in marked]
         else:
             logger.debug(
                 "Requested build-packages already installed: %s", package_names
             )
-            installed_package_names = [
+            # apt-get simulation only reports packages it would install or upgrade.
+            # Preserve the legacy return value for requested concrete packages that
+            # are already satisfied.
+            marked_package_names.update(
                 get_pkg_name_parts(name)[0] for name in package_names
-            ]
+            )
 
-        # For actual installs (or already-satisfied deps), report what is installed on disk.
+        # This result is a best effort approach for deps and virtual packages
+        # as they are not part of the installation list.
         return sorted(
-            cls._get_installed_package_versions(installed_package_names),
+            cls._get_installed_package_versions(sorted(marked_package_names)),
             key=lambda package: package.split("=", 1)[0],
         )
 

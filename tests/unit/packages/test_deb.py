@@ -1121,16 +1121,14 @@ def test_get_installed_packages_fallback_ignores_not_installed(monkeypatch, tmp_
     assert pkgs == ["keep=2.0"]
 
 
-def test_install_packages_host_path_does_not_use_apt_cache_for_manifest(
+def test_install_packages_host_path_uses_marked_packages_for_manifest(
     fake_deb_run, mocker
 ):
-    mocker.patch(
+    mark_packages = mocker.patch(
         "craft_parts.packages.deb._get_packages_marked_for_installation_apt_get",
-        side_effect=AssertionError(
-            "should not use apt-get mark simulation on host install path"
-        ),
+        return_value=[("package", "1.0")],
     )
-    mocker.patch(
+    get_versions = mocker.patch(
         "craft_parts.packages.deb.Ubuntu._get_installed_package_versions",
         return_value=["package=1.0"],
     )
@@ -1141,4 +1139,7 @@ def test_install_packages_host_path_does_not_use_apt_cache_for_manifest(
 
     build_packages = deb.Ubuntu.install_packages(["package"])
 
+    mark_packages.assert_called_once_with(["package"])
+    get_versions.assert_called_once_with(["package"])
+    fake_deb_run.assert_not_called()
     assert build_packages == ["package=1.0"]
