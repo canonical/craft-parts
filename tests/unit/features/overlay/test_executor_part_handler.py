@@ -738,6 +738,102 @@ class TestOverlayMigration:
         assert Path("prime/.wh.file1").exists() is False
         assert Path("prime/.wh.file2").exists()
 
+    def test_migrate_overlay_with_install(self, new_dir, partitions):
+        """Test that overlay contents are correctly migrated when the part has
+        relevant contents coming from the install dir."""
+        cache_dir = new_dir / "cache"
+        base_dir = new_dir / "base"
+        cache_dir.mkdir()
+        base_dir.mkdir()
+
+        p1 = Part(
+            "p1", {"plugin": "nil", "overlay-script": "exit 0"}, partitions=partitions
+        )
+        info = ProjectInfo(application_name="test", cache_dir=cache_dir)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=base_dir, cache_level=0
+        )
+        p1_handler = PartHandler(
+            p1,
+            part_info=PartInfo(info, p1),
+            part_list=[p1],
+            overlay_manager=ovmgr,
+        )
+        p1_handler._make_dirs()
+
+        # Put a "my-dir/my-file.txt" structure in the part's layer dir.
+        (p1.part_layer_dir / "my-dir").mkdir(exist_ok=False)
+        (p1.part_layer_dir / "my-dir/my-file.txt").touch()
+
+        # Put the *same* structure in the part's install dir.
+        (p1.part_install_dir / "my-dir").mkdir(exist_ok=False)
+        (p1.part_install_dir / "my-dir/my-file.txt").touch()
+
+        # Run Stage and check that the file and directory were recorded in the overlay
+        # migration state
+        p1_handler.run_action(Action("", Step.STAGE))
+        stage_state = states.load_overlay_migration_state(
+            p1.overlay_dirs[None], Step.STAGE
+        )
+        assert stage_state is not None
+        assert "my-dir" in stage_state.directories
+        assert "my-dir/my-file.txt" in stage_state.files
+
+        # Run Prime and check that the file and directory were recorded in the overlay
+        # migration state
+        p1_handler.run_action(Action("", Step.PRIME))
+        prime_state = states.load_overlay_migration_state(
+            p1.overlay_dirs[None], Step.PRIME
+        )
+        assert prime_state is not None
+        assert "my-dir" in prime_state.directories
+        assert "my-dir/my-file.txt" in prime_state.files
+
+    def test_migrate_overlay_filters(self, new_dir, partitions):
+        """Test the interaction between the overlay migration and the 'stage' and 'prime'
+        filters."""
+        cache_dir = new_dir / "cache"
+        base_dir = new_dir / "base"
+        cache_dir.mkdir()
+        base_dir.mkdir()
+
+        # We'll have a file coming from the overlay and one coming from the build.
+        overlay_file = "my-overlay-file.txt"
+        build_file = "my-build-file.txt"
+
+        p1 = Part(
+            "p1",
+            {
+                "plugin": "nil",
+                "overlay-script": "exit 0",
+                "prime": [f"-{overlay_file}", f"-{build_file}"],
+            },
+            partitions=partitions,
+        )
+        info = ProjectInfo(application_name="test", cache_dir=cache_dir)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=base_dir, cache_level=0
+        )
+        p1_handler = PartHandler(
+            p1,
+            part_info=PartInfo(info, p1),
+            part_list=[p1],
+            overlay_manager=ovmgr,
+        )
+        p1_handler._make_dirs()
+
+        # Add the files to their respective directories.
+        (p1.part_layer_dir / overlay_file).touch()
+        (p1.part_install_dir / build_file).touch()
+
+        _run_step_migration(p1_handler, Step.PRIME)
+        prime_dir = p1.prime_dir
+
+        # The file coming from the BUILD step is filtered out, but the file coming
+        # from OVERLAY is *not*.
+        assert not (prime_dir / build_file).exists()
+        assert (prime_dir / overlay_file).exists()
+
 
 def _run_step_migration(handler: PartHandler, step: Step) -> None:
     if step > Step.STAGE:
