@@ -261,3 +261,84 @@ def test_go_use_incomplete_parts(new_dir, partitions, parts_yaml_template: str):
     with lf.action_executor() as ctx:
         with pytest.raises(PluginBuildError):
             ctx.execute(actions)
+
+
+def test_go_monorepo_with_replace_directives(new_dir, partitions):
+    """
+    Test that go-use works with monorepo submodules that have replace directives.
+
+    There is a monorepository whose dependencies all all each other
+    - `replace 'example.com/test/<> => ../<>`
+
+    """
+    source_location = Path(__file__).parent / "test_go_monorepo"
+
+    parts_yaml = textwrap.dedent(
+        f"""
+        parts:
+          all-deps:
+            source: {source_location}
+            plugin: go-use
+            go-use-monorepo-subdir:
+            - trace
+            - sdk
+            - metric
+            - core
+            - .
+          hello:
+            after:
+            - all-deps
+            plugin: go
+            source: .
+            build-environment:
+            - GO111MODULE: "on"
+            - GOPROXY: "off"
+            - GOFLAGS: "-json"
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    Path("go.mod").write_text(
+        textwrap.dedent(
+            """
+            module example.com/hello
+
+            go 1.25
+
+            require example.com/test/sdk v0.0.0
+            """
+        )
+    )
+
+    Path("main.go").write_text(
+        textwrap.dedent(
+            """
+            package main
+
+            import (
+                "fmt"
+                "example.com/test/sdk"
+            )
+
+            func main() {
+                result := sdk.Initialize()
+                fmt.Println(result)
+            }
+            """
+        )
+    )
+
+    lf = LifecycleManager(
+        parts,
+        application_name="test_go_monorepo",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    binary = lf.project_info.prime_dir / "bin/hello"
+    assert binary.exists(), "Binary should be built successfully"
