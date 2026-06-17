@@ -22,7 +22,7 @@ Changelog
 
 .. _release-2.35.0:
 
-2.35.0 (unreleased)
+2.35.0 (2026-06-17)
 -------------------
 
 New features:
