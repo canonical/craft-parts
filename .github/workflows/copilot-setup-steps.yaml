@@ -1,0 +1,51 @@
+name: Copilot Setup Steps
+
+on:
+  pull_request:
+    paths:
+      - ".github/copilot-instructions.md"
+      - ".github/workflows/copilot-setup-steps.yaml"
+      - "Makefile"
+      - "common.mk"
+      - "pyproject.toml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/copilot-instructions.md"
+      - ".github/workflows/copilot-setup-steps.yaml"
+      - "Makefile"
+      - "common.mk"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+# Cancel existing jobs for this branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  validate-setup-steps:
+    name: Validate setup steps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pristine Ubuntu environment
+        uses: lengau/pristine-ubuntu-action@main
+
+      - name: Setup Python runner
+        uses: canonical/starflow/setup-python-runner@main
+
+      - name: Verify setup command works
+        run: make setup
+
+      - name: Run linters to verify setup
+        run: make lint
+
+      - name: Run fast tests to verify setup
+        run: make test-fast
