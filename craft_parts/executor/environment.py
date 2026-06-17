@@ -124,7 +124,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
 
     if include_paths:
         for envvar in ["CPPFLAGS", "CFLAGS", "CXXFLAGS"]:
-            part_environment[envvar] = _combine_paths(
+            part_environment[envvar] = f'${{{envvar}:+"${envvar} "}}' + _combine_paths(
                 paths=include_paths, prepend="-isystem ", separator=" "
             )
 
@@ -135,7 +135,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
         )
 
     if library_paths:
-        part_environment["LDFLAGS"] = _combine_paths(
+        part_environment["LDFLAGS"] = '${LDFLAGS:+"$LDFLAGS "}' + _combine_paths(
             paths=library_paths, prepend="-L", separator=" "
         )
 
@@ -148,8 +148,9 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
         )
 
     if pkg_config_paths:
-        part_environment["PKG_CONFIG_PATH"] = _combine_paths(
-            pkg_config_paths, prepend="", separator=":"
+        part_environment["PKG_CONFIG_PATH"] = (
+            '${PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}'
+            + _combine_paths(pkg_config_paths, prepend="", separator=":")
         )
 
     return part_environment
@@ -197,7 +198,7 @@ def _translate_partition_env(partition: str) -> str:
 
     :returns: The translated name
     """
-    return partition.upper().translate({ord("-"): "_", ord("/"): "_"})
+    return partition.upper().translate({ord("+"): "_", ord("-"): "_", ord("/"): "_"})
 
 
 def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:

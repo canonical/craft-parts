@@ -25,7 +25,7 @@ from craft_parts.utils.path_utils import (
     get_partition_and_path,
 )
 
-PATH_CLASSES = [Path, PurePosixPath, str]
+PATH_CLASSES = [Path, PurePosixPath]
 
 NON_PARTITION_PATHS = [
     "/absolute/path",
@@ -74,23 +74,23 @@ PARTITION_EXPECTED_PARTITIONS = [
 ]
 
 PARTITION_EXPECTED_INNER_PATHS = [
-    "",
-    "",
-    "",
-    "path",
-    "path",
-    "path",
-    "path",
-    "path",
-    "path",
-    "",
-    "",
-    "",
-    "path",
-    "path",
-    "path",
-    "path",
-    "path",
+    Path(),
+    Path(),
+    Path(),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path(),
+    Path(),
+    Path(),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
+    Path("path"),
 ]
 
 # Prevent us from adding nonmatching paths for tests below.
@@ -144,6 +144,34 @@ def test_has_partition(full_path, expected):
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
 def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class):
     """Test that when partitions are disabled this is a no-op."""
+    actual_partition, actual_inner_path = get_partition_and_path(
+        path_class(path), "default"
+    )
+
+    assert actual_partition is None
+    assert actual_inner_path == path_class(path)
+    assert isinstance(actual_inner_path, path_class)
+
+
+@pytest.mark.parametrize("path_class", PATH_CLASSES)
+def test_get_partition_compatible_filepath_disabled_build_partition(path_class):
+    """Build pseudo-partition paths are parsed even when partitions are disabled."""
+    actual_partition, actual_inner_path = get_partition_and_path(
+        path_class("(build)/generated.txt"), "default"
+    )
+
+    assert actual_partition == "build"
+    assert actual_inner_path == path_class("generated.txt")
+    assert isinstance(actual_inner_path, path_class)
+
+
+@pytest.mark.parametrize("path", ["(default)/generated.txt", "(overlay)/generated.txt"])
+@pytest.mark.parametrize("path_class", PATH_CLASSES)
+def test_get_partition_compatible_filepath_disabled_non_build_passthrough(
+    path,
+    path_class,
+):
+    """Only the build pseudo-partition is parsed when partitions are disabled."""
     actual_partition, actual_inner_path = get_partition_and_path(
         path_class(path), "default"
     )

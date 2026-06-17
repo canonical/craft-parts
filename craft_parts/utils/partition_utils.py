@@ -22,20 +22,22 @@ from pathlib import Path
 
 from craft_parts import errors, features
 
-# Allow alphanumeric characters, hyphens and slashes, not starting or ending
-# with a hyphen or a slash
-VALID_PARTITION_REGEX = re.compile(r"(?!-|/)[a-z0-9-/]+(?<!-|/)", re.ASCII)
+# Allow alphanumeric characters, plus sign, hyphens and slashes, not starting or
+# ending with a plus sign, hyphen or a slash.
+VALID_PARTITION_REGEX = re.compile(r"(?![-/+])[a-z0-9/+-]+(?<![-/+])", re.ASCII)
 VALID_NAMESPACED_PARTITION_REGEX = re.compile(
     r"[a-z0-9]+/" + VALID_PARTITION_REGEX.pattern, re.ASCII
 )
 
 PARTITION_INVALID_MSG = (
-    "Partitions must only contain lowercase letters, numbers,"
-    "hyphens and slashes, and may not begin or end with a hyphen or a slash."
+    "Partition names may contain lowercase letters, numbers, hyphens, "
+    "plus signs and slashes. Names must begin and end with a lowercase "
+    "letter or number."
 )
 
 DEFAULT_PARTITION = "default"
 OVERLAY_PARTITION = "overlay"  # Pseudo-partition targeting the overlay
+BUILD_PARTITION = "build"  # Pseudo-partition pointing to the part build directory
 
 
 def validate_partition_names(partitions: Sequence[str] | None) -> None:
@@ -75,10 +77,11 @@ def validate_partition_names(partitions: Sequence[str] | None) -> None:
     if DEFAULT_PARTITION in partitions[1:]:
         raise errors.FeatureError("Only the first partition can be named 'default'.")
 
-    if OVERLAY_PARTITION in partitions:
-        raise errors.FeatureError(
-            "Reserved name 'overlay' cannot be used to name a partition."
-        )
+    for partition in (OVERLAY_PARTITION, BUILD_PARTITION):
+        if partition in partitions:
+            raise errors.FeatureError(
+                f"Reserved name '{partition}' cannot be used to name a partition."
+            )
 
     _validate_partition_naming_convention(partitions)
     _validate_partitions_conflicts(partitions)
@@ -156,7 +159,7 @@ def _validate_partitions_conflicts(partitions: Sequence[str]) -> None:
 
     raise errors.FeatureError(
         message=f"Partition name conflicts:\n{msg}",
-        details="Hyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.",
+        details="Plus signs, hyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo+bar', 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.",
     )
 
 
@@ -173,7 +176,7 @@ def _detect_conflicts(partitions: Sequence[str]) -> list[set[str]]:
 
     """
     conflict_sets: list[set[str]] = []
-    env_var_translation = {ord("-"): "_", ord("/"): "_"}
+    env_var_translation = {ord("+"): "_", ord("-"): "_", ord("/"): "_"}
 
     for candidate_partition, partition in itertools.combinations(partitions, 2):
         candidate_underscored = candidate_partition.translate(env_var_translation)

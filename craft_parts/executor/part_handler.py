@@ -18,11 +18,9 @@
 
 import logging
 import os
-import os.path
 import shutil
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from glob import iglob
 from pathlib import Path
 from typing import Any, cast
 
@@ -51,7 +49,7 @@ from craft_parts.state_manager import (
 from craft_parts.state_manager.stage_state import StageState
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import BUILD_PARTITION, DEFAULT_PARTITION
 
 from . import filesets, migration
 from .environment import generate_step_environment
@@ -92,7 +90,7 @@ class _UpdateHandler(Protocol):
 
 
 # map the source path to the destination path in the partition
-_MigratedContents = dict[str, str]
+_MigratedContents = dict[str, Path]
 
 
 class _Squasher:
@@ -197,11 +195,11 @@ class _Squasher:
             src_path = str(sub_path / f)
             self.migrated_directories[dst_partition][src_path] = f
 
-    def _filter_already_distributed(self, visible_contents: set[str]) -> set[str]:
+    def _filter_already_distributed(self, visible_contents: set[Path]) -> set[Path]:
         """Filter files in paths already distributed to other partitions."""
         if not self._distributed_paths:
             return visible_contents
-        contents: set[str] = set()
+        contents: set[Path] = set()
         for content in visible_contents:
             is_distributed = any(
                 migration.already_distributed(Path(content), distributed_path)
@@ -231,6 +229,7 @@ class PartHandler:
         overlay_manager: OverlayManager,
         ignore_patterns: list[str] | None = None,
         base_layer_hash: LayerHash | None = None,
+        build_environment: Iterable[str] | None = None,
     ) -> None:
         self._part = part
         self._part_info = part_info
@@ -238,7 +237,7 @@ class PartHandler:
         self._track_stage_packages = track_stage_packages
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
-        self._app_environment: dict[str, str] = {}
+        self._build_environment = build_environment
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -411,7 +410,7 @@ class PartHandler:
             destdir = self._part.part_layer_dir
             files, dirs = filesets.migratable_filesets(
                 overlay_fileset,
-                str(destdir),
+                destdir,
                 self._part_info.default_partition,
                 self._part_info.default_partition,
             )
@@ -500,10 +499,15 @@ class PartHandler:
             # time around. We can be confident that this won't overwrite anything else,
             # because to do so would require changing the `organize` keyword, which will
             # make the build step dirty and require a clean instead of an update.
+            organize_install_dirs = {
+                **self._part.part_install_dirs,
+                BUILD_PARTITION: self._part.part_build_dir,
+            }
+
             organize_files(
                 part_name=self._part.name,
                 file_map=self._part.spec.organize_files,
-                install_dir_map=self._part.part_install_dirs,
+                install_dir_map=organize_install_dirs,
                 overwrite=update,
                 default_partition=step_info.default_partition,
             )
@@ -542,6 +546,8 @@ class PartHandler:
         """
         self._make_dirs()
 
+        self._migrate_overlay_files_to_stage()
+
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
@@ -549,8 +555,6 @@ class PartHandler:
             stdout=stdout,
             stderr=stderr,
         )
-
-        self._migrate_overlay_files_to_stage()
 
         # Overlay integrity is checked based by the hash of its last (topmost) layer,
         # so we compute it for all parts. The overlay hash is added to the stage state
@@ -599,6 +603,8 @@ class PartHandler:
         """
         self._make_dirs()
 
+        self._migrate_overlay_files_to_prime()
+
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
@@ -607,7 +613,6 @@ class PartHandler:
             stderr=stderr,
         )
 
-        self._migrate_overlay_files_to_prime()
         default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
         primed_stage_packages: set[str]
@@ -663,6 +668,9 @@ class PartHandler:
         )
 
         if step_info.step == Step.BUILD:
+            # Prepend environment set by the application.
+            step_env = self._prepend_build_environment(step_env)
+
             # Validate build environment. Unlike the pre-validation we did in
             # the execution prologue, we don't assume that a different part
             # can add elements to the build environment. All part dependencies
@@ -1024,7 +1032,7 @@ class PartHandler:
                 state.write(step_overlay_state_path)
 
     def _clean_dangling_whiteouts(
-        self, prime_dir: Path, migrated_files: set[str], migrated_dirs: set[str]
+        self, prime_dir: Path, migrated_files: set[Path], migrated_dirs: set[Path]
     ) -> None:
         """Clean up dangling whiteout files with no backing files to white out."""
         dangling_whiteouts = migration.filter_dangling_whiteouts(
@@ -1032,12 +1040,12 @@ class PartHandler:
         )
         self._clean_whiteouts(prime_dir, dangling_whiteouts)
 
-    def _clean_all_whiteouts(self, prime_dir: Path, migrated_files: set[str]) -> None:
+    def _clean_all_whiteouts(self, prime_dir: Path, migrated_files: set[Path]) -> None:
         """Clean up all whiteout files."""
         all_whiteouts = migration.filter_all_whiteouts(migrated_files)
         self._clean_whiteouts(prime_dir, all_whiteouts)
 
-    def _clean_whiteouts(self, prime_dir: Path, whiteouts: set[str]) -> None:
+    def _clean_whiteouts(self, prime_dir: Path, whiteouts: set[Path]) -> None:
         """Clean up whiteout files."""
         for whiteout in whiteouts:
             primed_whiteout = prime_dir / whiteout
@@ -1255,7 +1263,7 @@ class PartHandler:
             *self._part.overlay_dirs.values(),
         ]
         for dir_name in dirs:
-            os.makedirs(dir_name, exist_ok=True)  # noqa: PTH103
+            dir_name.mkdir(parents=True, exist_ok=True)
 
         self._symlink_alias_to_default()
         self._create_usrmerge_scaffolding()
@@ -1292,7 +1300,7 @@ class PartHandler:
             return None
 
         packages.snaps.download_snaps(
-            snaps_list=stage_snaps, directory=str(self._part.part_snaps_dir)
+            snaps_list=stage_snaps, directory=self._part.part_snaps_dir
         )
 
         return stage_snaps
@@ -1352,7 +1360,7 @@ class PartHandler:
 
         logger.debug("Unpacking stage-snaps to %s", install_dir)
 
-        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))  # noqa: PTH118, PTH207
+        snap_files = snaps_dir.glob("*.snap")
         snap_sources = (
             sources.SnapSource(
                 source=s,
@@ -1365,6 +1373,24 @@ class PartHandler:
 
         for snap_source in snap_sources:
             snap_source.provision(install_dir, keep=True)
+
+    def _prepend_build_environment(self, content: str) -> str:
+        if not self._build_environment:
+            return content
+
+        current_dir = Path.cwd()
+        try:
+            # Set the current working directory to the build directory. Build
+            # environment generators may produce different results depending
+            # on the current path.
+            os.chdir(self._part.part_build_dir)
+            env_list = ["# Build environment from application"]
+            env_list.extend([f"export {x}" for x in self._build_environment])
+            env_list.extend(["", content])
+        finally:
+            os.chdir(current_dir)
+
+        return "\n".join(env_list)
 
 
 def _remove(filename: Path) -> None:
@@ -1381,7 +1407,7 @@ def _remove(filename: Path) -> None:
 
 
 def _apply_file_filter(
-    *, filter_files: set[str], filter_dirs: set[str], destdir: Path
+    *, filter_files: set[Path], filter_dirs: set[Path], destdir: Path
 ) -> None:
     """Remove files and directories from the filesystem.
 
@@ -1395,7 +1421,7 @@ def _apply_file_filter(
         for file_name in files:
             path = Path(root, file_name)
             relpath = path.relative_to(destdir)
-            if str(relpath) not in filter_files and not overlays.is_whiteout_file(path):
+            if relpath not in filter_files and not overlays.is_whiteout_file(path):
                 logger.debug("delete file: %s", relpath)
                 path.unlink()
 
@@ -1403,10 +1429,10 @@ def _apply_file_filter(
             path = Path(root, directory)
             relpath = path.relative_to(destdir)
             if path.is_symlink():
-                if str(relpath) not in filter_files:
+                if relpath not in filter_files:
                     logger.debug("delete symlink: %s", relpath)
                     path.unlink()
-            elif str(relpath) not in filter_dirs:
+            elif relpath not in filter_dirs:
                 logger.debug("delete dir: %s", relpath)
                 # Don't descend into this directory-- we'll just delete it
                 # entirely.
@@ -1529,7 +1555,7 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: list[Part]) -> list[Pa
 
 
 def _get_primed_stage_packages(
-    snap_files: set[str], *, prime_dirs: list[Path]
+    snap_files: set[Path], *, prime_dirs: list[Path]
 ) -> set[str]:
     primed_stage_packages: set[str] = set()
     for _snap_file in snap_files:
@@ -1537,7 +1563,7 @@ def _get_primed_stage_packages(
             snap_file = prime_dir / _snap_file
             if not snap_file.exists():
                 continue
-            stage_package = read_origin_stage_package(str(snap_file))
+            stage_package = read_origin_stage_package(snap_file)
             if stage_package:
                 primed_stage_packages.add(stage_package)
     return primed_stage_packages

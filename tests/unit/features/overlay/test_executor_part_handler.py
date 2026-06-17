@@ -146,14 +146,14 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         )
 
         self._mock_mount_overlayfs.assert_called_with(
-            f"{self._part_info.overlay_mount_dir}",
+            self._part_info.overlay_mount_dir,
             (
                 f"-olowerdir={self._part_info.overlay_packages_dir}:/base,"
                 f"upperdir={self._part.part_layer_dir},"
                 f"workdir={self._part_info.overlay_work_dir}"
             ),
         )
-        self._mock_umount.assert_called_with(f"{self._part_info.overlay_mount_dir}")
+        self._mock_umount.assert_called_with(self._part_info.overlay_mount_dir)
 
     def test_run_build_without_overlay_visibility(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
@@ -179,10 +179,10 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         default_partition = partitions[0] if partitions is not None else "default"
         mock_step_contents.partitions_contents[default_partition] = (
             StagePartitionContents(
-                files={"file"},
-                dirs={"dir"},
-                backstage_files={"back_file"},
-                backstage_dirs={"back_dir"},
+                files={Path("file")},
+                dirs={Path("dir")},
+                backstage_files={Path("back_file")},
+                backstage_dirs={Path("back_dir")},
             )
         )
         partitions_migration_contents = {}
@@ -208,11 +208,11 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
-            directories={"dir"},
+            files={Path("file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
-            backstage_files={"back_file"},
-            backstage_directories={"back_dir"},
+            backstage_files={Path("back_file")},
+            backstage_directories={Path("back_dir")},
             overlay_hash="d12e3f53ba91f94656abc940abb50b12b209d246",
         )
 
@@ -564,14 +564,15 @@ class TestOverlayMigration:
         # pylint: enable=attribute-defined-outside-init
 
     @pytest.mark.parametrize(
-        ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
+        ("step", "step_dir"),
+        [(Step.STAGE, Path("stage")), (Step.PRIME, Path("prime"))],
     )
     def test_migrate_overlay(self, step, step_dir):
         _run_step_migration(self._p1_handler, step)
-        assert Path(f"{step_dir}/dir1/foo").exists()
-        assert Path(f"{step_dir}/bar").exists()
-        assert Path(f"{step_dir}/dir1/baz").exists()
-        assert Path(f"overlay/{step_dir}_overlay").exists()
+        assert (step_dir / "dir1/foo").exists()
+        assert (step_dir / "bar").exists()
+        assert (step_dir / "dir1/baz").exists()
+        assert Path(f"overlay/{step_dir.name}_overlay").exists()
 
     @pytest.mark.parametrize(
         ("step", "step_dir"), [(Step.STAGE, "stage"), (Step.PRIME, "prime")]
@@ -739,6 +740,102 @@ class TestOverlayMigration:
         _run_step_migration(p1_handler, Step.PRIME)
         assert Path("prime/.wh.file1").exists() is False
         assert Path("prime/.wh.file2").exists()
+
+    def test_migrate_overlay_with_install(self, new_dir, partitions):
+        """Test that overlay contents are correctly migrated when the part has
+        relevant contents coming from the install dir."""
+        cache_dir = new_dir / "cache"
+        base_dir = new_dir / "base"
+        cache_dir.mkdir()
+        base_dir.mkdir()
+
+        p1 = Part(
+            "p1", {"plugin": "nil", "overlay-script": "exit 0"}, partitions=partitions
+        )
+        info = ProjectInfo(application_name="test", cache_dir=cache_dir)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=base_dir, cache_level=0
+        )
+        p1_handler = PartHandler(
+            p1,
+            part_info=PartInfo(info, p1),
+            part_list=[p1],
+            overlay_manager=ovmgr,
+        )
+        p1_handler._make_dirs()
+
+        # Put a "my-dir/my-file.txt" structure in the part's layer dir.
+        (p1.part_layer_dir / "my-dir").mkdir(exist_ok=False)
+        (p1.part_layer_dir / "my-dir/my-file.txt").touch()
+
+        # Put the *same* structure in the part's install dir.
+        (p1.part_install_dir / "my-dir").mkdir(exist_ok=False)
+        (p1.part_install_dir / "my-dir/my-file.txt").touch()
+
+        # Run Stage and check that the file and directory were recorded in the overlay
+        # migration state
+        p1_handler.run_action(Action("", Step.STAGE))
+        stage_state = states.load_overlay_migration_state(
+            p1.overlay_dirs[None], Step.STAGE
+        )
+        assert stage_state is not None
+        assert Path("my-dir") in stage_state.directories
+        assert Path("my-dir/my-file.txt") in stage_state.files
+
+        # Run Prime and check that the file and directory were recorded in the overlay
+        # migration state
+        p1_handler.run_action(Action("", Step.PRIME))
+        prime_state = states.load_overlay_migration_state(
+            p1.overlay_dirs[None], Step.PRIME
+        )
+        assert prime_state is not None
+        assert Path("my-dir") in prime_state.directories
+        assert Path("my-dir/my-file.txt") in prime_state.files
+
+    def test_migrate_overlay_filters(self, new_dir, partitions):
+        """Test the interaction between the overlay migration and the 'stage' and 'prime'
+        filters."""
+        cache_dir = new_dir / "cache"
+        base_dir = new_dir / "base"
+        cache_dir.mkdir()
+        base_dir.mkdir()
+
+        # We'll have a file coming from the overlay and one coming from the build.
+        overlay_file = "my-overlay-file.txt"
+        build_file = "my-build-file.txt"
+
+        p1 = Part(
+            "p1",
+            {
+                "plugin": "nil",
+                "overlay-script": "exit 0",
+                "prime": [f"-{overlay_file}", f"-{build_file}"],
+            },
+            partitions=partitions,
+        )
+        info = ProjectInfo(application_name="test", cache_dir=cache_dir)
+        ovmgr = OverlayManager(
+            project_info=info, part_list=[p1], base_layer_dir=base_dir, cache_level=0
+        )
+        p1_handler = PartHandler(
+            p1,
+            part_info=PartInfo(info, p1),
+            part_list=[p1],
+            overlay_manager=ovmgr,
+        )
+        p1_handler._make_dirs()
+
+        # Add the files to their respective directories.
+        (p1.part_layer_dir / overlay_file).touch()
+        (p1.part_install_dir / build_file).touch()
+
+        _run_step_migration(p1_handler, Step.PRIME)
+        prime_dir = p1.prime_dir
+
+        # The file coming from the BUILD step is filtered out, but the file coming
+        # from OVERLAY is *not*.
+        assert not (prime_dir / build_file).exists()
+        assert (prime_dir / overlay_file).exists()
 
 
 def _run_step_migration(handler: PartHandler, step: Step) -> None:

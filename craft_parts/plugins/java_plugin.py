@@ -19,9 +19,9 @@
 from __future__ import annotations
 
 import logging
-import os
 import subprocess
 import tempfile
+from pathlib import Path
 
 from typing_extensions import override
 
@@ -45,12 +45,11 @@ class JavaPlugin(Plugin):
                         System.out.println(System.getProperty("java.specification.version"));
                     }
                 }"""
-            with open(f"{tempdir}/Test.java", "w") as file:  # noqa: PTH123
-                file.write(test_class)
+            Path(tempdir, "Test.java").write_text(test_class)
 
             try:
                 subprocess.call([javac, "-d", tempdir, f"{tempdir}/Test.java"])
-                java_home = os.path.dirname(os.path.dirname(javac))  # noqa: PTH120
+                java_home = Path(javac).parents[1].as_posix()
                 spec_version = subprocess.check_output(
                     [java_home + "/bin/java", "-cp", tempdir, "Test"], text=True
                 )
