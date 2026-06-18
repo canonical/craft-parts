@@ -1,0 +1,55 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+import subprocess
+import textwrap
+from pathlib import Path
+
+import pytest
+import yaml
+from craft_parts import LifecycleManager, Step
+
+pytestmark = [pytest.mark.plugin]
+
+
+
+def test_<plugin_key>_plugin(new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          sample:
+            plugin: <plugin-key>
+            source: .
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    # Write the smallest possible source project that this build system can build.
+    Path("<project-config-file>").write_text(
+        textwrap.dedent(
+            """\
+            # build system config
+            """
+        )
+    )
+    Path("<source-file>").write_text(
+        textwrap.dedent(
+            """\
+            # source contents
+            """
+        )
+    )
+
+    lifecycle = LifecycleManager(
+        parts,
+        application_name="test_<plugin_key>_plugin",
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lifecycle.plan(Step.PRIME)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    artifact = Path(lifecycle.project_info.prime_dir, "bin", "<artifact-name>")
+
+    output = subprocess.check_output([str(artifact)], text=True)
+    assert output == "<expected-output>\\n"
