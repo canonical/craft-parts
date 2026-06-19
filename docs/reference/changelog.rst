@@ -19,18 +19,6 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-.. _release-2.33.1:
-
-2.33.1 (2026-06-17)
--------------------
-
-Bug fixes:
-
-- Always migrate overlay files to Stage and Prime first, even if the part being staged
-  or primed also has contents coming from the install directory.
-
-For a complete list of commits, check out the `2.33.1`_ release on GitHub.
-
 .. _release-2.36.0:
 
 2.36.0 (unreleased)
@@ -43,6 +31,18 @@ Bug fixes:
   *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
   they were absent when packages are installed with ``--no-install-recommends``,
   causing builds to fail.
+
+.. _release-2.33.1:
+
+2.33.1 (2026-06-17)
+-------------------
+
+Bug fixes:
+
+- Always migrate overlay files to Stage and Prime first, even if the part being staged
+  or primed also has contents coming from the install directory.
+
+For a complete list of commits, check out the `2.33.1`_ release on GitHub.
 
 .. _release-2.35.0:
 
