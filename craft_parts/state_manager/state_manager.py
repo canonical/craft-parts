@@ -410,6 +410,12 @@ class StateManager:
 
         changed_dependencies: list[Dependency] = []
         for dependency in dependencies:
+            prerequisite_step = steps.dependency_prerequisite_step(
+                step, part=part, dependency=dependency
+            )
+            if not prerequisite_step:
+                continue
+
             prerequisite_stw = self._state_db.get(
                 part_name=dependency.name, step=prerequisite_step
             )

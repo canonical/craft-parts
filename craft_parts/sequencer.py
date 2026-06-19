@@ -231,13 +231,16 @@ class Sequencer:
         return self._sm.project_vars(part, step)
 
     def _process_dependencies(self, part: Part, step: Step) -> None:
-        prerequisite_step = steps.dependency_prerequisite_step(step)
-        if not prerequisite_step:
-            return
-
         all_deps = parts.part_dependencies(part, part_list=self._part_list)
-        deps = {p for p in all_deps if self._sm.should_step_run(p, prerequisite_step)}
-        for dep in deps:
+        for dep in all_deps:
+            prerequisite_step = steps.dependency_prerequisite_step(
+                step, part=part, dependency=dep
+            )
+            if not prerequisite_step or not self._sm.should_step_run(
+                dep, prerequisite_step
+            ):
+                continue
+
             self._add_all_actions(
                 target_step=prerequisite_step,
                 part_names=[dep.name],
@@ -265,7 +268,7 @@ class Sequencer:
             self._layer_state.set_layer_hash(part, layer_hash)
 
         elif (step == Step.BUILD and part in self._overlay_viewers) or (
-            step == Step.STAGE and part.has_overlay
+            step == Step.STAGE and (part.has_overlay or part.organizes_to_overlay)
         ):
             # The overlay step for all parts should run before we build a part
             # with overlay visibility or before we stage a part that declares
@@ -476,11 +479,13 @@ class Sequencer:
                 return True
 
         elif step == Step.STAGE:
-            # If a part declares overlay parameters, restage it if overlay changed
+            # If a part contributes overlay content, restage it if overlay changed
             current_overlay_hash = self._layer_state.get_overlay_hash()
             state_overlay_hash = self._sm.get_step_state_overlay_hash(part, step)
 
-            if part.has_overlay and current_overlay_hash != state_overlay_hash:
+            if (
+                part.has_overlay or part.organizes_to_overlay
+            ) and current_overlay_hash != state_overlay_hash:
                 logger.debug("%s:%s has overlay and it changed", part.name, step)
                 self._rerun_step(part, step, reason="overlay changed")
                 return True

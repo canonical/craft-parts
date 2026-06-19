@@ -19,6 +19,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+Unreleased
+----------
+
+Bug fixes:
+
+- The Overlay and Build steps of parts that organize content to the overlay
+  are executed before these steps in other parts, even when ``after`` is
+  used.
+
 .. _release-2.33.1:
 
 2.33.1 (2026-06-17)
