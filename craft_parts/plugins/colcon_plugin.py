@@ -129,17 +129,17 @@ class ColconPlugin(Plugin):
         if options.colcon_packages:
             build_command.extend(["--packages-select", *options.colcon_packages])
 
-        # compile in release only if user did not set the build type in cmake-args
-        if not any("-DCMAKE_BUILD_TYPE=" in s for s in options.colcon_cmake_args):
-            build_command.extend(
-                [
-                    "--cmake-args",
-                    "-DCMAKE_BUILD_TYPE=Release",
-                    *options.colcon_cmake_args,
-                ]
-            )
-        elif len(options.colcon_cmake_args) > 0:
-            build_command.extend(["--cmake-args", *options.colcon_cmake_args])
+        # Inject cmake defaults for options the user has not explicitly set:
+        # - Release build type (for performance; no debug symbols in a rock/snap)
+        # - BUILD_TESTING=OFF (test targets are not useful and pull in heavy deps)
+        # Both can be overridden by passing the corresponding flag in
+        # colcon-cmake-args.
+        cmake_args = list(options.colcon_cmake_args)
+        if not any("-DCMAKE_BUILD_TYPE=" in s for s in cmake_args):
+            cmake_args.insert(0, "-DCMAKE_BUILD_TYPE=Release")
+        if not any("-DBUILD_TESTING=" in s for s in cmake_args):
+            cmake_args.append("-DBUILD_TESTING=OFF")
+        build_command.extend(["--cmake-args", *cmake_args])
 
         # Specify the number of workers
         build_command.extend(

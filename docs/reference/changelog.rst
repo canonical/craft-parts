@@ -19,6 +19,20 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.36.0:
+
+2.36.0 (unreleased)
+-------------------
+
+New features:
+
+- The ``colcon`` plugin now passes ``-DBUILD_TESTING=OFF`` to CMake by default,
+  disabling test targets that are not useful inside a rock or snap and would
+  otherwise pull in large test-only dependencies. Users can opt back in by
+  passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
+
+For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
+
 .. _release-2.33.1:
 
 2.33.1 (2026-06-17)
