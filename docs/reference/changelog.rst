@@ -31,6 +31,19 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.33.1`_ release on GitHub.
 
+.. _release-2.36.0:
+
+2.36.0 (unreleased)
+-------------------
+
+Bug fixes:
+
+- Fix the ``colcon`` plugin to declare ``make`` and
+  ``python3-colcon-recursive-crawl`` as explicit build packages. Both are only
+  *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
+  they were absent when packages are installed with ``--no-install-recommends``,
+  causing builds to fail.
+
 .. _release-2.35.0:
 
 2.35.0 (2026-06-17)

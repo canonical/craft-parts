@@ -55,12 +55,14 @@ class ColconPlugin(Plugin):
             "gcc",
             "g++",
             "cmake",
+            "make",
             "colcon",
             "python3-colcon-core",
             "python3-colcon-cmake",
             "python3-colcon-package-selection",
             "python3-colcon-python-setup-py",
             "python3-colcon-parallel-executor",
+            "python3-colcon-recursive-crawl",
         }
 
     @override
