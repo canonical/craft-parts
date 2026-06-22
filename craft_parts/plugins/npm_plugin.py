@@ -61,6 +61,8 @@ class NpmPluginProperties(PluginProperties, frozen=True):
     # part properties required by the plugin
     npm_include_node: bool = False
     npm_node_version: str | None = None
+    npm_dev_dependencies: list[str] = []
+    npm_scripts: list[str] = []
     source: str  # pyright: ignore[reportGeneralTypeIssues]
     build_attributes: list[str] = []
 
@@ -155,6 +157,11 @@ class NpmPlugin(Plugin):
     def _npm_cache_backstage(self) -> Path:
         """Path to npm cache to consume packages from."""
         return self._part_info.project_info.dirs.backstage_dir / "npm-cache"
+
+    @property
+    def _npm_dev_prefix(self) -> Path:
+        """Path to installation directory for dev dependencies."""
+        return self._part_info.part_build_dir / "dev-dependencies"
 
     @staticmethod
     def _get_architecture() -> str:
@@ -290,6 +297,8 @@ class NpmPlugin(Plugin):
         if self._is_self_contained:
             # explicitly block registry access during offline builds
             base_env["npm_config_registry"] = "https://localhost:1"
+            base_env["npm_config_prefix"] = str(self._npm_dev_prefix)
+            base_env["PATH"] = f"{self._npm_dev_prefix}/bin:${{PATH}}"
 
         return base_env
 
@@ -301,11 +310,11 @@ class NpmPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
+        options = cast(NpmPluginProperties, self._options)
         if self._is_self_contained:
-            return self._get_self_contained_build_commands()
+            return self._get_self_contained_build_commands(options)
 
         cmd: list[str] = []
-        options = cast(NpmPluginProperties, self._options)
         if options.npm_include_node:
             arch = self._get_architecture()
             version = options.npm_node_version
@@ -355,7 +364,9 @@ class NpmPlugin(Plugin):
 
         return cmd
 
-    def _get_self_contained_build_commands(self) -> list[str]:
+    def _get_self_contained_build_commands(
+        self, options: NpmPluginProperties
+    ) -> list[str]:
         """Return a list of commands to run during self-contained build step."""
         pkg_path = self._part_info.part_build_dir / "package.json"
         bundled_pkg_path = (
@@ -363,8 +374,13 @@ class NpmPlugin(Plugin):
         )
         return [
             *get_install_from_local_tarballs_commands(
-                pkg_path, bundled_pkg_path, self._npm_cache_backstage
+                pkg_path,
+                bundled_pkg_path,
+                self._npm_cache_backstage,
+                self._npm_dev_prefix,
+                options.npm_dev_dependencies,
             ),
+            *[f"npm run {script}" for script in options.npm_scripts],
             'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
         ]
 

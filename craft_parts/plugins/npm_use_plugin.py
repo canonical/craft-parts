@@ -17,12 +17,13 @@
 """The npm-use plugin."""
 
 from pathlib import Path
+from typing import cast
 
 from typing_extensions import override
 
 from craft_parts.utils.npm_utils import get_install_from_local_tarballs_commands
 
-from .npm_plugin import NpmPlugin
+from .npm_plugin import NpmPlugin, NpmPluginProperties
 
 
 class NpmUsePlugin(NpmPlugin):
@@ -46,6 +47,7 @@ class NpmUsePlugin(NpmPlugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
+        options = cast(NpmPluginProperties, self._options)
         self._npm_cache_export.mkdir(parents=True, exist_ok=True)
         pkg_path = self._part_info.part_build_dir / "package.json"
         bundled_pkg_path = (
@@ -55,7 +57,11 @@ class NpmUsePlugin(NpmPlugin):
         if self._is_self_contained:
             return [
                 *get_install_from_local_tarballs_commands(
-                    pkg_path, bundled_pkg_path, self._npm_cache_backstage
+                    pkg_path,
+                    bundled_pkg_path,
+                    self._npm_cache_backstage,
+                    self._npm_dev_prefix,
+                    options.npm_dev_dependencies,
                 ),
                 f'mv "$(npm pack . | tail -1)" "{self._npm_cache_export}/"',
             ]
