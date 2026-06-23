@@ -133,11 +133,12 @@ class ColconPlugin(Plugin):
         # - Release build type (for performance; no debug symbols in a rock/snap)
         # - BUILD_TESTING=OFF (test targets are not useful and pull in heavy deps)
         # Both can be overridden by passing the corresponding flag in
-        # colcon-cmake-args.
+        # colcon-cmake-args. Detection matches any arg that sets the variable,
+        # including the typed CMake form (e.g. "-DBUILD_TESTING:BOOL=ON").
         cmake_args = list(options.colcon_cmake_args)
-        if not any("-DCMAKE_BUILD_TYPE=" in s for s in cmake_args):
+        if not any(s.lstrip().startswith("-DCMAKE_BUILD_TYPE") for s in cmake_args):
             cmake_args.insert(0, "-DCMAKE_BUILD_TYPE=Release")
-        if not any("-DBUILD_TESTING=" in s for s in cmake_args):
+        if not any(s.lstrip().startswith("-DBUILD_TESTING") for s in cmake_args):
             cmake_args.append("-DBUILD_TESTING=OFF")
         build_command.extend(["--cmake-args", *cmake_args])
 

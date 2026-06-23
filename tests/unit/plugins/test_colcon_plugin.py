@@ -255,3 +255,26 @@ class TestPluginColconPlugin:
 
         assert "-DBUILD_TESTING=ON" in build_command
         assert "-DBUILD_TESTING=OFF" not in build_command
+
+    def test_get_build_commands_typed_cmake_overrides(
+        self, setup_method_fixture, new_dir
+    ):
+        # The typed CMake form (e.g. "-DBUILD_TESTING:BOOL=ON") must also be
+        # detected as a user override so the plugin does not append a
+        # conflicting default.
+        plugin = setup_method_fixture(
+            new_dir,
+            properties={
+                "colcon-cmake-args": [
+                    "-DBUILD_TESTING:BOOL=ON",
+                    "-DCMAKE_BUILD_TYPE:STRING=Debug",
+                ]
+            },
+        )
+
+        build_command = plugin.get_build_commands()[-1]
+
+        assert "-DBUILD_TESTING:BOOL=ON" in build_command
+        assert "-DBUILD_TESTING=OFF" not in build_command
+        assert "-DCMAKE_BUILD_TYPE:STRING=Debug" in build_command
+        assert "-DCMAKE_BUILD_TYPE=Release" not in build_command
