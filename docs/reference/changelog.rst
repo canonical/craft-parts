@@ -34,6 +34,11 @@ Bug fixes:
 - The Overlay and Build steps of parts that organize content to the overlay
   are executed before these steps in other parts, even when ``after`` is
   used.
+- Fix the ``colcon`` plugin to declare ``make`` and
+  ``python3-colcon-recursive-crawl`` as explicit build packages. Both are only
+  *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
+  they were absent when packages are installed with ``--no-install-recommends``,
+  causing builds to fail.
 
 .. _release-2.33.1:
 
