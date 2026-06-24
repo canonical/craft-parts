@@ -144,6 +144,7 @@ class TestPluginColconPlugin:
             f"--merge-install --install-base {plugin._part_info.part_install_dir}"
             f"{optional_properties}"
             f"--cmake-args -DCMAKE_BUILD_TYPE=Release "
+            f"-DBUILD_TESTING=OFF "
             f"--parallel-workers {plugin._part_info.parallel_build_count}",
         ]
 
@@ -189,6 +190,7 @@ class TestPluginColconPlugin:
             f'--build-base "{plugin._part_info.part_build_dir}" '
             f"--merge-install --install-base {plugin._part_info.part_install_dir} "
             f"{cmake_args}"
+            f"-DBUILD_TESTING=OFF "
             f"--parallel-workers {plugin._part_info.parallel_build_count}",
         ]
 
@@ -225,5 +227,54 @@ class TestPluginColconPlugin:
             f'--build-base "{plugin._part_info.part_build_dir}" '
             f"--merge-install --install-base {plugin._part_info.part_install_dir} "
             f'--cmake-args -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wall -Wextra" '
+            f"-DBUILD_TESTING=OFF "
             f"--parallel-workers {plugin._part_info.parallel_build_count}",
         ]
+
+    def test_get_build_commands_build_testing_off_by_default(
+        self, setup_method_fixture, new_dir
+    ):
+        # -DBUILD_TESTING=OFF must be injected when the user has not set it.
+        plugin = setup_method_fixture(new_dir)
+
+        build_command = plugin.get_build_commands()[-1]
+
+        assert "-DBUILD_TESTING=OFF" in build_command
+
+    def test_get_build_commands_build_testing_user_override(
+        self, setup_method_fixture, new_dir
+    ):
+        # When the user explicitly sets -DBUILD_TESTING=ON, the plugin must
+        # not append -DBUILD_TESTING=OFF (which would be silently shadowed and
+        # confusing).
+        plugin = setup_method_fixture(
+            new_dir, properties={"colcon-cmake-args": ["-DBUILD_TESTING=ON"]}
+        )
+
+        build_command = plugin.get_build_commands()[-1]
+
+        assert "-DBUILD_TESTING=ON" in build_command
+        assert "-DBUILD_TESTING=OFF" not in build_command
+
+    def test_get_build_commands_typed_cmake_overrides(
+        self, setup_method_fixture, new_dir
+    ):
+        # The typed CMake form (e.g. "-DBUILD_TESTING:BOOL=ON") must also be
+        # detected as a user override so the plugin does not append a
+        # conflicting default.
+        plugin = setup_method_fixture(
+            new_dir,
+            properties={
+                "colcon-cmake-args": [
+                    "-DBUILD_TESTING:BOOL=ON",
+                    "-DCMAKE_BUILD_TYPE:STRING=Debug",
+                ]
+            },
+        )
+
+        build_command = plugin.get_build_commands()[-1]
+
+        assert "-DBUILD_TESTING:BOOL=ON" in build_command
+        assert "-DBUILD_TESTING=OFF" not in build_command
+        assert "-DCMAKE_BUILD_TYPE:STRING=Debug" in build_command
+        assert "-DCMAKE_BUILD_TYPE=Release" not in build_command
