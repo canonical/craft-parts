@@ -19,7 +19,7 @@ import logging
 import subprocess
 import textwrap
 from pathlib import Path
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, CompletedProcess
 from unittest import mock
 from unittest.mock import Mock, call
 
@@ -27,6 +27,12 @@ import pytest
 import zstandard
 from craft_parts import ProjectInfo, callbacks, packages
 from craft_parts.packages import deb, errors
+from craft_parts.packages.deb import (
+    Ubuntu,
+    _dpkg_installed_version,
+    _get_apt_get_error_package,
+    _get_packages_marked_for_installation_apt_get,
+)
 from craft_parts.packages.deb_package import DebPackage
 from pytest_mock import MockerFixture
 
@@ -41,6 +47,18 @@ def mock_env_copy():
         yield m
 
 
+def _fake_dpkg_installed_version(name: str) -> str | None:
+    return {
+        "package": "1.0",
+        "package-installed": "1.0",
+        "versioned-package": "2.0",
+        "dependency-package": "1.0",
+        "new-version": "3.0",
+        "resolved-virtual-package": "1.0",
+        "virtual-package": None,
+    }.get(name)
+
+
 @pytest.fixture
 def mock_logger(mocker):
     return mocker.patch("craft_parts.packages.deb.logger", spec=logging.Logger)
@@ -51,6 +69,38 @@ def fake_all_packages_installed(mocker):
     mocker.patch(
         "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
         return_value=False,
+    )
+
+    mocker.patch(
+        "craft_parts.packages.deb._dpkg_installed_version",
+        side_effect=_fake_dpkg_installed_version,
+    )
+
+    mocker.patch(
+        "craft_parts.packages.deb._get_packages_marked_for_installation_apt_get",
+        side_effect=lambda package_names: {
+            tuple(sorted(["package-installed", "package", "versioned-package=2.0"])): [
+                ("package", "1.0"),
+                ("package-installed", "1.0"),
+                ("versioned-package", "2.0"),
+                ("dependency-package", "1.0"),
+            ],
+            tuple(sorted(["package-installed"])): [
+                ("package-installed", "1.0"),
+            ],
+            tuple(sorted(["package-installed=1.0"])): [
+                ("package-installed", "1.0"),
+            ],
+            tuple(sorted(["new-version=3.0"])): [
+                ("new-version", "3.0"),
+            ],
+            tuple(sorted(["virtual-package"])): [
+                ("resolved-virtual-package", "1.0"),
+            ],
+            tuple(sorted(["package=1.0"])): [
+                ("package", "1.0"),
+            ],
+        }.get(tuple(sorted(package_names)), []),
     )
 
 
@@ -550,9 +600,10 @@ class TestBuildPackages:
         ]
 
     @pytest.mark.usefixtures("fake_all_packages_installed")
-    def test_invalid_package_requested(self, fake_apt_cache, fake_deb_run):
-        fake_apt_cache.return_value.__enter__.return_value.mark_packages.side_effect = (
-            errors.PackageNotFound("package-invalid")
+    def test_invalid_package_requested(self, fake_apt_cache, fake_deb_run, mocker):
+        mocker.patch(
+            "craft_parts.packages.deb._get_packages_marked_for_installation_apt_get",
+            side_effect=subprocess.CalledProcessError(100, ["apt-get", "-s"]),
         )
 
         with pytest.raises(errors.BuildPackageNotFound):
@@ -993,3 +1044,234 @@ def test_chown_stage_packages(
     # Make sure chown was called properly
     mock_chown.assert_called_once_with(deb_cache_dir, user="_apt")
     assert message.format(deb_cache_dir) in caplog.text
+
+
+def test_dpkg_installed_version_nonzero_returncode(monkeypatch):
+    def fake_run(*args, **kwargs):
+        return CompletedProcess(
+            args=["dpkg-query"], returncode=1, stdout="", stderr="nope"
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert _dpkg_installed_version("bash") is None
+
+
+def test_dpkg_installed_version_empty_stdout(monkeypatch):
+    def fake_run(*args, **kwargs):
+        return CompletedProcess(
+            args=["dpkg-query"], returncode=0, stdout="\n", stderr=""
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert _dpkg_installed_version("bash") is None
+
+
+def test_dpkg_installed_version_not_installed_status(monkeypatch):
+    def fake_run(*args, **kwargs):
+        out = "deinstall ok config-files\t1.2.3\n"
+        return CompletedProcess(
+            args=["dpkg-query"], returncode=0, stdout=out, stderr=""
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert _dpkg_installed_version("bash") is None
+
+
+def test_dpkg_installed_version_installed(monkeypatch):
+    def fake_run(*args, **kwargs):
+        out = "install ok installed\t5.2.15-2ubuntu1\n"
+        return CompletedProcess(
+            args=["dpkg-query"], returncode=0, stdout=out, stderr=""
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert _dpkg_installed_version("bash") == "5.2.15-2ubuntu1"
+
+
+def test_get_packages_marked_for_installation_apt_get_uses_simulate(monkeypatch):
+    def fake_run(cmd, check, capture_output, text):
+        assert cmd[:2] == ["apt-get", "--simulate"]
+        assert check is True
+        assert capture_output is True
+        assert text is True
+        return CompletedProcess(
+            args=cmd,
+            returncode=0,
+            stdout="Inst package (1.0 Ubuntu:24.04/noble [amd64])\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    assert _get_packages_marked_for_installation_apt_get(["package"]) == [
+        ("package", "1.0")
+    ]
+
+
+def test_get_packages_marked_for_installation_apt_get_parses_upgrade(monkeypatch):
+    def fake_run(cmd, check, capture_output, text):
+        return CompletedProcess(
+            args=cmd,
+            returncode=0,
+            stdout=(
+                "Inst systemd [255.4-1ubuntu8.14] "
+                "(255.4-1ubuntu8.15 Ubuntu:24.04/noble-updates [amd64])\n"
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    assert _get_packages_marked_for_installation_apt_get(["systemd"]) == [
+        ("systemd", "255.4-1ubuntu8.15")
+    ]
+
+
+def test_get_apt_get_error_package_uses_package_reported_by_apt_get():
+    err = subprocess.CalledProcessError(
+        100,
+        ["apt-get", "--simulate", "install"],
+        stderr="E: Unable to locate package missing-package\n",
+    )
+
+    assert (
+        _get_apt_get_error_package(["valid-package", "missing-package"], err)
+        == "missing-package"
+    )
+
+
+def test_get_apt_get_error_package_falls_back_to_first_package_name():
+    err = subprocess.CalledProcessError(
+        100,
+        ["apt-get", "--simulate", "install"],
+        stderr="E: Something went wrong\n",
+    )
+
+    assert (
+        _get_apt_get_error_package(["fallback-package=1.0"], err) == "fallback-package"
+    )
+
+
+def test_get_installed_packages_uses_dpkg_query_when_available(monkeypatch):
+    def fake_check_output(cmd, text=False, stderr=None):
+        assert cmd[:2] == ["dpkg-query", "-W"]
+        return (
+            "bash\tinstall ok installed\t5.2.15-2ubuntu1\n"
+            "coreutils\tinstall ok installed\t9.4-3ubuntu6\n"
+            "bash\tinstall ok installed\t5.2.15-2ubuntu1\n"
+            "removed\tdeinstall ok config-files\t1.0\n"
+            "\n"
+        )
+
+    monkeypatch.setattr(subprocess, "check_output", fake_check_output)
+
+    pkgs = Ubuntu.get_installed_packages()
+    assert pkgs == ["bash=5.2.15-2ubuntu1", "coreutils=9.4-3ubuntu6"]
+
+
+def test_get_installed_packages_dpkg_query_ignores_malformed_lines(monkeypatch):
+    def fake_check_output(cmd, text=False, stderr=None):
+        assert cmd[:2] == ["dpkg-query", "-W"]
+        # Missing fields / wrong separators should be ignored.
+        return (
+            "bash install ok installed 5.2\n"
+            "ok\tinstall ok installed\t1.2.3\n"
+            "nover\tinstall ok installed\t\n"
+        )
+
+    monkeypatch.setattr(subprocess, "check_output", fake_check_output)
+
+    pkgs = Ubuntu.get_installed_packages()
+    assert pkgs == ["ok=1.2.3"]
+
+
+def test_get_installed_packages_fallback_parses_dpkg_status_and_flushes_last_stanza(
+    monkeypatch, tmp_path
+):
+    # Force dpkg-query path to fail
+    def boom(*a, **kw):
+        raise subprocess.CalledProcessError(1, "dpkg-query")
+
+    monkeypatch.setattr(subprocess, "check_output", boom)
+
+    # Fake /var/lib/dpkg/status with NO trailing blank line on last stanza
+    status = (
+        "Package: aaa\n"
+        "Status: install ok installed\n"
+        "Version: 1.0\n"
+        "\n"
+        "Package: zzz\n"
+        "Status: install ok installed\n"
+        "Version: 9.9\n"
+    )
+    fake_status = tmp_path / "status"
+    fake_status.write_text(status, encoding="utf-8")
+
+    # Redirect Path('/var/lib/dpkg/status') to our temp file
+    real_path = Path
+
+    def fake_path(p):
+        if p == "/var/lib/dpkg/status":
+            return fake_status
+        return real_path(p)
+
+    monkeypatch.setattr("craft_parts.packages.deb.Path", fake_path)
+
+    pkgs = Ubuntu.get_installed_packages()
+    assert pkgs == ["aaa=1.0", "zzz=9.9"]
+
+
+def test_get_installed_packages_fallback_ignores_not_installed(monkeypatch, tmp_path):
+    def boom(*a, **kw):
+        raise subprocess.CalledProcessError(1, "dpkg-query")
+
+    monkeypatch.setattr(subprocess, "check_output", boom)
+
+    status = (
+        "Package: keep\n"
+        "Status: install ok installed\n"
+        "Version: 2.0\n"
+        "\n"
+        "Package: gone\n"
+        "Status: deinstall ok config-files\n"
+        "Version: 1.0\n"
+        "\n"
+    )
+    fake_status = tmp_path / "status"
+    fake_status.write_text(status, encoding="utf-8")
+
+    real_path = Path
+
+    def fake_path(p):
+        if p == "/var/lib/dpkg/status":
+            return fake_status
+        return real_path(p)
+
+    monkeypatch.setattr("craft_parts.packages.deb.Path", fake_path)
+
+    pkgs = Ubuntu.get_installed_packages()
+    assert pkgs == ["keep=2.0"]
+
+
+def test_install_packages_host_path_uses_marked_packages_for_manifest(
+    fake_deb_run, mocker
+):
+    mark_packages = mocker.patch(
+        "craft_parts.packages.deb._get_packages_marked_for_installation_apt_get",
+        return_value=[("package", "1.0")],
+    )
+    get_versions = mocker.patch(
+        "craft_parts.packages.deb.Ubuntu._get_installed_package_versions",
+        return_value=["package=1.0"],
+    )
+    mocker.patch(
+        "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
+        return_value=True,
+    )
+
+    build_packages = deb.Ubuntu.install_packages(["package"])
+
+    mark_packages.assert_called_once_with(["package"])
+    get_versions.assert_called_once_with(["package"])
+    fake_deb_run.assert_not_called()
+    assert build_packages == ["package=1.0"]

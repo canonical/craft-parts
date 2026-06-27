@@ -459,6 +459,149 @@ def _is_list_of_slices(names: list[str]) -> bool:
     return any("_" in name for name in names)
 
 
+def _parse_installed_dpkg_query_line(line: str) -> str | None:
+    """Parse one dpkg-query output line into package=version, if installed."""
+    if not line.strip():
+        return None
+
+    try:
+        pkg_name, pkg_status, pkg_version = (
+            part.strip() for part in line.split("\t", 2)
+        )
+    except ValueError:
+        return None
+    if not pkg_name or not pkg_version:
+        return None
+    if "install ok installed" not in pkg_status:
+        return None
+
+    return f"{pkg_name}={pkg_version}"
+
+
+def _get_installed_packages_dpkg_query() -> list[str]:
+    """Return installed packages using dpkg-query."""
+    output = subprocess.check_output(
+        ["dpkg-query", "-W", "-f=${Package}\t${Status}\t${Version}\n"],
+        text=True,
+        stderr=subprocess.DEVNULL,
+    )
+    packages = {
+        package
+        for line in output.splitlines()
+        if (package := _parse_installed_dpkg_query_line(line)) is not None
+    }
+    return sorted(packages)
+
+
+def _get_installed_packages_dpkg_status() -> list[str]:
+    """Return installed packages by parsing /var/lib/dpkg/status."""
+    packages: set[str] = set()
+    status_path = Path("/var/lib/dpkg/status")
+
+    stanza_name: str | None = None
+    stanza_version: str | None = None
+    installed = False
+
+    with status_path.open(encoding="utf-8") as status_file:
+        for line in status_file:
+            if line.startswith("Package: "):
+                stanza_name = line.split(":", 1)[1].strip()
+                stanza_version = None
+                installed = False
+            elif line.startswith("Status: "):
+                installed = "install ok installed" in line
+            elif line.startswith("Version: "):
+                stanza_version = line.split(":", 1)[1].strip()
+            elif not line.strip():
+                if stanza_name and installed and stanza_version:
+                    packages.add(f"{stanza_name}={stanza_version}")
+                stanza_name = None
+                stanza_version = None
+                installed = False
+
+    if stanza_name and installed and stanza_version:
+        packages.add(f"{stanza_name}={stanza_version}")
+
+    return sorted(packages)
+
+
+def _dpkg_installed_version(pkg_name: str) -> str | None:
+    """Return installed version for pkg_name, or None if not installed."""
+    # dpkg-query exits non-zero if the package isn't installed
+    result = subprocess.run(
+        ["dpkg-query", "-W", "-f=${Status}\t${Version}\n", pkg_name],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+
+    line = (result.stdout or "").strip()
+    if not line:
+        return None
+
+    status, _, version = line.partition("\t")
+    if "install ok installed" not in status:
+        return None
+    version = version.strip()
+    return version or None
+
+
+def _parse_apt_get_simulation_inst_line(line: str) -> tuple[str, str] | None:
+    """Parse an apt-get simulation Inst line into package and target version."""
+    if not line.startswith("Inst "):
+        return None
+
+    pkg_name, _, package_details = line.removeprefix("Inst ").partition(" ")
+    if not pkg_name or "(" not in package_details:
+        return None
+
+    version = package_details.split("(", 1)[1].split(")", 1)[0].split()[0]
+    if not version:
+        return None
+
+    return pkg_name, version
+
+
+def _get_apt_get_error_package(
+    package_names: list[str], err: subprocess.CalledProcessError
+) -> str:
+    """Return the package name mentioned by apt-get, if detectable."""
+    output = f"{err.stdout or ''}\n{err.stderr or ''}"
+    for package_name in package_names:
+        pkg_name, _ = get_pkg_name_parts(package_name)
+        if package_name in output or pkg_name in output:
+            return pkg_name
+
+    return get_pkg_name_parts(package_names[0])[0]
+
+
+def _get_packages_marked_for_installation_apt_get(
+    package_names: list[str],
+) -> list[tuple[str, str]]:
+    """Return packages apt-get would install using simulation output."""
+    result = subprocess.run(
+        [
+            "apt-get",
+            "--simulate",
+            "--no-install-recommends",
+            "--allow-downgrades",
+            "install",
+            *package_names,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    return [
+        marked_package
+        for line in result.stdout.splitlines()
+        if (marked_package := _parse_apt_get_simulation_inst_line(line))
+    ]
+
+
 class Ubuntu(BaseRepository):
     """Repository management for Ubuntu packages."""
 
@@ -524,7 +667,6 @@ class Ubuntu(BaseRepository):
             ) from call_error
 
     @classmethod
-    @_apt_cache_wrapper
     def _check_if_all_packages_installed(cls, package_names: list[str]) -> bool:
         """Check if all given packages are installed.
 
@@ -532,56 +674,36 @@ class Ubuntu(BaseRepository):
         get_pkg_name_parts().  Used as an optimization to skip installation
         and cache refresh if dependencies are already satisfied.
 
+        This check uses dpkg-query and does not resolve virtual packages. If a
+        virtual package is requested, apt-get may still make a later install
+        call that resolves to a no-op when the dependency is already satisfied.
+
         :return True if _all_ packages are installed (with correct versions).
         """
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            for package in package_names:
-                pkg_name, pkg_version = get_pkg_name_parts(package)
-                installed_version = apt_cache.get_installed_version(
-                    pkg_name, resolve_virtual_packages=True
-                )
-
-                if installed_version is None or (
-                    pkg_version is not None and installed_version != pkg_version
-                ):
-                    return False
-
+        for package in package_names:
+            pkg_name, pkg_version = get_pkg_name_parts(package)
+            installed_version = _dpkg_installed_version(pkg_name)
+            if installed_version is None:
+                return False
+            if pkg_version is not None and installed_version != pkg_version:
+                return False
         return True
 
     @classmethod
-    @_apt_cache_wrapper
     def _get_installed_package_versions(cls, package_names: Sequence[str]) -> list[str]:
         packages: list[str] = []
-
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            for package_name in package_names:
-                package_version = apt_cache.get_installed_version(
-                    package_name, resolve_virtual_packages=True
-                )
-                if package_version is None:
-                    logger.debug("Expected package %s not installed", package_name)
-                    continue
-                logger.debug(
-                    "Found installed version %s for package %s",
-                    package_version,
-                    package_name,
-                )
-                packages.append(f"{package_name}={package_version}")
-
+        for package_name in package_names:
+            package_version = _dpkg_installed_version(package_name)
+            if package_version is None:
+                logger.debug("Expected package %s not installed", package_name)
+                continue
+            logger.debug(
+                "Found installed version %s for package %s",
+                package_version,
+                package_name,
+            )
+            packages.append(f"{package_name}={package_version}")
         return packages
-
-    @classmethod
-    @_apt_cache_wrapper
-    def _get_packages_marked_for_installation(
-        cls, package_names: list[str]
-    ) -> list[tuple[str, str]]:
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            try:
-                apt_cache.mark_packages(set(package_names))
-            except errors.PackageNotFound as error:
-                raise errors.BuildPackageNotFound(error.package_name) from error
-
-            return apt_cache.get_packages_marked_for_installation()
 
     @classmethod
     def download_packages(cls, package_names: list[str]) -> None:
@@ -633,25 +755,39 @@ class Ubuntu(BaseRepository):
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
-        # Collect the list of marked packages to later construct a manifest
-        marked_packages = cls._get_packages_marked_for_installation(package_names)
-        marked_package_names = [name for name, _ in sorted(marked_packages)]
+        try:
+            marked = _get_packages_marked_for_installation_apt_get(package_names)
+        except subprocess.CalledProcessError as err:
+            failed_package = _get_apt_get_error_package(package_names, err)
+            raise errors.BuildPackageNotFound(failed_package) from err
 
-        if not list_only:
-            if refresh_package_cache and install_required:
-                cls.refresh_packages_list()
-            if install_required:
-                cls._install_packages(package_names)
-            else:
-                logger.debug(
-                    "Requested build-packages already installed: %s", package_names
-                )
+        marked_package_names = {name for name, _ in marked}
+
+        if list_only:
+            # For list-only, report what apt would install (deterministic).
+            return [f"{name}={version}" for name, version in sorted(marked)]
+
+        if refresh_package_cache and install_required:
+            cls.refresh_packages_list()
+
+        if install_required:
+            cls._install_packages(package_names)
+        else:
+            logger.debug(
+                "Requested build-packages already installed: %s", package_names
+            )
+            # apt-get simulation only reports packages it would install or upgrade.
+            # Preserve the legacy return value for requested concrete packages that
+            # are already satisfied.
+            marked_package_names.update(
+                get_pkg_name_parts(name)[0] for name in package_names
+            )
 
         # This result is a best effort approach for deps and virtual packages
         # as they are not part of the installation list.
-        # Tell static type checkers to ignore until we can use PEP 612 (Python 3.10)
-        return cls._get_installed_package_versions(  # type: ignore[no-any-return]
-            marked_package_names
+        return sorted(
+            cls._get_installed_package_versions(sorted(marked_package_names)),
+            key=lambda package: package.split("=", 1)[0],
         )
 
     @classmethod
@@ -873,14 +1009,25 @@ class Ubuntu(BaseRepository):
             return apt_cache.get_installed_version(package_name) is not None
 
     @classmethod
-    @_apt_cache_wrapper
     def get_installed_packages(cls) -> list[str]:
-        """Obtain a list of the installed packages and their versions."""
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            return [
-                f"{pkg_name}={pkg_version}"
-                for pkg_name, pkg_version in apt_cache.get_installed_packages().items()
-            ]
+        """Obtain a list of the installed packages and their versions.
+
+        Prefer dpkg-query because python-apt may try to create
+        /etc/apt/sources.list when it is missing, which fails in unprivileged
+        environments. Fall back to parsing /var/lib/dpkg/status when dpkg-query
+        is unavailable or fails.
+
+        :return: A list of installed packages in the form package=version.
+        """
+        try:
+            return _get_installed_packages_dpkg_query()
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+            pass
+
+        try:
+            return _get_installed_packages_dpkg_status()
+        except OSError:
+            return []
 
     @classmethod
     def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
