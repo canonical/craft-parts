@@ -20,6 +20,7 @@ import abc
 import logging
 import shutil
 import subprocess
+import urllib.parse
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar
@@ -237,8 +238,54 @@ class FileSourceHandler(SourceHandler):
             **kwargs,
         )
         self._file = Path()
+        self._updated_files: set[str] = set()
+        self._updated_directories: set[str] = set()
 
     # pylint: enable=too-many-arguments
+
+    @override
+    def check_if_outdated(
+        self, target: str, *, ignore_files: list[str] | None = None
+    ) -> bool:
+        """Check if the source file changed since target was created."""
+        self._updated_files = set()
+        self._updated_directories = set()
+
+        source = self.source
+        if url_utils.is_url(source):
+            if url_utils.get_url_scheme(source) != "file":
+                return False
+            source = urllib.parse.unquote(urllib.parse.urlparse(source).path)
+
+        try:
+            target_mtime = os.lstat(target).st_mtime
+            source_mtime = os.lstat(source).st_mtime
+        except FileNotFoundError:
+            return False
+
+        source_name = Path(source).name
+
+        if source_name in (ignore_files or []):
+            return False
+
+        if source_mtime >= target_mtime:
+            self._updated_files.add(source_name)
+            return True
+
+        return False
+
+    @override
+    def get_outdated_files(self) -> tuple[list[str], list[str]]:
+        """Obtain lists of outdated files and directories.
+
+        Call :meth:`check_if_outdated` first to populate the lists.
+        """
+        return (sorted(self._updated_files), sorted(self._updated_directories))
+
+    @override
+    def update(self) -> None:
+        """Update pulled source."""
+        self.pull()
 
     @abc.abstractmethod
     def provision(
