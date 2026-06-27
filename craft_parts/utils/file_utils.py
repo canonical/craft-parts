@@ -148,8 +148,8 @@ def link(
 
 
 def copy(
-    source: Path,
-    destination: Path,
+    source: Path | str,
+    destination: Path | str,
     *,
     follow_symlinks: bool = False,
     permissions: list[Permissions] | None = None,
@@ -167,18 +167,32 @@ def copy(
 
     :raises CopyFileNotFound: If source doesn't exist.
     """
+    source = Path(source)
+    destination = Path(destination)
+
     # If os.link raised an I/O error, it may have left a file behind. Skip on
     # OSError in case it doesn't exist or is a directory.
     with contextlib.suppress(OSError):
         destination.unlink()
 
     try:
-        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
+        src_stat = os.stat(source, follow_symlinks=follow_symlinks)  # noqa: PTH116
     except FileNotFoundError as err:
         raise errors.CopyFileNotFound(str(source)) from err
 
-    uid = source.stat(follow_symlinks=follow_symlinks).st_uid
-    gid = source.stat(follow_symlinks=follow_symlinks).st_gid
+    src_mode = src_stat.st_mode
+
+    if stat.S_ISFIFO(src_mode):
+        os.mkfifo(destination, stat.S_IMODE(src_mode))
+        shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
+    elif stat.S_ISCHR(src_mode) or stat.S_ISBLK(src_mode):
+        os.mknod(destination, src_mode, src_stat.st_rdev)
+        shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
+    else:
+        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
+
+    uid = src_stat.st_uid
+    gid = src_stat.st_gid
 
     try:
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
