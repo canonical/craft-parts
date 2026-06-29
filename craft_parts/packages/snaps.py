@@ -75,7 +75,7 @@ class SnapPackage:
 
     def __init__(self, snap: str) -> None:
         """Lifecycle handler for a snap of the format <snap-name>/<channel>."""
-        self.name, self.channel = _get_parsed_snap(snap)
+        self.name, self.channel, self.components = _get_parsed_snap(snap)
         self._original_channel = self.channel
         if not self.channel or self.channel == "stable":
             self.channel = "latest/stable"
@@ -204,8 +204,17 @@ class SnapPackage:
         """Download a given snap."""
         # We use the `snap download` command here on recommendation
         # of the snapd team.
-        logger.debug("Downloading snap: %s", self.name)
-        snap_download_cmd = ["snap", "download", self.name]
+        logger.debug(
+            "Downloading snap: %s, with components: %s",
+            self.name,
+            ", ".join(self.components),
+        )
+        comp_segment = f"+{'+'.join(self.components)}" if self.components else ""
+        snap_download_cmd = [
+            "snap",
+            "download",
+            f"{self.name}{comp_segment}",
+        ]
         if self._original_channel:
             snap_download_cmd.extend(["--channel", self._original_channel])
         try:
@@ -218,7 +227,9 @@ class SnapPackage:
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapDownloadError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_components=self.components,
+                snap_channel=self.channel,
             ) from err
 
     def install(self) -> None:
@@ -323,7 +334,7 @@ def get_assertion(assertion_params: Sequence[str]) -> bytes:
         ) from call_error
 
 
-def _get_parsed_snap(snap: str) -> tuple[str, str]:
+def _get_parsed_snap(snap: str) -> tuple[str, str, list[str]]:
     if "/" in snap:
         sep_index = snap.find("/")
         snap_name = snap[:sep_index]
@@ -331,7 +342,9 @@ def _get_parsed_snap(snap: str) -> tuple[str, str]:
     else:
         snap_name = snap
         snap_channel = ""
-    return snap_name, snap_channel
+
+    snap_name, *snap_components = snap_name.split("+")
+    return snap_name, snap_channel, snap_components
 
 
 def get_snapd_socket_path_template() -> str:
