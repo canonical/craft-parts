@@ -168,6 +168,16 @@ class PartSpec(BaseModel):
     This key does not affect commands specified with ``override-build``.
     """
 
+    patches: list[str] = Field(
+        default=[],
+        description="A list of patch files to apply to the part's source.",
+        examples=[["patches/fix-build.patch", "patches/adjust-paths.patch"]],
+    )
+    """A list of patch files to apply to the part's source.
+
+    During the pull step, entries are applied to the pulled source tree.
+    """
+
     source_submodules: list[str] | None = Field(
         default=None,
         description="The registered submodules to fetch from Git sources.",
