@@ -708,3 +708,25 @@ def test_find_merge_conflicts_broken_symlink_vs_file(tmp_path: pathlib.Path):
     conflicts = file_utils.find_merge_conflicts(source_root, dest_root)
 
     assert conflicts == {pathlib.Path("my-link"): ["different types (symlink, file)"]}
+
+
+def test_link_or_copy_samefile_symlink(tmp_path: Path) -> None:
+    """Ensure link_or_copy does not crash or delete the file when dest symlinks to source."""
+    from craft_parts.utils.file_utils import link_or_copy
+
+    # Create a source file
+    source = tmp_path / "source.txt"
+    source.write_text("test data")
+
+    # Create a destination that is a symlink pointing directly to the source
+    destination = tmp_path / "dest.txt"
+    destination.symlink_to(source.name)
+
+    # Run the function - this should return silently without throwing FileExistsError
+    link_or_copy(source, destination)
+
+    # Verify the source was NOT deleted (which was the root cause of the bug)
+    assert source.exists()
+    assert source.read_text() == "test data"
+    assert destination.exists()
+    assert destination.is_symlink()
