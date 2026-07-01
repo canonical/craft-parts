@@ -633,6 +633,10 @@ class Ubuntu(BaseRepository):
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
+        # Refresh BEFORE marking packages
+        if refresh_package_cache and install_required:
+            cls.refresh_packages_list()
+
         # Collect the list of marked packages to later construct a manifest
         marked_packages = cls._get_packages_marked_for_installation(package_names)
         marked_package_names = [name for name, _ in sorted(marked_packages)]
