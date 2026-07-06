@@ -21,6 +21,7 @@ import logging
 import pathlib
 import subprocess
 import sys
+import time
 from collections.abc import Sequence
 from http import HTTPStatus
 from typing import (
@@ -42,6 +43,14 @@ _STORE_ASSERTION = [
 # pylint: enable=line-too-long
 
 _CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
+
+# How many times to try querying the store through snapd (/v2/find), and how
+# long to wait between attempts. Queries can fail transiently, e.g. on slow
+# infrastructure, or while snapd is restarting shortly after a build instance
+# is created (see https://warthogs.atlassian.net/browse/SNAPDENG-36387).
+_STORE_RETRY_COUNT: int = 5
+_STORE_RETRY_INTERVAL: float = 2.0
+
 logger = logging.getLogger(__name__)
 
 
@@ -119,27 +128,38 @@ class SnapPackage:
     def get_store_snap_info(self) -> dict[str, Any] | None:
         """Return a store payload for the snap."""
         if self._is_in_store is None:
-            # Some environments timeout often, like the armv7 testing
-            # infrastructure. Given that constraint, we add some retry
-            # logic.
-            retry_count = 5
-            while retry_count > 0:
+            # Store queries fail transiently in some environments: slow
+            # infrastructure (like armv7 test runners) times out often, and
+            # snapd itself may be briefly unable to service requests (e.g.
+            # while restarting on a freshly created build instance). Retry
+            # with a delay to ride out these windows.
+            for attempt in range(1, _STORE_RETRY_COUNT + 1):
                 try:
                     self._store_snap_info = _get_store_snap_info(self.name)
                     break
                 except exceptions.HTTPError as http_error:
                     logger.debug(
                         "The http error when checking the store for %s is %d "
-                        "(retries left %d)",
+                        "(attempt %d of %d)",
                         self.name,
                         http_error.response.status_code,
-                        retry_count,
+                        attempt,
+                        _STORE_RETRY_COUNT,
                     )
                     if http_error.response.status_code == HTTPStatus.NOT_FOUND:
                         raise errors.SnapUnavailable(
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error
-                    retry_count -= 1
+                except exceptions.ConnectionError:
+                    logger.debug(
+                        "Failed to connect to snapd when checking the store "
+                        "for %s (attempt %d of %d)",
+                        self.name,
+                        attempt,
+                        _STORE_RETRY_COUNT,
+                    )
+                if attempt < _STORE_RETRY_COUNT:
+                    time.sleep(_STORE_RETRY_INTERVAL)
 
         return self._store_snap_info
 
@@ -299,8 +319,13 @@ def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
             if snap_pkg_channel != "stable" and snap_pkg_type == "base":
                 snap_pkg = SnapPackage(f"{snap_pkg.name}/latest/{snap_pkg_channel}")
 
-            if not snap_pkg.installed:
-                snap_pkg.install()
+        # Attempt the install even if the store query failed (store_snap_info
+        # is None): 'snap install' does its own store lookup and fails loudly
+        # if the snap is genuinely unavailable. Skipping the install here
+        # would only surface much later, as a confusing "command not found"
+        # error when the part's build environment is validated.
+        if not snap_pkg.installed:
+            snap_pkg.install()
 
         local_snap_info = snap_pkg.get_local_snap_info()
         if local_snap_info:
