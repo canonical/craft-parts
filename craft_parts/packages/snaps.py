@@ -43,14 +43,6 @@ _STORE_ASSERTION = [
 # pylint: enable=line-too-long
 
 _CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
-
-# How many times to try querying the store through snapd (/v2/find), and how
-# long to wait between attempts. Queries can fail transiently, e.g. on slow
-# infrastructure, or while snapd is restarting shortly after a build instance
-# is created (see https://warthogs.atlassian.net/browse/SNAPDENG-36387).
-_STORE_RETRY_COUNT: int = 5
-_STORE_RETRY_INTERVAL: float = 2.0
-
 logger = logging.getLogger(__name__)
 
 
@@ -128,38 +120,31 @@ class SnapPackage:
     def get_store_snap_info(self) -> dict[str, Any] | None:
         """Return a store payload for the snap."""
         if self._is_in_store is None:
-            # Store queries fail transiently in some environments: slow
-            # infrastructure (like armv7 test runners) times out often, and
-            # snapd itself may be briefly unable to service requests (e.g.
-            # while restarting on a freshly created build instance). Retry
-            # with a delay to ride out these windows.
-            for attempt in range(1, _STORE_RETRY_COUNT + 1):
+            # Some environments timeout often, like the armv7 testing
+            # infrastructure. Given that constraint, we add some retry
+            # logic.
+            retry_count = 5
+            while retry_count > 0:
                 try:
                     self._store_snap_info = _get_store_snap_info(self.name)
                     break
                 except exceptions.HTTPError as http_error:
                     logger.debug(
                         "The http error when checking the store for %s is %d "
-                        "(attempt %d of %d)",
+                        "(retries left %d)",
                         self.name,
                         http_error.response.status_code,
-                        attempt,
-                        _STORE_RETRY_COUNT,
+                        retry_count,
                     )
                     if http_error.response.status_code == HTTPStatus.NOT_FOUND:
                         raise errors.SnapUnavailable(
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error
-                except exceptions.ConnectionError:
-                    logger.debug(
-                        "Failed to connect to snapd when checking the store "
-                        "for %s (attempt %d of %d)",
-                        self.name,
-                        attempt,
-                        _STORE_RETRY_COUNT,
-                    )
-                if attempt < _STORE_RETRY_COUNT:
-                    time.sleep(_STORE_RETRY_INTERVAL)
+                    retry_count -= 1
+                    # Wait before retrying: snapd may be briefly unable to
+                    # service requests, e.g. while restarting shortly after
+                    # a build instance is created (SNAPDENG-36387).
+                    time.sleep(2)
 
         return self._store_snap_info
 
