@@ -70,10 +70,7 @@ class LocalSource(SourceHandler):
 
         _source_resolved = self.source_abspath.resolve()
         _work_dir_resolved = self._dirs.work_dir.resolve()
-
-        _nested_craft_dirs: frozenset[Path] = frozenset()
-
-        _craft_output_dirs = [
+        _craft_dirs = [
             p
             for p in [
                 self._dirs.parts_dir,
@@ -85,23 +82,19 @@ class LocalSource(SourceHandler):
             if p is not None
         ]
 
-        if _source_resolved == _work_dir_resolved:
-            # Fast path: source IS work_dir — output dirs are direct children,
-            # exclude by name.
-            self._ignore_patterns.extend(p.name for p in _craft_output_dirs)
-        elif _work_dir_resolved.is_relative_to(_source_resolved):
-            if self._dirs.root_dir is not None:
-                # root_dir rewrite: work_dir is a source subdirectory containing
-                # real source files alongside craft output dirs.  Exclude only
-                # the specific craft output dirs by absolute path so the source
-                # files in work_dir are still staged.
-                _nested_craft_dirs = frozenset(p.resolve() for p in _craft_output_dirs)
+        _nested_craft_dirs: frozenset[Path] = frozenset()
+
+        if _work_dir_resolved.is_relative_to(_source_resolved):
+            rel = _work_dir_resolved.relative_to(_source_resolved)
+            if self._dirs.root_dir is not None and rel != Path("."):
+                # work_dir is a source subdir with real files alongside craft
+                # output — exclude only the specific output dirs by absolute path.
+                _nested_craft_dirs = frozenset(p.resolve() for p in _craft_dirs)
             else:
-                # Traditional case: work_dir is nested inside source and is
-                # treated as a craft-only directory.  Exclude the entire subtree
-                # via the first path component.
-                rel = _work_dir_resolved.relative_to(_source_resolved)
-                self._ignore_patterns.append(rel.parts[0])
+                # source == work_dir: rel.parts is empty, exclude by craft dir names.
+                # work_dir nested inside source (no root_dir): exclude first component.
+                names = {rel.parts[0]} if rel.parts else {p.name for p in _craft_dirs}
+                self._ignore_patterns.extend(names)
 
         logger.debug("ignore patterns: %r", self._ignore_patterns)
 
