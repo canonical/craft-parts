@@ -28,9 +28,13 @@ class ProjectDirs:
 
     :param work_dir: The parent directory containing the parts, prime and stage
         subdirectories. If not specified, the current directory will be used.
+    :param root_dir: The root directory of the project (e.g. the git repository
+        root). When set, local sources are staged from this directory so sibling
+        packages outside ``work_dir`` are accessible during the build.
     :param partitions: If partitions are enabled, the list of partitions.
 
     :ivar work_dir: The root of the work directories used for project processing.
+    :ivar root_dir: The project root directory, if set.
     :ivar parts_dir: The directory containing work subdirectories for each part.
     :ivar overlay_dir: The directory containing work subdirectories for overlays.
     :ivar overlay_mount_dir: The mountpoint for the overlay filesystem.
@@ -45,10 +49,12 @@ class ProjectDirs:
         *,
         partitions: Sequence[str] | None = None,
         work_dir: Path | str = ".",
+        root_dir: Path | None = None,
     ) -> None:
         partition_utils.validate_partition_names(partitions)
         self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()
+        self.root_dir = root_dir
         self.parts_dir = self.work_dir / "parts"
         self.overlay_dir = self.work_dir / "overlay"
         self.overlay_mount_dir = self.overlay_dir / "overlay"

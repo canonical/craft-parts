@@ -57,6 +57,11 @@ class LifecycleManager:
         directory will be used.
     :param work_dir: The toplevel directory for work directories. The current
         directory will be used if none is specified.
+    :param root_dir: The root directory of the project (e.g. the git repository
+        root). When set, local sources are staged from this directory with
+        ``source-subdir`` automatically computed as the relative path from
+        ``root_dir`` to the original source. ``work_dir`` must be the same as
+        or a subdirectory of ``root_dir``.
     :param arch: The architecture to build for. Defaults to the host system
         architecture.
     :param base: [deprecated] The system base the project being processed will
@@ -103,6 +108,7 @@ class LifecycleManager:
         application_name: str,
         cache_dir: Path | str,
         work_dir: Path | str = ".",
+        root_dir: Path | str | None = None,
         arch: str = "",
         base: str = "",
         project_name: str | None = None,
@@ -145,9 +151,18 @@ class LifecycleManager:
         if filesystem_mounts:
             filesystem_mounts_obj = FilesystemMounts.unmarshal(filesystem_mounts)
 
+        if root_dir is not None:
+            root_dir = Path(root_dir).resolve()
+            work_dir_resolved = Path(work_dir).expanduser().resolve()
+            if not work_dir_resolved.is_relative_to(root_dir):
+                raise ValueError(
+                    f"work_dir {str(work_dir_resolved)!r} must be the same as or a "
+                    f"subdirectory of root_dir {str(root_dir)!r}"
+                )
+
         packages.Repository.configure(application_package_name)
 
-        project_dirs = ProjectDirs(work_dir=work_dir, partitions=partitions)
+        project_dirs = ProjectDirs(work_dir=work_dir, partitions=partitions, root_dir=root_dir)
 
         project_info = ProjectInfo(
             application_name=application_name,
@@ -171,6 +186,9 @@ class LifecycleManager:
         parts_data = all_parts.get("parts", {})
 
         executor.expand_environment(parts_data, info=project_info)
+
+        if root_dir is not None:
+            _rewrite_local_sources(parts_data, root_dir)
 
         part_list: list[Part] = []
         for name, spec in parts_data.items():
@@ -400,3 +418,27 @@ def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
     for name in part.dependencies:
         if name not in parts_data:
             raise errors.InvalidPartName(name)
+
+
+def _rewrite_local_sources(parts_data: dict[str, Any], root_dir: Path) -> None:
+    """Rewrite local sources so they're staged from root_dir with source-subdir set.
+
+    This preserves sibling directories (e.g. ../common) in the staging area,
+    which would otherwise be inaccessible when only the charm subdir is staged.
+    """
+    for spec in parts_data.values():
+        if not isinstance(spec, dict):
+            continue
+        source = str(spec.get("source", "."))
+        if not source.startswith("."):
+            continue
+        source_abs = Path(source).resolve()
+        if not source_abs.is_relative_to(root_dir):
+            continue
+        relative = source_abs.relative_to(root_dir)
+        if relative == Path("."):
+            continue
+        existing_subdir = spec.get("source-subdir")
+        new_subdir = str(relative / existing_subdir) if existing_subdir else str(relative)
+        spec["source"] = str(root_dir)
+        spec["source-subdir"] = new_subdir

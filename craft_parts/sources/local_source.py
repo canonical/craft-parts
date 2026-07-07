@@ -69,6 +69,8 @@ class LocalSource(SourceHandler):
         self.source_abspath = Path(self.source).absolute()
         self.copy_function = copy_function
 
+        _nested_craft_dirs: frozenset[Path] = frozenset()
+
         if self._dirs.work_dir.resolve() == Path(self.source_abspath):
             # ignore parts/stage/dir if source dir matches workdir
             self._ignore_patterns.append(self._dirs.parts_dir.name)
@@ -78,17 +80,55 @@ class LocalSource(SourceHandler):
             if self._dirs.partition_dir:
                 self._ignore_patterns.append(self._dirs.partition_dir.name)
         else:
-            # otherwise check if work_dir inside source dir
             with contextlib.suppress(ValueError):
-                rel_work_dir = self._dirs.work_dir.relative_to(self.source_abspath)
-                # deep workdirs will be cut at the first component
-                self._ignore_patterns.append(rel_work_dir.parts[0])
+                self._dirs.work_dir.relative_to(self.source_abspath)
+                if self._dirs.root_dir is not None and Path(self.source_abspath) == self._dirs.root_dir:
+                    # source was rewritten to root_dir; work_dir is the original
+                    # source dir and contains useful files — exclude only the
+                    # craft-parts output dirs by absolute path
+                    _nested_craft_dirs = frozenset(
+                        p.resolve()
+                        for p in filter(
+                            None,
+                            [
+                                self._dirs.parts_dir,
+                                self._dirs.stage_dir,
+                                self._dirs.prime_dir,
+                                self._dirs.overlay_dir,
+                                self._dirs.partition_dir,
+                            ],
+                        )
+                    )
+                else:
+                    # otherwise check if work_dir inside source dir
+                    rel_work_dir = self._dirs.work_dir.relative_to(self.source_abspath)
+                    # deep workdirs will be cut at the first component
+                    self._ignore_patterns.append(rel_work_dir.parts[0])
 
         logger.debug("ignore patterns: %r", self._ignore_patterns)
 
         self._ignore = functools.partial(
             _ignore, self.source_abspath, Path.cwd(), self._ignore_patterns
         )
+
+        if _nested_craft_dirs:
+            _base = self._ignore
+
+            def _ignore_with_nested_craft_dirs(
+                directory: Path | str,
+                files: list[str],
+                also_ignore: list[str] | None = None,
+                *,
+                _craft: frozenset[Path] = _nested_craft_dirs,
+                _base_fn: functools.partial[list[str]] = _base,
+            ) -> list[str]:
+                excluded = set(_base_fn(directory, files, also_ignore=also_ignore) or [])
+                for name in files:
+                    if Path(directory, name).resolve() in _craft:
+                        excluded.add(name)
+                return list(excluded)
+
+            self._ignore = _ignore_with_nested_craft_dirs
         self._updated_files: set[str] = set()
         self._updated_directories: set[str] = set()
 
