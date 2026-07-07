@@ -16,7 +16,6 @@
 
 """The local source handler and helpers."""
 
-import contextlib
 import functools
 import logging
 import os
@@ -69,41 +68,40 @@ class LocalSource(SourceHandler):
         self.source_abspath = Path(self.source).absolute()
         self.copy_function = copy_function
 
+        _source_resolved = self.source_abspath.resolve()
+        _work_dir_resolved = self._dirs.work_dir.resolve()
+
         _nested_craft_dirs: frozenset[Path] = frozenset()
 
-        if self._dirs.work_dir.resolve() == Path(self.source_abspath):
-            # ignore parts/stage/dir if source dir matches workdir
-            self._ignore_patterns.append(self._dirs.parts_dir.name)
-            self._ignore_patterns.append(self._dirs.stage_dir.name)
-            self._ignore_patterns.append(self._dirs.prime_dir.name)
-            self._ignore_patterns.append(self._dirs.overlay_dir.name)
-            if self._dirs.partition_dir:
-                self._ignore_patterns.append(self._dirs.partition_dir.name)
-        else:
-            with contextlib.suppress(ValueError):
-                self._dirs.work_dir.relative_to(self.source_abspath)
-                if self._dirs.root_dir is not None and Path(self.source_abspath) == self._dirs.root_dir:
-                    # source was rewritten to root_dir; work_dir is the original
-                    # source dir and contains useful files — exclude only the
-                    # craft-parts output dirs by absolute path
-                    _nested_craft_dirs = frozenset(
-                        p.resolve()
-                        for p in filter(
-                            None,
-                            [
-                                self._dirs.parts_dir,
-                                self._dirs.stage_dir,
-                                self._dirs.prime_dir,
-                                self._dirs.overlay_dir,
-                                self._dirs.partition_dir,
-                            ],
-                        )
-                    )
-                else:
-                    # otherwise check if work_dir inside source dir
-                    rel_work_dir = self._dirs.work_dir.relative_to(self.source_abspath)
-                    # deep workdirs will be cut at the first component
-                    self._ignore_patterns.append(rel_work_dir.parts[0])
+        _craft_output_dirs = [
+            p
+            for p in [
+                self._dirs.parts_dir,
+                self._dirs.stage_dir,
+                self._dirs.prime_dir,
+                self._dirs.overlay_dir,
+                self._dirs.partition_dir,
+            ]
+            if p is not None
+        ]
+
+        if _source_resolved == _work_dir_resolved:
+            # Fast path: source IS work_dir — output dirs are direct children,
+            # exclude by name.
+            self._ignore_patterns.extend(p.name for p in _craft_output_dirs)
+        elif _work_dir_resolved.is_relative_to(_source_resolved):
+            if self._dirs.root_dir is not None:
+                # root_dir rewrite: work_dir is a source subdirectory containing
+                # real source files alongside craft output dirs.  Exclude only
+                # the specific craft output dirs by absolute path so the source
+                # files in work_dir are still staged.
+                _nested_craft_dirs = frozenset(p.resolve() for p in _craft_output_dirs)
+            else:
+                # Traditional case: work_dir is nested inside source and is
+                # treated as a craft-only directory.  Exclude the entire subtree
+                # via the first path component.
+                rel = _work_dir_resolved.relative_to(_source_resolved)
+                self._ignore_patterns.append(rel.parts[0])
 
         logger.debug("ignore patterns: %r", self._ignore_patterns)
 
