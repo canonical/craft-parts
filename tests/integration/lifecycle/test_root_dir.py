@@ -120,22 +120,32 @@ class TestRootDir:
         assert (src_dir / "common" / "shared.py").exists()
         assert lf._part_list[0].spec.source_subdir == "charm/src"
 
-    def test_work_dir_not_under_root_dir_raises(self, tmp_path):
-        """root_dir must be an ancestor of work_dir."""
-        root = tmp_path / "root"
-        work = tmp_path / "other"
-        root.mkdir()
-        work.mkdir()
+    def test_work_dir_outside_root_dir_is_valid(self, tmp_path, monkeypatch):
+        """work_dir does not need to be inside root_dir.
 
-        parts = {"parts": {"my-part": {"plugin": "nil", "source": "."}}}
-        with pytest.raises(ValueError, match="must be the same as or a subdirectory"):
-            craft_parts.LifecycleManager(
-                parts,
-                application_name="test_root_dir",
-                cache_dir=str(tmp_path),
-                work_dir=str(work),
-                root_dir=root,
-            )
+        In managed mode, work_dir=/root and root_dir=/root/project — work_dir
+        is a parent of root_dir, not a child.  Sources that don't resolve
+        inside root_dir are simply left unrewritten.
+        """
+        # CWD = root_dir; work_dir is a parent
+        root = tmp_path / "project"
+        work = tmp_path  # parent of root
+        root.mkdir()
+        (root / "file.txt").write_text("hello\n")
+        monkeypatch.chdir(root)
+
+        parts = {"parts": {"my-part": {"plugin": "dump", "source": "."}}}
+        lf = craft_parts.LifecycleManager(
+            parts,
+            application_name="test_root_dir",
+            cache_dir=str(work / ".cache"),
+            work_dir=str(work),
+            root_dir=root,
+        )
+        _pull(lf)
+
+        src_dir = work / "parts" / "my-part" / "src"
+        assert (src_dir / "file.txt").exists()
 
     def test_work_dir_equal_to_root_dir_is_valid(self, tmp_path, monkeypatch):
         """work_dir == root_dir is a valid configuration (no source rewriting needed)."""

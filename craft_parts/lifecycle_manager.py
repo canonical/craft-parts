@@ -58,10 +58,9 @@ class LifecycleManager:
     :param work_dir: The toplevel directory for work directories. The current
         directory will be used if none is specified.
     :param root_dir: The root directory of the project (e.g. the git repository
-        root). When set, local sources are staged from this directory with
-        ``source-subdir`` automatically computed as the relative path from
-        ``root_dir`` to the original source. ``work_dir`` must be the same as
-        or a subdirectory of ``root_dir``.
+        root). When set, local sources that resolve inside ``root_dir`` are
+        re-staged from this directory with ``source-subdir`` automatically
+        computed as the relative path from ``root_dir`` to the original source.
     :param arch: The architecture to build for. Defaults to the host system
         architecture.
     :param base: [deprecated] The system base the project being processed will
@@ -150,14 +149,6 @@ class LifecycleManager:
         filesystem_mounts_obj: FilesystemMounts | None = None
         if filesystem_mounts:
             filesystem_mounts_obj = FilesystemMounts.unmarshal(filesystem_mounts)
-
-        if root_dir is not None:
-            work_dir_resolved = Path(work_dir).expanduser().resolve()
-            if not work_dir_resolved.is_relative_to(root_dir):
-                raise ValueError(
-                    f"work_dir {str(work_dir_resolved)!r} must be the same as or a "
-                    f"subdirectory of root_dir {str(root_dir)!r}"
-                )
 
         packages.Repository.configure(application_package_name)
 
