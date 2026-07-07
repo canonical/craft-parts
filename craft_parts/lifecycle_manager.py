@@ -108,7 +108,7 @@ class LifecycleManager:
         application_name: str,
         cache_dir: Path | str,
         work_dir: Path | str = ".",
-        root_dir: Path | str | None = None,
+        root_dir: Path | None = None,
         arch: str = "",
         base: str = "",
         project_name: str | None = None,
@@ -152,7 +152,6 @@ class LifecycleManager:
             filesystem_mounts_obj = FilesystemMounts.unmarshal(filesystem_mounts)
 
         if root_dir is not None:
-            root_dir = Path(root_dir).resolve()
             work_dir_resolved = Path(work_dir).expanduser().resolve()
             if not work_dir_resolved.is_relative_to(root_dir):
                 raise ValueError(
