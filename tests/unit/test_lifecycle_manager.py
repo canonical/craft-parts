@@ -481,3 +481,78 @@ class TestPluginProperties:
                     }
                 },
             )
+
+
+class TestRewriteLocalSources:
+    """Unit tests for _rewrite_local_sources."""
+
+    def _call(self, parts_data, root_dir):
+        from craft_parts.lifecycle_manager import _rewrite_local_sources
+        _rewrite_local_sources(parts_data, root_dir)
+
+    def test_source_inside_root_dir_is_rewritten(self, tmp_path, monkeypatch):
+        """A relative source that resolves inside root_dir gets rewritten."""
+        root = tmp_path / "project"
+        charm = root / "charm"
+        charm.mkdir(parents=True)
+        monkeypatch.chdir(charm)
+
+        parts = {"my-part": {"plugin": "nil", "source": "."}}
+        self._call(parts, root)
+
+        assert parts["my-part"]["source"] == str(root)
+        assert parts["my-part"]["source-subdir"] == "charm"
+
+    def test_source_outside_root_dir_is_not_rewritten(self, tmp_path, monkeypatch):
+        """A source that resolves outside root_dir is left unchanged."""
+        root = tmp_path / "project"
+        outside = tmp_path / "other"
+        root.mkdir()
+        outside.mkdir()
+        monkeypatch.chdir(outside)
+
+        parts = {"my-part": {"plugin": "nil", "source": "."}}
+        self._call(parts, root)
+
+        # source resolves to tmp_path/other, which is not inside root — no rewrite
+        assert parts["my-part"]["source"] == "."
+        assert "source-subdir" not in parts["my-part"]
+
+    def test_absolute_source_is_not_rewritten(self, tmp_path, monkeypatch):
+        """A part with an absolute source path is never rewritten."""
+        root = tmp_path / "project"
+        root.mkdir()
+        monkeypatch.chdir(root)
+
+        abs_source = str(tmp_path / "something")
+        parts = {"my-part": {"plugin": "nil", "source": abs_source}}
+        self._call(parts, root)
+
+        assert parts["my-part"]["source"] == abs_source
+        assert "source-subdir" not in parts["my-part"]
+
+    def test_source_equal_to_root_dir_is_not_rewritten(self, tmp_path, monkeypatch):
+        """A source that resolves to exactly root_dir needs no subdir rewrite."""
+        root = tmp_path / "project"
+        root.mkdir()
+        monkeypatch.chdir(root)
+
+        parts = {"my-part": {"plugin": "nil", "source": "."}}
+        self._call(parts, root)
+
+        # source resolves to root itself — relative is "." so no rewrite
+        assert parts["my-part"]["source"] == "."
+        assert "source-subdir" not in parts["my-part"]
+
+    def test_existing_source_subdir_is_preserved(self, tmp_path, monkeypatch):
+        """An existing source-subdir is prepended with the resolved relative path."""
+        root = tmp_path / "project"
+        charm = root / "charm"
+        charm.mkdir(parents=True)
+        monkeypatch.chdir(charm)
+
+        parts = {"my-part": {"plugin": "nil", "source": ".", "source-subdir": "src"}}
+        self._call(parts, root)
+
+        assert parts["my-part"]["source"] == str(root)
+        assert parts["my-part"]["source-subdir"] == "charm/src"
