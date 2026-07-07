@@ -420,7 +420,7 @@ def _rewrite_local_sources(parts_data: dict[str, Any], root_dir: Path) -> None:
         if not isinstance(spec, dict):
             continue
         source = str(spec.get("source", "."))
-        if not source.startswith("."):
+        if Path(source).is_absolute() or "://" in source:
             continue
         source_abs = Path(source).resolve()
         if not source_abs.is_relative_to(root_dir):

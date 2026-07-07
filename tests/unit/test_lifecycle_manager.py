@@ -544,7 +544,35 @@ class TestRewriteLocalSources:
         assert parts["my-part"]["source"] == "."
         assert "source-subdir" not in parts["my-part"]
 
-    def test_existing_source_subdir_is_preserved(self, tmp_path, monkeypatch):
+    def test_bare_relative_source_is_rewritten(self, tmp_path, monkeypatch):
+        """A bare relative source (no leading dot) inside root_dir is rewritten.
+
+        craft-parts allows source: "src" as a valid local relative path;
+        _rewrite_local_sources must handle it the same as source: "./src".
+        """
+        root = tmp_path / "project"
+        subdir = root / "charm"
+        subdir.mkdir(parents=True)
+        monkeypatch.chdir(root)
+
+        parts = {"my-part": {"plugin": "nil", "source": "charm"}}
+        self._call(parts, root)
+
+        assert parts["my-part"]["source"] == str(root)
+        assert parts["my-part"]["source-subdir"] == "charm"
+
+    def test_url_source_is_not_rewritten(self, tmp_path, monkeypatch):
+        """A URL source (e.g. https://) is never treated as a local path."""
+        root = tmp_path / "project"
+        root.mkdir()
+        monkeypatch.chdir(root)
+
+        url = "https://example.com/repo.git"
+        parts = {"my-part": {"plugin": "nil", "source": url}}
+        self._call(parts, root)
+
+        assert parts["my-part"]["source"] == url
+        assert "source-subdir" not in parts["my-part"]
         """An existing source-subdir is prepended with the resolved relative path."""
         root = tmp_path / "project"
         charm = root / "charm"

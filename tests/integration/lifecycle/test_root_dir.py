@@ -51,7 +51,7 @@ def monorepo(tmp_path, monkeypatch):
     return tmp_path
 
 
-def _make_lf(root, work_dir, cache_dir, **kwargs):
+def _make_lf(work_dir, cache_dir, **kwargs):
     parts = {"parts": {"my-part": {"plugin": "dump", "source": "."}}}
     return craft_parts.LifecycleManager(
         parts,
@@ -75,7 +75,7 @@ class TestRootDir:
         charm = root / "charm"
         cache = charm / ".cache"
 
-        lf = _make_lf(root, charm, cache, root_dir=root)
+        lf = _make_lf(charm, cache, root_dir=root)
         _pull(lf)
 
         src_dir = charm / "parts" / "my-part" / "src"
@@ -88,7 +88,7 @@ class TestRootDir:
         charm = root / "charm"
         cache = charm / ".cache"
 
-        lf = _make_lf(root, charm, cache)
+        lf = _make_lf(charm, cache)
         _pull(lf)
 
         src_dir = charm / "parts" / "my-part" / "src"
@@ -152,7 +152,7 @@ class TestRootDir:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "file.txt").write_text("hello\n")
 
-        lf = _make_lf(tmp_path, tmp_path, tmp_path / ".cache", root_dir=tmp_path)
+        lf = _make_lf(tmp_path, tmp_path / ".cache", root_dir=tmp_path)
         _pull(lf)
 
         src_dir = tmp_path / "parts" / "my-part" / "src"
@@ -164,7 +164,7 @@ class TestRootDir:
         charm = root / "charm"
         cache = charm / ".cache"
 
-        lf = _make_lf(root, charm, cache, root_dir=None)
+        lf = _make_lf(charm, cache, root_dir=None)
         _pull(lf)
 
         src_dir = charm / "parts" / "my-part" / "src"

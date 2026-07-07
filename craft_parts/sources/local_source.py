@@ -111,7 +111,7 @@ class LocalSource(SourceHandler):
                 also_ignore: list[str] | None = None,
                 *,
                 _craft: frozenset[Path] = _nested_craft_dirs,
-                _base_fn: functools.partial[list[str]] = _base,
+                _base_fn: Callable[..., list[str]] = _base,
             ) -> list[str]:
                 excluded = set(_base_fn(directory, files, also_ignore=also_ignore) or [])
                 for name in files:
