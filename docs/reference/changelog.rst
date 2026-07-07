@@ -40,6 +40,11 @@ Bug fixes:
   they were absent when packages are installed with ``--no-install-recommends``,
   causing builds to fail.
 
+Documentation:
+
+- Document the ``disable-parallel`` key and parallel build behavior in the
+  Autotools plugin reference.
+
 .. _release-2.33.1:
 
 2.33.1 (2026-06-17)

@@ -40,6 +40,21 @@ autotools-configure-parameters
 configure flags to pass to the build such as those shown by running
 ``./configure --help``.
 
+disable-parallel
+~~~~~~~~~~~~~~~~
+
+**Type:** boolean
+
+**Default:** false
+
+Whether to disable parallel execution of ``make`` during the build step.
+
+By default, the plugin builds in parallel by running ``make`` with ``-j`` set to
+the number of concurrent jobs given by
+:ref:`CRAFT_PARALLEL_BUILD_COUNT <craft_parts_step_execution_environment>`. Set
+this key to ``true`` to run ``make`` without the ``-j`` flag, forcing a serial
+build. This is useful for projects whose build system is not parallel-safe.
+
 
 Environment variables
 ---------------------
@@ -73,7 +88,8 @@ During the build step the plugin performs the following actions:
      ``bootstrap`` with any set ``autotools-bootstrap-parameters`` without *configuring*
      the project.
 #. Call ``configure`` with any set ``autotools-configure-parameters``.
-#. Call ``make`` to build.
+#. Call ``make`` to build. The build runs in parallel with ``-j`` set to
+   ``CRAFT_PARALLEL_BUILD_COUNT`` unless ``disable-parallel`` is set to ``true``.
 #. Call ``make install`` with ``DESTDIR`` set to ``$CRAFT_PART_INSTALL``.
 
 
