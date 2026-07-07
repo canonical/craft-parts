@@ -25,7 +25,7 @@ from pathlib import Path
 
 import craft_parts
 import pytest
-from craft_parts import Step
+from craft_parts import Features, Step
 
 
 @pytest.fixture
@@ -160,3 +160,186 @@ class TestRootDir:
         src_dir = charm / "parts" / "my-part" / "src"
         assert (src_dir / "src" / "hello.py").exists()
         assert not (src_dir / "common").exists()
+
+
+class TestRootDirWithNonLocalSources:
+    """root_dir must not rewrite non-local or absolute sources."""
+
+    def test_absolute_source_not_rewritten(self, monorepo):
+        """A part whose source is an absolute path is left unchanged."""
+        root = monorepo
+        charm = root / "charm"
+        cache = charm / ".cache"
+
+        parts = {"parts": {"my-part": {"plugin": "dump", "source": str(root / "common")}}}
+        lf = craft_parts.LifecycleManager(
+            parts,
+            application_name="test_root_dir",
+            cache_dir=str(cache),
+            work_dir=str(charm),
+            root_dir=root,
+        )
+        _pull(lf)
+
+        src_dir = charm / "parts" / "my-part" / "src"
+        # Only common/ contents (shared.py) should be staged, not the full root
+        assert (src_dir / "shared.py").exists()
+        assert not (src_dir / "charm").exists()
+
+    def test_multiple_parts_only_local_source_rewritten(self, monorepo):
+        """With multiple parts, only the relative-source part is rewritten.
+
+        A second part with an absolute source should be staged without
+        source-subdir injection from root_dir.
+        """
+        root = monorepo
+        charm = root / "charm"
+        cache = charm / ".cache"
+
+        parts = {
+            "parts": {
+                "local-part": {"plugin": "dump", "source": "."},
+                "abs-part": {"plugin": "dump", "source": str(root / "common")},
+            }
+        }
+        lf = craft_parts.LifecycleManager(
+            parts,
+            application_name="test_root_dir",
+            cache_dir=str(cache),
+            work_dir=str(charm),
+            root_dir=root,
+        )
+        _pull(lf)
+
+        # local-part: full root staged, sibling visible
+        local_src = charm / "parts" / "local-part" / "src"
+        assert (local_src / "charm" / "src" / "hello.py").exists()
+        assert (local_src / "common" / "shared.py").exists()
+
+        # abs-part: only common/ contents, no root rewrite
+        abs_src = charm / "parts" / "abs-part" / "src"
+        assert (abs_src / "shared.py").exists()
+        assert not (abs_src / "charm").exists()
+
+
+class TestRootDirWithOverlay:
+    """root_dir works correctly with overlays enabled.
+
+    The overlay/ output dir lives inside work_dir (which is inside root_dir)
+    and must not be captured by the source pull.
+    """
+
+    def test_overlay_dir_excluded_from_staged_source(self, monorepo, mocker):
+        """When overlay feature is on, the overlay/ dir is not staged."""
+        Features.reset()
+        Features(enable_overlay=True)
+        try:
+            import sys
+
+            mocker.patch("os.geteuid", return_value=0)
+            mocker.patch.object(sys, "platform", "linux")
+            mocker.patch(
+                "craft_parts.overlays.OverlayManager.refresh_packages_list"
+            )
+
+            root = monorepo
+            charm = root / "charm"
+            cache = charm / ".cache"
+
+            lf = craft_parts.LifecycleManager(
+                {"parts": {"my-part": {"plugin": "dump", "source": "."}}},
+                application_name="test_root_dir",
+                cache_dir=str(cache),
+                work_dir=str(charm),
+                root_dir=root,
+                base_layer_dir=charm / "base",
+                base_layer_hash=b"hash",
+            )
+            _pull(lf)
+
+            src_dir = charm / "parts" / "my-part" / "src"
+            assert (src_dir / "common" / "shared.py").exists()
+            overlay_dir_name = lf._project_info.dirs.overlay_dir.name
+            assert not (src_dir / overlay_dir_name).exists()
+        finally:
+            Features.reset()
+
+
+class TestRootDirWithPartitions:
+    """root_dir works correctly with partitions enabled."""
+
+    def test_root_dir_with_partitions_source_rewritten(self, monorepo):
+        """root_dir source rewriting works when partitions are enabled."""
+        Features.reset()
+        Features(enable_partitions=True)
+        try:
+            root = monorepo
+            charm = root / "charm"
+            cache = charm / ".cache"
+
+            lf = craft_parts.LifecycleManager(
+                {"parts": {"my-part": {"plugin": "dump", "source": "."}}},
+                application_name="test_root_dir",
+                cache_dir=str(cache),
+                work_dir=str(charm),
+                root_dir=root,
+                partitions=["default", "mypart"],
+            )
+            _pull(lf)
+
+            src_dir = charm / "parts" / "my-part" / "src"
+            assert (src_dir / "charm" / "src" / "hello.py").exists()
+            assert (src_dir / "common" / "shared.py").exists()
+        finally:
+            Features.reset()
+
+
+class TestRootDirEdgeCases:
+    """Edge cases for root_dir source rewriting."""
+
+    def test_work_dir_equals_root_dir_no_subdir_set(self, tmp_path, monkeypatch):
+        """When work_dir == root_dir, no source_subdir is injected."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "file.txt").write_text("hello\n")
+
+        parts = {"parts": {"my-part": {"plugin": "dump", "source": "."}}}
+        lf = craft_parts.LifecycleManager(
+            parts,
+            application_name="test_root_dir",
+            cache_dir=str(tmp_path / ".cache"),
+            work_dir=str(tmp_path),
+            root_dir=tmp_path,
+        )
+        # No source-subdir should be set (resolved source is already root_dir)
+        assert lf._part_list[0].spec.source_subdir == ""
+
+        _pull(lf)
+
+        src_dir = tmp_path / "parts" / "my-part" / "src"
+        assert (src_dir / "file.txt").exists()
+
+    def test_relative_source_pointing_to_sibling(self, monorepo):
+        """A relative source that resolves inside root_dir is rewritten correctly.
+
+        source: ../common resolves to root/common; rewritten to
+        source=root_dir, source-subdir=common so the full root is staged
+        and the build dir is set to root/common/.
+        """
+        root = monorepo
+        charm = root / "charm"
+        cache = charm / ".cache"
+
+        parts = {"parts": {"my-part": {"plugin": "dump", "source": "../common"}}}
+        lf = craft_parts.LifecycleManager(
+            parts,
+            application_name="test_root_dir",
+            cache_dir=str(cache),
+            work_dir=str(charm),
+            root_dir=root,
+        )
+        _pull(lf)
+
+        # Full root is staged (source-subdir only affects the build directory, not pull)
+        src_dir = charm / "parts" / "my-part" / "src"
+        assert (src_dir / "common" / "shared.py").exists()
+        assert lf._part_list[0].spec.source_subdir == "common"
