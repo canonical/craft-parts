@@ -155,7 +155,25 @@ def test_include_export_plugin(
     mocker.patch(
         "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
     )
+    mocker.patch.object(plugin, "_system_has_poetry", return_value=False)
 
     build_packages = plugin.get_build_packages()
 
     assert ("python3-poetry-plugin-export" in build_packages) == should_install
+
+
+@pytest.mark.parametrize("version", ["22.04", "24.04", "25.10", "26.04", "26.10"])
+def test_poetry_deps_nullifies_build_packages(
+    plugin: PoetryPlugin, mocker: MockFixture, version: str
+):
+    """Ensure that we don't install any build packages if we have a 'poetry-deps' part."""
+    mocker.patch("craft_parts.utils.os_utils.OsRelease.name", return_value="Ubuntu")
+    mocker.patch(
+        "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
+    )
+
+    plugin._part_info._part_dependencies = ["poetry-deps"]
+
+    build_packages = plugin.get_build_packages()
+
+    assert "python3-poetry-plugin-export" not in build_packages

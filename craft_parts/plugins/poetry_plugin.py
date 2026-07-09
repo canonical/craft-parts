@@ -105,11 +105,11 @@ class PoetryPlugin(BasePythonPlugin):
         ):
             build_packages |= {"python3-poetry"}
 
-        # In 25.04+, Poetry 2 is included which deprecated the built-in `export` subcommand
-        # and moved it to an optional plugin.
-        os_release = os_utils.OsRelease()
-        if os_release.name() == "Ubuntu" and os_release.version_id() >= "25.04":
-            build_packages |= {"python3-poetry-plugin-export"}
+            # In 25.04+, Poetry 2 is included which deprecated the built-in `export` subcommand
+            # and moved it to an optional plugin.
+            os_release = os_utils.OsRelease()
+            if os_release.name() == "Ubuntu" and os_release.version_id() >= "25.04":
+                build_packages |= {"python3-poetry-plugin-export"}
 
         return build_packages
 
