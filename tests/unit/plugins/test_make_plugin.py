@@ -94,3 +94,16 @@ class TestPluginMake:
 
     def test_get_out_of_source_build(self):
         assert self._plugin.get_out_of_source_build() is False
+
+    def test_subclass_default_parameters(self, new_dir):
+        class LocalMakePlugin(MakePlugin):
+            default_parameters = ["-e"]
+
+        properties = LocalMakePlugin.properties_class.unmarshal({"source": "."})
+        part = Part("foo", {})
+
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(project_info=project_info, part=part)
+        plugin = LocalMakePlugin(properties=properties, part_info=part_info)
+
+        assert 'make -e -j"1"' in plugin.get_build_commands()

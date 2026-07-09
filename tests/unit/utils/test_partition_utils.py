@@ -59,7 +59,7 @@ def test_validate_partitions_failure_feature_disabled(partitions, message):
         ["mypart", "test1/foo-bar2"],
         ["mypart", "test1/foo/bar2"],
         ["test1/mypart", "test1/mypart2"],
-        ["test/foo-bar", "test/foo-baz"],
+        ["test/foo-bar", "test/foo+baz"],
         ["test/foo-bar-baz", "test/foo-bar"],
     ],
 )
@@ -77,12 +77,19 @@ def test_validate_partitions_success_feature_enabled(partitions):
         (["default", "test/foo", "test/foo"], "Partitions must be unique."),
         (["default", "!!!"], "Partition '!!!' is invalid."),
         (["default", "-"], "Partition '-' is invalid."),
+        (["default", "+"], "Partition '+' is invalid."),
         (["default", "woop-"], "Partition 'woop-' is invalid."),
         (["default", "woop."], "Partition 'woop.' is invalid."),
+        (["default", "woop+"], "Partition 'woop+' is invalid."),
         (["default", "/"], "Namespaced partition '/' is invalid."),
         (["default", "test/!!!"], "Namespaced partition 'test/!!!' is invalid."),
         (["default", "test/-"], "Namespaced partition 'test/-' is invalid."),
+        (["default", "test/+"], "Namespaced partition 'test/+' is invalid."),
         (["default", "te-st/foo"], "Namespaced partition 'te-st/foo' is invalid."),
+        (
+            ["default", "te+st/foo"],  # codespell:ignore te
+            "Namespaced partition 'te+st/foo' is invalid.",  # codespell:ignore te
+        ),
         (
             ["default", "test", "test/foo"],
             "Partition name conflicts:\n- 'test', 'test/foo'",
@@ -100,8 +107,8 @@ def test_validate_partitions_success_feature_enabled(partitions):
             ("Partition name conflicts:\n- 'test-foo', 'test/foo'"),
         ),
         (
-            ["default", "test/foo", "test-foo"],
-            ("Partition name conflicts:\n- 'test-foo', 'test/foo'"),
+            ["default", "test/foo", "test+foo"],
+            ("Partition name conflicts:\n- 'test+foo', 'test/foo'"),
         ),
         (
             [
