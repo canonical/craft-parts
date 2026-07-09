@@ -172,7 +172,7 @@ def test_poetry_deps_nullifies_build_packages(
         "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
     )
 
-    plugin._part_info._part_dependencies = {"poetry-deps"}
+    mocker.patch.object(plugin._part_info, "_part_dependencies", {"poetry-deps"})
 
     build_packages = plugin.get_build_packages()
 
