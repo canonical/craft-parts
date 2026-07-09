@@ -19,6 +19,17 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.34.1:
+
+2.34.1 (2026-07-09)
+-------------------
+
+Bug fixes:
+
+- (Poetry plugin) Don't install the Poetry export plugin if a ``poetry-deps`` part
+  is provided.
+
+For a complete list of commits, check out the `2.34.1`_ release on GitHub.
 
 .. _release-2.35.0:
 
@@ -1743,6 +1754,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _Poetry: https://python-poetry.org
 
 .. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
+.. _2.34.1: https://github.com/canonical/craft-parts/releases/tag/2.34.1
 .. _2.34.0: https://github.com/canonical/craft-parts/releases/tag/2.34.0
 .. _2.33.0: https://github.com/canonical/craft-parts/releases/tag/2.33.0
 .. _2.32.0: https://github.com/canonical/craft-parts/releases/tag/2.32.0
