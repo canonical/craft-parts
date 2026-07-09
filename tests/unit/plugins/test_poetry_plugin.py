@@ -166,13 +166,13 @@ def test_include_export_plugin(
 def test_poetry_deps_nullifies_build_packages(
     plugin: PoetryPlugin, mocker: MockFixture, version: str
 ):
-    """Ensure that we don't install any build packages if we have a 'poetry-deps' part."""
+    """Ensure Poetry-related build packages aren't installed when a 'poetry-deps' part is present."""
     mocker.patch("craft_parts.utils.os_utils.OsRelease.name", return_value="Ubuntu")
     mocker.patch(
         "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
     )
 
-    plugin._part_info._part_dependencies = ["poetry-deps"]
+    plugin._part_info._part_dependencies = {"poetry-deps"}
 
     build_packages = plugin.get_build_packages()
 

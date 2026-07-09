@@ -26,7 +26,7 @@ Changelog
 
 Bug fixes:
 
-- (Poetry plugin) Don't install the poetry export plugin if a ``poetry-deps`` part
+- (Poetry plugin) Don't install the Poetry export plugin if a ``poetry-deps`` part
   is provided.
 
 For a complete list of commits, check out the `2.34.1`_ release on GitHub.
