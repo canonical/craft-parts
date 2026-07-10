@@ -812,11 +812,34 @@ class Part:
         """Return the subdirectory containing the part source code."""
         return self._part_dir / "src"
 
+    def _effective_source_subdir(self) -> str:
+        """Return the source subdir accounting for root_dir.
+
+        When root_dir is set and this part's source is a subdirectory of root_dir,
+        the effective subdir includes the relative path from root_dir to the source
+        so that the build step finds files in the right place after a root_dir pull.
+        """
+        root_dir = self.dirs.root_dir
+        if root_dir is None:
+            return self.spec.source_subdir
+        source = self.spec.source or "."
+        if Path(source).is_absolute() or "://" in source:
+            return self.spec.source_subdir
+        source_abs = Path(source).resolve()
+        if not source_abs.is_relative_to(root_dir):
+            return self.spec.source_subdir
+        rel = source_abs.relative_to(root_dir)
+        if rel == Path("."):
+            return self.spec.source_subdir
+        combined = rel / self.spec.source_subdir if self.spec.source_subdir else rel
+        return str(combined)
+
     @property
     def part_src_subdir(self) -> Path:
         """Return the subdirectory in source containing the source subtree (if any)."""
-        if self.spec.source_subdir:
-            return self.part_src_dir / self.spec.source_subdir
+        subdir = self._effective_source_subdir()
+        if subdir:
+            return self.part_src_dir / subdir
         return self.part_src_dir
 
     @property
@@ -831,12 +854,13 @@ class Part:
         Parts that have a source subdirectory and do not support out-of-source builds
         will have a build subdirectory.
         """
+        subdir = self._effective_source_subdir()
         if (
             self.plugin_name != ""
-            and self.spec.source_subdir
+            and subdir
             and not plugins.get_plugin_class(self.plugin_name).get_out_of_source_build()
         ):
-            return self.part_build_dir / self.spec.source_subdir
+            return self.part_build_dir / subdir
         return self.part_build_dir
 
     @property

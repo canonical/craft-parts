@@ -177,9 +177,6 @@ class LifecycleManager:
 
         executor.expand_environment(parts_data, info=project_info)
 
-        if root_dir is not None:
-            _rewrite_local_sources(parts_data, root_dir)
-
         part_list: list[Part] = []
         for name, spec in parts_data.items():
             part = _build_part(name, spec, project_dirs, strict_mode, partitions)
@@ -409,26 +406,3 @@ def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
         if name not in parts_data:
             raise errors.InvalidPartName(name)
 
-
-def _rewrite_local_sources(parts_data: dict[str, Any], root_dir: Path) -> None:
-    """Rewrite local sources so they're staged from root_dir with source-subdir set.
-
-    This preserves sibling directories (e.g. ../common) in the staging area,
-    which would otherwise be inaccessible when only the project subdir is staged.
-    """
-    for spec in parts_data.values():
-        if not isinstance(spec, dict):
-            continue
-        source = str(spec.get("source", "."))
-        if Path(source).is_absolute() or "://" in source:
-            continue
-        source_abs = Path(source).resolve()
-        if not source_abs.is_relative_to(root_dir):
-            continue
-        relative = source_abs.relative_to(root_dir)
-        if relative == Path("."):
-            continue
-        existing_subdir = spec.get("source-subdir")
-        new_subdir = str(relative / existing_subdir) if existing_subdir else str(relative)
-        spec["source"] = str(root_dir)
-        spec["source-subdir"] = new_subdir

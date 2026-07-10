@@ -68,7 +68,20 @@ class LocalSource(SourceHandler):
         self.source_abspath = Path(self.source).absolute()
         self.copy_function = copy_function
 
-        _source_resolved = self.source_abspath.resolve()
+        # When root_dir is set and the source is a relative path inside root_dir,
+        # pull from root_dir so sibling directories are available in the build
+        # environment. source_abspath is preserved as the user-declared path.
+        _pull_source = self.source_abspath.resolve()
+        if (
+            self._dirs.root_dir is not None
+            and not Path(self.source).is_absolute()
+            and "://" not in self.source
+        ):
+            _root = self._dirs.root_dir.resolve()
+            if _pull_source.is_relative_to(_root) and _pull_source != _root:
+                _pull_source = _root
+        self._pull_source = _pull_source
+
         _work_dir_resolved = self._dirs.work_dir.resolve()
         _craft_dirs = [
             p
@@ -84,8 +97,8 @@ class LocalSource(SourceHandler):
 
         _nested_craft_dirs: frozenset[Path] = frozenset()
 
-        if _work_dir_resolved.is_relative_to(_source_resolved):
-            rel = _work_dir_resolved.relative_to(_source_resolved)
+        if _work_dir_resolved.is_relative_to(_pull_source):
+            rel = _work_dir_resolved.relative_to(_pull_source)
             if self._dirs.root_dir is not None and rel != Path("."):
                 # work_dir is a source subdir with real files alongside craft
                 # output — exclude only the specific output dirs by absolute path.
@@ -99,7 +112,7 @@ class LocalSource(SourceHandler):
         logger.debug("ignore patterns: %r", self._ignore_patterns)
 
         self._ignore = functools.partial(
-            _ignore, self.source_abspath, Path.cwd(), self._ignore_patterns
+            _ignore, _pull_source, Path.cwd(), self._ignore_patterns
         )
 
         if _nested_craft_dirs:
@@ -126,11 +139,11 @@ class LocalSource(SourceHandler):
     @override
     def pull(self) -> None:
         """Retrieve the local source files."""
-        if not Path(self.source_abspath).exists():
+        if not self._pull_source.exists():
             raise errors.SourceNotFound(self.source)
 
         file_utils.link_or_copy_tree(
-            self.source_abspath,
+            self._pull_source,
             self.part_src_dir,
             ignore=self._ignore,
             copy_function=self.copy_function,
@@ -158,7 +171,7 @@ class LocalSource(SourceHandler):
         self._updated_files = set()
         self._updated_directories = set()
 
-        for root, directories, files in os.walk(self.source_abspath, topdown=True):
+        for root, directories, files in os.walk(self._pull_source, topdown=True):
             ignored = set(
                 self._ignore(Path(root), directories + files, also_ignore=ignore_files)
             )
@@ -170,7 +183,7 @@ class LocalSource(SourceHandler):
             for file_name in set(files) - ignored:
                 path = Path(root, file_name)
                 if os.lstat(path).st_mtime >= target_mtime:
-                    self._updated_files.add(os.path.relpath(path, self.source))
+                    self._updated_files.add(os.path.relpath(path, self._pull_source))
 
             directories_to_remove: list[str] = []
             for directory in directories:
@@ -182,7 +195,7 @@ class LocalSource(SourceHandler):
 
                     # os.walk will include symlinks to directories here, but we
                     # want to treat those as files
-                    relpath = os.path.relpath(path, self.source)
+                    relpath = os.path.relpath(path, self._pull_source)
                     if path.is_symlink():
                         self._updated_files.add(relpath)
                     else:
@@ -216,7 +229,7 @@ class LocalSource(SourceHandler):
         # First, copy the directories
         for directory in self._updated_directories:
             file_utils.link_or_copy_tree(
-                Path(self.source, directory),
+                Path(self._pull_source, directory),
                 Path(self.part_src_dir, directory),
                 ignore=self._ignore,
                 copy_function=self.copy_function,
@@ -225,7 +238,7 @@ class LocalSource(SourceHandler):
         # Now, copy files
         for file_path in self._updated_files:
             self.copy_function(
-                Path(self.source, file_path),
+                Path(self._pull_source, file_path),
                 Path(self.part_src_dir, file_path),
             )
 

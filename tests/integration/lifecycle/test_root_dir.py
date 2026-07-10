@@ -118,7 +118,8 @@ class TestRootDir:
         src_dir = charm / "parts" / "my-part" / "src"
         assert (src_dir / "charm" / "src" / "hello.py").exists()
         assert (src_dir / "common" / "shared.py").exists()
-        assert lf._part_list[0].spec.source_subdir == "charm/src"
+        part = lf._part_list[0]
+        assert part._effective_source_subdir() == "charm/src"
 
     def test_work_dir_outside_root_dir_is_valid(self, tmp_path, monkeypatch):
         """work_dir does not need to be inside root_dir.
@@ -329,11 +330,11 @@ class TestRootDirEdgeCases:
         assert (src_dir / "file.txt").exists()
 
     def test_relative_source_pointing_to_sibling(self, monorepo):
-        """A relative source that resolves inside root_dir is rewritten correctly.
+        """A relative source that resolves inside root_dir is handled correctly.
 
-        source: ../common resolves to root/common; rewritten to
-        source=root_dir, source-subdir=common so the full root is staged
-        and the build dir is set to root/common/.
+        source: ../common resolves to root/common; LocalSource uses root_dir as
+        the copy source and _effective_source_subdir() returns "common" so the
+        build dir is set to root/common/.
         """
         root = monorepo
         charm = root / "charm"
@@ -352,4 +353,4 @@ class TestRootDirEdgeCases:
         # Full root is staged (source-subdir only affects the build directory, not pull)
         src_dir = charm / "parts" / "my-part" / "src"
         assert (src_dir / "common" / "shared.py").exists()
-        assert lf._part_list[0].spec.source_subdir == "common"
+        assert lf._part_list[0]._effective_source_subdir() == "common"
