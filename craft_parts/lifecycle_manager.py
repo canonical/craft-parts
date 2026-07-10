@@ -414,7 +414,7 @@ def _rewrite_local_sources(parts_data: dict[str, Any], root_dir: Path) -> None:
     """Rewrite local sources so they're staged from root_dir with source-subdir set.
 
     This preserves sibling directories (e.g. ../common) in the staging area,
-    which would otherwise be inaccessible when only the charm subdir is staged.
+    which would otherwise be inaccessible when only the project subdir is staged.
     """
     for spec in parts_data.values():
         if not isinstance(spec, dict):
