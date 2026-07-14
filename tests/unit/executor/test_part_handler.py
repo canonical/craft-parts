@@ -15,7 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os
+import textwrap
+from collections.abc import Generator, Iterable
 from pathlib import Path
 from typing import Any, cast
 from unittest.mock import call
@@ -138,6 +139,27 @@ class TestPartHandling:
         assert self._mock_mount_overlayfs.mock_calls == []
         assert self._mock_umount.mock_calls == []
 
+    def test_run_build_passes_build_dir_to_organize(self, mocker):
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
+        mocker.patch(
+            "craft_parts.packages.Repository.get_installed_packages",
+            return_value=[],
+        )
+        mocker.patch(
+            "craft_parts.packages.snaps.get_installed_snaps",
+            return_value=[],
+        )
+        mocker.patch("subprocess.check_output", return_value=b"os-info")
+        mock_organize = mocker.patch("craft_parts.executor.part_handler.organize_files")
+
+        self._handler._run_build(
+            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None
+        )
+
+        organize_install_dirs = mock_organize.call_args.kwargs["install_dir_map"]
+        assert organize_install_dirs["build"] == self._part.part_build_dir
+        assert "build" not in self._part.part_install_dirs
+
     @pytest.mark.usefixtures("new_dir")
     @pytest.mark.parametrize("out_of_source", [True, False])
     def test_run_build_out_of_source_behavior(self, mocker, out_of_source):
@@ -194,10 +216,10 @@ class TestPartHandling:
         mock_step_contents = StepContents(stage=True, partitions=partitions)
         mock_step_contents.partitions_contents[default_partition] = (
             StagePartitionContents(
-                files={"file"},
-                dirs={"dir"},
-                backstage_files={"back_file"},
-                backstage_dirs={"back_dir"},
+                files={Path("file")},
+                dirs={Path("dir")},
+                backstage_files={Path("back_file")},
+                backstage_dirs={Path("back_dir")},
             )
         )
         partitions_migration_contents = {}
@@ -223,11 +245,11 @@ class TestPartHandling:
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
-            directories={"dir"},
+            files={Path("file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
-            backstage_files={"back_file"},
-            backstage_directories={"back_dir"},
+            backstage_files={Path("back_file")},
+            backstage_directories={Path("back_dir")},
             overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
         )
 
@@ -236,8 +258,8 @@ class TestPartHandling:
         mock_step_contents = StepContents(partitions=partitions)
         mock_step_contents.partitions_contents[default_partition] = (
             StepPartitionContents(
-                files={"file", "pkg_file"},
-                dirs={"dir"},
+                files={Path("file"), Path("pkg_file")},
+                dirs={Path("dir")},
             )
         )
         partitions_migration_contents = {}
@@ -291,8 +313,8 @@ class TestPartHandling:
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file", "pkg_file"},
-            directories={"dir"},
+            files={Path("file"), Path("pkg_file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
             primed_stage_packages={"pkg"},
         )
@@ -302,8 +324,8 @@ class TestPartHandling:
         mock_step_contents = StepContents(partitions=partitions)
         mock_step_contents.partitions_contents[default_partition] = (
             StepPartitionContents(
-                files={"file"},
-                dirs={"dir"},
+                files={Path("file")},
+                dirs={Path("dir")},
             )
         )
         partitions_migration_contents = {}
@@ -330,8 +352,8 @@ class TestPartHandling:
             partition=default_partition,
             part_properties=self._part.spec.marshal(),
             project_options=self._part_info.project_options,
-            files={"file"},
-            directories={"dir"},
+            files={Path("file")},
+            directories={Path("dir")},
             partitions_contents=partitions_migration_contents,
             primed_stage_packages=set(),
         )
@@ -882,7 +904,7 @@ class TestPackages:
         assert result == ["word-salad"]
         mock_download_snaps.assert_called_once_with(
             snaps_list=["word-salad"],
-            directory=os.path.join(new_dir, "parts/p1/stage_snaps"),  # noqa: PTH118
+            directory=Path(new_dir, "parts/p1/stage_snaps"),
         )
 
     def test_fetch_stage_snaps_none(self, mocker, new_dir, partitions):
@@ -1068,7 +1090,7 @@ class TestFileFilter:
     def test_apply_file_filter_empty(self, new_dir, partitions):
         fileset = filesets.Fileset([])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1084,7 +1106,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1100,7 +1122,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_dir(self, new_dir, partitions):
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1115,7 +1137,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_symlink(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file4", "-dir3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1131,7 +1153,7 @@ class TestFileFilter:
     def test_apply_file_filter_keep_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["dir1/file3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, str(self._destdir), "default", "default" if partitions else None
+            fileset, self._destdir, "default", "default" if partitions else None
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1182,12 +1204,12 @@ class TestHelpers:
         [
             (
                 {},
-                {None: {"a": "a"}},
-                {None: {"b": "b"}},
+                {None: {"a": Path("a")}},
+                {None: {"b": Path("b")}},
                 {
                     None: MigrationState(
-                        files={"a"},
-                        directories={"b"},
+                        files={Path("a")},
+                        directories={Path("b")},
                     )
                 },
             ),
@@ -1195,17 +1217,17 @@ class TestHelpers:
                 {
                     "default": MigrationState(
                         partition="default",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     )
                 },
-                {"default": {"a-key": "a-value", "c-key": "c-value"}},
-                {"default": {"b-key": "b-value"}},
+                {"default": {"a-key": Path("a-value"), "c-key": Path("c-value")}},
+                {"default": {"b-key": Path("b-value")}},
                 {
                     "default": MigrationState(
                         partition="default",
-                        files={"foo", "a-value", "c-value"},
-                        directories={"bar", "b-value"},
+                        files={Path("foo"), Path("a-value"), Path("c-value")},
+                        directories={Path("bar"), Path("b-value")},
                     )
                 },
             ),
@@ -1213,22 +1235,22 @@ class TestHelpers:
                 {
                     "partition-a": MigrationState(
                         partition="partition-a",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     )
                 },
-                {"default": {"a": "a"}},
-                {"default": {"b": "b"}},
+                {"default": {"a": Path("a")}},
+                {"default": {"b": Path("b")}},
                 {
                     "default": MigrationState(
                         partition="default",
-                        files={"a"},
-                        directories={"b"},
+                        files={Path("a")},
+                        directories={Path("b")},
                     ),
                     "partition-a": MigrationState(
                         partition="partition-a",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     ),
                 },
             ),
@@ -1236,25 +1258,25 @@ class TestHelpers:
                 {
                     "partition-a": MigrationState(
                         partition="partition-a",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     )
                 },
-                {"partition-b": {"a": "a"}},
-                {"partition-c": {"b": "b"}},
+                {"partition-b": {"a": Path("a")}},
+                {"partition-c": {"b": Path("b")}},
                 {
                     "partition-c": MigrationState(
                         partition="partition-c",
-                        directories={"b"},
+                        directories={Path("b")},
                     ),
                     "partition-a": MigrationState(
                         partition="partition-a",
-                        files={"foo"},
-                        directories={"bar"},
+                        files={Path("foo")},
+                        directories={Path("bar")},
                     ),
                     "partition-b": MigrationState(
                         partition="partition-b",
-                        files={"a"},
+                        files={Path("a")},
                     ),
                 },
             ),
@@ -1324,6 +1346,7 @@ class TestDirs:
         new_dir,
         plugin: str = "make",
         part_spec: dict[str, Any] | None = None,
+        build_environment: Iterable[str] | None = None,
     ) -> tuple[Part, PartHandler]:
         spec = part_spec or {}
         part = Part(
@@ -1346,6 +1369,7 @@ class TestDirs:
             part_info=part_info,
             part_list=[part],
             overlay_manager=ovmgr,
+            build_environment=build_environment,
         )
 
         return part, handler
@@ -1417,3 +1441,47 @@ class TestDirs:
         handler._make_dirs()
 
         assert list(part.part_install_dir.iterdir()) == []
+
+    def test_build_environment(self, new_dir, partitions):
+        """Test application-specified build environment variables."""
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin="nil",
+            build_environment=['FOO="foo value"', 'BAR="bar value"'],
+        )
+
+        handler._make_dirs()
+        step_env = handler._prepend_build_environment("content")
+
+        assert step_env == textwrap.dedent("""\
+            # Build environment from application
+            export FOO="foo value"
+            export BAR="bar value"
+
+            content""")
+
+    def test_build_environment_from_generator(self, new_dir, partitions):
+        """Test application-specified build environment variables."""
+
+        def envgen() -> Generator[str]:
+            yield from ['FOO="foo value"', 'BAR="bar value"']
+
+        part, handler = self._part_and_handler(
+            usrmerged_by_default=True,
+            new_dir=new_dir,
+            partitions=partitions,
+            plugin="nil",
+            build_environment=envgen(),
+        )
+
+        handler._make_dirs()
+        step_env = handler._prepend_build_environment("content")
+
+        assert step_env == textwrap.dedent("""\
+            # Build environment from application
+            export FOO="foo value"
+            export BAR="bar value"
+
+            content""")

@@ -119,6 +119,7 @@ constraint-dependencies = [
     "pyyaml>5.0",
     "regex>=2021.11.10",
     "sphinx-basic-ng>=1.0.0b1",
+    "starlette>=1.3.1",
     "tornado>=4.0",
     "webencodings>=0.4.0",
 ]
@@ -211,6 +212,7 @@ markers = [
     "java: tests that require the Java build tools to be installed (includes maven, gradle, etc.)",
     "python: tests that require the Python build tools (poetry, uv, pip)",
     "plugin: tests that require plugin dependencies other than java or python",
+    "flaky: tests that are known to be flaky and may need reruns (e.g. network-dependent)",
 ]
 
 [tool.coverage.run]

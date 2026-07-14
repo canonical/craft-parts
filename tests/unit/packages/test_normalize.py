@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import pathlib
 import stat
 from pathlib import Path
 from textwrap import dedent
@@ -35,7 +33,7 @@ def pkg_config_file():
         :param filename: filename of pkg-config file
         :param prefix: value of prefix parameter
         """
-        with open(filename, "w", encoding="utf-8") as file:  # noqa: PTH123
+        with filename.open("w", encoding="utf-8") as file:
             file.write(
                 dedent(
                     f"""\
@@ -90,77 +88,76 @@ def expected_pkg_config_content():
     [
         [  # fix_xml2_config
             {
-                "path": os.path.join("root", "usr", "bin", "xml2-config"),  # noqa: PTH118
+                "path": Path("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             }
         ],
         [  # no_fix_xml2_config
             {
-                "path": os.path.join("root", "usr", "bin", "xml2-config"),  # noqa: PTH118
+                "path": Path("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             }
         ],
         [  # fix_xslt_config
             {
-                "path": os.path.join("root", "usr", "bin", "xslt-config"),  # noqa: PTH118
+                "path": Path("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             }
         ],
         [  # no_fix_xslt_config
             {
-                "path": os.path.join("root", "usr", "bin", "xslt-config"),  # noqa: PTH118
+                "path": Path("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             }
         ],
         [  # fix_xml2_xslt_config
             {
-                "path": os.path.join("root", "usr", "bin", "xml2-config"),  # noqa: PTH118
+                "path": Path("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             },
             {
-                "path": os.path.join("root", "usr", "bin", "xslt-config"),  # noqa: PTH118
+                "path": Path("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/usr/foo",
                 "expected": "prefix=root/usr/foo",
             },
         ],
         [  # no_fix_xml2_xslt_config
             {
-                "path": os.path.join("root", "usr", "bin", "xml2-config"),  # noqa: PTH118
+                "path": Path("root", "usr", "bin", "xml2-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             },
             {
-                "path": os.path.join("root", "usr", "bin", "xslt-config"),  # noqa: PTH118
+                "path": Path("root", "usr", "bin", "xslt-config"),
                 "content": "prefix=/foo",
                 "expected": "prefix=/foo",
             },
         ],
     ],
 )
-@pytest.mark.usefixtures("new_dir")
+@pytest.mark.usefixtures("new_path")
 class TestFixXmlTools:
     """Check the normalization of pathnames in XML tools."""
 
     def test_fix_xmltools(self, tc):
         for test_file in tc:
             path = test_file["path"]
-            os.makedirs(os.path.dirname(path), exist_ok=True)  # noqa: PTH103, PTH120
-            with open(path, "w") as f:  # noqa: PTH123
-                f.write(test_file["content"])
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(test_file["content"])
 
         normalize(Path("root"), repository=DummyRepository)
 
         for test_file in tc:
-            with open(test_file["path"]) as f:  # noqa: PTH123
+            with test_file["path"].open() as f:
                 assert f.read() == test_file["expected"]
 
 
-@pytest.mark.usefixtures("new_dir")
+@pytest.mark.usefixtures("new_path")
 class TestFixShebang:
     """Check the normalization of script interpreter lines."""
 
@@ -168,7 +165,7 @@ class TestFixShebang:
         (
             "python bin dir",
             {
-                "file_path": os.path.join("root", "bin", "a"),  # noqa: PTH118
+                "file_path": Path("root", "bin", "a"),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -176,7 +173,7 @@ class TestFixShebang:
         (
             "python3 bin dir",
             {
-                "file_path": os.path.join("root", "bin", "d"),  # noqa: PTH118
+                "file_path": Path("root", "bin", "d"),
                 "content": "#!/usr/bin/python3\nimport this",
                 "expected": "#!/usr/bin/env python3\nimport this",
             },
@@ -184,7 +181,7 @@ class TestFixShebang:
         (
             "sbin dir",
             {
-                "file_path": os.path.join("root", "sbin", "b"),  # noqa: PTH118
+                "file_path": Path("root", "sbin", "b"),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -192,7 +189,7 @@ class TestFixShebang:
         (
             "usr/bin dir",
             {
-                "file_path": os.path.join("root", "usr", "bin", "c"),  # noqa: PTH118
+                "file_path": Path("root", "usr", "bin", "c"),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -200,7 +197,7 @@ class TestFixShebang:
         (
             "usr/sbin dir",
             {
-                "file_path": os.path.join("root", "usr", "sbin", "d"),  # noqa: PTH118
+                "file_path": Path("root", "usr", "sbin", "d"),
                 "content": "#!/usr/bin/python\nimport this",
                 "expected": "#!/usr/bin/env python\nimport this",
             },
@@ -208,7 +205,7 @@ class TestFixShebang:
         (
             "opt/bin dir",
             {
-                "file_path": os.path.join("root", "opt", "bin", "e"),  # noqa: PTH118
+                "file_path": Path("root", "opt", "bin", "e"),
                 "content": "#!/usr/bin/python\nraise Exception()",
                 "expected": "#!/usr/bin/env python\nraise Exception()",
             },
@@ -217,25 +214,25 @@ class TestFixShebang:
 
     def test_fix_shebang(self):
         for _, data in self.scenarios:
-            os.makedirs(os.path.dirname(data["file_path"]), exist_ok=True)  # noqa: PTH103, PTH120
-            with open(data["file_path"], "w") as fd:  # noqa: PTH123
-                fd.write(data["content"])
+            path = data["file_path"]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(data["content"])
 
         normalize(Path("root"), repository=DummyRepository)
 
         for _, data in self.scenarios:
-            with open(data["file_path"]) as fd:  # noqa: PTH123
+            with data["file_path"].open() as fd:
                 assert fd.read() == data["expected"]
 
 
-@pytest.mark.usefixtures("new_dir")
+@pytest.mark.usefixtures("new_path")
 class TestRemoveUselessFiles:
     """Check the removal of unnecessary files."""
 
-    def create(self, file_path: str) -> str:
-        path = os.path.join("root", file_path)  # noqa: PTH118
-        os.makedirs(os.path.dirname(path), exist_ok=True)  # noqa: PTH103, PTH120
-        open(path, "w").close()  # noqa: PTH123
+    def create(self, file_path: Path) -> Path:
+        path = Path("root", file_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
 
         return path
 
@@ -243,21 +240,21 @@ class TestRemoveUselessFiles:
         paths = [
             self.create(p)
             for p in [
-                os.path.join("usr", "lib", "python3.5", "sitecustomize.py"),  # noqa: PTH118
-                os.path.join("usr", "lib", "python2.7", "sitecustomize.py"),  # noqa: PTH118
-                os.path.join("usr", "lib", "python", "sitecustomize.py"),  # noqa: PTH118
+                Path("usr", "lib", "python3.5", "sitecustomize.py"),
+                Path("usr", "lib", "python2.7", "sitecustomize.py"),
+                Path("usr", "lib", "python", "sitecustomize.py"),
             ]
         ]
         normalize(Path("root"), repository=DummyRepository)
 
         for p in paths:
-            assert os.path.exists(p) is False  # noqa: PTH110
+            assert p.exists() is False
 
     def test_no_remove(self):
-        path = self.create(os.path.join("opt", "python3.5", "sitecustomize.py"))  # noqa: PTH118
+        path = self.create(Path("opt", "python3.5", "sitecustomize.py"))
         normalize(Path("root"), repository=DummyRepository)
 
-        assert os.path.exists(path)  # noqa: PTH110
+        assert path.exists()
 
 
 class TestFixPkgConfig:
@@ -281,20 +278,20 @@ class TestFixPkgConfig:
     )
     def test_fix_pkg_config_trim_prefix_from_snap(
         self,
-        tmpdir,
+        tmp_path,
         prefix,
         fixed_prefix,
         pkg_config_file,
         expected_pkg_config_content,
     ):
         """Verify prefixes from snaps are trimmed."""
-        pc_file = tmpdir / "my-file.pc"
+        pc_file = tmp_path / "my-file.pc"
         pkg_config_file(pc_file, prefix)
 
-        fix_pkg_config(tmpdir, pc_file)
+        fix_pkg_config(tmp_path, pc_file)
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
-            f"{tmpdir}{fixed_prefix}"
+            f"{tmp_path}{fixed_prefix}"
         )
 
     @pytest.mark.parametrize(
@@ -355,36 +352,36 @@ class TestFixPkgConfig:
         )
 
     def test_normalize_fix_pkg_config(
-        self, tmpdir, pkg_config_file, expected_pkg_config_content
+        self, tmp_path, pkg_config_file, expected_pkg_config_content
     ):
         """Verify normalization fixes pkg-config files."""
-        pc_file = tmpdir / "my-file.pc"
+        pc_file = tmp_path / "my-file.pc"
         pkg_config_file(pc_file, "/root/stage/usr")
-        normalize(tmpdir, repository=DummyRepository)
+        normalize(tmp_path, repository=DummyRepository)
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
-            f"{tmpdir}/usr"
+            f"{tmp_path}/usr"
         )
 
     def test_normalize_fix_pkg_config_with_pcfiledir(
-        self, tmpdir, pkg_config_file, expected_pkg_config_content
+        self, tmp_path, pkg_config_file, expected_pkg_config_content
     ):
         """Verify normalization fixes pkg-config files."""
-        pc_file = tmpdir / "my-file.pc"
+        pc_file = tmp_path / "my-file.pc"
         pkg_config_file(pc_file, "${pcfiledir}/../../..")
-        normalize(tmpdir, repository=DummyRepository)
+        normalize(tmp_path, repository=DummyRepository)
 
         assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
             "${pcfiledir}/../../.."
         )
 
-    def test_fix_pkg_config_is_dir(self, tmpdir):
+    def test_fix_pkg_config_is_dir(self, tmp_path):
         """Verify directories ending in .pc do not raise an error."""
-        pc_file = tmpdir / "granite.pc"
+        pc_file = tmp_path / "granite.pc"
         pc_file.mkdir()
 
         # this shouldn't crash
-        normalize(tmpdir, repository=DummyRepository)
+        normalize(tmp_path, repository=DummyRepository)
 
 
 @pytest.mark.parametrize(
@@ -398,14 +395,14 @@ class TestFixPkgConfig:
 class TestFixSymlinks:
     """Check the normalization of symbolic links."""
 
-    def test_fix_symlinks(self, src, dst, result, new_dir):
-        os.makedirs("a")  # noqa: PTH103
-        open("1", mode="w").close()  # noqa: PTH123
+    def test_fix_symlinks(self, src, dst, result, new_path):
+        Path("a").mkdir(parents=True)
+        Path("1").touch()
 
-        pathlib.Path(dst).symlink_to(src)
-        normalize(new_dir, repository=DummyRepository)
+        Path(dst).symlink_to(src)
+        normalize(new_path, repository=DummyRepository)
 
-        assert os.readlink(dst) == result  # noqa: PTH115
+        assert Path(dst).readlink() == Path(result)
 
 
 class TestFixSUID:
@@ -420,11 +417,11 @@ class TestFixSUID:
             ("suid_guid_sticky_file", 0o7744, 0o1744),
         ],
     )
-    def test_mode(self, key, test_mod, expected_mod, tmpdir):
-        f = os.path.join(tmpdir, key)  # noqa: PTH118
-        open(f, mode="w").close()  # noqa: PTH123
-        os.chmod(f, test_mod)  # noqa: PTH101
+    def test_mode(self, key, test_mod, expected_mod, tmp_path):
+        f = Path(tmp_path, key)
+        f.touch()
+        f.chmod(test_mod)
 
-        normalize(tmpdir, repository=DummyRepository)
+        normalize(tmp_path, repository=DummyRepository)
 
-        assert stat.S_IMODE(os.stat(f).st_mode) == expected_mod  # noqa: PTH116
+        assert stat.S_IMODE(f.stat().st_mode) == expected_mod
