@@ -174,11 +174,11 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
         "CRAFT_ARCH_TRIPLET_BUILD_FOR": info.arch_triplet_build_for,
         "CRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
         "CRAFT_PROJECT_DIR": str(info.project_dir),
+        "DEBIAN_FRONTEND": "noninteractive",
     }
 
     if Features().enable_overlay:
         global_environment["CRAFT_OVERLAY"] = str(info.overlay_mount_dir)
-        global_environment["DEBIAN_FRONTEND"] = "noninteractive"
 
     if Features().enable_partitions:
         global_environment.update(_get_environment_for_partitions(info))

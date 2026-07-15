@@ -39,6 +39,8 @@ Bug fixes:
   *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
   they were absent when packages are installed with ``--no-install-recommends``,
   causing builds to fail.
+- Set ``DEBIAN_FRONTEND=noninteractive`` in the global execution environment,
+  so all steps run non-interactively by default.
 
 .. _release-2.34.1:
 
