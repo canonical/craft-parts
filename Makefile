@@ -349,7 +349,7 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# https://github.com/actions/runner-images/blob/6fd5896f04e572647774996a7b292b854e6e8bc0/images/ubuntu/scripts/build/install-java-tools.sh#L67
 	sudo rm -f /etc/apt/sources.list.d/adoptium.list
 	# Remove browsers and drivers not used by our tests.
-	nohup sudo snap remove firefox --purge > /dev/null 2>&1 &
+	nohup sudo snap remove --no-wait firefox --purge > /dev/null 2>&1 &
 	nohup sudo rm -f /usr/share/java/selenium-server.jar > /dev/null &
 	nohup sudo rm -rf /usr/local/share/gecko_driver > /dev/null &
 	# Remove Homebrew (linuxbrew) not used by our tests.
