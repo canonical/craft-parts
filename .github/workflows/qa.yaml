@@ -26,6 +26,8 @@ jobs:
           "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          "ubuntu-26.04",
+          "ubuntu-26.04-arm",
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -36,6 +38,8 @@ jobs:
           "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          "ubuntu-26.04",
+          "ubuntu-26.04-arm",
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -56,6 +60,8 @@ jobs:
           "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          "ubuntu-26.04",
+          "ubuntu-26.04-arm",
         ]
       slow-test-python-versions: '["3.12"]'
       lowest-python-platform: '["amd64", "focal"]'
@@ -72,6 +78,8 @@ jobs:
           "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          "ubuntu-26.04",
+          "ubuntu-26.04-arm",
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -87,6 +95,8 @@ jobs:
         [
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          "ubuntu-26.04",
+          "ubuntu-26.04-arm",
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -117,6 +127,8 @@ jobs:
           "ubuntu-22.04-arm",
           "ubuntu-24.04",
           "ubuntu-24.04-arm",
+          "ubuntu-26.04",
+          "ubuntu-26.04-arm",
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
@@ -129,9 +141,9 @@ jobs:
   test-requires-root:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: '["ubuntu-24.04"]'
+      fast-test-platforms: '["ubuntu-24.04", "ubuntu-26.04"]'
       fast-test-python-versions: '["3.12"]'
-      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
+      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm", "ubuntu-26.04", "ubuntu-26.04-arm"]'
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: requires_root
