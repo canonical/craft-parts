@@ -172,6 +172,7 @@ def test_generate_step_environment_build_features(
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
+        export DEBIAN_FRONTEND="noninteractive"
         export CRAFT_DEFAULT_STAGE="{new_dir}/stage"
         export CRAFT_DEFAULT_PRIME="{new_dir}/prime"
         export CRAFT_MYPART_STAGE="{new_dir}/partitions/mypart/stage"
@@ -569,6 +570,7 @@ def test_get_global_environment_partitions_overlay(
         "CRAFT_YOURPART_PRIME": f"{work_dir}/partitions/yourpart/prime",
         "CRAFT_YOURPART_STAGE": f"{work_dir}/partitions/yourpart/stage",
         "CRAFT_OVERLAY": f"{work_dir}/overlay/overlay",
+        "DEBIAN_FRONTEND": "noninteractive",
         "CRAFT_PARALLEL_BUILD_COUNT": "1",
         "CRAFT_PRIME": f"{work_dir}/prime",
         "CRAFT_PROJECT_DIR": f"{new_dir}",

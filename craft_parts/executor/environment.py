@@ -178,6 +178,7 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
 
     if Features().enable_overlay:
         global_environment["CRAFT_OVERLAY"] = str(info.overlay_mount_dir)
+        global_environment["DEBIAN_FRONTEND"] = "noninteractive"
 
     if Features().enable_partitions:
         global_environment.update(_get_environment_for_partitions(info))
