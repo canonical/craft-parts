@@ -218,13 +218,23 @@ class SnapDownloadError(PackagesError):
     """Failed to download a snap.
 
     :param snap_name: The snap name.
+    :param snap_components: The snap components.
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
+    def __init__(
+        self, *, snap_name: str, snap_components: list[str], snap_channel: str
+    ) -> None:
         self.snap_name = snap_name
         self.snap_channel = snap_channel
-        brief = f"Error downloading snap {snap_name!r} from channel {snap_channel!r}."
+        self.snap_components = snap_components
+
+        component_msg = ""
+        if self.snap_components:
+            component_msg = (
+                f" with the following components: {', '.join(self.snap_components)}"
+            )
+        brief = f"Error downloading snap {snap_name!r} from channel {snap_channel!r}{component_msg}."
 
         super().__init__(brief=brief)
 
