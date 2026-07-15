@@ -346,6 +346,18 @@ class PartSpec(BaseModel):
     Build packages must be listed by their name on the host system.
     """
 
+    build_slices: list[str] = Field(
+        default=[],
+        description="The Chisel slices to make available in the build environment.",
+        examples=["[openssl_libs, openssl_dev]"],
+    )
+    """The Chisel slices to make available during the build step, before the build
+    starts. The part cuts them with Chisel and exposes them to the build environment.
+
+    Slices are the Chisel analogue of ``build-packages`` and are listed using the
+    ``<package-name>_<slice-name>`` syntax.
+    """
+
     build_environment: list[dict[str, str]] = Field(
         default=[],
         description="The environment variables to define for the build step, as key-value pairs.",

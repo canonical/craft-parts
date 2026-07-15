@@ -36,6 +36,11 @@ class ProjectDirs:
     :ivar overlay_mount_dir: The mountpoint for the overlay filesystem.
     :ivar overlay_packages_dir: The cache directory for overlay packages.
     :ivar overlay_work_dir: The work directory for the overlay filesystem.
+    :ivar build_slices_dir: The directory holding Chisel slices cut for the build
+        environment.
+    :ivar build_slices_mount_dir: The mountpoint for the build-slices merged root.
+    :ivar build_slices_cow_dir: The copy-on-write branch for the build-slices
+        merged root.
     :ivar stage_dir: The staging area containing installed files from all parts.
     :ivar prime_dir: The primed tree containing the final artifacts to deploy.
     """
@@ -54,6 +59,9 @@ class ProjectDirs:
         self.overlay_mount_dir = self.overlay_dir / "overlay"
         self.overlay_packages_dir = self.overlay_dir / "packages"
         self.overlay_work_dir = self.overlay_dir / "work"
+        self.build_slices_dir = self.work_dir / "build-slices"
+        self.build_slices_mount_dir = self.work_dir / "build-slices-mount"
+        self.build_slices_cow_dir = self.work_dir / "build-slices-cow"
         self.stage_dir = self.work_dir / "stage"
         self.backstage_dir = self.work_dir / "backstage"
         self.prime_dir = self.work_dir / "prime"

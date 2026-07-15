@@ -31,10 +31,12 @@ class Features(metaclass=Singleton):
 
     :cvar enable_overlay: Enables the overlay step.
     :cvar enable_partitions: Enables the usage of partitions.
+    :cvar enable_build_slices: Enables build-time Chisel slices.
     """
 
     enable_overlay: bool = False
     enable_partitions: bool = False
+    enable_build_slices: bool = False
 
     @classmethod
     def reset(cls) -> None:

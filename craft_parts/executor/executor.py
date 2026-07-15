@@ -26,6 +26,7 @@ from typing_extensions import Self
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
+from craft_parts.features import Features
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.parts import Part, sort_parts
@@ -112,6 +113,7 @@ class Executor:
         """
         self._install_build_packages()
         self._install_build_snaps()
+        self._cut_build_slices()
 
         self._verify_plugin_environment()
 
@@ -316,6 +318,23 @@ class Executor:
         else:
             logger.info("Installing build-snaps")
             packages.snaps.install_snaps(build_snaps)
+
+    def _cut_build_slices(self) -> None:
+        if not Features().enable_build_slices:
+            return
+
+        build_slices: set[str] = set()
+        for handler in self._handler.values():
+            build_slices.update(handler.build_slices)
+
+        if not build_slices:
+            return
+
+        logger.info("Cutting build-slices")
+        packages.chisel.cut_slices(
+            sorted(build_slices),
+            root=self._project_info.dirs.build_slices_dir,
+        )
 
     def _verify_plugin_environment(self) -> None:
         for part in self._part_list:

@@ -28,8 +28,9 @@ from typing_extensions import Protocol
 
 from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
+from craft_parts.features import Features
 from craft_parts.filesystem_mounts import FilesystemMount
-from craft_parts.infos import PartInfo, StepInfo
+from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
@@ -52,6 +53,7 @@ from craft_parts.utils import file_utils, os_utils
 from craft_parts.utils.partition_utils import BUILD_PARTITION, DEFAULT_PARTITION
 
 from . import filesets, migration
+from .build_slices import BuildSlicesMount
 from .environment import generate_step_environment
 from .errors import EnvironmentChangedError
 from .organize import organize_files
@@ -259,6 +261,7 @@ class PartHandler:
 
         self.build_packages = _get_build_packages(part=self._part, plugin=self._plugin)
         self.build_snaps = _get_build_snaps(part=self._part, plugin=self._plugin)
+        self.build_slices = _get_build_slices(part=self._part)
 
     def run_action(
         self,
@@ -473,13 +476,19 @@ class PartHandler:
         with _conditional_layer_mount(
             self._overlay_manager, top_part=self._part, condition=needs_overlay
         ):
-            self._run_step(
-                step_info=step_info,
-                scriptlet_name="override-build",
-                work_dir=self._part.part_build_dir,
-                stdout=stdout,
-                stderr=stderr,
-            )
+            with _conditional_build_slices_mount(
+                project_info=self._part_info.project_info,
+                part=self._part,
+                condition=self._needs_build_slices(),
+            ) as run_build_step:
+                run_build_step(
+                    self._run_step,
+                    step_info=step_info,
+                    scriptlet_name="override-build",
+                    work_dir=self._part.part_build_dir,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
 
             logger.debug("Run pre-organize callbacks")
             callbacks.run_step(step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE)
@@ -515,6 +524,7 @@ class PartHandler:
         assets = {
             "build-packages": self.build_packages,
             "build-snaps": self.build_snaps,
+            "build-slices": self.build_slices,
         }
         assets.update(_get_machine_manifest())
 
@@ -704,6 +714,10 @@ class PartHandler:
             return StepContents(stage=step_info.step == Step.STAGE)
 
         return step_handler.run_builtin()
+
+    def _needs_build_slices(self) -> bool:
+        """Return whether the part's build must run in the build-slices chroot."""
+        return bool(Features().enable_build_slices and self.build_slices)
 
     def _compute_layer_hash(self, *, all_parts: bool) -> LayerHash:
         """Obtain the layer verification hash.
@@ -1517,6 +1531,22 @@ def _get_build_snaps(*, part: Part, plugin: Plugin) -> list[str]:
     return all_snaps
 
 
+def _get_build_slices(*, part: Part) -> list[str]:
+    """Obtain the list of Chisel slices to expose to the build environment.
+
+    Only slices declared directly in the part specification are considered.
+
+    :param part: The part being processed.
+
+    :return: The list of build slices.
+    """
+    build_slices = part.spec.build_slices
+    if build_slices:
+        logger.debug("part build slices: %s", build_slices)
+
+    return list(build_slices)
+
+
 def _get_machine_manifest() -> dict[str, Any]:
     """Obtain information about the system OS and runtime environment."""
     return {
@@ -1598,3 +1628,26 @@ def _conditional_layer_mount(
             yield
     else:
         yield
+
+
+@contextmanager
+def _conditional_build_slices_mount(
+    *, project_info: ProjectInfo, part: Part, condition: bool
+) -> Iterator[Callable[..., Any]]:
+    """Provide a runner for the build step, optionally inside the merged root.
+
+    When ``condition`` is true, yield a callable that runs the build step inside
+    a chroot into the build-slices merged root. Otherwise yield a passthrough
+    that runs the step directly on the host.
+    """
+    if condition:
+        with BuildSlicesMount(project_info=project_info, part=part) as mount:
+            yield mount.run
+    else:
+
+        def _run_directly(
+            target: Callable[..., StepContents], **kwargs: Any
+        ) -> StepContents:
+            return target(**kwargs)
+
+        yield _run_directly

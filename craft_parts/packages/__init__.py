@@ -20,6 +20,7 @@ import logging
 from typing import Any, TYPE_CHECKING, cast
 
 from . import errors, snaps
+from . import chisel
 from .normalize import fix_pkg_config
 from .platform import is_deb_based, is_dnf_based, is_yum_based
 
@@ -71,6 +72,7 @@ class _RepositoryProxy:
 Repository = cast("BaseRepository", _RepositoryProxy())
 
 __all__ = [
+    "chisel",
     "errors",
     "fix_pkg_config",
     "Repository",

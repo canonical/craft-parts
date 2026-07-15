@@ -310,3 +310,20 @@ class ChiselError(PackagesError):
                 break
 
         super().__init__(brief=brief, details=details)
+
+
+class InvalidBuildSlices(PackagesError):  # noqa: N818
+    """One or more build-slices entries are not valid Chisel slices.
+
+    :param slices: The entries that are not valid Chisel slices.
+    """
+
+    def __init__(self, slices: Sequence[str]) -> None:
+        self.slices = slices
+        entries = ", ".join(sorted(slices))
+        super().__init__(
+            brief=f"Invalid build-slices entries: {entries}",
+            resolution=(
+                "Build slices must use the '<package-name>_<slice-name>' syntax."
+            ),
+        )

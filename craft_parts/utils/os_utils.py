@@ -256,6 +256,31 @@ def mount_overlayfs(mountpoint: Path | str, *args: str) -> None:
     subprocess.check_call(["fuse-overlayfs", *args, mountpoint.as_posix()])
 
 
+def mount_unionfs(mountpoint: Path | str, *args: str) -> None:
+    """Mount a union filesystem using unionfs-fuse.
+
+    :param mountpoint: Where the union will be mounted.
+    :param args: Additional arguments to ``unionfs(1)`` (branch spec and options).
+
+    :raises subprocess.CalledProcessError: on error.
+    """
+    mountpoint = Path(mountpoint)
+    logger.debug("unionfs mountpoint=%r, args=%r", mountpoint.as_posix(), args)
+    subprocess.check_call(["unionfs", *args, mountpoint.as_posix()])
+
+
+def umount_fuse(mountpoint: Path | str) -> None:
+    """Unmount a FUSE filesystem using fusermount.
+
+    :param mountpoint: The mount point to unmount.
+
+    :raises subprocess.CalledProcessError: on error.
+    """
+    mountpoint = Path(mountpoint)
+    logger.debug("fusermount -u mountpoint=%r", mountpoint.as_posix())
+    subprocess.check_call(["fusermount", "-u", mountpoint.as_posix()])
+
+
 _UMOUNT_RETRIES = 5
 
 

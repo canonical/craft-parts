@@ -71,6 +71,7 @@ class BuildState(StepState):
             "after",
             "build-attributes",
             "build-packages",
+            "build-slices",
             "disable-parallel",
             "organize",
             "override-build",

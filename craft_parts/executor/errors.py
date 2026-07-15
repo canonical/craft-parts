@@ -16,6 +16,39 @@
 
 """Executor error definitions."""
 
+from craft_parts import errors
+
 
 class EnvironmentChangedError(RuntimeError):
     """Environment between two lifecycle executions changed."""
+
+
+class BuildSlicesMountError(errors.PartsError):
+    """Failed to mount the build-slices merged root.
+
+    :param mountpoint: The filesystem mount point.
+    :param message: The error message.
+    """
+
+    def __init__(self, mountpoint: str, message: str) -> None:
+        self.mountpoint = mountpoint
+        self.message = message
+        brief = f"Failed to mount build-slices merged root on {mountpoint}: {message}"
+        resolution = "Ensure unionfs-fuse is installed and FUSE is available."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class BuildSlicesUnmountError(errors.PartsError):
+    """Failed to unmount the build-slices merged root.
+
+    :param mountpoint: The filesystem mount point.
+    :param message: The error message.
+    """
+
+    def __init__(self, mountpoint: str, message: str) -> None:
+        self.mountpoint = mountpoint
+        self.message = message
+        brief = f"Failed to unmount build-slices merged root {mountpoint}: {message}"
+
+        super().__init__(brief=brief)
