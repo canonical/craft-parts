@@ -348,4 +348,23 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# Delete the adoptium repository:
 	# https://github.com/actions/runner-images/blob/6fd5896f04e572647774996a7b292b854e6e8bc0/images/ubuntu/scripts/build/install-java-tools.sh#L67
 	sudo rm -f /etc/apt/sources.list.d/adoptium.list
+	# Remove browsers and drivers not used by our tests.
+	nohup sudo snap remove firefox --purge > /dev/null 2>&1 & true
+	nohup sudo rm -f /usr/share/java/selenium-server.jar > /dev/null &
+	nohup sudo rm -rf /usr/local/share/gecko_driver > /dev/null &
+	# Remove Homebrew (linuxbrew) not used by our tests.
+	nohup sudo rm -rf /home/linuxbrew > /dev/null &
+ifeq ($(UBUNTU_GE_2510),1)
+	# Remove older .NET SDK versions (8.0, 9.0) not needed on 26.04+.
+	nohup sudo rm -rf \
+		/usr/share/dotnet/sdk/8.0* \
+		/usr/share/dotnet/sdk/9.0* \
+		/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0* \
+		/usr/share/dotnet/shared/Microsoft.NETCore.App/9.0* \
+		/usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0* \
+		/usr/share/dotnet/shared/Microsoft.AspNetCore.App/9.0* \
+		/usr/share/dotnet/packs/Microsoft.NETCore.App.Ref/8.0* \
+		/usr/share/dotnet/packs/Microsoft.NETCore.App.Ref/9.0* \
+		> /dev/null &
+endif
 endif
