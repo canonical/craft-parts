@@ -210,9 +210,10 @@ APT_PACKAGES += bison
 endif
 # We'll check for any dotnet SDK. On 25.10+, install dotnet 10; on older releases,
 # install dotnet 8 (common to 22.04 -> 24.10). On focal, we'll get the snap instead.
+UBUNTU_GE_2510 := $(shell . /etc/os-release && dpkg --compare-versions "$$VERSION_ID" ge "25.10" && echo 1 || echo 0)
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
 ifneq ($(UBUNTU_CODENAME),focal)
-ifeq ($(shell . /etc/os-release && dpkg --compare-versions "$$VERSION_ID" ge "25.10" && echo 1 || echo 0),1)
+ifeq ($(UBUNTU_GE_2510),1)
 APT_PACKAGES += dotnet-sdk-10.0
 else
 APT_PACKAGES += dotnet-sdk-8.0
