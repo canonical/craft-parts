@@ -268,6 +268,10 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 
 # Add configuration for intersphinx mapping
 intersphinx_mapping = {
+    "craft-providers": (
+        "https://documentation.ubuntu.com/craft-providers/latest",
+        None,
+    ),
     "starter-pack": (
         "https://canonical-example-product-documentation.readthedocs-hosted.com/en/latest",
         None,
