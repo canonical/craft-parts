@@ -208,12 +208,15 @@ endif
 ifeq ($(wildcard /usr/share/doc/bison/copyright),)
 APT_PACKAGES += bison
 endif
-# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
-# 22.04 -> 25.10 (and possibly 26.04).
-# On focal, we'll get the snap instead.
+# We'll check for any dotnet SDK. On 25.10+, install dotnet 10; on older releases,
+# install dotnet 8 (common to 22.04 -> 24.10). On focal, we'll get the snap instead.
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
 ifneq ($(UBUNTU_CODENAME),focal)
+ifeq ($(shell . /etc/os-release && dpkg --compare-versions "$$VERSION_ID" ge "25.10" && echo 1 || echo 0),1)
+APT_PACKAGES += dotnet-sdk-10.0
+else
 APT_PACKAGES += dotnet-sdk-8.0
+endif
 endif
 endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
