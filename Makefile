@@ -354,6 +354,13 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	nohup sudo rm -rf /usr/local/share/gecko_driver > /dev/null &
 	# Remove Homebrew (linuxbrew) not used by our tests.
 	nohup sudo rm -rf /home/linuxbrew > /dev/null &
+	# Remove cloud CLI tools not used by our tests.
+	nohup sudo rm -rf /opt/google-cloud-sdk /usr/lib/google-cloud-sdk > /dev/null &
+	nohup sudo rm -rf /usr/local/aws-cli /usr/local/bin/aws /usr/local/bin/aws_completer > /dev/null &
+	# Remove PowerShell not used by our tests.
+	nohup sudo rm -rf /opt/microsoft/powershell /usr/bin/pwsh > /dev/null &
+	# Remove vcpkg not used by our tests.
+	nohup sudo rm -rf /usr/local/share/vcpkg /usr/local/bin/vcpkg > /dev/null &
 ifeq ($(UBUNTU_GE_2510),1)
 	# Remove older .NET SDK versions (8.0, 9.0) not needed on 26.04+.
 	nohup sudo rm -rf \
