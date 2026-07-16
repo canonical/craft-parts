@@ -431,7 +431,7 @@ class TestPartitionErrors:
             "    unknown partition 'foo' in '(foo)'\n"
             "Valid partitions: default, mypart, yourpart"
         )
-        assert err.resolution == "Correct the invalid partition name(s) and try again."
+        assert err.resolution == "Correct the invalid partition usage and try again."
 
     def test_invalid_partition_warning(self):
         err = errors.PartitionUsageWarning(
