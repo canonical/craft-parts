@@ -39,6 +39,14 @@ Bug fixes:
   *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
   they were absent when packages are installed with ``--no-install-recommends``,
   causing builds to fail.
+- Fix transient build failures when installing build snaps. A failed store
+  query through snapd (for example while snapd is restarting shortly after a
+  build instance is created) caused the snap installation to be silently
+  skipped, so the build only failed later, with a confusing
+  ``'<command>' not found`` error during plugin environment validation (for
+  example the ``uv`` plugin with ``build-snaps: [astral-uv]``). Store queries
+  are now retried with a delay between attempts, and installation is
+  attempted even if the query still fails.
 
 .. _release-2.34.1:
 

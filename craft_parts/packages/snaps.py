@@ -21,6 +21,7 @@ import logging
 import pathlib
 import subprocess
 import sys
+import time
 from collections.abc import Sequence
 from http import HTTPStatus
 from typing import (
@@ -140,6 +141,10 @@ class SnapPackage:
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error
                     retry_count -= 1
+                    # Wait before retrying: snapd may be briefly unable to
+                    # service requests, e.g. while restarting shortly after
+                    # a build instance is created (SNAPDENG-36387).
+                    time.sleep(2)
 
         return self._store_snap_info
 
@@ -299,8 +304,13 @@ def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
             if snap_pkg_channel != "stable" and snap_pkg_type == "base":
                 snap_pkg = SnapPackage(f"{snap_pkg.name}/latest/{snap_pkg_channel}")
 
-            if not snap_pkg.installed:
-                snap_pkg.install()
+        # Attempt the install even if the store query failed (store_snap_info
+        # is None): 'snap install' does its own store lookup and fails loudly
+        # if the snap is genuinely unavailable. Skipping the install here
+        # would only surface much later, as a confusing "command not found"
+        # error when the part's build environment is validated.
+        if not snap_pkg.installed:
+            snap_pkg.install()
 
         local_snap_info = snap_pkg.get_local_snap_info()
         if local_snap_info:
