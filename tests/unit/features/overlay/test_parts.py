@@ -48,6 +48,7 @@ class TestPartSpecs:
             "disable-parallel": True,
             "after": ["bar"],
             "overlay-packages": ["overlay-pkg1", "overlay-pkg2"],
+            "overlay-recommended-packages": [],
             "stage-snaps": ["stage-snap1", "stage-snap2"],
             "stage-packages": ["stage-pkg1", "stage-pkg2"],
             "build-snaps": ["build-snap1", "build-snap2"],

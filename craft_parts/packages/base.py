@@ -76,10 +76,13 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache.
 
         :param package_names: A list with the names of the packages to download.
+        :param include_recommends: Whether or not to include recommended packages.
         """
 
     @classmethod
@@ -90,6 +93,7 @@ class BaseRepository(abc.ABC):
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,
     ) -> list[str]:
         """Install packages on the host system.
 
@@ -107,6 +111,7 @@ class BaseRepository(abc.ABC):
         :param package_names: A list of package names to install.
         :param list_only: Only list the packages that would be installed.
         :param refresh_package_cache: Refresh the cache before installing.
+        :param include_recommends: Whether or not to include recommended packages.
 
         :return: A list with the packages installed and their versions.
         """
@@ -205,7 +210,9 @@ class DummyRepository(BaseRepository):
 
     @override
     @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache."""
 
     @override
@@ -216,6 +223,7 @@ class DummyRepository(BaseRepository):
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,
     ) -> list[str]:
         """Install packages on the host system."""
         logger.debug("Package manager not defined, not installing any packages")

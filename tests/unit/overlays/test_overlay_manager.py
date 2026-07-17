@@ -313,10 +313,12 @@ class TestPackageManagement:
             mock_download_packages,
             ["pkg1", "pkg2"],
             use_host_sources=False,
+            include_recommends=False,
         )
         mock_download_packages.assert_called_once_with(
             ["pkg1", "pkg2"],
             use_host_sources=False,
+            include_recommends=False,
         )
 
     def test_install_packages(self, mocker, new_dir):
@@ -340,11 +342,13 @@ class TestPackageManagement:
             ["pkg1", "pkg2"],
             refresh_package_cache=False,
             use_host_sources=False,
+            include_recommends=False,
         )
         mock_install_packages.assert_called_once_with(
             ["pkg1", "pkg2"],
             refresh_package_cache=False,
             use_host_sources=False,
+            include_recommends=False,
         )
 
     def test_package_cache_mount_refresh(self, new_dir):
@@ -397,10 +401,12 @@ class TestPackageManagement:
             mock_download_packages,
             ["pkg1", "pkg2"],
             use_host_sources=False,
+            include_recommends=False,
         )
         mock_download_packages.assert_called_once_with(
             ["pkg1", "pkg2"],
             use_host_sources=False,
+            include_recommends=False,
         )
         self.mock_umount.assert_called_once_with(
             new_dir / "overlay/overlay",
@@ -433,11 +439,13 @@ class TestPackageManagement:
             ["pkg1", "pkg2"],
             refresh_package_cache=False,
             use_host_sources=False,
+            include_recommends=False,
         )
         mock_install_packages.assert_called_once_with(
             ["pkg1", "pkg2"],
             refresh_package_cache=False,
             use_host_sources=False,
+            include_recommends=False,
         )
         self.mock_umount.assert_called_once_with(new_dir / "overlay/overlay")
 

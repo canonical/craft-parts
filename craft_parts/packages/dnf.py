@@ -60,7 +60,12 @@ class DNFRepository(YUMRepository):
         return packages
 
     @classmethod
-    def _install_packages(cls, package_names: list[str]) -> None:
+    def _install_packages(
+        cls,
+        package_names: list[str],
+        *,
+        include_recommends: bool = False,  # noqa: ARG003
+    ) -> None:
         """Really install the packages."""
         logger.debug("Installing packages: %s", " ".join(package_names))
         dnf_command = ["dnf", "install", "-y"]
