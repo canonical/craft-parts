@@ -371,7 +371,7 @@ class PartHandler:
         if self._part.has_overlay:
             # install overlay packages (from spec and plugin)
             overlay_packages = self._merged_overlay_packages()
-            overlay_recommended_packages = self._part.spec.overlay_recommended_packages
+            overlay_recommended_packages = self._merged_overlay_recommended_packages()
             if overlay_packages or overlay_recommended_packages:
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
@@ -1317,13 +1317,19 @@ class PartHandler:
         plugin_packages = sorted(self._plugin.get_overlay_packages())
         return spec_packages + [p for p in plugin_packages if p not in spec_packages]
 
+    def _merged_overlay_recommended_packages(self) -> list[str]:
+        """Return overlay recommended packages from both the part spec and the plugin."""
+        spec_packages = list(self._part.spec.overlay_recommended_packages)
+        plugin_packages = sorted(self._plugin.get_overlay_recommended_packages())
+        return spec_packages + [p for p in plugin_packages if p not in spec_packages]
+
     def _fetch_overlay_packages(self) -> None:
         """Download overlay packages to the local package cache.
 
         :raises OverlayPackageNotFound: If a package is not available for download.
         """
         overlay_packages = self._merged_overlay_packages()
-        overlay_recommended_packages = self._part.spec.overlay_recommended_packages
+        overlay_recommended_packages = self._merged_overlay_recommended_packages()
         if not (overlay_packages or overlay_recommended_packages):
             return
 
