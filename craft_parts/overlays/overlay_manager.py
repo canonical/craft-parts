@@ -323,7 +323,7 @@ class PackageCacheMount:
         """Download the specified packages to the local system.
 
         :param package_names: The list of packages to download.
-        :param package_names: Whether or not to include recommended packages.
+        :param include_recommends: Whether or not to include recommended packages.
         """
         self._overlay_manager.download_packages(
             package_names, include_recommends=include_recommends
