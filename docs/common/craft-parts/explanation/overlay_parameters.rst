@@ -3,7 +3,7 @@
 Overlay parameters
 ------------------
 
-A part has four parameters that can be used to adjust how the overlay step
+A part has five parameters that can be used to adjust how the overlay step
 works: ``overlay-packages``, ``overlay-recommended-packages``, ``overlay-script``,
 ``override-overlay`` and ``overlay``. ``overlay-packages`` and ``overlay`` (the
 overlay-files parameter) behave much the same way as the related parameters on the
