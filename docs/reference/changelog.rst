@@ -24,6 +24,9 @@ Unreleased
 
 New features:
 
+- Add ``overlay-recommended-packages`` key to install overlay packages with their
+  recommended packages.
+
 - The ``colcon`` plugin now passes ``-DBUILD_TESTING=OFF`` to CMake by default,
   disabling test targets that are not useful inside a rock or snap and would
   otherwise pull in large test-only dependencies. Users can opt back in by
