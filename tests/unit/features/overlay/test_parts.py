@@ -129,20 +129,30 @@ class TestPartSpecs:
         assert spec.stage_packages == package_list
 
     @pytest.mark.parametrize(
-        ("packages", "overlay_script", "override_script", "files", "result"),
+        (
+            "packages",
+            "rec_packages",
+            "overlay_script",
+            "override_script",
+            "files",
+            "result",
+        ),
         [
-            ([], None, None, ["*"], False),
-            (["pkg"], None, None, ["*"], True),
-            ([], "ls", None, ["*"], True),
-            ([], None, "ls", ["*"], True),
-            ([], None, None, ["-usr/share"], True),
+            ([], [], None, None, ["*"], False),
+            (["pkg"], [], None, None, ["*"], True),
+            ([], [], "ls", None, ["*"], True),
+            ([], [], None, "ls", ["*"], True),
+            ([], [], None, None, ["-usr/share"], True),
+            ([], ["pkg"], None, None, ["*"], True),
+            (["pkg1"], ["pkg2"], None, None, ["*"], True),
         ],
     )
     def test_spec_has_overlay(
-        self, packages, overlay_script, override_script, files, result
+        self, packages, rec_packages, overlay_script, override_script, files, result
     ):
         data = {
             "overlay-packages": packages,
+            "overlay-recommended-packages": rec_packages,
             "overlay-script": overlay_script,
             "override-overlay": override_script,
             "overlay": files,
