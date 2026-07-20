@@ -8,7 +8,7 @@ works: ``overlay-packages``, ``overlay-recommended-packages``, ``overlay-script`
 ``override-overlay`` and ``overlay``. ``overlay-packages`` and ``overlay`` (the
 overlay-files parameter) behave much the same way as the related parameters on the
 ``STAGE`` step. The ``overlay-recommended-packages`` key works like
-``overlay-packages``, but installs packages with their recommended packages.
+``overlay-packages``, but installs packages with their recommended dependencies.
 
 The ``overlay-script`` and ``override-overlay`` keys both behave
 similarly to ``override-stage`` and are mutually incompatible.
