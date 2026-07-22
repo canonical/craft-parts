@@ -376,6 +376,8 @@ class PartHandler:
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
                 ) as ctx:
+                    # include-recommends should be processed first, packages in recommends
+                    # chain will be skipped if any already installed via overlay-packages
                     if overlay_recommended_packages:
                         ctx.install_packages(
                             overlay_recommended_packages, include_recommends=True
@@ -1340,6 +1342,8 @@ class PartHandler:
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
                 ctx.refresh_packages_list()
+                # include-recommends should be processed first, packages in recommends
+                # chain will be skipped if any already installed via overlay-packages
                 if overlay_recommended_packages:
                     ctx.download_packages(
                         overlay_recommended_packages, include_recommends=True
