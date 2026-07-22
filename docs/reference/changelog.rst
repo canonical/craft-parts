@@ -40,6 +40,11 @@ Bug fixes:
   they were absent when packages are installed with ``--no-install-recommends``,
   causing builds to fail.
 
+Documentation:
+
+- Group the plugins in the reference by the language or technology they
+  support.
+
 .. _release-2.34.1:
 
 2.34.1 (2026-07-09)
