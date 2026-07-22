@@ -8,10 +8,12 @@ works: ``overlay-packages``, ``overlay-recommended-packages``, ``overlay-script`
 ``override-overlay`` and ``overlay``. ``overlay-packages`` and ``overlay`` (the
 overlay-files parameter) behave much the same way as the related parameters on the
 ``STAGE`` step. The ``overlay-recommended-packages`` key works like
-``overlay-packages``, but installs packages with their recommended dependencies.
+``overlay-packages``, but also installs any `recommended packages
+<https://www.debian.org/doc/manuals/debian-faq/pkg-basics.en.html#depends`__ that the
+target packages might have.
 
-The ``overlay-script`` and ``override-overlay`` keys both behave
-similarly to ``override-stage`` and are mutually incompatible.
+The ``overlay-script`` and ``override-overlay`` keys both take as value a scriplet that
+replaces the default overlay step behaviour. They are mutually incompatible.
 
 The ``override-overlay`` key is unique in that it runs the script in a
 chroot environment. This is useful for scripts that need to execute within the target

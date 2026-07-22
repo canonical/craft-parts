@@ -293,7 +293,9 @@ class PartSpec(BaseModel):
         description="The packages to install in the part's layer with recommended packages.",
         examples=["[ed]"],
     )
-    """The packages to install in the part's layer with recommended packages.
+    """The packages to install in the part's layer, plus any `recommended packages
+    <https://www.debian.org/doc/manuals/debian-faq/pkg-basics.en.html#depends>`__ they
+    might have.
 
     During the overlay step, these packages and their recommended packages are
     installed into the part's layer using the base layer's package manager.
