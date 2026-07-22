@@ -55,6 +55,7 @@ from . import filesets, migration
 from .environment import generate_step_environment
 from .errors import EnvironmentChangedError
 from .organize import organize_files
+from .source_patches import apply_source_patches
 from .step_handler import (
     StagePartitionContents,
     StepContents,
@@ -813,6 +814,7 @@ class PartHandler:
         state_file = states.get_step_state_path(self._part, step_info.step)
         self._source_handler.check_if_outdated(str(state_file))
         self._source_handler.update()
+        apply_source_patches(self._part, stdout=stdout, stderr=stderr)
 
     def _update_overlay(
         self, step_info: StepInfo, *, stdout: Stream, stderr: Stream

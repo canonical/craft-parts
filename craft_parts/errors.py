@@ -572,6 +572,26 @@ class PluginPullError(PartsError):
         super().__init__(brief=brief)
 
 
+class PatchApplyError(PartsError):
+    """A source patch failed to apply during pull.
+
+    :param part_name: The name of the part being processed.
+    :param patch: The patch path as declared in the part definition.
+    :param message: Optional details from patch execution.
+    """
+
+    def __init__(
+        self, *, part_name: str, patch: str, message: str | None = None
+    ) -> None:
+        self.part_name = part_name
+        self.patch = patch
+        self.message = message
+        brief = f"Failed to apply patch {patch!r} for part {part_name!r}."
+        resolution = "Ensure the patch file exists and can be applied cleanly to the pulled source."
+
+        super().__init__(brief=brief, details=message, resolution=resolution)
+
+
 class UserExecutionError(PartsError, abc.ABC):
     """Plugin build script failed at runtime.
 
