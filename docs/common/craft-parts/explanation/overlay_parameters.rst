@@ -9,7 +9,7 @@ works: ``overlay-packages``, ``overlay-recommended-packages``, ``overlay-script`
 overlay-files parameter) behave much the same way as the related parameters on the
 ``STAGE`` step. The ``overlay-recommended-packages`` key works like
 ``overlay-packages``, but also installs any `recommended packages
-<https://www.debian.org/doc/manuals/debian-faq/pkg-basics.en.html#depends`__ that the
+<https://www.debian.org/doc/manuals/debian-faq/pkg-basics.en.html#depends>`__ that the
 target packages might have.
 
 The ``overlay-script`` and ``override-overlay`` keys both take as value a scriplet that
