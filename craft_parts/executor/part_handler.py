@@ -376,12 +376,12 @@ class PartHandler:
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
                 ) as ctx:
-                    if overlay_packages:
-                        ctx.install_packages(overlay_packages)
                     if overlay_recommended_packages:
                         ctx.install_packages(
                             overlay_recommended_packages, include_recommends=True
                         )
+                    if overlay_packages:
+                        ctx.install_packages(overlay_packages)
 
             if self._part.spec.override_overlay or self._plugin.uses_overlay:
                 # Run in chroot: either override-overlay scriptlet or
@@ -1340,12 +1340,12 @@ class PartHandler:
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
                 ctx.refresh_packages_list()
-                if overlay_packages:
-                    ctx.download_packages(overlay_packages)
                 if overlay_recommended_packages:
                     ctx.download_packages(
                         overlay_recommended_packages, include_recommends=True
                     )
+                if overlay_packages:
+                    ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
