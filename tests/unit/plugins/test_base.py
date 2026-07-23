@@ -80,6 +80,7 @@ def test_plugin_overlay_defaults(new_dir):
 
     assert plugin.uses_overlay is False
     assert plugin.get_overlay_packages() == set()
+    assert plugin.get_overlay_recommended_packages() == set()
     assert plugin.get_overlay_chroot_commands() == []
 
 

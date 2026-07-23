@@ -38,6 +38,7 @@ _pull_state_foo = textwrap.dedent(
       source-submodules: null
       stage-packages: []
       overlay-packages: []
+      overlay-recommended-packages: []
     project_options:
       target_arch: amd64
     assets:
@@ -75,6 +76,7 @@ _pull_state_bar = textwrap.dedent(
       source-submodules: null
       stage-packages: []
       overlay-packages: []
+      overlay-recommended-packages: []
     project_options:
       target_arch: amd64
     assets:

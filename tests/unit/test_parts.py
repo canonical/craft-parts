@@ -71,6 +71,7 @@ class TestPartSpecs:
         # Overlay defaults
         data_copy["overlay"] = ["*"]
         data_copy["overlay-packages"] = []
+        data_copy["overlay-recommended-packages"] = []
         data_copy["overlay-script"] = None
         data_copy["override-overlay"] = None
         spec = PartSpec.unmarshal(data)
