@@ -119,7 +119,10 @@ class Executor:
         # overlay packages if the cache level is the first layer after the base,
         # to keep compatibility with existing behavior.
         if (
-            any(p.spec.overlay_packages for p in self._part_list)
+            any(
+                p.spec.overlay_packages or p.spec.overlay_recommended_packages
+                for p in self._part_list
+            )
             and self._overlay_manager.cache_level == 0
         ):
             logger.info("Updating base overlay system")

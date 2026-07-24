@@ -584,7 +584,9 @@ class Ubuntu(BaseRepository):
             return apt_cache.get_packages_marked_for_installation()
 
     @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache area."""
         logger.debug("Downloading packages using apt: %s", " ".join(package_names))
         env = os.environ.copy()
@@ -596,15 +598,20 @@ class Ubuntu(BaseRepository):
             }
         )
 
-        apt_command = [
-            "apt-get",
-            "--no-install-recommends",
-            "-y",
-            "-oDpkg::Use-Pty=0",
-            "--allow-downgrades",
-            "--download-only",
-            "install",
-        ]
+        apt_command = ["apt-get"]
+
+        if not include_recommends:
+            apt_command.append("--no-install-recommends")
+
+        apt_command.extend(
+            [
+                "-y",
+                "-oDpkg::Use-Pty=0",
+                "--allow-downgrades",
+                "--download-only",
+                "install",
+            ]
+        )
 
         try:
             process_run(apt_command + package_names, env=env)
@@ -618,6 +625,7 @@ class Ubuntu(BaseRepository):
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,
     ) -> list[str]:
         """Install packages on the host system."""
         if not package_names:
@@ -641,7 +649,9 @@ class Ubuntu(BaseRepository):
             if refresh_package_cache and install_required:
                 cls.refresh_packages_list()
             if install_required:
-                cls._install_packages(package_names)
+                cls._install_packages(
+                    package_names, include_recommends=include_recommends
+                )
             else:
                 logger.debug(
                     "Requested build-packages already installed: %s", package_names
@@ -655,7 +665,9 @@ class Ubuntu(BaseRepository):
         )
 
     @classmethod
-    def _install_packages(cls, package_names: list[str]) -> None:
+    def _install_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         logger.debug("Installing packages: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
@@ -668,12 +680,18 @@ class Ubuntu(BaseRepository):
 
         apt_command = [
             "apt-get",
-            "--no-install-recommends",
-            "-y",
-            "-oDpkg::Use-Pty=0",
-            "--allow-downgrades",
-            "install",
         ]
+        if not include_recommends:
+            apt_command.append("--no-install-recommends")
+
+        apt_command.extend(
+            [
+                "-y",
+                "-oDpkg::Use-Pty=0",
+                "--allow-downgrades",
+                "install",
+            ]
+        )
 
         # Set stdin to /dev/null to prevent SIGTTIN/SIGTTOU problems, see
         # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=555632

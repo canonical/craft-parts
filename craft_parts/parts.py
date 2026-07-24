@@ -288,6 +288,19 @@ class PartSpec(BaseModel):
     using the base layer's package manager.
     """
 
+    overlay_recommended_packages: list[str] = Field(
+        default=[],
+        description="The packages to install in the part's layer with recommended packages.",
+        examples=["[ed]"],
+    )
+    """The packages to install in the part's layer, plus any `recommended packages
+    <https://www.debian.org/doc/manuals/debian-faq/pkg-basics.en.html#depends>`__ they
+    might have.
+
+    During the overlay step, these packages and their recommended packages are
+    installed into the part's layer using the base layer's package manager.
+    """
+
     stage_snaps: list[str] = Field(
         default=[],
         description="The snaps to include in the stage environment.",
@@ -568,7 +581,11 @@ class PartSpec(BaseModel):
     )
 
     @field_validator(
-        "overlay_packages", "overlay_files", "overlay_script", "override_overlay"
+        "overlay_packages",
+        "overlay_recommended_packages",
+        "overlay_files",
+        "overlay_script",
+        "override_overlay",
     )
     @classmethod
     def validate_overlay_feature(cls, item: _T_validate) -> _T_validate:
@@ -660,6 +677,7 @@ class PartSpec(BaseModel):
         """Return whether this spec declares overlay content."""
         return bool(
             self.overlay_packages
+            or self.overlay_recommended_packages
             or self.override_overlay is not None
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
