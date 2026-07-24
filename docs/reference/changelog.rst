@@ -32,6 +32,10 @@ New features:
   otherwise pull in large test-only dependencies. Users can opt back in by
   passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
 
+- Craft Parts now always ignores Ubuntu's phased updates when installing
+  build packages or fetching stage packages, so the latest available version
+  of each package is used.
+
 Bug fixes:
 
 - The Overlay and Build steps of parts that organize content to the overlay
