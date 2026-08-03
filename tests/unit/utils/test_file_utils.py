@@ -24,7 +24,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
-from craft_parts.utils.file_utils import get_path_differences
+from craft_parts.utils.file_utils import get_path_differences, link_or_copy
 from typing_extensions import Any
 
 
@@ -712,7 +712,6 @@ def test_find_merge_conflicts_broken_symlink_vs_file(tmp_path: pathlib.Path):
 
 def test_link_or_copy_samefile_symlink(tmp_path: Path) -> None:
     """Ensure link_or_copy does not crash or delete the file when dest symlinks to source."""
-    from craft_parts.utils.file_utils import link_or_copy
 
     # Create a source file
     source = tmp_path / "source.txt"
