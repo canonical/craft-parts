@@ -20,7 +20,7 @@ import stat
 from pathlib import Path
 
 import pytest
-from craft_parts import errors, features
+from craft_parts import errors
 from craft_parts.actions import Action
 from craft_parts.executor import filesets, migration, part_handler
 from craft_parts.executor.filesets import Fileset
@@ -598,19 +598,18 @@ class TestFileMigration:
 
 @pytest.mark.usefixtures("new_dir")
 class TestFileMigrationErrors:
-    def test_migratable_filesets_partition_defined_error(self):
-        """Error if the partition feature is disabled and a partition is provided."""
+    def test_migratable_filesets_missing_partition_error(self):
+        """Error if no partition is provided to migratable_filesets."""
         with pytest.raises(errors.FeatureError) as raised:
             filesets.migratable_filesets(
                 Fileset(["*"]),
                 Path("install"),
                 default_partition="default",
-                partition="default",
+                partition=None,
             )
 
-        assert features.Features().enable_partitions is False
         assert (
-            "The partition feature must be enabled if a partition is provided."
+            "A partition must be provided when filtering partition filesets."
         ) in str(raised.value)
 
 

@@ -452,25 +452,22 @@ class TestOverlayDisabled:
         )
 
 
-class TestPartitionsDisabled:
-    """Partition feature must be enabled when partition are defined."""
+class TestPartitionsDefaultOnly:
+    """Projects without partitions use the default partition."""
 
     @pytest.fixture
     def parts_data(self) -> dict[str, Any]:
         return {"parts": {"foo": {"plugin": "nil"}}}
 
-    def test_partitions_disabled(self, new_dir, parts_data):
-        with pytest.raises(errors.FeatureError) as raised:
-            lifecycle_manager.LifecycleManager(
-                parts_data,
-                application_name="test",
-                cache_dir=new_dir,
-                partitions=["default"],
-            )
-        assert (
-            raised.value.message
-            == "Partitions are defined but partition feature is not enabled."
+    def test_partitions_default_only(self, new_dir, parts_data):
+        manager = lifecycle_manager.LifecycleManager(
+            parts_data,
+            application_name="test",
+            cache_dir=new_dir,
         )
+
+        assert manager.project_info.partitions == ["default"]
+        assert manager.project_info.default_partition == "default"
 
 
 class TestPluginProperties:

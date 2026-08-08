@@ -261,7 +261,7 @@ class TestStepHandlerBuiltins:
         )
         result = sh.run_builtin()
 
-        step_contents = StepContents(stage=True)
+        step_contents = StepContents(partitions=partitions, stage=True)
         default_partition = partitions[0] if partitions else "default"
         step_contents.partitions_contents[default_partition] = StagePartitionContents(
             files={Path("subdir/bar"), Path("foo")},
@@ -294,7 +294,7 @@ class TestStepHandlerBuiltins:
             partitions=partitions,
         )
         result = sh.run_builtin()
-        step_contents = StepContents()
+        step_contents = StepContents(partitions=partitions)
         default_partition = partitions[0] if partitions else "default"
         step_contents.partitions_contents[default_partition] = StepPartitionContents(
             files={Path("subdir/bar"), Path("foo")}, dirs={Path("subdir")}

@@ -93,7 +93,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
     *,
     part_name: str,
     file_map: dict[str, str],
-    install_dir_map: Mapping[str | None, Path],
+    install_dir_map: Mapping[str, Path],
     overwrite: bool,
     default_partition: str,
 ) -> None:
@@ -123,7 +123,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
             install_dir_map,
             default_partition,
         )
-        src_root = install_dir_map.get(None) or install_dir_map[default_partition]
+        src_root = install_dir_map[default_partition]
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
@@ -359,7 +359,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
 def get_src_path(
     src_partition_path: path_utils.PartitionPathPair,
     part_name: str,
-    install_dir_map: Mapping[str | None, Path],
+    install_dir_map: Mapping[str, Path],
     default_partition: str,
 ) -> Path:
     """Return the full path for a relative source."""
@@ -411,7 +411,7 @@ def get_src_path(
 def get_dst_path(
     dst_partition_path: path_utils.PartitionPathPair,
     part_name: str,
-    install_dir_map: Mapping[str | None, Path],
+    install_dir_map: Mapping[str, Path],
     default_partition: str,
 ) -> tuple[Path, str]:
     """Return the full destination path and log-friendly representation of a destination."""

@@ -47,6 +47,7 @@ class ProjectDirs:
         work_dir: Path | str = ".",
     ) -> None:
         partition_utils.validate_partition_names(partitions)
+        partitions = partition_utils.normalize_partition_names(partitions)
         self.project_dir = Path().expanduser().resolve()
         self.work_dir = Path(work_dir).expanduser().resolve()
         self.parts_dir = self.work_dir / "parts"
@@ -57,12 +58,8 @@ class ProjectDirs:
         self.stage_dir = self.work_dir / "stage"
         self.backstage_dir = self.work_dir / "backstage"
         self.prime_dir = self.work_dir / "prime"
-        if partitions:
-            self._partitions: Sequence[str] | None = partitions
-            self.partition_dir: Path | None = self.work_dir / "partitions"
-        else:
-            self._partitions = None
-            self.partition_dir = None
+        self._partitions: Sequence[str] = partitions
+        self.partition_dir: Path | None = self.work_dir / "partitions"
 
         self.overlay_dirs = self._get_partition_dirs(partitions, "overlay")
         self.stage_dirs = self._get_partition_dirs(partitions, "stage")
@@ -70,7 +67,7 @@ class ProjectDirs:
 
     def _get_partition_dirs(
         self, partitions: Sequence[str] | None, dirname: str
-    ) -> dict[str | None, Path]:
+    ) -> dict[str, Path]:
         return partition_utils.get_partition_dir_map(
             base_dir=self.work_dir, partitions=partitions, suffix=dirname
         )
@@ -79,23 +76,24 @@ class ProjectDirs:
         self, dir_name: str, partition: str | None = None
     ) -> None:
         """Ensure the requested partition is valid."""
-        if self._partitions:
-            if not partition:
-                raise PartitionUsageError(
-                    error_list=[
-                        f"Partitions are enabled, you must specify which partition's {dir_name!r} you want."
-                    ],
-                    partitions=self._partitions,
-                )
-            if partition not in self._partitions:
-                raise PartitionNotFound(partition, self._partitions)
+        if partition is None:
+            return
+        if partition not in self._partitions:
+            raise PartitionNotFound(partition, self._partitions)
 
     def get_stage_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""
         self._validate_requested_partition("stage_dir", partition)
+        partition = partition or self._partitions[0]
         return self.stage_dirs[partition]
 
     def get_prime_dir(self, partition: str | None = None) -> Path:
         """Get the prime directory for the given partition."""
         self._validate_requested_partition("prime_dir", partition)
+        partition = partition or self._partitions[0]
         return self.prime_dirs[partition]
+
+    @property
+    def partitions(self) -> list[str]:
+        """Return the canonical project partitions."""
+        return list(self._partitions)
