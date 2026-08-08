@@ -108,6 +108,8 @@ def test_generate_step_environment_build(host_arch: str, host_triplet: str, new_
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export DEBIAN_FRONTEND="noninteractive"
+        export CRAFT_DEFAULT_STAGE="{new_dir}/stage"
+        export CRAFT_DEFAULT_PRIME="{new_dir}/prime"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
         export CRAFT_PROJECT_NAME="test-project"
@@ -238,6 +240,8 @@ def test_generate_step_environment_no_project_name(
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export DEBIAN_FRONTEND="noninteractive"
+        export CRAFT_DEFAULT_STAGE="{new_dir}/stage"
+        export CRAFT_DEFAULT_PRIME="{new_dir}/prime"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
         export CRAFT_PART_NAME="p1"
@@ -295,6 +299,8 @@ def test_generate_step_environment_no_build(
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export DEBIAN_FRONTEND="noninteractive"
+        export CRAFT_DEFAULT_STAGE="{new_dir}/stage"
+        export CRAFT_DEFAULT_PRIME="{new_dir}/prime"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
         export CRAFT_PROJECT_NAME="test-project"
@@ -351,6 +357,8 @@ def test_generate_step_environment_no_user_env(
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
         export DEBIAN_FRONTEND="noninteractive"
+        export CRAFT_DEFAULT_STAGE="{new_dir}/stage"
+        export CRAFT_DEFAULT_PRIME="{new_dir}/prime"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
         export CRAFT_PROJECT_NAME="test-project"
@@ -490,13 +498,13 @@ def test_expand_variables_deprecated(new_dir, name, value, caplog):
 
 
 @pytest.mark.parametrize(
-    "invalid_vars",
+    "expected_vars",
     [
         {"CRAFT_DEFAULT_STAGE", "CRAFT_DEFAULT_PRIME"},
     ],
 )
-def test_get_global_environment(new_dir, partitions, invalid_vars):
-    """Test that get_global_environment doesn't include partitions when disabled."""
+def test_get_global_environment(new_dir, partitions, expected_vars):
+    """Test that get_global_environment includes default partition aliases."""
     info = ProjectInfo(
         project_dirs=ProjectDirs(work_dir="/work", partitions=partitions),
         arch="arm64",
@@ -507,7 +515,7 @@ def test_get_global_environment(new_dir, partitions, invalid_vars):
     )
 
     actual = environment._get_global_environment(info)
-    assert invalid_vars.isdisjoint(actual.keys())
+    assert expected_vars.issubset(actual.keys())
 
 
 def test_get_global_environment_partitions(

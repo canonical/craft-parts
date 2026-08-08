@@ -337,7 +337,7 @@ def test_organize(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
     # Verify that it can be organized again by overwriting
@@ -351,7 +351,7 @@ def test_organize(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=True,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -430,7 +430,7 @@ def test_organize_no_overwrite(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -478,7 +478,7 @@ def test_organize_no_overwrite_idempotent(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
     organize_and_assert(
@@ -491,7 +491,7 @@ def test_organize_no_overwrite_idempotent(new_dir, data):
         expected_message=data.get("expected_message_2", data.get("expected_message")),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -637,7 +637,7 @@ def test_organize_from_build(data, new_dir):
         expected_overwrite=None,
         overwrite=False,
         install_dirs={
-            None: Path(new_dir / "install"),
+            "default": Path(new_dir / "install"),
             BUILD_PARTITION: Path(new_dir / "build_dir"),
         },
     )
@@ -657,7 +657,7 @@ def test_glob_directory_to_nested_file_path_errors_cleanly(new_dir):
         ),
         expected_overwrite=None,
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -671,7 +671,7 @@ def test_organize_nested_directory_with_symlink_loop_errors_cleanly(new_dir):
         organize_files(
             part_name="part-name",
             file_map={"app": "loop/nested"},
-            install_dir_map={None: install_dir},
+            install_dir_map={"default": install_dir},
             overwrite=False,
             default_partition="default",
         )
@@ -688,7 +688,7 @@ def test_organize_through_self_referential_source_symlink_errors_cleanly(new_dir
         organize_files(
             part_name="part-name",
             file_map={"loop/main": "main"},
-            install_dir_map={None: install_dir},
+            install_dir_map={"default": install_dir},
             overwrite=False,
             default_partition="default",
         )
@@ -708,7 +708,7 @@ def test_organize_symlink_into_its_target_errors_cleanly(new_dir):
         ),
         expected_overwrite=None,
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -726,7 +726,7 @@ def test_organize_through_self_referential_destination_symlink_errors_cleanly(ne
         ),
         expected_overwrite=None,
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -741,7 +741,7 @@ def test_glob_directory_into_own_root_remains_noop(new_dir):
         expected_message=None,
         expected_overwrite=None,
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -775,7 +775,7 @@ def test_glob_directory_to_nested_root_errors_cleanly(
         expected_message=expected_message,
         expected_overwrite=None,
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -839,7 +839,7 @@ def test_glob_destination_matching_source_glob_behavior(new_dir):
         expected_message=None,
         expected_overwrite=None,
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
     organize_and_assert(
@@ -858,5 +858,5 @@ def test_glob_destination_matching_source_glob_behavior(new_dir):
         expected_message=None,
         expected_overwrite=None,
         overwrite=True,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )

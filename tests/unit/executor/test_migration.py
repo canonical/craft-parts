@@ -20,7 +20,7 @@ import stat
 from pathlib import Path
 
 import pytest
-from craft_parts import errors, features
+from craft_parts import errors
 from craft_parts.actions import Action
 from craft_parts.executor import filesets, migration, part_handler
 from craft_parts.executor.filesets import Fileset
@@ -34,6 +34,10 @@ from craft_parts.steps import Step
 @pytest.mark.usefixtures("new_dir")
 class TestFileMigration:
     """Verify different migration scenarios."""
+
+    @staticmethod
+    def _migration_partition() -> str:
+        return "default"
 
     def test_migratable_filesets_rereadsymlinked_parent_swap(self, partitions):
         """Swapping a symlink parent must be visible to the next call."""
@@ -52,7 +56,7 @@ class TestFileMigration:
             Fileset(["parent/*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         assert files == {Path("real1/foo")}
 
@@ -63,7 +67,7 @@ class TestFileMigration:
             Fileset(["parent/*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         assert files == {Path("real2/foo")}
 
@@ -84,7 +88,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -113,7 +117,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
@@ -150,7 +154,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -169,7 +173,7 @@ class TestFileMigration:
         install_dir = Path("install")
         stage_dir = Path("stage")
         bin_path = Path("bin")
-        partition = "default" if partitions else None
+        partition = self._migration_partition()
 
         Path(install_dir, "usr/bin").mkdir(parents=True)
         stage_dir.mkdir()
@@ -211,7 +215,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -242,7 +246,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -272,7 +276,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -303,7 +307,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files, dirs=dirs, srcdir=install_dir, destdir=stage_dir
@@ -336,7 +340,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migrated_files, migrated_dirs = migration.migrate_files(
             files=files,
@@ -378,7 +382,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migration.migrate_files(
             files=files,
@@ -411,7 +415,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migration.migrate_files(
             files=files,
@@ -442,7 +446,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migration.migrate_files(
             files=files,
@@ -480,7 +484,7 @@ class TestFileMigration:
             Fileset(["*"]),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
 
         # Should not raise, ownership errors are logged and ignored.
@@ -614,7 +618,7 @@ class TestFileMigration:
             Fileset(filters),
             install_dir,
             default_partition="default",
-            partition="default" if partitions else None,
+            partition=self._migration_partition(),
         )
         migration.migrate_files(
             files=files,
@@ -630,19 +634,18 @@ class TestFileMigration:
 
 @pytest.mark.usefixtures("new_dir")
 class TestFileMigrationErrors:
-    def test_migratable_filesets_partition_defined_error(self):
-        """Error if the partition feature is disabled and a partition is provided."""
+    def test_migratable_filesets_missing_partition_error(self):
+        """Error if no partition is provided to migratable_filesets."""
         with pytest.raises(errors.FeatureError) as raised:
             filesets.migratable_filesets(
                 Fileset(["*"]),
                 Path("install"),
                 default_partition="default",
-                partition="default",
+                partition=None,
             )
 
-        assert features.Features().enable_partitions is False
         assert (
-            "The partition feature must be enabled if a partition is provided."
+            "A partition must be provided when filtering partition filesets."
         ) in str(raised.value)
 
 

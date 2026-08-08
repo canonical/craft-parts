@@ -50,11 +50,7 @@ def main() -> None:
 
     logging.basicConfig(level=log_level)
 
-    features = {"enable_overlay": True}
-    if options.partitions:
-        features["enable_partitions"] = True
-
-    craft_parts.Features(**features)
+    craft_parts.Features(enable_overlay=True)
 
     try:
         _process_inputs(options)
