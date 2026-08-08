@@ -26,6 +26,7 @@ from craft_parts.features import Features
 from craft_parts.overlays import overlay_fs
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions, permissions_are_compatible
+from craft_parts.utils.partition_utils import normalize_partition_names
 
 from . import filesets
 
@@ -35,30 +36,18 @@ def check_for_stage_collisions(
 ) -> None:
     """Verify whether parts have conflicting files to stage.
 
-    If the partitions feature is enabled, then check if parts have conflicting files to
-        stage for each partition.
-    If the partitions feature is disabled, only check for conflicts in the default
-        stage directory.
+    Check if parts have conflicting files to stage for each partition.
 
     :param part_list: The list of parts to check.
     :param partitions: An optional list of partition names.
 
     :raises PartConflictError: If conflicts are found.
-    :raises FeatureError: If partitions are specified but the feature is not enabled or
-        if partitions are not specified and the feature is enabled.
     """
-    if partitions and not Features().enable_partitions:
-        raise errors.FeatureError(
-            "Partitions specified but partitions feature is not enabled."
+    normalized = normalize_partition_names(partitions)
+    for partition in normalized:
+        _check_for_stage_collisions_per_partition(
+            part_list, partition, report_partition=len(normalized) > 1
         )
-
-    if partitions is None and Features().enable_partitions:
-        raise errors.FeatureError(
-            "Partitions feature is enabled but no partitions specified."
-        )
-
-    for partition in partitions or [None]:
-        _check_for_stage_collisions_per_partition(part_list, partition)
 
 
 @dataclass
@@ -175,14 +164,16 @@ def _get_candidates_from_overlay(
 def _check_for_stage_collisions_per_partition(
     part_list: list[Part],
     partition: str | None,
+    *,
+    report_partition: bool = False,
 ) -> None:
     """Verify whether parts have conflicting files for a stage directory in a partition.
 
     If no partition is provided, then the default stage directory is checked.
 
     :param part_list: The list of parts to check.
-    :param partition: If the partitions feature is enabled, then the name of the
-        partition containing the stage directory to check.
+    :param partition: The name of the partition containing the stage directory to check.
+    :param report_partition: Whether to mention the partition name in error messages.
 
     :raises PartConflictError: If conflicts between build content are found.
     :raises OverlayStageConflict: If conflicts between build and overlay content are
@@ -236,13 +227,13 @@ def _check_for_stage_collisions_per_partition(
                         part_name=candidate.part_name,
                         overlay_part_name=other_candidate.part_name,
                         conflicting_files=conflict_files,
-                        partition=partition,
+                        partition=partition if report_partition else None,
                     )
                 raise errors.PartFilesConflict(
                     part_name=candidate.part_name,
                     other_part_name=other_candidate.part_name,
                     conflicting_files=conflict_files,
-                    partition=partition,
+                    partition=partition if report_partition else None,
                 )
 
         # And add our candidate to the list.

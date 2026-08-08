@@ -700,7 +700,10 @@ class TestOverlayMigration:
         # clean part data
         self._p3_handler.clean_step(step)
         assert Path(f"{step_dir}/bar").exists()
-        assert Path(f"{step_dir}/file1").exists()  # file1 remains (also belongs to p1)
+        if step == Step.STAGE:
+            assert Path(f"{step_dir}/file1").exists()  # file1 remains (also belongs to p1)
+        else:
+            assert Path(f"{step_dir}/file1").exists() is False
 
         # clean overlay data
         self._p1_handler.clean_step(step)
@@ -776,7 +779,7 @@ class TestOverlayMigration:
         # migration state
         p1_handler.run_action(Action("", Step.STAGE))
         stage_state = states.load_overlay_migration_state(
-            p1.overlay_dirs[None], Step.STAGE
+            p1.overlay_dirs[p1.default_partition], Step.STAGE
         )
         assert stage_state is not None
         assert Path("my-dir") in stage_state.directories
@@ -786,7 +789,7 @@ class TestOverlayMigration:
         # migration state
         p1_handler.run_action(Action("", Step.PRIME))
         prime_state = states.load_overlay_migration_state(
-            p1.overlay_dirs[None], Step.PRIME
+            p1.overlay_dirs[p1.default_partition], Step.PRIME
         )
         assert prime_state is not None
         assert Path("my-dir") in prime_state.directories
