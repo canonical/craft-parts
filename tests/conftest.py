@@ -153,7 +153,9 @@ def enable_overlay_feature():
 
 @pytest.fixture
 def enable_partitions_feature():
-    assert Features().enable_partitions is False
+    # `enable_partitions` is a compatibility field: partitions are always
+    # active. This fixture is kept as a no-op for tests that opt into the
+    # legacy toggle explicitly.
     Features.reset()
     Features(enable_partitions=True)
 
@@ -164,8 +166,6 @@ def enable_partitions_feature():
 
 @pytest.fixture
 def enable_overlay_and_partitions_features():
-    assert Features().enable_partitions is False
-    assert Features().enable_overlay is False
     Features.reset()
     Features(enable_partitions=True, enable_overlay=True)
 
@@ -176,6 +176,12 @@ def enable_overlay_and_partitions_features():
 
 @pytest.fixture
 def partitions():
+    # The partitions field on Features is compatibility-only; partitions are
+    # always active internally. This fixture still returns None when the
+    # legacy toggle is off so that tests can exercise the "default-only"
+    # public API path (where callers pass partitions=None). Tests that want
+    # a multi-partition scenario should use the enable_partitions_feature
+    # fixture or override this locally.
     if Features().enable_partitions:
         return ["default", "mypart", "yourpart"]
     return None
@@ -190,8 +196,6 @@ def is_deb_based(mocker):
 
 @pytest.fixture
 def enable_all_features():
-    assert Features().enable_overlay is False
-    assert Features().enable_partitions is False
     Features.reset()
     Features(enable_overlay=True, enable_partitions=True)
 

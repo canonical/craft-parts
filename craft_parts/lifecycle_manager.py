@@ -35,7 +35,7 @@ from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
-from craft_parts.utils.partition_utils import validate_partition_names
+from craft_parts.utils.partition_utils import normalize_partition_names, validate_partition_names
 
 
 class LifecycleManager:
@@ -144,6 +144,7 @@ class LifecycleManager:
             raise ValueError("parts definition is missing")
 
         validate_partition_names(partitions)
+        partitions = normalize_partition_names(partitions)
         validate_filesystem_mounts(filesystem_mounts)
         filesystem_mounts_obj: FilesystemMounts | None = None
         if filesystem_mounts:

@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
-from craft_parts import Part, ProjectDirs, errors
+from craft_parts import Part, ProjectDirs
 from craft_parts.executor.collisions import check_for_stage_collisions
 
 from tests.unit.executor import test_collisions
@@ -27,7 +26,7 @@ class TestCollisions(test_collisions.TestCollisions):
 
 class TestCollisionsPartitionError:
     def test_partitions_enabled_but_not_defined(self, partitions, tmpdir):
-        """Raise an error if partitions are enabled but not defined."""
+        """Use the part default partition if no partitions are provided."""
         part = Part(
             name="part",
             data={},
@@ -35,9 +34,4 @@ class TestCollisionsPartitionError:
             partitions=partitions,
         )
 
-        with pytest.raises(errors.FeatureError) as raised:
-            check_for_stage_collisions(part_list=[part], partitions=None)
-
-        assert raised.value.brief == (
-            "Partitions feature is enabled but no partitions specified."
-        )
+        check_for_stage_collisions(part_list=[part], partitions=None)

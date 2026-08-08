@@ -19,7 +19,7 @@
 import os
 from pathlib import Path
 
-from craft_parts import errors, features
+from craft_parts import errors
 from craft_parts.utils import path_utils
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
@@ -40,9 +40,9 @@ class Fileset:
     ) -> None:
         """Initialize a fileset.
 
-        If the partition feature is enabled, files in the default partition are
-        normalized to begin with `(default)/`. For example, ["foo", "(default)/bar"]
-        is normalized to ["(default)/foo", "(default)/bar"].
+        Files in the default partition are normalized to begin with `(default)/`.
+        For example, ["foo", "(default)/bar"] is normalized to
+        ["(default)/foo", "(default)/bar"].
 
         :param entries: List of filepaths represented as strings.
         :param name: Name of the fileset.
@@ -185,20 +185,12 @@ def _get_file_list(
 
     :return: A tuple containing the include and exclude lists.
 
-    :raises FeatureError: If the partition feature is enabled but no partition is
-        provided or if a partition is provided but the partition feature is not enabled.
+    :raises FeatureError: If no partition is provided.
     """
-    if features.Features().enable_partitions and not partition:
+    if not partition:
         raise errors.FeatureError(
             message=(
-                "A partition must be provided if the partition feature is enabled."
-            )
-        )
-
-    if not features.Features().enable_partitions and partition:
-        raise errors.FeatureError(
-            message=(
-                "The partition feature must be enabled if a partition is provided."
+                "A partition must be provided when filtering partition filesets."
             )
         )
 
@@ -212,10 +204,6 @@ def _get_file_list(
             includes.append(item[1:])
         else:
             includes.append(item)
-
-    # short circuit if no partition was provided
-    if not partition:
-        return includes or ["*"], excludes
 
     # only include files for the partition
     processed_includes: list[str] = []
@@ -313,10 +301,9 @@ def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Pa
 
 
 def normalize_entry(entry: str, default_partition: str) -> str:
-    """Normalize an entry to begin with a partition, if partitions are enabled.
+    """Normalize an entry to begin with a partition.
 
-    If partitions are enabled, `foo` will be normalized to `(default)/foo`.
-    If partitions are not enabled, `foo` will be left as `foo`.
+    `foo` will be normalized to `(default)/foo`.
 
     :param entry: Entry to normalize.
 
