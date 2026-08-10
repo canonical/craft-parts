@@ -24,6 +24,9 @@ Unreleased
 
 New features:
 
+- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
+  snap name and channel.
+
 - Add ``overlay-recommended-packages`` key to install overlay packages with their
   recommended dependencies.
 
@@ -98,8 +101,6 @@ New features:
   pseudo-partition.
 - Add a ``gradle-use`` plugin for publishing Gradle artifacts to a local Maven
   repository.
-- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
-  snap name and channel.
 - For explicit typing of file system operations, switch to the `pathlib module
   <https://docs.python.org/3/library/pathlib.html>`_. All uses of ``str`` for paths are
   replaced with ``pathlib.Path``. In the public APIs, this change only impacts the
