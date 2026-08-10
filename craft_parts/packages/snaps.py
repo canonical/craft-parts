@@ -19,7 +19,6 @@
 import contextlib
 import logging
 import pathlib
-import re
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -75,7 +74,7 @@ class SnapPackage:
         return cls(snap).installed
 
     def __init__(self, snap: str) -> None:
-        """Lifecycle handler for a snap of the format <snap-name> @ <channel> or <snap-name>/<channel>."""
+        """Lifecycle handler for a snap of the format <snap-name>@<channel> or <snap-name>/<channel>."""
         self.name, self.channel = _get_parsed_snap(snap)
         self._original_channel = self.channel
         if not self.channel or self.channel == "stable":
@@ -272,7 +271,7 @@ class SnapPackage:
 
 
 def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> None:
-    """Download snaps of the format <snap-name>[ @ <channel>] into directory.
+    """Download snaps of the format <snap-name>[@<channel>] into directory.
 
     The target directory is created if it does not exist.
     """
@@ -284,7 +283,7 @@ def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> Non
 
 
 def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
-    """Install snaps of the format <snap-name>[ @ <channel>].
+    """Install snaps of the format <snap-name>[@<channel>].
 
     :return: a list of "name=revision" for the snaps installed.
     """
@@ -327,7 +326,7 @@ def get_assertion(assertion_params: Sequence[str]) -> bytes:
 def _get_parsed_snap(snap: str) -> tuple[str, str]:
     snap = snap.strip()
     if "@" in snap:
-        snap_name, snap_channel = re.split(r"\s*@\s*", snap, maxsplit=1)
+        snap_name, snap_channel = snap.split("@", 1)
     elif "/" in snap:
         sep_index = snap.find("/")
         snap_name = snap[:sep_index]
