@@ -122,9 +122,7 @@ def _host_compatible_chroot(path: Path) -> None:
     # Note: /etc/os-release is symlinked to /usr/lib/os-release
     # This could cause an issue if /etc/os-release is removed at any point.
     host_os_release = os_utils.OsRelease()
-    chroot_os_release = os_utils.OsRelease(
-        os_release_file=str(path / "/etc/os-release")
-    )
+    chroot_os_release = os_utils.OsRelease(os_release_file=path / "/etc/os-release")
     _compare_os_release(host_os_release, chroot_os_release)
 
 
@@ -183,11 +181,11 @@ class _Mount:
 
     def _mount(self, src: Path, chroot: Path, *args: str) -> None:
         abs_dst = self.get_abs_path(chroot, self.dst)
-        os_utils.mount(str(src), str(abs_dst), *args)
+        os_utils.mount(src, abs_dst, *args)
 
     def _umount(self, chroot: Path, *args: str) -> None:
         abs_dst = self.get_abs_path(chroot, self.dst)
-        os_utils.umount(str(abs_dst), "--recursive", *args)
+        os_utils.umount(abs_dst, "--recursive", *args)
 
     def get_abs_path(self, path: Path, chroot_path: Path) -> Path:
         """Make `chroot_path` relative to host `path`."""
@@ -233,7 +231,7 @@ class _Mount:
         # under those mounted to prepare the chroot.
         # Remount as private to ease unmounting.
         abs_dst = self.get_abs_path(chroot, self.dst)
-        os_utils.mount(str(abs_dst), "--make-rprivate")
+        os_utils.mount(abs_dst, None, "--make-rprivate")
 
         self._umount(chroot, *args)
 

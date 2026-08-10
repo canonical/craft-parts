@@ -15,4 +15,10 @@ jobs:
     uses: canonical/starflow/.github/workflows/scan-python.yaml@main
     with:
       packages: python-apt-dev
-      requirements-find-args: "! -path '*/tests/integration/*'"
+      osv-extra-args: "--config=osv-scanner.toml"
+      osv-exclude-paths: |
+        docs
+        tests/integration
+      uv-export-no-groups: |
+        docs
+        docs-starter-pack

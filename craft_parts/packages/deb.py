@@ -310,7 +310,7 @@ def _run_dpkg_query_list_files(package_name: str) -> set[str]:
         .split()
     )
 
-    return {i for i in output if ("lib" in i and os.path.isfile(i))}  # noqa: PTH113
+    return {i for i in output if ("lib" in i and Path(i).is_file())}
 
 
 def _get_filtered_stage_package_names(
@@ -584,7 +584,9 @@ class Ubuntu(BaseRepository):
             return apt_cache.get_packages_marked_for_installation()
 
     @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache area."""
         logger.debug("Downloading packages using apt: %s", " ".join(package_names))
         env = os.environ.copy()
@@ -596,15 +598,20 @@ class Ubuntu(BaseRepository):
             }
         )
 
-        apt_command = [
-            "apt-get",
-            "--no-install-recommends",
-            "-y",
-            "-oDpkg::Use-Pty=0",
-            "--allow-downgrades",
-            "--download-only",
-            "install",
-        ]
+        apt_command = ["apt-get"]
+
+        if not include_recommends:
+            apt_command.append("--no-install-recommends")
+
+        apt_command.extend(
+            [
+                "-y",
+                "-oDpkg::Use-Pty=0",
+                "--allow-downgrades",
+                "--download-only",
+                "install",
+            ]
+        )
 
         try:
             process_run(apt_command + package_names, env=env)
@@ -618,6 +625,7 @@ class Ubuntu(BaseRepository):
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,
     ) -> list[str]:
         """Install packages on the host system."""
         if not package_names:
@@ -641,7 +649,9 @@ class Ubuntu(BaseRepository):
             if refresh_package_cache and install_required:
                 cls.refresh_packages_list()
             if install_required:
-                cls._install_packages(package_names)
+                cls._install_packages(
+                    package_names, include_recommends=include_recommends
+                )
             else:
                 logger.debug(
                     "Requested build-packages already installed: %s", package_names
@@ -655,7 +665,9 @@ class Ubuntu(BaseRepository):
         )
 
     @classmethod
-    def _install_packages(cls, package_names: list[str]) -> None:
+    def _install_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         logger.debug("Installing packages: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
@@ -668,12 +680,18 @@ class Ubuntu(BaseRepository):
 
         apt_command = [
             "apt-get",
-            "--no-install-recommends",
-            "-y",
-            "-oDpkg::Use-Pty=0",
-            "--allow-downgrades",
-            "install",
         ]
+        if not include_recommends:
+            apt_command.append("--no-install-recommends")
+
+        apt_command.extend(
+            [
+                "-y",
+                "-oDpkg::Use-Pty=0",
+                "--allow-downgrades",
+                "install",
+            ]
+        )
 
         # Set stdin to /dev/null to prevent SIGTTIN/SIGTTOU problems, see
         # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=555632
@@ -776,9 +794,7 @@ class Ubuntu(BaseRepository):
                 ):
                     logger.info("Extracting stage package: %s", pkg_name)
                     installed.add(f"{pkg_name}={pkg_version}")
-                    file_utils.link_or_copy(
-                        str(dl_path), str(stage_packages_path / dl_path.name)
-                    )
+                    file_utils.link_or_copy(dl_path, stage_packages_path / dl_path.name)
 
         return sorted(installed)
 
@@ -819,16 +835,17 @@ class Ubuntu(BaseRepository):
             with tempfile.TemporaryDirectory(
                 suffix="deb-extract", dir=install_path.parent
             ) as extract_dir:
+                extract_dir_path = Path(extract_dir)
                 # Extract deb package.
-                deb_utils.extract_deb(pkg_path, Path(extract_dir), logger.debug)
+                deb_utils.extract_deb(pkg_path, extract_dir_path, logger.debug)
 
                 # Mark source of files.
                 if track_stage_packages:
                     marked_name = cls._extract_deb_name_version(pkg_path)
-                    mark_origin_stage_package(extract_dir, marked_name)
+                    mark_origin_stage_package(extract_dir_path, marked_name)
 
                 # Stage files to install_dir.
-                file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
+                file_utils.link_or_copy_tree(extract_dir_path, install_path)
 
         if pkg_path:
             normalize(install_path, repository=cls)

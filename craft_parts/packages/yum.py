@@ -106,7 +106,9 @@ class YUMRepository(BaseRepository):
         return False
 
     @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache area.
 
         XXX: method left out of YUMRepository's MVP; nothing will be
@@ -121,6 +123,7 @@ class YUMRepository(BaseRepository):
         *,
         list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,  # noqa: ARG003
     ) -> list[str]:
         """Install packages on the host system."""
         if not package_names:

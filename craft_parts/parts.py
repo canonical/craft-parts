@@ -44,6 +44,7 @@ from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
 from craft_parts.utils.partition_utils import (
+    BUILD_PARTITION,
     DEFAULT_PARTITION,
     OVERLAY_PARTITION,
     get_partition_dir_map,
@@ -287,6 +288,19 @@ class PartSpec(BaseModel):
     using the base layer's package manager.
     """
 
+    overlay_recommended_packages: list[str] = Field(
+        default=[],
+        description="The packages to install in the part's layer with recommended packages.",
+        examples=["[ed]"],
+    )
+    """The packages to install in the part's layer, plus any `recommended packages
+    <https://www.debian.org/doc/manuals/debian-faq/pkg-basics.en.html#depends>`__ they
+    might have.
+
+    During the overlay step, these packages and their recommended packages are
+    installed into the part's layer using the base layer's package manager.
+    """
+
     stage_snaps: list[str] = Field(
         default=[],
         description="The snaps to include in the stage environment.",
@@ -377,13 +391,13 @@ class PartSpec(BaseModel):
     """
 
     organize_files: dict[str, str] = Field(
-        default_factory=dict,
+        default_factory=dict[str, str],
         alias="organize",
-        description="A map of files from the build directory to their destinations in the stage directory.",
+        description="A map of files from the part's install directory to their destinations in the stage directory.",
         examples=["{hello.py: bin/hello}"],
     )
-    """A map of files from the build directory to their destinations in the stage
-    directory.
+    """A map of files from the part's install directory to their destinations in the
+    stage directory.
 
     Each pair of source and destination paths is represented as a nested key of the form
     ``<source-path>: <destination-path>``.
@@ -569,7 +583,11 @@ class PartSpec(BaseModel):
     )
 
     @field_validator(
-        "overlay_packages", "overlay_files", "overlay_script", "override_overlay"
+        "overlay_packages",
+        "overlay_recommended_packages",
+        "overlay_files",
+        "overlay_script",
+        "override_overlay",
     )
     @classmethod
     def validate_overlay_feature(cls, item: _T_validate) -> _T_validate:
@@ -661,6 +679,7 @@ class PartSpec(BaseModel):
         """Return whether this spec declares overlay content."""
         return bool(
             self.overlay_packages
+            or self.overlay_recommended_packages
             or self.override_overlay is not None
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
@@ -673,7 +692,7 @@ class PartSpec(BaseModel):
         if not Features().enable_partitions or not Features().enable_overlay:
             return False
         for dest in self.organize_files.values():
-            partition, _ = get_partition_and_path(dest, DEFAULT_PARTITION)
+            partition, _ = get_partition_and_path(Path(dest), DEFAULT_PARTITION)
             if partition == OVERLAY_PARTITION:
                 return True
         return False
@@ -701,7 +720,34 @@ class PartSpec(BaseModel):
         return False
 
 
+def _get_build_partition_usage_error(fileset_name: str, partition: str) -> str | None:
+    """Return an error message if the build pseudo-partition is misused."""
+    if partition != BUILD_PARTITION:
+        return None
+
+    if fileset_name == "organize":
+        return "    cannot organize files into the build directory"
+
+    return f"    ({partition}) cannot be used in {fileset_name!r}"
+
+
+def _get_missing_partition_inner_path_error(
+    filepath: str, default_partition: str, *, require_inner_path: bool
+) -> str | None:
+    """Return an error message if a partition filepath is missing its inner path."""
+    if not require_inner_path:
+        return None
+
+    _, inner_path = get_partition_and_path(filepath, default_partition)
+    if inner_path:
+        return None
+
+    return f"    no path specified after partition in {filepath!r}"
+
+
 # pylint: disable=too-many-public-methods
+
+
 class Part:
     """Each of the components used in the project specification.
 
@@ -763,6 +809,21 @@ class Part:
 
         self._check_partition_feature()
         self._check_partition_usage()
+        self._check_overlay_script_plugin_conflict()
+
+    def _check_overlay_script_plugin_conflict(self) -> None:
+        """Check that overlay-script is not used with a plugin that uses overlay."""
+        if not self.plugin_name or not self.spec.overlay_script:
+            return
+        plugin_class = plugins.get_plugin_class(self.plugin_name)
+        if plugin_class.uses_overlay:
+            raise errors.PartSpecificationError(
+                part_name=self.name,
+                message=(
+                    f"overlay-script cannot be used with plugin "
+                    f"{self.plugin_name!r} because it participates in the overlay step"
+                ),
+            )
 
     def __repr__(self) -> str:
         return f"Part({self.name!r})"
@@ -933,7 +994,13 @@ class Part:
     @property
     def has_overlay(self) -> bool:
         """Return whether this part declares overlay content."""
-        return self.spec.has_overlay
+        if self.spec.has_overlay:
+            return True
+        if self.plugin_name:
+            plugin_class = plugins.get_plugin_class(self.plugin_name)
+            if plugin_class.uses_overlay:
+                return True
+        return False
 
     @property
     def organizes_to_overlay(self) -> bool:
@@ -1051,7 +1118,11 @@ class Part:
             match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
+                if build_error := _get_build_partition_usage_error(
+                    fileset_name, str(partition)
+                ):
+                    error_list.append(build_error)
+                elif str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
                     # If overlays are enabled we can organize to (overlay)
                     pass
                 elif str(partition) not in self._partitions:
@@ -1067,12 +1138,10 @@ class Part:
                             f"    misused partition {partition!r} in {filepath!r}"
                         )
 
-            if require_inner_path:
-                _, inner_path = get_partition_and_path(filepath, self.default_partition)
-                if not inner_path:
-                    error_list.append(
-                        f"    no path specified after partition in {filepath!r}"
-                    )
+            if path_error := _get_missing_partition_inner_path_error(
+                filepath, self.default_partition, require_inner_path=require_inner_path
+            ):
+                error_list.append(path_error)
 
         if error_list:
             error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
