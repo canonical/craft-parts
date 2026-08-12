@@ -375,6 +375,7 @@ class TestFileSourceHandler:
 
         downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert not downloaded.exists()
+        assert not downloaded.with_name(downloaded.name + ".part").exists()
 
     def test_pull_url_preserves_preexisting_file_after_max_retries(
         self, new_dir, mocker
@@ -406,6 +407,28 @@ class TestFileSourceHandler:
 
         assert downloaded.exists()
         assert downloaded.read_bytes() == b"preexisting content"
+        assert not downloaded.with_name(downloaded.name + ".part").exists()
+
+    def test_pull_url_overwrites_preexisting_file_on_success(self, new_dir, mocker):
+        """A pre-existing destination file is fully replaced on success, not
+        appended to."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        downloaded.write_bytes(b"stale content")
+
+        ok_response = mocker.Mock()
+        ok_response.raise_for_status.return_value = None
+        ok_response.headers = {}
+        ok_response.iter_content.return_value = [b"fresh content"]
+        ok_response.__enter__ = mocker.Mock(return_value=ok_response)
+        ok_response.__exit__ = mocker.Mock(return_value=False)
+        mocker.patch("craft_parts.sources.base.requests.get", return_value=ok_response)
+
+        self.source.pull()
+
+        assert downloaded.read_bytes() == b"fresh content"
 
     def test_pull_url_retries_network_error(self, new_dir, mocker):
         """A network-level exception (e.g. connection reset) is retried."""
@@ -443,7 +466,6 @@ class TestFileSourceHandler:
             requests.exceptions.MissingSchema("Invalid URL, no scheme supplied"),
             requests.exceptions.URLRequired("a valid URL is required"),
             requests.exceptions.TooManyRedirects("Exceeded 30 redirects"),
-            requests.exceptions.SSLError("certificate verify failed"),
         ],
     )
     def test_pull_url_permanent_error_not_retried(self, new_dir, mocker, exception):
@@ -461,6 +483,35 @@ class TestFileSourceHandler:
 
         assert mock_get.call_count == 1
         mock_sleep.assert_not_called()
+
+    def test_pull_url_retries_ssl_error(self, new_dir, mocker):
+        """SSLError is retried since it can indicate a transient TLS issue,
+        not just a permanent certificate problem."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        ok_response = mocker.Mock()
+        ok_response.raise_for_status.return_value = None
+        ok_response.headers = {}
+        ok_response.iter_content.return_value = [b"content"]
+        ok_response.__enter__ = mocker.Mock(return_value=ok_response)
+        ok_response.__exit__ = mocker.Mock(return_value=False)
+
+        mock_get = mocker.patch(
+            "craft_parts.sources.base.requests.get",
+            side_effect=[
+                requests.exceptions.SSLError("TLS handshake failed"),
+                ok_response,
+            ],
+        )
+
+        self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        assert downloaded.is_file()
+        assert downloaded.read_bytes() == b"content"
+        assert mock_get.call_count == 2
 
     def test_file_source_abstract_methods(self):
         class FaultyFileSource(FileSourceHandler):

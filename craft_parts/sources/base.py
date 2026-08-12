@@ -52,15 +52,17 @@ _DOWNLOAD_RETRY_BACKOFF_SECONDS = 1.0
 # so it does not need to be divided across retry attempts.
 _DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS = 3600
 # Exceptions that indicate a permanent, non-transient failure (e.g. a
-# malformed URL or an invalid/untrusted TLS certificate), and therefore
-# should never be retried.
+# malformed URL or scheme), and therefore should never be retried.
+# Note that requests.exceptions.SSLError is intentionally not included here:
+# it's raised both for permanent certificate-validation failures and for
+# transient TLS handshake/connection issues, so excluding it entirely would
+# also prevent retrying genuinely transient failures.
 _NON_RETRIABLE_REQUEST_EXCEPTIONS = (
     requests.exceptions.InvalidSchema,
     requests.exceptions.InvalidURL,
     requests.exceptions.MissingSchema,
     requests.exceptions.URLRequired,
     requests.exceptions.TooManyRedirects,
-    requests.exceptions.SSLError,
 )
 
 
@@ -325,30 +327,33 @@ class FileSourceHandler(SourceHandler):
         if url_utils.get_url_scheme(self.source) == "ftp":
             raise NotImplementedError("ftp download not implemented")
 
-        # url_utils.download_request() appends to an existing destination
-        # file rather than overwriting it, so remember its original size (or
-        # that it didn't exist) to restore it if a download attempt fails,
-        # rather than unconditionally deleting a file we may not have
-        # created.
-        original_size = self._file.stat().st_size if self._file.exists() else None
+        # Download to a temporary file instead of self._file directly.
+        # url_utils.download_request() appends to an existing destination, so
+        # writing straight to self._file would either corrupt a pre-existing
+        # file (by appending the response after it) or require deleting a
+        # file we didn't create when an attempt fails. Downloading to a
+        # dedicated temporary path and only moving it into place once fully
+        # downloaded avoids both problems.
+        temp_file = self._file.with_name(self._file.name + ".part")
+        temp_file.unlink(missing_ok=True)
 
-        for attempt in range(_MAX_DOWNLOAD_ATTEMPTS):
-            error = self._try_download()
-            if error is None:
-                break
+        try:
+            for attempt in range(_MAX_DOWNLOAD_ATTEMPTS):
+                error = self._try_download(temp_file)
+                if error is None:
+                    break
 
-            # Discard any content written by the failed attempt so a
-            # subsequent attempt (or a later download() call) doesn't append
-            # to a truncated, corrupt file.
-            if original_size is None:
-                self._file.unlink(missing_ok=True)
-            elif self._file.exists():
-                with self._file.open("r+b") as partial_file:
-                    partial_file.truncate(original_size)
+                # Discard any content written by the failed attempt so the
+                # next attempt starts from a clean state.
+                temp_file.unlink(missing_ok=True)
 
-            if attempt >= _MAX_DOWNLOAD_ATTEMPTS - 1:
-                raise error from error.__cause__
-            self._retry_download(attempt, error=error)
+                if attempt >= _MAX_DOWNLOAD_ATTEMPTS - 1:
+                    raise error from error.__cause__
+                self._retry_download(attempt, error=error)
+
+            temp_file.replace(self._file)
+        finally:
+            temp_file.unlink(missing_ok=True)
 
         # if source_checksum is defined cache the file for future reuse
         if self.source_checksum:
@@ -356,9 +361,10 @@ class FileSourceHandler(SourceHandler):
             file_cache.cache(filename=str(self._file), key=self.source_checksum)
         return self._file
 
-    def _try_download(self) -> errors.SourceError | None:
+    def _try_download(self, destination: Path) -> errors.SourceError | None:
         """Attempt to download the source file once.
 
+        :param destination: the file to download the source into.
         :returns: ``None`` on success, or a retriable error if the download
             failed due to a transient issue. Non-retriable failures (e.g. a
             404 or a non-transient HTTP error) are raised directly.
@@ -371,7 +377,7 @@ class FileSourceHandler(SourceHandler):
                 timeout=_DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS,
             ) as request:
                 request.raise_for_status()
-                url_utils.download_request(request, self._file)
+                url_utils.download_request(request, destination)
         except requests.HTTPError as err:
             if err.response.status_code == requests.codes.not_found:
                 raise errors.SourceNotFound(source=self.source) from err
