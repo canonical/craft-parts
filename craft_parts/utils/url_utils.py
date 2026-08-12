@@ -17,6 +17,7 @@
 """URL parsing and downloading helpers."""
 
 import logging
+import os
 import urllib.parse
 from pathlib import Path
 
@@ -67,7 +68,14 @@ def download_request(
 
     mode = "ab" if destination.exists() else "wb"
 
-    with destination.open(mode) as destination_file:
+    # Open by file descriptor with O_NOFOLLOW rather than destination.open(),
+    # so that if something replaced the destination path with a symlink
+    # since it was last checked (e.g. during a caller's retry backoff), this
+    # doesn't silently follow it and write to an unintended location.
+    open_flags = os.O_WRONLY | os.O_NOFOLLOW
+    open_flags |= os.O_APPEND if mode == "ab" else os.O_CREAT | os.O_TRUNC
+    fd = os.open(destination, open_flags, 0o666)
+    with os.fdopen(fd, mode) as destination_file:
         for buf in request.iter_content(1024):
             destination_file.write(buf)
             if not os_utils.is_dumb_terminal():
