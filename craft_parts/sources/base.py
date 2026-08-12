@@ -51,6 +51,17 @@ _DOWNLOAD_RETRY_BACKOFF_SECONDS = 1.0
 # download attempt. This is *not* a wall-clock limit for the whole request,
 # so it does not need to be divided across retry attempts.
 _DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS = 3600
+# Exceptions that indicate a permanent, non-transient failure (e.g. a
+# malformed URL or an invalid/untrusted TLS certificate), and therefore
+# should never be retried.
+_NON_RETRIABLE_REQUEST_EXCEPTIONS = (
+    requests.exceptions.InvalidSchema,
+    requests.exceptions.InvalidURL,
+    requests.exceptions.MissingSchema,
+    requests.exceptions.URLRequired,
+    requests.exceptions.TooManyRedirects,
+    requests.exceptions.SSLError,
+)
 
 
 def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
@@ -314,15 +325,26 @@ class FileSourceHandler(SourceHandler):
         if url_utils.get_url_scheme(self.source) == "ftp":
             raise NotImplementedError("ftp download not implemented")
 
+        # url_utils.download_request() appends to an existing destination
+        # file rather than overwriting it, so remember its original size (or
+        # that it didn't exist) to restore it if a download attempt fails,
+        # rather than unconditionally deleting a file we may not have
+        # created.
+        original_size = self._file.stat().st_size if self._file.exists() else None
+
         for attempt in range(_MAX_DOWNLOAD_ATTEMPTS):
             error = self._try_download()
             if error is None:
                 break
 
-            # Discard any partially downloaded content so a subsequent attempt
-            # (or a later download() call) doesn't append to a truncated,
-            # corrupt file.
-            self._file.unlink(missing_ok=True)
+            # Discard any content written by the failed attempt so a
+            # subsequent attempt (or a later download() call) doesn't append
+            # to a truncated, corrupt file.
+            if original_size is None:
+                self._file.unlink(missing_ok=True)
+            elif self._file.exists():
+                with self._file.open("r+b") as partial_file:
+                    partial_file.truncate(original_size)
 
             if attempt >= _MAX_DOWNLOAD_ATTEMPTS - 1:
                 raise error from error.__cause__
@@ -371,9 +393,7 @@ class FileSourceHandler(SourceHandler):
                 source=self.source,
             )
             network_error.__cause__ = err
-            if isinstance(
-                err, requests.exceptions.InvalidSchema | requests.exceptions.InvalidURL
-            ):
+            if isinstance(err, _NON_RETRIABLE_REQUEST_EXCEPTIONS):
                 raise network_error from err
 
             return network_error

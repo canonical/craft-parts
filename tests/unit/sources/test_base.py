@@ -376,6 +376,37 @@ class TestFileSourceHandler:
         downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert not downloaded.exists()
 
+    def test_pull_url_preserves_preexisting_file_after_max_retries(
+        self, new_dir, mocker
+    ):
+        """A destination file that existed before pull() is not deleted."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        downloaded.write_bytes(b"preexisting content")
+
+        response = mocker.Mock()
+        response.raise_for_status.return_value = None
+        response.headers = {}
+
+        def iter_content(_chunk_size):
+            # Simulate writing a few bytes before the connection drops,
+            # without ever clearing the file we're appending to.
+            yield b"partial"
+            raise requests.exceptions.ChunkedEncodingError("stream interrupted")
+
+        response.iter_content.side_effect = iter_content
+        response.__enter__ = mocker.Mock(return_value=response)
+        response.__exit__ = mocker.Mock(return_value=False)
+        mocker.patch("craft_parts.sources.base.requests.get", return_value=response)
+
+        with pytest.raises(errors.NetworkRequestError):
+            self.source.pull()
+
+        assert downloaded.exists()
+        assert downloaded.read_bytes() == b"preexisting content"
+
     def test_pull_url_retries_network_error(self, new_dir, mocker):
         """A network-level exception (e.g. connection reset) is retried."""
         mocker.patch("time.sleep")
@@ -404,14 +435,25 @@ class TestFileSourceHandler:
         assert downloaded.read_bytes() == b"content"
         assert mock_get.call_count == 2
 
-    def test_pull_url_invalid_schema_not_retried(self, new_dir, mocker):
-        """A non-transient error like an invalid URL scheme fails immediately."""
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            requests.exceptions.InvalidSchema("No connection adapters"),
+            requests.exceptions.InvalidURL("invalid URL"),
+            requests.exceptions.MissingSchema("Invalid URL, no scheme supplied"),
+            requests.exceptions.URLRequired("a valid URL is required"),
+            requests.exceptions.TooManyRedirects("Exceeded 30 redirects"),
+            requests.exceptions.SSLError("certificate verify failed"),
+        ],
+    )
+    def test_pull_url_permanent_error_not_retried(self, new_dir, mocker, exception):
+        """A non-transient error fails immediately without retrying."""
         mock_sleep = mocker.patch("time.sleep")
         self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
 
         mock_get = mocker.patch(
             "craft_parts.sources.base.requests.get",
-            side_effect=requests.exceptions.InvalidSchema("No connection adapters"),
+            side_effect=exception,
         )
 
         with pytest.raises(errors.NetworkRequestError):
