@@ -742,11 +742,18 @@ class PartHandler:
             self._part.part_src_dir,
             self._part.part_build_dir,
             self._part.part_install_dir,
+            # The part's run directory holds the generated build.sh/environment.sh
+            # scripts used by the built-in plugin build.
+            self._part.part_run_dir,
             dirs.stage_dir,
             dirs.prime_dir,
         ]
         for mount_dir in bind_mount_dirs:
             mount_dir.mkdir(parents=True, exist_ok=True)
+
+        # The clean slice root has no /tmp, which the scriptlet mechanism needs
+        # for its temporary files.
+        (slices_dir / "tmp").mkdir(parents=True, exist_ok=True)
 
         extra_bind_mounts = [(mount_dir, mount_dir) for mount_dir in bind_mount_dirs]
 
@@ -759,6 +766,7 @@ class PartHandler:
             stdout=stdout,
             stderr=stderr,
             extra_bind_mounts=extra_bind_mounts,
+            create_mountpoints=True,
         )
 
     def _compute_layer_hash(self, *, all_parts: bool) -> LayerHash:

@@ -47,6 +47,7 @@ def chroot(
     *args: Any,
     use_host_sources: bool = False,
     extra_bind_mounts: Sequence[tuple[Path, Path]] | None = None,
+    create_mountpoints: bool = False,
     **kwargs: Any,
 ) -> _T:
     """Execute a callable in a chroot environment.
@@ -59,6 +60,9 @@ def chroot(
       sources defined on the host.
     :param extra_bind_mounts: Additional ``(src, dst)`` paths to bind-mount into the
       chroot at ``dst`` (an absolute path inside the chroot) before running the target.
+    :param create_mountpoints: Whether to create the standard mount points inside the
+      chroot before mounting. Required when the root is minimal (e.g. a cut set of
+      Chisel slices) and does not already contain ``/proc``, ``/sys``, ``/dev``, etc.
 
     :returns: The target function return value.
     """
@@ -79,7 +83,12 @@ def chroot(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
     )
     logger.debug("[pid=%d] set up chroot", os.getpid())
-    _setup_chroot(path, use_host_sources=use_host_sources, extra_mounts=bind_mounts)
+    _setup_chroot(
+        path,
+        use_host_sources=use_host_sources,
+        extra_mounts=bind_mounts,
+        create_mountpoints=create_mountpoints,
+    )
     try:
         child.start()
         res, err = parent_conn.recv()
@@ -141,10 +150,15 @@ def _setup_chroot(
     *,
     use_host_sources: bool,
     extra_mounts: Sequence[_Mount] | None = None,
+    create_mountpoints: bool = False,
 ) -> None:
     """Prepare the chroot environment before executing the target function."""
     logger.debug("setup chroot: %r", path)
     if sys.platform == "linux":
+        if create_mountpoints:
+            for entry in _linux_mounts:
+                entry.create_mountpoint(path)
+
         # base configuration
         _setup_chroot_mounts(path, _linux_mounts)
 
@@ -216,6 +230,15 @@ class _Mount:
     def get_abs_path(self, path: Path, chroot_path: Path) -> Path:
         """Make `chroot_path` relative to host `path`."""
         return path / str(chroot_path).lstrip("/")
+
+    def create_mountpoint(self, chroot: Path) -> None:
+        """Create the mount point for `self.dst` inside `chroot`.
+
+        Used when the chroot root is minimal (e.g. a cut set of Chisel slices)
+        and does not already contain the standard mount points.
+        """
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        abs_dst.mkdir(parents=True, exist_ok=True)
 
     def dst_exists(self, chroot: Path) -> bool:
         """Return True if `self.dst` exists within `chroot`."""
@@ -292,6 +315,16 @@ class _BindMount(_Mount):
             return abs_dst.is_symlink() or abs_dst.exists() or abs_dst.parent.is_dir()
 
         return abs_dst.is_symlink() or abs_dst.exists()
+
+    def create_mountpoint(self, chroot: Path) -> None:
+        abs_dst = self.get_abs_path(chroot, self.dst)
+
+        if self.src.is_file():
+            abs_dst.parent.mkdir(parents=True, exist_ok=True)
+            if not abs_dst.exists():
+                abs_dst.touch()
+        else:
+            abs_dst.mkdir(parents=True, exist_ok=True)
 
     def create_dst(self, chroot: Path) -> None:
         abs_dst = self.get_abs_path(chroot, self.dst)
