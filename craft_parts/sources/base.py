@@ -18,8 +18,10 @@
 
 import abc
 import logging
+import os
 import shutil
 import subprocess
+import tempfile
 import time
 from collections.abc import Sequence
 from pathlib import Path
@@ -327,15 +329,21 @@ class FileSourceHandler(SourceHandler):
         if url_utils.get_url_scheme(self.source) == "ftp":
             raise NotImplementedError("ftp download not implemented")
 
-        # Download to a temporary file instead of self._file directly.
-        # url_utils.download_request() appends to an existing destination, so
-        # writing straight to self._file would either corrupt a pre-existing
-        # file (by appending the response after it) or require deleting a
-        # file we didn't create when an attempt fails. Downloading to a
-        # dedicated temporary path and only moving it into place once fully
-        # downloaded avoids both problems.
-        temp_file = self._file.with_name(self._file.name + ".part")
-        temp_file.unlink(missing_ok=True)
+        # Download to a uniquely-named temporary file instead of self._file
+        # directly. url_utils.download_request() appends to an existing
+        # destination, so writing straight to self._file would either
+        # corrupt a pre-existing file (by appending the response after it)
+        # or require deleting a file we didn't create when an attempt fails.
+        # A dedicated temporary path (created with tempfile so it can't
+        # collide with a legitimate sibling file or a concurrent download)
+        # avoids both problems; it's only moved into place once fully
+        # downloaded.
+        self._file.parent.mkdir(parents=True, exist_ok=True)
+        fd, temp_name = tempfile.mkstemp(
+            dir=self._file.parent, prefix=f".{self._file.name}.", suffix=".part"
+        )
+        os.close(fd)
+        temp_file = Path(temp_name)
 
         try:
             for attempt in range(_MAX_DOWNLOAD_ATTEMPTS):

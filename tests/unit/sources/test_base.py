@@ -375,7 +375,7 @@ class TestFileSourceHandler:
 
         downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
         assert not downloaded.exists()
-        assert not downloaded.with_name(downloaded.name + ".part").exists()
+        assert list(downloaded.parent.glob("*.part")) == []
 
     def test_pull_url_preserves_preexisting_file_after_max_retries(
         self, new_dir, mocker
@@ -407,7 +407,7 @@ class TestFileSourceHandler:
 
         assert downloaded.exists()
         assert downloaded.read_bytes() == b"preexisting content"
-        assert not downloaded.with_name(downloaded.name + ".part").exists()
+        assert list(downloaded.parent.glob("*.part")) == []
 
     def test_pull_url_overwrites_preexisting_file_on_success(self, new_dir, mocker):
         """A pre-existing destination file is fully replaced on success, not
