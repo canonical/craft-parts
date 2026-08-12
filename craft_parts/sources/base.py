@@ -82,14 +82,29 @@ def _create_download_temp_file(destination_dir: Path, prefix: str) -> Path:
     (as ``mkstemp`` itself does internally) so there's no window where the
     process' umask is altered and no risk of a race with other threads
     creating files concurrently.
+
+    :param prefix: prefix for the temporary filename. Truncated if
+        necessary so the full name stays within typical filesystem limits
+        (e.g. ext4's 255-byte ``NAME_MAX``) even for long source filenames.
     """
+    # 32 hex chars (the uuid4 hex digest) + ".part", leaving the rest of
+    # the budget for the caller-supplied prefix.
+    max_prefix_len = 255 - len(".part") - 32
+    prefix = prefix.encode()[:max_prefix_len].decode(errors="ignore")
     for _ in range(_TEMP_FILE_CREATION_ATTEMPTS):
         temp_file = destination_dir / f"{prefix}{uuid.uuid4().hex}.part"
         try:
             fd = os.open(temp_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o666)
         except FileExistsError:
             continue
-        os.close(fd)
+        try:
+            os.close(fd)
+        except BaseException:
+            # If closing the freshly-created file fails (or this code is
+            # interrupted, e.g. by KeyboardInterrupt) don't leave an
+            # orphaned file behind.
+            temp_file.unlink(missing_ok=True)
+            raise
         return temp_file
     raise FileExistsError("Could not create a unique temporary download file")
 
