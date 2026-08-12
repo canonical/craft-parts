@@ -77,6 +77,11 @@ runs in userspace: it composes cleanly when the build instance is itself an
 overlay (avoiding the fragile overlay-on-overlay case) and does not depend on
 kernel overlayfs support.
 
+> **Note:** switching this backend from `unionfs-fuse` to `fuse-overlayfs`
+> (better maintained, multi-threaded) is under evaluation. See
+> [`build-slices-fuse-overlayfs.md`](build-slices-fuse-overlayfs.md) for the
+> investigation, including the nested-`lowerdir` pitfall and its fix.
+
 ### Lifecycle (hybrid: cut once, mount per build step)
 
 1. **Cut once (global), in `Executor.prologue()`**
@@ -137,6 +142,53 @@ $CRAFT_PART_INSTALL                 (bind-mounted into the chroot, writable)
 
 The chroot makes the slice's absolute symlink resolve against the merged root
 (where the target exists) instead of the real system root.
+
+### Why bind-mount the part working dirs (and why base is read-only)
+
+The union's base branch (`/`) is mounted **read-only**, and the leftmost
+copy-on-write branch absorbs every write the build makes. This keeps the real
+system tree pristine, but it means writes to the part working dirs (which live
+_under_ `/`, e.g. `<work_dir>/parts/<part>/build` and `.../install`) would also
+be redirected into the throwaway cow branch and discarded on unmount. To make
+the build's intended output survive, the manager bind-mounts the real, writable
+host directories (`src`, `build`, the install dirs, `stage`, `backstage`) into
+the merged root at their identical absolute paths, shadowing the read-only union
+view with the actual filesystem. The rest of the lifecycle (stage, prime) runs
+_outside_ the chroot directly on those host dirs, so it observes what the build
+wrote.
+
+The design therefore deliberately splits writes into two buckets:
+
+- **Intended, persistent output** → the part working dirs, via writable
+  bind-mounts to real disk (survives into stage/prime).
+- **Incidental writes anywhere else** (`/usr`, `/etc`, `/tmp`, slice paths) →
+  absorbed by the throwaway cow branch and discarded on unmount, leaving the base
+  system and the slices untouched.
+
+**Why not simply mount the base branch read-write?** That would drop both the cow
+branch and the bind mounts — writes under `/` would persist automatically — but
+it reintroduces exactly the hazard this design exists to avoid (it is a
+regression toward the rejected "cut slices into `/`" alternative):
+
+1. **It is destructive again.** A build step writing outside its own dirs
+   (`make install` into `/usr`, config into `/etc`, a toolchain writing to
+   `/usr/lib`) would mutate the real system root. build-slices must also work in
+   craft-parts' destructive mode, where `/` is the user's actual machine, not a
+   disposable instance.
+2. **It breaks per-part isolation.** All parts share the same base `/`. A build
+   that pollutes or deletes base files would contaminate every subsequent part's
+   build, stage-package resolution, and the rest of the lifecycle — making builds
+   order-dependent and non-reproducible.
+3. **It corrupts the merged view.** A build could overwrite or delete
+   slice-provided or base-system files in place, so later parts no longer see the
+   clean `slices + base` view.
+
+A read-write base conflates the two write buckets: everything persists, including
+the damage. The extra bind mounts are the price of decoupling "the build sees a
+rich merged root" from "the build cannot harm the system." If the number of bind
+mounts becomes a concern, the right direction is to narrow _what_ is bound (for
+example, `src` is copied into `build` before the build step runs anyway), not to
+loosen the isolation guarantee by making the base writable.
 
 ### State / rebuild invalidation
 
