@@ -390,8 +390,17 @@ class FileSourceHandler(SourceHandler):
                     break
 
                 # Discard any content written by the failed attempt so the
-                # next attempt starts from a clean state.
-                temp_file.unlink(missing_ok=True)
+                # next attempt starts from a clean state. Truncate rather
+                # than unlink: url_utils.download_request() reopens an
+                # existing destination in append mode with a plain
+                # destination.open("ab"), which doesn't use O_EXCL and
+                # would therefore follow a symlink planted at this path
+                # during the backoff sleep if the file had been removed.
+                # Truncating preserves the inode (and the safety
+                # guarantees from the os.open(O_EXCL) call that created
+                # it) while still discarding its content.
+                with temp_file.open("wb"):
+                    pass
 
                 if attempt >= _MAX_DOWNLOAD_ATTEMPTS - 1:
                     raise error from error.__cause__
