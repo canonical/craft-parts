@@ -314,8 +314,8 @@ class FileSourceHandler(SourceHandler):
             error = self._try_download()
             if error is None:
                 break
-            if attempt == _MAX_DOWNLOAD_ATTEMPTS:
-                raise error
+            if attempt >= _MAX_DOWNLOAD_ATTEMPTS:
+                raise error from error.__cause__
             self._retry_download(attempt, error=error)
 
         # if source_checksum is defined cache the file for future reuse
@@ -358,11 +358,16 @@ class FileSourceHandler(SourceHandler):
                 source=self.source,
             )
             network_error.__cause__ = err
+            if isinstance(
+                err, requests.exceptions.InvalidSchema | requests.exceptions.InvalidURL
+            ):
+                raise network_error from err
+
             return network_error
 
         return None
 
-    def _retry_download(self, attempt: int, *, error: Exception) -> None:
+    def _retry_download(self, attempt: int, *, error: errors.SourceError) -> None:
         """Wait before retrying a failed download, discarding any partial file.
 
         :param attempt: The number of the attempt that just failed (1-indexed).
@@ -378,6 +383,6 @@ class FileSourceHandler(SourceHandler):
             self.source,
             attempt,
             _MAX_DOWNLOAD_ATTEMPTS,
-            error,
+            error.brief,
         )
         time.sleep(delay)

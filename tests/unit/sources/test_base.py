@@ -372,6 +372,22 @@ class TestFileSourceHandler:
         assert downloaded.read_bytes() == b"content"
         assert mock_get.call_count == 2
 
+    def test_pull_url_invalid_schema_not_retried(self, new_dir, mocker):
+        """A non-transient error like an invalid URL scheme fails immediately."""
+        mock_sleep = mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+
+        mock_get = mocker.patch(
+            "craft_parts.sources.base.requests.get",
+            side_effect=requests.exceptions.InvalidSchema("No connection adapters"),
+        )
+
+        with pytest.raises(errors.NetworkRequestError):
+            self.source.pull()
+
+        assert mock_get.call_count == 1
+        mock_sleep.assert_not_called()
+
     def test_file_source_abstract_methods(self):
         class FaultyFileSource(FileSourceHandler):
             """A file source handler that doesn't implement abstract methods."""
