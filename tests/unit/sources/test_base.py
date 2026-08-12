@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import stat
 from pathlib import Path
 from re import escape
 from typing import Literal
@@ -429,6 +430,30 @@ class TestFileSourceHandler:
         self.source.pull()
 
         assert downloaded.read_bytes() == b"fresh content"
+
+    def test_pull_url_downloaded_file_has_default_permissions(self, new_dir, mocker):
+        """The downloaded file's permissions follow the umask, not the
+        restrictive mode used internally for the temporary download file."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        ok_response = mocker.Mock()
+        ok_response.raise_for_status.return_value = None
+        ok_response.headers = {}
+        ok_response.iter_content.return_value = [b"content"]
+        ok_response.__enter__ = mocker.Mock(return_value=ok_response)
+        ok_response.__exit__ = mocker.Mock(return_value=False)
+        mocker.patch("craft_parts.sources.base.requests.get", return_value=ok_response)
+
+        self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        reference_file = downloaded.with_name("reference_file")
+        reference_file.touch()
+        assert stat.S_IMODE(downloaded.stat().st_mode) == stat.S_IMODE(
+            reference_file.stat().st_mode
+        )
 
     def test_pull_url_retries_network_error(self, new_dir, mocker):
         """A network-level exception (e.g. connection reset) is retried."""

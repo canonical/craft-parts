@@ -68,6 +68,17 @@ _NON_RETRIABLE_REQUEST_EXCEPTIONS = (
 )
 
 
+def _get_umask() -> int:
+    """Get the process' umask without changing it.
+
+    ``os.umask()`` is the only portable way to read the umask, but it also
+    sets it as a side effect, so the previous value must be restored.
+    """
+    umask = os.umask(0)
+    os.umask(umask)
+    return umask
+
+
 def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
     """Get extra values for this source type's JSON schema.
 
@@ -344,6 +355,12 @@ class FileSourceHandler(SourceHandler):
         )
         os.close(fd)
         temp_file = Path(temp_name)
+        # mkstemp() creates the file with mode 0600 regardless of umask, but
+        # a plain file write would respect the umask (typically 0644). Match
+        # that behavior so the final file's permissions aren't unexpectedly
+        # more restrictive than before this change.
+        default_mode = 0o666 & ~_get_umask()
+        temp_file.chmod(default_mode)
 
         try:
             for attempt in range(_MAX_DOWNLOAD_ATTEMPTS):
