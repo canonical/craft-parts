@@ -346,6 +346,30 @@ class TestFileSourceHandler:
         assert requests_mock.call_count == base._MAX_DOWNLOAD_ATTEMPTS
         assert mock_sleep.call_count == base._MAX_DOWNLOAD_ATTEMPTS - 1
 
+    def test_pull_url_removes_partial_file_after_max_retries(self, new_dir, mocker):
+        """A partially downloaded file is removed once retries are exhausted."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        response = mocker.Mock()
+        response.raise_for_status.return_value = None
+        response.headers = {}
+
+        def iter_content(_chunk_size):
+            # Simulate writing a few bytes before the connection drops.
+            yield b"partial"
+            raise requests.exceptions.ChunkedEncodingError("stream interrupted")
+
+        response.iter_content.side_effect = iter_content
+        mocker.patch("craft_parts.sources.base.requests.get", return_value=response)
+
+        with pytest.raises(errors.NetworkRequestError):
+            self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        assert not downloaded.exists()
+
     def test_pull_url_retries_network_error(self, new_dir, mocker):
         """A network-level exception (e.g. connection reset) is retried."""
         mocker.patch("time.sleep")

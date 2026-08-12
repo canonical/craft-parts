@@ -314,6 +314,12 @@ class FileSourceHandler(SourceHandler):
             error = self._try_download()
             if error is None:
                 break
+
+            # Discard any partially downloaded content so a subsequent attempt
+            # (or a later download() call) doesn't append to a truncated,
+            # corrupt file.
+            self._file.unlink(missing_ok=True)
+
             if attempt >= _MAX_DOWNLOAD_ATTEMPTS:
                 raise error from error.__cause__
             self._retry_download(attempt, error=error)
@@ -368,15 +374,11 @@ class FileSourceHandler(SourceHandler):
         return None
 
     def _retry_download(self, attempt: int, *, error: errors.SourceError) -> None:
-        """Wait before retrying a failed download, discarding any partial file.
+        """Wait before retrying a failed download.
 
         :param attempt: The number of the attempt that just failed (1-indexed).
         :param error: The exception raised by the failed attempt.
         """
-        # Discard any partially downloaded content so the next attempt starts
-        # from scratch instead of appending to a truncated file.
-        self._file.unlink(missing_ok=True)
-
         delay = _DOWNLOAD_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
         logger.warning(
             "Retrying download of %r after transient error (attempt %d/%d): %s",
