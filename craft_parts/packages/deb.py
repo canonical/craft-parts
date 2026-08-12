@@ -444,21 +444,6 @@ def get_packages_in_base(*, base: str) -> list[DebPackage]:
     return []
 
 
-def _is_list_of_slices(names: list[str]) -> bool:
-    """Whether `names` contains Chisel slices or Deb packages.
-
-    This function does not "validate" the names to see if they refer to existing slices/
-    packages; it only considers the format of the names. It also assumes that the list
-    has been pre-processed and is homogeneous - that is, it does *not* contain a mixture
-    of slices and deb packages.
-
-    :param name: A list of package names.
-    :return: `True` if the list refers to Chisel slices, or `False` if it refers to Deb
-    packages (or is empty).
-    """
-    return any("_" in name for name in names)
-
-
 class Ubuntu(BaseRepository):
     """Repository management for Ubuntu packages."""
 
@@ -719,7 +704,8 @@ class Ubuntu(BaseRepository):
         if not package_names:
             return []
 
-        if _is_list_of_slices(package_names):
+        # assumes that the list is all slices or all packages, but not a mix
+        if deb_utils.has_slices(package_names):
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)
@@ -810,7 +796,9 @@ class Ubuntu(BaseRepository):
         """Unpack stage packages to install_path."""
         if stage_packages is None:
             stage_packages = []
-        if _is_list_of_slices(stage_packages):
+
+        # assumes that the list is all slices or all packages, but not a mix
+        if deb_utils.has_slices(stage_packages):
             cls._unpack_stage_slices(
                 stage_packages=stage_packages, install_path=install_path
             )

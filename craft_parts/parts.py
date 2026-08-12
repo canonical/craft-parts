@@ -43,6 +43,7 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
+from craft_parts.utils.deb_utils import has_packages, has_slices
 from craft_parts.utils.partition_utils import (
     BUILD_PARTITION,
     DEFAULT_PARTITION,
@@ -611,15 +612,9 @@ class PartSpec(BaseModel):
             # This check is only relevant in deb systems.
             return values
 
-        def is_slice(name: str) -> bool:
-            return "_" in name
-
-        # Detect a mixture of .deb packages and chisel slices.
         stage_packages = values.get("stage-packages", [])
-        has_slices = any(name for name in stage_packages if is_slice(name))
-        has_packages = any(name for name in stage_packages if not is_slice(name))
 
-        if has_slices and has_packages:
+        if has_slices(stage_packages) and has_packages(stage_packages):
             raise ValueError("Cannot mix packages and slices in stage-packages")
 
         return values
@@ -700,7 +695,8 @@ class PartSpec(BaseModel):
         """Return whether the part contains chisel slices."""
         if not self.stage_packages:
             return False
-        return any("_" in p for p in self.stage_packages)
+
+        return has_slices(self.stage_packages)
 
     @property
     def has_chisel_as_build_snap(self) -> bool:
