@@ -314,7 +314,7 @@ class FileSourceHandler(SourceHandler):
         if url_utils.get_url_scheme(self.source) == "ftp":
             raise NotImplementedError("ftp download not implemented")
 
-        for attempt in range(1, _MAX_DOWNLOAD_ATTEMPTS + 1):
+        for attempt in range(_MAX_DOWNLOAD_ATTEMPTS):
             error = self._try_download()
             if error is None:
                 break
@@ -324,7 +324,7 @@ class FileSourceHandler(SourceHandler):
             # corrupt file.
             self._file.unlink(missing_ok=True)
 
-            if attempt >= _MAX_DOWNLOAD_ATTEMPTS:
+            if attempt >= _MAX_DOWNLOAD_ATTEMPTS - 1:
                 raise error from error.__cause__
             self._retry_download(attempt, error=error)
 
@@ -383,14 +383,14 @@ class FileSourceHandler(SourceHandler):
     def _retry_download(self, attempt: int, *, error: errors.SourceError) -> None:
         """Wait before retrying a failed download.
 
-        :param attempt: The number of the attempt that just failed (1-indexed).
+        :param attempt: The number of the attempt that just failed (0-indexed).
         :param error: The exception raised by the failed attempt.
         """
-        delay = _DOWNLOAD_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
+        delay = _DOWNLOAD_RETRY_BACKOFF_SECONDS * (2**attempt)
         logger.warning(
             "Retrying download of %r after transient error (attempt %d/%d): %s",
             self.source,
-            attempt,
+            attempt + 1,
             _MAX_DOWNLOAD_ATTEMPTS,
             error.brief,
         )
