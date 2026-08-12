@@ -328,7 +328,7 @@ class TestFileSourceHandler:
         assert downloaded.is_file()
         assert downloaded.read_text() == "content"
         assert requests_mock.call_count == 3
-        assert mock_sleep.call_count == 2
+        assert mock_sleep.call_args_list == [mocker.call(1.0), mocker.call(2.0)]
 
     def test_pull_url_gives_up_after_max_retries(self, requests_mock, new_dir, mocker):
         """A transient HTTP error is raised after all retries are exhausted."""
@@ -344,7 +344,9 @@ class TestFileSourceHandler:
             self.source.pull()
 
         assert requests_mock.call_count == base._MAX_DOWNLOAD_ATTEMPTS
-        assert mock_sleep.call_count == base._MAX_DOWNLOAD_ATTEMPTS - 1
+        assert mock_sleep.call_args_list == [
+            mocker.call(2.0**i) for i in range(base._MAX_DOWNLOAD_ATTEMPTS - 1)
+        ]
 
     def test_pull_url_removes_partial_file_after_max_retries(self, new_dir, mocker):
         """A partially downloaded file is removed once retries are exhausted."""

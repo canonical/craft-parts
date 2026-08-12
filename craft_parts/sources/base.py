@@ -47,6 +47,11 @@ _MAX_DOWNLOAD_ATTEMPTS = 5
 # Base delay (in seconds) for the exponential backoff between download
 # retries (1, 2, 4, 8 seconds, ...).
 _DOWNLOAD_RETRY_BACKOFF_SECONDS = 1.0
+# Per-attempt timeout (in seconds) for a stalled connection/response. This is
+# divided across all attempts so that adding retries doesn't multiply the
+# worst-case time spent waiting on a hung request beyond the original
+# single-attempt budget of one hour.
+_DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS = 3600 // _MAX_DOWNLOAD_ATTEMPTS
 
 
 def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
@@ -339,7 +344,10 @@ class FileSourceHandler(SourceHandler):
         """
         try:
             request = requests.get(
-                self.source, stream=True, allow_redirects=True, timeout=3600
+                self.source,
+                stream=True,
+                allow_redirects=True,
+                timeout=_DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS,
             )
             request.raise_for_status()
             url_utils.download_request(request, self._file)
