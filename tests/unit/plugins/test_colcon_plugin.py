@@ -139,12 +139,14 @@ class TestPluginColconPlugin:
             ),
             "fi",
             "",
-            f'colcon build --base-paths "{plugin._part_info.part_src_dir}" '
-            f'--build-base "{plugin._part_info.part_build_dir}" '
-            f"--merge-install --install-base {plugin._part_info.part_install_dir}"
-            f"{optional_properties}"
-            f"--cmake-args -DCMAKE_BUILD_TYPE=Release "
-            f"--parallel-workers {plugin._part_info.parallel_build_count}",
+            (
+                f'colcon build --base-paths "{plugin._part_info.part_src_dir}" '
+                f'--build-base "{plugin._part_info.part_build_dir}" '
+                f"--merge-install --install-base {plugin._part_info.part_install_dir}"
+                f"{optional_properties}"
+                f"--cmake-args -DCMAKE_BUILD_TYPE=Release "
+                f"--parallel-workers {plugin._part_info.parallel_build_count}"
+            ),
         ]
 
     @pytest.mark.parametrize(
@@ -185,11 +187,13 @@ class TestPluginColconPlugin:
             ),
             "fi",
             "",
-            f'colcon build --base-paths "{plugin._part_info.part_src_dir}" '
-            f'--build-base "{plugin._part_info.part_build_dir}" '
-            f"--merge-install --install-base {plugin._part_info.part_install_dir} "
-            f"{cmake_args}"
-            f"--parallel-workers {plugin._part_info.parallel_build_count}",
+            (
+                f'colcon build --base-paths "{plugin._part_info.part_src_dir}" '
+                f'--build-base "{plugin._part_info.part_build_dir}" '
+                f"--merge-install --install-base {plugin._part_info.part_install_dir} "
+                f"{cmake_args}"
+                f"--parallel-workers {plugin._part_info.parallel_build_count}"
+            ),
         ]
 
     def test_get_build_commands_cmake_debug(
@@ -221,9 +225,11 @@ class TestPluginColconPlugin:
             ),
             "fi",
             "",
-            f'colcon build --base-paths "{plugin._part_info.part_src_dir}" '
-            f'--build-base "{plugin._part_info.part_build_dir}" '
-            f"--merge-install --install-base {plugin._part_info.part_install_dir} "
-            f'--cmake-args -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wall -Wextra" '
-            f"--parallel-workers {plugin._part_info.parallel_build_count}",
+            (
+                f'colcon build --base-paths "{plugin._part_info.part_src_dir}" '
+                f'--build-base "{plugin._part_info.part_build_dir}" '
+                f"--merge-install --install-base {plugin._part_info.part_install_dir} "
+                f'--cmake-args -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wall -Wextra" '
+                f"--parallel-workers {plugin._part_info.parallel_build_count}"
+            ),
         ]
