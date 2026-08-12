@@ -755,6 +755,18 @@ class PartHandler:
         # for its temporary files.
         (slices_dir / "tmp").mkdir(parents=True, exist_ok=True)
 
+        # Chisel provides the lib/lib64 usrmerge symlinks but not bin/sbin, so
+        # tools installed under /usr/bin (e.g. bash, referenced by the scriptlet
+        # shebang /bin/bash) would not be reachable at their merged paths.
+        for name in ("bin", "sbin"):
+            link = slices_dir / name
+            if (
+                not link.exists()
+                and not link.is_symlink()
+                and (slices_dir / "usr" / name).is_dir()
+            ):
+                link.symlink_to(Path("usr") / name)
+
         extra_bind_mounts = [(mount_dir, mount_dir) for mount_dir in bind_mount_dirs]
 
         return chroot.chroot(
