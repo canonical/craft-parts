@@ -179,6 +179,17 @@ class BaseRepository(abc.ABC):
             pulled.
         """
 
+    @classmethod
+    def cut_slices(cls, *, slices: list[str], install_path: Path) -> None:
+        """Cut Chisel slices into a destination path.
+
+        :param slices: The list of names of slices to cut.
+        :param install_path: The destination directory.
+        """
+        raise NotImplementedError(
+            f"{cls.__name__} does not support cutting Chisel slices"
+        )
+
 
 RepositoryType = type[BaseRepository]
 

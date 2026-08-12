@@ -112,6 +112,7 @@ class Executor:
         """
         self._install_build_packages()
         self._install_build_snaps()
+        self._cut_build_slices()
 
         self._verify_plugin_environment()
 
@@ -319,6 +320,21 @@ class Executor:
         else:
             logger.info("Installing build-snaps")
             packages.snaps.install_snaps(build_snaps)
+
+    def _cut_build_slices(self) -> None:
+        build_slices: set[str] = set()
+        for part in self._part_list:
+            build_slices.update(part.spec.build_slices)
+
+        if not build_slices:
+            return
+
+        slices_dir = self._project_info.dirs.build_slices_dir
+        logger.info("Cutting build-slices")
+        slices_dir.mkdir(parents=True, exist_ok=True)
+        packages.Repository.cut_slices(
+            slices=sorted(build_slices), install_path=slices_dir
+        )
 
     def _verify_plugin_environment(self) -> None:
         for part in self._part_list:

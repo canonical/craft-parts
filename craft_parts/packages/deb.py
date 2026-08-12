@@ -859,6 +859,15 @@ class Ubuntu(BaseRepository):
         :param stage_packages: The list of names of slices to cut.
         :param install_path: The destination directory.
         """
+        cls.cut_slices(slices=stage_packages, install_path=install_path)
+
+    @classmethod
+    def cut_slices(cls, *, slices: list[str], install_path: pathlib.Path) -> None:
+        """Cut Chisel slices into a destination path.
+
+        :param slices: The list of names of slices to cut.
+        :param install_path: The destination directory.
+        """
         output_stream = StringIO()
         handler = logging.StreamHandler(stream=output_stream)
         logger.addHandler(handler)
@@ -870,14 +879,12 @@ class Ubuntu(BaseRepository):
                     "--ignore=unmaintained",
                     "--ignore=unstable",
                     f"--root={install_path}",
-                    *stage_packages,
+                    *slices,
                 ]
             )
         except subprocess.CalledProcessError as err:
             command_output = output_stream.getvalue()
-            raise errors.ChiselError(
-                slices=stage_packages, output=command_output
-            ) from err
+            raise errors.ChiselError(slices=slices, output=command_output) from err
         finally:
             logger.removeHandler(handler)
 

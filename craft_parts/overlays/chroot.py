@@ -46,6 +46,7 @@ def chroot(
     target: Callable[..., _T],
     *args: Any,
     use_host_sources: bool = False,
+    extra_bind_mounts: Sequence[tuple[Path, Path]] | None = None,
     **kwargs: Any,
 ) -> _T:
     """Execute a callable in a chroot environment.
@@ -56,10 +57,17 @@ def chroot(
     :param kwargs: Keyword arguments for target.
     :param use_host_sources: Whether overlay steps should also include the repository
       sources defined on the host.
+    :param extra_bind_mounts: Additional ``(src, dst)`` paths to bind-mount into the
+      chroot at ``dst`` (an absolute path inside the chroot) before running the target.
 
     :returns: The target function return value.
     """
     logger.debug("[pid=%d] parent process", os.getpid())
+
+    bind_mounts: list[_Mount] = [
+        _RBindMount(src, dst, skip_missing=False)
+        for src, dst in (extra_bind_mounts or [])
+    ]
 
     # This typehint technically should be "Connection[Any, tuple[_T, None] | tuple[None, str]]"
     # However, types surrounding multiprocessing are finnicky at best and the way we handle the
@@ -71,14 +79,16 @@ def chroot(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
     )
     logger.debug("[pid=%d] set up chroot", os.getpid())
-    _setup_chroot(path, use_host_sources=use_host_sources)
+    _setup_chroot(path, use_host_sources=use_host_sources, extra_mounts=bind_mounts)
     try:
         child.start()
         res, err = parent_conn.recv()
         child.join()
     finally:
         logger.debug("[pid=%d] clean up chroot", os.getpid())
-        _cleanup_chroot(path, use_host_sources=use_host_sources)
+        _cleanup_chroot(
+            path, use_host_sources=use_host_sources, extra_mounts=bind_mounts
+        )
 
     if isinstance(err, str):
         raise errors.OverlayChrootExecutionError(err)
@@ -126,7 +136,12 @@ def _host_compatible_chroot(path: Path) -> None:
     _compare_os_release(host_os_release, chroot_os_release)
 
 
-def _setup_chroot(path: Path, *, use_host_sources: bool) -> None:
+def _setup_chroot(
+    path: Path,
+    *,
+    use_host_sources: bool,
+    extra_mounts: Sequence[_Mount] | None = None,
+) -> None:
     """Prepare the chroot environment before executing the target function."""
     logger.debug("setup chroot: %r", path)
     if sys.platform == "linux":
@@ -137,11 +152,22 @@ def _setup_chroot(path: Path, *, use_host_sources: bool) -> None:
             _host_compatible_chroot(path)
             _setup_chroot_mounts(path, _ubuntu_apt_mounts)
 
+        if extra_mounts:
+            _setup_chroot_mounts(path, extra_mounts)
 
-def _cleanup_chroot(path: Path, *, use_host_sources: bool) -> None:
+
+def _cleanup_chroot(
+    path: Path,
+    *,
+    use_host_sources: bool,
+    extra_mounts: Sequence[_Mount] | None = None,
+) -> None:
     """Clean the chroot environment after executing the target function."""
     logger.debug("cleanup chroot: %r", path)
     if sys.platform == "linux":
+        if extra_mounts:
+            _cleanup_chroot_mounts(path, extra_mounts)
+
         _cleanup_chroot_mounts(path, _linux_mounts)
 
         if use_host_sources:

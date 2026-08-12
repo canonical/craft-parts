@@ -359,6 +359,19 @@ class PartSpec(BaseModel):
     Build packages must be listed by their name on the host system.
     """
 
+    build_slices: list[str] = Field(
+        default=[],
+        description="The Chisel slices to make available during the build.",
+        examples=["[python3.12_standard, gcc-12_bins]"],
+    )
+    """The Chisel slices to make available during the build step.
+
+    The slices from all parts are collected and cut into a single directory that
+    becomes the system root of the build step. Since slices and Debian packages
+    cannot be safely mixed in a single filesystem, ``build-slices`` is mutually
+    exclusive with ``build-packages`` and ``build-snaps`` in the same part.
+    """
+
     build_environment: list[dict[str, str]] = Field(
         default=[],
         description="The environment variables to define for the build step, as key-value pairs.",
@@ -594,6 +607,23 @@ class PartSpec(BaseModel):
             raise ValueError("overlays not supported")
         return item
 
+    @field_validator("build_slices")
+    @classmethod
+    def validate_build_slices_feature(cls, item: _T_validate) -> _T_validate:
+        """Check if build-slices specified when feature is disabled."""
+        if item and not Features().enable_build_slices:
+            raise ValueError("build-slices not supported")
+        return item
+
+    @model_validator(mode="after")
+    def validate_build_slices_mutually_exclusive(self) -> Self:
+        """Check that build-slices is not mixed with build-packages/build-snaps."""
+        if self.build_slices and (self.build_packages or self.build_snaps):
+            raise ValueError(
+                "build-slices cannot be used with build-packages or build-snaps"
+            )
+        return self
+
     @model_validator(mode="after")
     def validate_overlay_mutually_exclusive(self) -> Self:
         """Check that override-overlay and overlay-script are not both defined."""
@@ -710,6 +740,11 @@ class PartSpec(BaseModel):
         return any(
             p for p in self.build_snaps if p == "chisel" or p.startswith("chisel/")
         )
+
+    @property
+    def has_build_slices(self) -> bool:
+        """Return whether the part lists build-slices."""
+        return bool(self.build_slices)
 
 
 def _get_build_partition_usage_error(fileset_name: str, partition: str) -> str | None:
@@ -1008,6 +1043,11 @@ class Part:
     def has_chisel_as_build_snap(self) -> bool:
         """Return whether this part has chisel in its build-snaps."""
         return self.spec.has_chisel_as_build_snap
+
+    @property
+    def has_build_slices(self) -> bool:
+        """Return whether this part lists build-slices."""
+        return self.spec.has_build_slices
 
     @property
     def default_partition(self) -> str:
@@ -1391,6 +1431,16 @@ def part_has_chisel_as_build_snap(data: dict[str, Any]) -> bool:
     spec = _get_part_spec(data)
 
     return spec.has_chisel_as_build_snap
+
+
+def part_has_build_slices(data: dict[str, Any]) -> bool:
+    """Whether the part described by ``data`` lists build-slices.
+
+    :param data: The part data to query.
+    """
+    spec = _get_part_spec(data)
+
+    return spec.has_build_slices
 
 
 def _get_part_spec(data: dict[str, Any]) -> PartSpec:

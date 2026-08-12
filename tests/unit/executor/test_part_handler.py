@@ -129,6 +129,7 @@ class TestPartHandling:
             assets={
                 "build-packages": ["pkg3"],
                 "build-snaps": [],
+                "build-slices": [],
                 "uname": "os-info",
                 "installed-packages": ["hello=2.10"],
                 "installed-snaps": ["snapcraft=6466"],

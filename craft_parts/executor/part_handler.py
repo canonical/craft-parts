@@ -30,7 +30,7 @@ from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
 from craft_parts.filesystem_mounts import FilesystemMount
 from craft_parts.infos import PartInfo, StepInfo
-from craft_parts.overlays import LayerHash, OverlayManager
+from craft_parts.overlays import LayerHash, OverlayManager, chroot
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
@@ -481,13 +481,20 @@ class PartHandler:
         with _conditional_layer_mount(
             self._overlay_manager, top_part=self._part, condition=needs_overlay
         ):
-            self._run_step(
-                step_info=step_info,
-                scriptlet_name="override-build",
-                work_dir=self._part.part_build_dir,
-                stdout=stdout,
-                stderr=stderr,
-            )
+            if self._part.has_build_slices:
+                self._run_build_step_in_slice_root(
+                    step_info=step_info,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
+            else:
+                self._run_step(
+                    step_info=step_info,
+                    scriptlet_name="override-build",
+                    work_dir=self._part.part_build_dir,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
 
             logger.debug("Run pre-organize callbacks")
             callbacks.run_step(step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE)
@@ -523,6 +530,7 @@ class PartHandler:
         assets = {
             "build-packages": self.build_packages,
             "build-snaps": self.build_snaps,
+            "build-slices": self._part.spec.build_slices,
         }
         assets.update(_get_machine_manifest())
 
@@ -712,6 +720,46 @@ class PartHandler:
             return StepContents(stage=step_info.step == Step.STAGE)
 
         return step_handler.run_builtin()
+
+    def _run_build_step_in_slice_root(
+        self,
+        *,
+        step_info: StepInfo,
+        stdout: Stream,
+        stderr: Stream,
+    ) -> StepContents:
+        """Run the build step using the cut build-slices directory as system root.
+
+        The current part's pull, build and install directories, plus the shared
+        stage and prime directories, are bind-mounted into the slice root at their
+        original absolute paths so the build can find its sources and the artifacts
+        produced by other parts.
+        """
+        slices_dir = self._part_info.dirs.build_slices_dir
+        dirs = self._part_info.dirs
+
+        bind_mount_dirs = [
+            self._part.part_src_dir,
+            self._part.part_build_dir,
+            self._part.part_install_dir,
+            dirs.stage_dir,
+            dirs.prime_dir,
+        ]
+        for mount_dir in bind_mount_dirs:
+            mount_dir.mkdir(parents=True, exist_ok=True)
+
+        extra_bind_mounts = [(mount_dir, mount_dir) for mount_dir in bind_mount_dirs]
+
+        return chroot.chroot(
+            slices_dir,
+            self._run_step,
+            step_info=step_info,
+            scriptlet_name="override-build",
+            work_dir=self._part.part_build_dir,
+            stdout=stdout,
+            stderr=stderr,
+            extra_bind_mounts=extra_bind_mounts,
+        )
 
     def _compute_layer_hash(self, *, all_parts: bool) -> LayerHash:
         """Obtain the layer verification hash.
@@ -1480,6 +1528,11 @@ def _get_build_packages(*, part: Part, plugin: Plugin) -> list[str]:
     if build_packages:
         logger.debug("part build packages: %s", build_packages)
         all_packages.extend(build_packages)
+
+    # Parts using build-slices provide all build tooling through slices, so the
+    # deb packages injected by the source handler and plugin are skipped.
+    if part.has_build_slices:
+        return all_packages
 
     source = part.spec.source
     if source:
