@@ -397,13 +397,18 @@ class FileSourceHandler(SourceHandler):
                     raise error from error.__cause__
                 self._retry_download(attempt, error=error)
 
+            # Verify the checksum against the temp file before replacing
+            # the destination, so a successful-but-wrong-content download
+            # doesn't destroy a pre-existing destination file.
+            if self.source_checksum:
+                verify_checksum(self.source_checksum, temp_file)
+
             temp_file.replace(self._file)
         finally:
             temp_file.unlink(missing_ok=True)
 
         # if source_checksum is defined cache the file for future reuse
         if self.source_checksum:
-            verify_checksum(self.source_checksum, self._file)
             file_cache.cache(filename=str(self._file), key=self.source_checksum)
         return self._file
 

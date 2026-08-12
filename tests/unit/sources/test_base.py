@@ -181,6 +181,28 @@ class TestFileSourceHandler:
         assert raised.value.expected == "12345"
         assert raised.value.obtained == "9a0364b9e99bb480dd25e1f0284c8555"
 
+    def test_pull_url_checksum_error_preserves_preexisting_file(
+        self, requests_mock, new_dir
+    ):
+        self.set_source(
+            cache_dir=new_dir,
+            source="http://test.com/some_file",
+            source_checksum="md5/12345",
+        )
+        Path("parts/foo/src").mkdir(parents=True)
+        requests_mock.get(self.source.source, text="content")
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        downloaded.write_text("preexisting content")
+
+        with pytest.raises(errors.ChecksumMismatch):
+            self.source.pull()
+
+        # A successful-but-wrong-content download must not clobber a
+        # pre-existing destination file.
+        assert downloaded.read_text() == "preexisting content"
+        assert list(downloaded.parent.glob("*.part")) == []
+
     def test_pull_url(self, requests_mock, new_dir):
         self.source.source = "http://test.com/some_file"
         requests_mock.get(self.source.source, text="content")
