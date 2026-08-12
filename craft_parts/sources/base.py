@@ -20,6 +20,7 @@ import abc
 import logging
 import shutil
 import subprocess
+import time
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar
@@ -36,6 +37,16 @@ from .cache import FileCache
 from .checksum import verify_checksum
 
 logger = logging.getLogger(__name__)
+
+# HTTP status codes that typically indicate a transient server-side or
+# proxy issue, and are therefore worth retrying.
+_RETRIABLE_HTTP_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
+# Number of times to attempt an HTTP(S) download before giving up, including
+# the initial attempt.
+_MAX_DOWNLOAD_ATTEMPTS = 5
+# Base delay (in seconds) for the exponential backoff between download
+# retries (1, 2, 4, 8 seconds, ...).
+_DOWNLOAD_RETRY_BACKOFF_SECONDS = 1.0
 
 
 def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
@@ -299,6 +310,27 @@ class FileSourceHandler(SourceHandler):
         if url_utils.get_url_scheme(self.source) == "ftp":
             raise NotImplementedError("ftp download not implemented")
 
+        for attempt in range(1, _MAX_DOWNLOAD_ATTEMPTS + 1):
+            error = self._try_download()
+            if error is None:
+                break
+            if attempt == _MAX_DOWNLOAD_ATTEMPTS:
+                raise error
+            self._retry_download(attempt, error=error)
+
+        # if source_checksum is defined cache the file for future reuse
+        if self.source_checksum:
+            verify_checksum(self.source_checksum, self._file)
+            file_cache.cache(filename=str(self._file), key=self.source_checksum)
+        return self._file
+
+    def _try_download(self) -> errors.SourceError | None:
+        """Attempt to download the source file once.
+
+        :returns: ``None`` on success, or a retriable error if the download
+            failed due to a transient issue. Non-retriable failures (e.g. a
+            404 or a non-transient HTTP error) are raised directly.
+        """
         try:
             request = requests.get(
                 self.source, stream=True, allow_redirects=True, timeout=3600
@@ -309,20 +341,43 @@ class FileSourceHandler(SourceHandler):
             if err.response.status_code == requests.codes.not_found:
                 raise errors.SourceNotFound(source=self.source) from err
 
-            raise errors.HttpRequestError(
+            http_error = errors.HttpRequestError(
                 status_code=err.response.status_code,
                 reason=err.response.reason,
                 source=self.source,
-            ) from err
+            )
+            http_error.__cause__ = err
+            if err.response.status_code not in _RETRIABLE_HTTP_STATUS_CODES:
+                raise http_error from err
+
+            return http_error
         except requests.RequestException as err:
-            raise errors.NetworkRequestError(
+            network_error = errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "
                 f"response={err.response!r})",
                 source=self.source,
-            ) from err
+            )
+            network_error.__cause__ = err
+            return network_error
 
-        # if source_checksum is defined cache the file for future reuse
-        if self.source_checksum:
-            verify_checksum(self.source_checksum, self._file)
-            file_cache.cache(filename=str(self._file), key=self.source_checksum)
-        return self._file
+        return None
+
+    def _retry_download(self, attempt: int, *, error: Exception) -> None:
+        """Wait before retrying a failed download, discarding any partial file.
+
+        :param attempt: The number of the attempt that just failed (1-indexed).
+        :param error: The exception raised by the failed attempt.
+        """
+        # Discard any partially downloaded content so the next attempt starts
+        # from scratch instead of appending to a truncated file.
+        self._file.unlink(missing_ok=True)
+
+        delay = _DOWNLOAD_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
+        logger.warning(
+            "Retrying download of %r after transient error (attempt %d/%d): %s",
+            self.source,
+            attempt,
+            _MAX_DOWNLOAD_ATTEMPTS,
+            error,
+        )
+        time.sleep(delay)

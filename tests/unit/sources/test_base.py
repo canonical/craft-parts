@@ -20,7 +20,7 @@ from typing import Literal
 import pytest
 import requests
 from craft_parts import ProjectDirs
-from craft_parts.sources import cache, errors
+from craft_parts.sources import base, cache, errors
 from craft_parts.sources.base import (
     BaseFileSourceModel,
     BaseSourceModel,
@@ -260,7 +260,8 @@ class TestFileSourceHandler:
         "error_code",
         [requests.codes.unauthorized, requests.codes.internal_server_error],
     )
-    def test_pull_url_http_error(self, requests_mock, new_dir, error_code):
+    def test_pull_url_http_error(self, requests_mock, new_dir, error_code, mocker):
+        mocker.patch("time.sleep")
         self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
         requests_mock.get(self.source.source, status_code=error_code, reason="Error")
 
@@ -272,6 +273,7 @@ class TestFileSourceHandler:
             self.source.pull()
 
     def test_pull_url_streaming_request_error(self, mocker, new_dir):
+        mocker.patch("time.sleep")
         self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
         Path("parts/foo/src").mkdir(parents=True)
 
@@ -292,6 +294,83 @@ class TestFileSourceHandler:
         )
         with pytest.raises(errors.NetworkRequestError, match=expected):
             self.source.pull()
+
+    @pytest.mark.parametrize(
+        "error_code",
+        [
+            requests.codes.too_many_requests,
+            requests.codes.internal_server_error,
+            requests.codes.bad_gateway,
+            requests.codes.service_unavailable,
+            requests.codes.gateway_timeout,
+        ],
+    )
+    def test_pull_url_retries_transient_http_error(
+        self, requests_mock, new_dir, error_code, mocker
+    ):
+        """Transient HTTP errors are retried before eventually succeeding."""
+        mock_sleep = mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        requests_mock.get(
+            self.source.source,
+            [
+                {"status_code": error_code, "reason": "Error"},
+                {"status_code": error_code, "reason": "Error"},
+                {"text": "content", "status_code": requests.codes.ok},
+            ],
+        )
+
+        self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        assert downloaded.is_file()
+        assert downloaded.read_text() == "content"
+        assert requests_mock.call_count == 3
+        assert mock_sleep.call_count == 2
+
+    def test_pull_url_gives_up_after_max_retries(self, requests_mock, new_dir, mocker):
+        """A transient HTTP error is raised after all retries are exhausted."""
+        mock_sleep = mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        requests_mock.get(
+            self.source.source,
+            status_code=requests.codes.service_unavailable,
+            reason="Service Unavailable",
+        )
+
+        with pytest.raises(errors.HttpRequestError):
+            self.source.pull()
+
+        assert requests_mock.call_count == base._MAX_DOWNLOAD_ATTEMPTS
+        assert mock_sleep.call_count == base._MAX_DOWNLOAD_ATTEMPTS - 1
+
+    def test_pull_url_retries_network_error(self, new_dir, mocker):
+        """A network-level exception (e.g. connection reset) is retried."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        ok_response = mocker.Mock()
+        ok_response.raise_for_status.return_value = None
+        ok_response.headers = {}
+        ok_response.iter_content.return_value = [b"content"]
+
+        mock_get = mocker.patch(
+            "craft_parts.sources.base.requests.get",
+            side_effect=[
+                requests.exceptions.ConnectionError("connection reset"),
+                ok_response,
+            ],
+        )
+
+        self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        assert downloaded.is_file()
+        assert downloaded.read_bytes() == b"content"
+        assert mock_get.call_count == 2
 
     def test_file_source_abstract_methods(self):
         class FaultyFileSource(FileSourceHandler):
