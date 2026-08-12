@@ -398,9 +398,10 @@ class FileSourceHandler(SourceHandler):
                 # during the backoff sleep if the file had been removed.
                 # Truncating preserves the inode (and the safety
                 # guarantees from the os.open(O_EXCL) call that created
-                # it) while still discarding its content.
-                with temp_file.open("wb"):
-                    pass
+                # it) while still discarding its content. O_NOFOLLOW
+                # ensures this truncation itself can't be tricked into
+                # following a symlink planted at the temp path either.
+                os.close(os.open(temp_file, os.O_WRONLY | os.O_TRUNC | os.O_NOFOLLOW))
 
                 if attempt >= _MAX_DOWNLOAD_ATTEMPTS - 1:
                     raise error from error.__cause__
