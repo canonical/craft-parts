@@ -39,6 +39,11 @@ def copy_tree(new_dir, copy_dir):
     shutil.copytree(source_location, new_dir, dirs_exist_ok=True)
 
 
+@pytest.mark.flaky(
+    reruns=3,
+    only_rerun=["PluginBuildError"],
+    reason="Fails when the Gradle wrapper can't download its distribution due to network issues.",
+)
 @pytest.mark.parametrize("use_gradlew", [True, False], indirect=True)
 def test_gradle_plugin(new_dir, partitions, use_gradlew):
     copy_tree(new_dir, "simple")
