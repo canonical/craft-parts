@@ -21,8 +21,8 @@ import logging
 import os
 import shutil
 import subprocess
-import tempfile
 import time
+import uuid
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar
@@ -66,17 +66,32 @@ _NON_RETRIABLE_REQUEST_EXCEPTIONS = (
     requests.exceptions.URLRequired,
     requests.exceptions.TooManyRedirects,
 )
+# Number of unique names to try when creating a temporary download file
+# before giving up (a collision is exceedingly unlikely given the name is a
+# random UUID, so this is only a safety net).
+_TEMP_FILE_CREATION_ATTEMPTS = 100
 
 
-def _get_umask() -> int:
-    """Get the process' umask without changing it.
+def _create_download_temp_file(destination_dir: Path, prefix: str) -> Path:
+    """Create a uniquely-named temporary file for a download.
 
-    ``os.umask()`` is the only portable way to read the umask, but it also
-    sets it as a side effect, so the previous value must be restored.
+    Unlike :func:`tempfile.mkstemp`, the file is created with the default
+    permissions the kernel would apply to any new file (i.e. respecting the
+    umask), rather than the restrictive, hardcoded ``0600`` mode
+    ``mkstemp`` uses. This is done with a single atomic ``os.open()`` call
+    (as ``mkstemp`` itself does internally) so there's no window where the
+    process' umask is altered and no risk of a race with other threads
+    creating files concurrently.
     """
-    umask = os.umask(0)
-    os.umask(umask)
-    return umask
+    for _ in range(_TEMP_FILE_CREATION_ATTEMPTS):
+        temp_file = destination_dir / f"{prefix}{uuid.uuid4().hex}.part"
+        try:
+            fd = os.open(temp_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o666)
+        except FileExistsError:
+            continue
+        os.close(fd)
+        return temp_file
+    raise FileExistsError("Could not create a unique temporary download file")
 
 
 def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
@@ -345,22 +360,13 @@ class FileSourceHandler(SourceHandler):
         # destination, so writing straight to self._file would either
         # corrupt a pre-existing file (by appending the response after it)
         # or require deleting a file we didn't create when an attempt fails.
-        # A dedicated temporary path (created with tempfile so it can't
-        # collide with a legitimate sibling file or a concurrent download)
-        # avoids both problems; it's only moved into place once fully
-        # downloaded.
+        # A dedicated temporary path (that can't collide with a legitimate
+        # sibling file or a concurrent download) avoids both problems; it's
+        # only moved into place once fully downloaded.
         self._file.parent.mkdir(parents=True, exist_ok=True)
-        fd, temp_name = tempfile.mkstemp(
-            dir=self._file.parent, prefix=f".{self._file.name}.", suffix=".part"
+        temp_file = _create_download_temp_file(
+            self._file.parent, prefix=f".{self._file.name}."
         )
-        os.close(fd)
-        temp_file = Path(temp_name)
-        # mkstemp() creates the file with mode 0600 regardless of umask, but
-        # a plain file write would respect the umask (typically 0644). Match
-        # that behavior so the final file's permissions aren't unexpectedly
-        # more restrictive than before this change.
-        default_mode = 0o666 & ~_get_umask()
-        temp_file.chmod(default_mode)
 
         try:
             for attempt in range(_MAX_DOWNLOAD_ATTEMPTS):
