@@ -47,11 +47,10 @@ _MAX_DOWNLOAD_ATTEMPTS = 5
 # Base delay (in seconds) for the exponential backoff between download
 # retries (1, 2, 4, 8 seconds, ...).
 _DOWNLOAD_RETRY_BACKOFF_SECONDS = 1.0
-# Per-attempt timeout (in seconds) for a stalled connection/response. This is
-# divided across all attempts so that adding retries doesn't multiply the
-# worst-case time spent waiting on a hung request beyond the original
-# single-attempt budget of one hour.
-_DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS = 3600 // _MAX_DOWNLOAD_ATTEMPTS
+# Inactivity timeout (in seconds) applied to socket operations for each
+# download attempt. This is *not* a wall-clock limit for the whole request,
+# so it does not need to be divided across retry attempts.
+_DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS = 3600
 
 
 def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
@@ -343,14 +342,14 @@ class FileSourceHandler(SourceHandler):
             404 or a non-transient HTTP error) are raised directly.
         """
         try:
-            request = requests.get(
+            with requests.get(
                 self.source,
                 stream=True,
                 allow_redirects=True,
                 timeout=_DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS,
-            )
-            request.raise_for_status()
-            url_utils.download_request(request, self._file)
+            ) as request:
+                request.raise_for_status()
+                url_utils.download_request(request, self._file)
         except requests.HTTPError as err:
             if err.response.status_code == requests.codes.not_found:
                 raise errors.SourceNotFound(source=self.source) from err

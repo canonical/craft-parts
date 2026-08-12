@@ -283,6 +283,8 @@ class TestFileSourceHandler:
         response.iter_content.side_effect = requests.exceptions.ChunkedEncodingError(
             "stream interrupted"
         )
+        response.__enter__ = mocker.Mock(return_value=response)
+        response.__exit__ = mocker.Mock(return_value=False)
 
         mocker.patch("craft_parts.sources.base.requests.get", return_value=response)
 
@@ -364,6 +366,8 @@ class TestFileSourceHandler:
             raise requests.exceptions.ChunkedEncodingError("stream interrupted")
 
         response.iter_content.side_effect = iter_content
+        response.__enter__ = mocker.Mock(return_value=response)
+        response.__exit__ = mocker.Mock(return_value=False)
         mocker.patch("craft_parts.sources.base.requests.get", return_value=response)
 
         with pytest.raises(errors.NetworkRequestError):
@@ -382,6 +386,8 @@ class TestFileSourceHandler:
         ok_response.raise_for_status.return_value = None
         ok_response.headers = {}
         ok_response.iter_content.return_value = [b"content"]
+        ok_response.__enter__ = mocker.Mock(return_value=ok_response)
+        ok_response.__exit__ = mocker.Mock(return_value=False)
 
         mock_get = mocker.patch(
             "craft_parts.sources.base.requests.get",
