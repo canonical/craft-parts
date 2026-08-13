@@ -37,7 +37,7 @@ from pydantic import (
 from typing_extensions import Self
 
 from craft_parts import errors, plugins
-from craft_parts.constraints import RelativePathStr
+from craft_parts.constraints import ChiselSliceStr, RelativePathStr
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.packages import platform
@@ -336,7 +336,7 @@ class PartSpec(BaseModel):
     This key is mutually incompatible with the ``stage-slices`` key.
     """
 
-    stage_slices: list[str] = Field(
+    stage_slices: list[ChiselSliceStr] = Field(
         default=[],
         description="The Chisel slices to include in the stage environment.",
         examples=["[ca-certificates_data, bash_bins]"],

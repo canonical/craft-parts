@@ -158,6 +158,15 @@ class TestPartSpecs:
                 nullcontext(),
                 id="valid-slice-unaffected-by-stage-packages-slice-support",
             ),
+            pytest.param(
+                ["ca-certificates_data", "bash"],
+                True,
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match="invalid Chisel slice",
+                ),
+                id="invalid-slice",
+            ),
         ],
     )
     @pytest.mark.usefixtures("is_deb_based")
