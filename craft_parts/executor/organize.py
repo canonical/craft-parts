@@ -214,7 +214,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
                         real_dst_path = dst_path.resolve()
                     else:
                         real_dst_path = dst_path
-                    if real_dst_path == src_path:
+                    if real_dst_path.exists() and real_dst_path.samefile(src_path):
                         # Trying to organize a directory to the same place, skipping
                         continue
                     file_utils.link_or_copy_tree(src, real_dst_path)
