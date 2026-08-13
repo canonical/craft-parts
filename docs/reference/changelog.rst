@@ -32,6 +32,14 @@ New features:
   otherwise pull in large test-only dependencies. Users can opt back in by
   passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
 
+- Add a ``stage-slices`` key to declare Chisel slices separately from the
+  ``stage-packages`` key.
+
+- Add a ``stage_packages_slice_support`` parameter to the ``LifecycleManager``
+  so applications can control whether Chisel slices can be declared in the
+  ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
+  should set this to False and use the ``stage-slices`` key instead.
+
 Bug fixes:
 
 - The Overlay and Build steps of parts that organize content to the overlay
