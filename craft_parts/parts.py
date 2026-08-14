@@ -327,11 +327,8 @@ class PartSpec(BaseModel):
     """During the stage step, these packages are included in the stage environment
     alongside the build artifacts.
 
-    Chisel slices should be defined with the ``stage-slices`` key.
-
-    (deprecated) Chisel slices can be listed using the ``<package-name>_<slice-name>``
-    syntax. Listing both packages and slices in the same ``stage-packages`` key is not
-    supported.
+    Chisel slices should be declared with the ``stage-slices`` key. Support for
+    chisel slices in the ``stage-packages`` key is deprecated.
 
     This key is mutually incompatible with the ``stage-slices`` key.
     """
@@ -344,7 +341,7 @@ class PartSpec(BaseModel):
     """During the stage step, these Chisel slices are cut into the stage environment
     alongside the build artifacts.
 
-    Each entry must use the ``<package-name>_<slice-name>`` syntax.
+    Each entry must be listed as ``<package-name>_<slice-name>``.
 
     This key is mutually incompatible with the ``stage-packages`` key.
     """
