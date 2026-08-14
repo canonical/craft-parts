@@ -129,6 +129,7 @@ part's build directory are represented in the stage directory.
     :label: reference-part-properties-stage-packages
 
 .. kitbash-field:: PartSpec stage_slices
+    :override-type: list[str]
     :label: reference-part-properties-stage-slices
 
 .. kitbash-field:: PartSpec stage_snaps
