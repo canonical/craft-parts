@@ -46,7 +46,7 @@ def fake_conn():
     return FakeConn()
 
 
-@pytest.mark.usefixtures("new_dir")
+@pytest.mark.usefixtures("new_dir", "multiprocessing_fork")
 class TestChroot:
     """Fork process and execute in chroot."""
 
