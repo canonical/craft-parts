@@ -308,14 +308,16 @@ class PartSpec(BaseModel):
     )
     """During the stage step, these snaps are included in the stage environment.
 
-    Entries can be in one of four formats:
+    Entries can be in one of three formats:
 
     * ``<snap-name>``
-    * ``<snap-name>@<channel>``
-    * ``<snap-name>/<track>/<risk>`` (deprecated, use ``@`` instead)
-    * ``<snap-name>/<track>/<risk>/<branch>`` (deprecated, use ``@`` instead)
+    * ``<snap-name>@<track>/<risk>``
+    * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If an entry contains no version or channel, ``latest/stable`` is used.
+    If an entry specifies no track or risk, ``latest/stable`` is used.
+
+    The ``/`` character may also be used to separate the snap name from the
+    track, but this is deprecated in favor of the ``@`` character.
     """
 
     stage_packages: list[str] = Field(

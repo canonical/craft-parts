@@ -34,7 +34,7 @@ def foo_install_dir(new_dir):
 
 @pytest.mark.parametrize(
     "stage_snap",
-    ["basic @ latest/stable", "basic/latest/stable"],
+    ["basic@latest/stable", "basic/latest/stable"],
 )
 def test_stage_snap(
     new_dir, partitions, fake_snap_command, foo_install_dir, stage_snap
@@ -84,7 +84,7 @@ def test_stage_snap_download_error(new_dir, partitions, fake_snap_command):
         parts:
           foo:
             plugin: nil
-            stage-snaps: ["basic @ latest/stable"]
+            stage-snaps: ["basic@latest/stable"]
         """
     )
 
@@ -119,7 +119,7 @@ def test_stage_snap_unpack_error(new_dir, partitions, fake_snap_command):
         parts:
           foo:
             plugin: nil
-            stage-snaps: ["bad-snap @ latest/stable"]
+            stage-snaps: ["bad-snap@latest/stable"]
         """
     )
 

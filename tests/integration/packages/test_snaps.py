@@ -45,7 +45,8 @@ def test_get_installed_snaps_success(check: CheckContextManager):
     "snaps_list",
     [
         {"snapcraft", "ruff"},
-        {"snapcraft @ 7.x/stable"},
+        {"snapcraft@7.x/stable"},
+        {"snapcraft/7.x/stable"},
     ],
 )
 def test_download_snaps_success(new_path: pathlib.Path, snaps_list: Sequence[str]):

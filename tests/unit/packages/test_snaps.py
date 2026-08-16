@@ -315,12 +315,21 @@ class TestSnapPackageLifecycle:
             ],
         ]
 
-    def test_install_non_classic_new_separator(self, fake_snapd, fake_snap_command):
+    @pytest.mark.parametrize(
+        "snap_name_with_channel",
+        [
+            "fake-snap@strict/stable",
+            "fake-snap/strict/stable",
+        ],
+    )
+    def test_install_non_classic_new_separator(
+        self, fake_snapd, fake_snap_command, snap_name_with_channel
+    ):
         fake_snapd.find_result = [
             {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
         ]
 
-        snap_pkg = snaps.SnapPackage("fake-snap@strict/stable")
+        snap_pkg = snaps.SnapPackage(snap_name_with_channel)
         snap_pkg.install()
         assert fake_snap_command.calls == [
             [
@@ -417,12 +426,21 @@ class TestSnapPackageLifecycle:
         snap_pkg.download()
         assert fake_snap_command.calls == [["snap", "download", "fake-snap"]]
 
-    def test_download_channel(self, fake_snapd, fake_snap_command):
+    @pytest.mark.parametrize(
+        "snap_name_with_channel",
+        [
+            "fake-snap@strict/stable",
+            "fake-snap/strict/stable",
+        ],
+    )
+    def test_download_channel(
+        self, fake_snapd, fake_snap_command, snap_name_with_channel
+    ):
         fake_snapd.find_result = [
             {"fake-snap": {"channels": {"strict/edge": {"confinement": "strict"}}}}
         ]
 
-        snap_pkg = snaps.SnapPackage("fake-snap@strict/stable")
+        snap_pkg = snaps.SnapPackage(snap_name_with_channel)
         snap_pkg.download()
         assert fake_snap_command.calls == [
             ["snap", "download", "fake-snap", "--channel", "strict/stable"]
