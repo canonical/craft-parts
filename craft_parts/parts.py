@@ -342,14 +342,16 @@ class PartSpec(BaseModel):
     """The snaps to install during the build step, before the build starts. The part
     makes them available in the build environment.
 
-    Entries can be listed in one of four formats.
+    Entries can be in one of three formats:
 
     * ``<snap-name>``
-    * ``<snap-name>@<channel>``
-    * ``<snap-name>/<channel-name>`` (deprecated, use ``@`` instead)
-    * ``<snap-name>/<channel-name>/<version-name>`` (deprecated, use ``@`` instead)
+    * ``<snap-name>@<track>/<risk>``
+    * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If no version or channel is provided, ``latest/stable`` is used.
+    If an entry specifies no track or risk, ``latest/stable`` is used.
+
+    The ``/`` character may also be used to separate the snap name from the
+    track, but this is deprecated in favor of the ``@`` character.
     """
 
     build_packages: list[str] = Field(

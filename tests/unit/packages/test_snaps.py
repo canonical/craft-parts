@@ -455,7 +455,16 @@ class TestSnapPackageLifecycle:
         snap_pkg.download()
         assert fake_snap_command.calls == [["snap", "download", "fake-snap"]]
 
-    def test_download_snaps(self, fake_snapd, fake_snap_command):
+    @pytest.mark.parametrize(
+        "snap_name_with_channel",
+        [
+            "other-fake-snap@latest/stable",
+            "other-fake-snap/latest/stable",
+        ],
+    )
+    def test_download_snaps(
+        self, fake_snapd, fake_snap_command, snap_name_with_channel
+    ):
         fake_snapd.find_result = [
             {"fake-snap": {"channels": {"latest/stable": {"confinement": "strict"}}}},
             {
@@ -466,7 +475,7 @@ class TestSnapPackageLifecycle:
         ]
 
         snaps.download_snaps(
-            snaps_list=["fake-snap", "other-fake-snap@latest/stable"],
+            snaps_list=["fake-snap", snap_name_with_channel],
             directory=Path("fakedir"),
         )
         assert fake_snap_command.calls == [
