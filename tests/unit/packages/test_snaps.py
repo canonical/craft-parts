@@ -45,6 +45,21 @@ class TestGetParsedSnap:
         assert name == expected_name
         assert channel == expected_channel
 
+    @pytest.mark.parametrize(
+        "snap",
+        [
+            "curl @ latest/stable",
+            "curl@ latest/stable",
+            "curl @latest/stable",
+            "curl / latest/stable",
+            "curl/ latest/stable",
+            "curl /latest/stable",
+        ],
+    )
+    def test_parsed_rejects_padding(self, snap):
+        with pytest.raises(errors.SnapInvalidFormat):
+            snaps._get_parsed_snap(snap)
+
 
 class TestSnapPackageCurrentChannel:
     def assert_channels(self, *, snap, installed_snaps, expected, fake_snapd):

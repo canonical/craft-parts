@@ -334,6 +334,11 @@ def _get_parsed_snap(snap: str) -> tuple[str, str]:
     else:
         snap_name = snap
         snap_channel = ""
+
+    # Reject padding around the name/channel or separator, e.g. "foo @ latest/stable".
+    if snap_name != snap_name.strip() or snap_channel != snap_channel.strip():
+        raise errors.SnapInvalidFormat(snap)
+
     return snap_name, snap_channel
 
 
