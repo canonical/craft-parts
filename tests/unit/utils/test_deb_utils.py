@@ -35,7 +35,7 @@ def test_is_chisel_slice(name, expected):
     [
         pytest.param(["bash_bins", "openssl_data"], True, id="all-slices"),
         pytest.param(["bash_bins", "curl"], True, id="mixed"),
-        pytest.param(["curl", "libxml2"], False, id="all-packages"),
+        pytest.param(["curl", "libxml2"], False, id="all-debs"),
         pytest.param([], False, id="empty-list"),
     ],
 )
@@ -46,11 +46,11 @@ def test_has_slices(names, expected):
 @pytest.mark.parametrize(
     ("names", "expected"),
     [
-        pytest.param(["curl", "libxml2"], True, id="all-packages"),
+        pytest.param(["curl", "libxml2"], True, id="all-debs"),
         pytest.param(["bash_bins", "curl"], True, id="mixed"),
         pytest.param(["bash_bins", "openssl_data"], False, id="all-slices"),
         pytest.param([], False, id="empty-list"),
     ],
 )
-def test_has_packages(names, expected):
-    assert deb_utils.has_packages(names) == expected
+def test_has_debs(names, expected):
+    assert deb_utils.has_debs(names) == expected

@@ -44,7 +44,7 @@ from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
-from craft_parts.utils.deb_utils import has_packages, has_slices
+from craft_parts.utils.deb_utils import has_debs, has_slices
 from craft_parts.utils.partition_utils import (
     BUILD_PARTITION,
     DEFAULT_PARTITION,
@@ -640,7 +640,7 @@ class PartSpec(BaseModel):
         stage_packages = values.get("stage-packages", [])
 
         if has_slices(stage_packages):
-            if has_packages(stage_packages):
+            if has_debs(stage_packages):
                 raise ValueError("cannot mix packages and slices in 'stage-packages'")
 
             context: dict[str, Any] = info.context or {}

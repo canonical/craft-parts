@@ -59,7 +59,7 @@ def has_slices(names: Iterable[str]) -> bool:
     return any(_is_chisel_slice(name) for name in names)
 
 
-def has_packages(names: Iterable[str]) -> bool:
+def has_debs(names: Iterable[str]) -> bool:
     """Return whether a list contains any Debian packages.
 
     :param names: An iterable of packages and slices.
