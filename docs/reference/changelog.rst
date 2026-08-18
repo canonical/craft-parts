@@ -24,6 +24,9 @@ Unreleased
 
 New features:
 
+- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
+  snap name and channel.
+
 - Add ``overlay-recommended-packages`` key to install overlay packages with their
   recommended dependencies.
 
