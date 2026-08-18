@@ -1277,6 +1277,31 @@ def test_get_installed_packages_fallback_ignores_not_installed(monkeypatch, tmp_
     assert pkgs == ["keep=2.0"]
 
 
+def test_install_packages_already_satisfied_uses_empty_marked_manifest(
+    fake_deb_run, mocker
+):
+    """Use the simulated marked set even when requested packages are satisfied."""
+    mark_packages = mocker.patch(
+        "craft_parts.packages.deb._get_packages_marked_for_installation_apt_get",
+        return_value=[],
+    )
+    get_versions = mocker.patch(
+        "craft_parts.packages.deb.Ubuntu._get_installed_package_versions",
+        return_value=[],
+    )
+    mocker.patch(
+        "craft_parts.packages.deb.Ubuntu._check_if_all_packages_installed",
+        return_value=True,
+    )
+
+    build_packages = deb.Ubuntu.install_packages(["package"])
+
+    mark_packages.assert_called_once_with(["package"], include_recommends=False)
+    get_versions.assert_called_once_with([])
+    fake_deb_run.assert_not_called()
+    assert build_packages == []
+
+
 def test_install_packages_host_path_uses_marked_packages_for_manifest(
     fake_deb_run, mocker
 ):

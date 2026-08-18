@@ -792,12 +792,6 @@ class Ubuntu(BaseRepository):
             logger.debug(
                 "Requested build-packages already installed: %s", package_names
             )
-            # apt-get simulation only reports packages it would install or upgrade.
-            # Preserve the legacy return value for requested concrete packages that
-            # are already satisfied.
-            marked_package_names.update(
-                get_pkg_name_parts(name)[0] for name in package_names
-            )
 
         # This result is a best effort approach for deps and virtual packages
         # as they are not part of the installation list.
