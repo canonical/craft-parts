@@ -17,6 +17,7 @@
 from pathlib import Path
 
 import pytest
+import requests
 from craft_parts.packages import errors, snaps
 
 # pylint: disable=missing-class-docstring
@@ -521,6 +522,78 @@ class TestSnapPackageLifecycle:
 
         installed_snaps = snaps.install_snaps(["fake-base-snap"])
         assert installed_snaps == ["fake-base-snap=test-fake-base-snap-revision"]
+
+
+class TestStoreQueryRetries:
+    """Store queries through snapd are retried and never silently skipped."""
+
+    @staticmethod
+    def _transient_error():
+        response = requests.Response()
+        response.status_code = 500
+        return requests.exceptions.HTTPError(response=response)
+
+    def test_get_store_snap_info_retries_transient_errors(self, mocker):
+        """Transient HTTP errors are retried with a delay."""
+        fake_sleep = mocker.patch("craft_parts.packages.snaps.time.sleep")
+        store_info = {"channel": "stable", "type": "app"}
+        mocker.patch(
+            "craft_parts.packages.snaps._get_store_snap_info",
+            side_effect=[self._transient_error(), self._transient_error(), store_info],
+        )
+        snap_pkg = snaps.SnapPackage("fake-snap")
+        assert snap_pkg.get_store_snap_info() == store_info
+        assert fake_sleep.call_count == 2
+
+    def test_get_store_snap_info_gives_up_after_retries(self, mocker):
+        """After exhausting all attempts the store info is None."""
+        mocker.patch("craft_parts.packages.snaps.time.sleep")
+        mocker.patch(
+            "craft_parts.packages.snaps._get_store_snap_info",
+            side_effect=self._transient_error(),
+        )
+        snap_pkg = snaps.SnapPackage("fake-snap")
+        assert snap_pkg.get_store_snap_info() is None
+
+    def test_install_snaps_installs_when_store_query_fails(
+        self, mocker, fake_snap_command
+    ):
+        """A failed store query must not silently skip installation."""
+        mocker.patch("craft_parts.packages.snaps.time.sleep")
+        mocker.patch(
+            "craft_parts.packages.snaps._get_store_snap_info",
+            side_effect=self._transient_error(),
+        )
+        not_found = requests.Response()
+        not_found.status_code = 404
+        # Not installed before the install, installed with revision 1 after.
+        mocker.patch(
+            "craft_parts.packages.snaps._get_local_snap_info",
+            side_effect=[
+                requests.exceptions.HTTPError(response=not_found),
+                {"name": "fake-snap", "revision": "1"},
+            ],
+        )
+        installed_snaps = snaps.install_snaps(["fake-snap"])
+        assert ["snap", "install", "fake-snap"] in fake_snap_command.calls
+        assert installed_snaps == ["fake-snap=1"]
+
+    def test_install_snaps_skips_installed_snap_when_store_query_fails(
+        self, mocker, fake_snap_command
+    ):
+        """An already-installed snap is not reinstalled if the store query fails."""
+        mocker.patch("craft_parts.packages.snaps.time.sleep")
+        mocker.patch(
+            "craft_parts.packages.snaps._get_store_snap_info",
+            side_effect=self._transient_error(),
+        )
+        mocker.patch(
+            "craft_parts.packages.snaps._get_local_snap_info",
+            return_value={"name": "fake-snap", "revision": "1"},
+        )
+        installed_snaps = snaps.install_snaps(["fake-snap"])
+        assert fake_snap_command.calls == []
+        assert installed_snaps == ["fake-snap=1"]
 
 
 class TestInstalledSnaps:
