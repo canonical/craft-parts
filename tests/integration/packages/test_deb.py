@@ -61,11 +61,12 @@ def test_install_packages_installs_package_and_returns_version(purge_hello):
 
 
 @pytest.mark.requires_root
-def test_install_packages_already_installed_returns_version(purge_hello):
-    """Verify install_packages is idempotent and still returns a version."""
+def test_install_packages_already_installed_returns_empty_manifest(purge_hello):
+    """Verify install_packages is idempotent and reports no new installation."""
     deb.Ubuntu.install_packages(["hello"])
     deb.Ubuntu.refresh_packages_list.cache_clear()
 
     installed = deb.Ubuntu.install_packages(["hello"])
 
-    assert any(package.startswith("hello=") for package in installed)
+    assert installed == []
+    assert Path("/usr/bin/hello").is_file()
