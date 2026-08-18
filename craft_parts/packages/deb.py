@@ -647,9 +647,7 @@ class Ubuntu(BaseRepository):
         if refresh_package_cache and install_required:
             cls.refresh_packages_list()
         if install_required:
-            cls._install_packages(
-                package_names, include_recommends=include_recommends
-            )
+            cls._install_packages(package_names, include_recommends=include_recommends)
         else:
             logger.debug(
                 "Requested build-packages already installed: %s", package_names
