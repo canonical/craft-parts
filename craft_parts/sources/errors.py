@@ -195,6 +195,19 @@ class InvalidSnapPackage(SourceError):  # noqa: N818
         super().__init__(brief=brief, resolution=resolution)
 
 
+class InvalidComponentPackage(SourceError):  # noqa: N818
+    """A component package is invalid.
+
+    :param comp_file: The component file name.
+    """
+
+    def __init__(self, comp_file: str) -> None:
+        brief = f"Component {comp_file!r} does not contain valid data."
+        resolution = "Ensure the source lists a proper component file."
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
 class InvalidRpmPackage(SourceError):  # noqa: N818
     """An rpm package is invalid.
 

@@ -29,6 +29,7 @@ from .local_source import LocalSource, LocalSourceModel
 from .rpm_source import RpmSource, RpmSourceModel
 from .sevenzip_source import SevenzipSource, SevenzipSourceModel
 from .snap_source import SnapSource, SnapSourceModel
+from .component_source import ComponentSource, ComponentSourceModel
 from .sources import (
     SourceHandler,
     get_source_handler,
@@ -51,7 +52,8 @@ def _detect_source_type(
 
 
 SourceModel = Annotated[
-    DebSourceModel
+    ComponentSourceModel
+    | DebSourceModel
     | FileSourceModel
     | GitSourceModel
     | LocalSourceModel
@@ -68,6 +70,8 @@ SourceModel = Annotated[
 __all__ = [
     "BaseFileSourceModel",
     "errors",
+    "ComponentSource",
+    "ComponentSourceModel",
     "DebSource",
     "DebSourceModel",
     "FileSource",
