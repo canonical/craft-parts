@@ -371,11 +371,19 @@ class PartHandler:
         if self._part.has_overlay:
             # install overlay packages (from spec and plugin)
             overlay_packages = self._merged_overlay_packages()
-            if overlay_packages:
+            overlay_recommended_packages = self._merged_overlay_recommended_packages()
+            if overlay_packages or overlay_recommended_packages:
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
                 ) as ctx:
-                    ctx.install_packages(overlay_packages)
+                    # include-recommends should be processed first, packages in recommends
+                    # chain will be skipped if any already installed via overlay-packages
+                    if overlay_recommended_packages:
+                        ctx.install_packages(
+                            overlay_recommended_packages, include_recommends=True
+                        )
+                    if overlay_packages:
+                        ctx.install_packages(overlay_packages)
 
             if self._part.spec.override_overlay or self._plugin.uses_overlay:
                 # Run in chroot: either override-overlay scriptlet or
@@ -1311,13 +1319,20 @@ class PartHandler:
         plugin_packages = sorted(self._plugin.get_overlay_packages())
         return spec_packages + [p for p in plugin_packages if p not in spec_packages]
 
+    def _merged_overlay_recommended_packages(self) -> list[str]:
+        """Return overlay recommended packages from both the part spec and the plugin."""
+        spec_packages = list(self._part.spec.overlay_recommended_packages)
+        plugin_packages = sorted(self._plugin.get_overlay_recommended_packages())
+        return spec_packages + [p for p in plugin_packages if p not in spec_packages]
+
     def _fetch_overlay_packages(self) -> None:
         """Download overlay packages to the local package cache.
 
         :raises OverlayPackageNotFound: If a package is not available for download.
         """
         overlay_packages = self._merged_overlay_packages()
-        if not overlay_packages:
+        overlay_recommended_packages = self._merged_overlay_recommended_packages()
+        if not (overlay_packages or overlay_recommended_packages):
             return
 
         try:
@@ -1327,7 +1342,14 @@ class PartHandler:
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
                 ctx.refresh_packages_list()
-                ctx.download_packages(overlay_packages)
+                # include-recommends should be processed first, packages in recommends
+                # chain will be skipped if any already installed via overlay-packages
+                if overlay_recommended_packages:
+                    ctx.download_packages(
+                        overlay_recommended_packages, include_recommends=True
+                    )
+                if overlay_packages:
+                    ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
                 part_name=self._part.name, package_name=err.package_name

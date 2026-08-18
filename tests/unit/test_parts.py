@@ -71,6 +71,7 @@ class TestPartSpecs:
         # Overlay defaults
         data_copy["overlay"] = ["*"]
         data_copy["overlay-packages"] = []
+        data_copy["overlay-recommended-packages"] = []
         data_copy["overlay-script"] = None
         data_copy["override-overlay"] = None
         spec = PartSpec.unmarshal(data)
@@ -379,6 +380,20 @@ class TestPartData:
         ],
     )
     def test_part_has_chisel_as_build_snap(self, partitions, tc_spec, tc_result):
+        p = Part("foo", tc_spec, partitions=partitions)
+        assert p.spec.has_chisel_as_build_snap == tc_result
+
+    @pytest.mark.parametrize(
+        ("tc_spec", "tc_result"),
+        [
+            ({"build-snaps": ["chisel@latest/candidate"]}, True),
+            ({"build-snaps": ["chisel@stable"]}, True),
+            ({"build-snaps": ["chiselhelper@stable"]}, False),
+        ],
+    )
+    def test_part_has_chisel_as_build_snap_new_separator(
+        self, partitions, tc_spec, tc_result
+    ):
         p = Part("foo", tc_spec, partitions=partitions)
         assert p.spec.has_chisel_as_build_snap == tc_result
 

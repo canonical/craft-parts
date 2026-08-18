@@ -288,20 +288,36 @@ class PartSpec(BaseModel):
     using the base layer's package manager.
     """
 
+    overlay_recommended_packages: list[str] = Field(
+        default=[],
+        description="The packages to install in the part's layer with recommended packages.",
+        examples=["[ed]"],
+    )
+    """The packages to install in the part's layer, plus any `recommended packages
+    <https://www.debian.org/doc/manuals/debian-faq/pkg-basics.en.html#depends>`__ they
+    might have.
+
+    During the overlay step, these packages and their recommended packages are
+    installed into the part's layer using the base layer's package manager.
+    """
+
     stage_snaps: list[str] = Field(
         default=[],
         description="The snaps to include in the stage environment.",
-        examples=["[go/1.17, chisel/latest/candidate, mir-kiosk-x11]"],
+        examples=["[go@1.17/stable, chisel@latest/candidate, mir-kiosk-x11]"],
     )
     """During the stage step, these snaps are included in the stage environment.
 
     Entries can be in one of three formats:
 
     * ``<snap-name>``
-    * ``<snap-name>/<channel-name>``
-    * ``<snap-name>/<channel-name>/<version-name>``
+    * ``<snap-name>@<track>/<risk>``
+    * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If an entry contains no version or channel, ``latest/stable`` is used.
+    If an entry specifies no track or risk, ``latest/stable`` is used.
+
+    The ``/`` character may also be used to separate the snap name from the
+    track, but this is deprecated in favor of the ``@`` character.
     """
 
     stage_packages: list[str] = Field(
@@ -321,18 +337,21 @@ class PartSpec(BaseModel):
     build_snaps: list[str] = Field(
         default=[],
         description="The snaps to install in the build environment.",
-        examples=["[go/latest/stable, node/stable]"],
+        examples=["[go@latest/stable, node@stable]"],
     )
     """The snaps to install during the build step, before the build starts. The part
     makes them available in the build environment.
 
-    Entries can be listed in one of three formats.
+    Entries can be in one of three formats:
 
     * ``<snap-name>``
-    * ``<snap-name>/<channel-name>``
-    * ``<snap-name>/<channel-name>/<version-name>``
+    * ``<snap-name>@<track>/<risk>``
+    * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If no version or channel is provided, ``latest/stable`` is used.
+    If an entry specifies no track or risk, ``latest/stable`` is used.
+
+    The ``/`` character may also be used to separate the snap name from the
+    track, but this is deprecated in favor of the ``@`` character.
     """
 
     build_packages: list[str] = Field(
@@ -568,7 +587,11 @@ class PartSpec(BaseModel):
     )
 
     @field_validator(
-        "overlay_packages", "overlay_files", "overlay_script", "override_overlay"
+        "overlay_packages",
+        "overlay_recommended_packages",
+        "overlay_files",
+        "overlay_script",
+        "override_overlay",
     )
     @classmethod
     def validate_overlay_feature(cls, item: _T_validate) -> _T_validate:
@@ -660,6 +683,7 @@ class PartSpec(BaseModel):
         """Return whether this spec declares overlay content."""
         return bool(
             self.overlay_packages
+            or self.overlay_recommended_packages
             or self.override_overlay is not None
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
@@ -689,9 +713,15 @@ class PartSpec(BaseModel):
         """Return whether the part has chisel as build snap."""
         if not self.build_snaps:
             return False
-        return any(
-            p for p in self.build_snaps if p == "chisel" or p.startswith("chisel/")
-        )
+        for build_snap in self.build_snaps:
+            normalized_snap = build_snap.strip()
+            if "@" in normalized_snap:
+                snap_name = normalized_snap.split("@", 1)[0]
+            else:
+                snap_name = normalized_snap.split("/", maxsplit=1)[0]
+            if snap_name == "chisel":
+                return True
+        return False
 
 
 def _get_build_partition_usage_error(fileset_name: str, partition: str) -> str | None:

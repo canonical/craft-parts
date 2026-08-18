@@ -24,6 +24,12 @@ Unreleased
 
 New features:
 
+- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
+  snap name and channel.
+
+- Add ``overlay-recommended-packages`` key to install overlay packages with their
+  recommended dependencies.
+
 - The ``colcon`` plugin now passes ``-DBUILD_TESTING=OFF`` to CMake by default,
   disabling test targets that are not useful inside a rock or snap and would
   otherwise pull in large test-only dependencies. Users can opt back in by

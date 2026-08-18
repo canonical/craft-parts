@@ -70,6 +70,9 @@ directory.
 .. kitbash-field:: PartSpec overlay_packages
     :label: reference-part-properties-overlay-packages
 
+.. kitbash-field:: PartSpec overlay_recommended_packages
+    :label: reference-part-properties-overlay-recommended-packages
+
 .. kitbash-field:: PartSpec overlay_script
     :label: reference-part-properties-overlay-script
 
