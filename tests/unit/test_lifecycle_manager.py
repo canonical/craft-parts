@@ -303,7 +303,7 @@ class TestLifecycleManager:
                 project_info=ANY,
                 ignore_patterns=None,
                 extra_build_packages=None,
-                extra_build_snaps=["chisel/latest/stable"],
+                extra_build_snaps=["chisel@latest/stable"],
                 track_stage_packages=False,
                 base_layer_dir=None,
                 base_layer_hash=None,
