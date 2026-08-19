@@ -71,7 +71,14 @@ def chroot(
     # functions used by the tests). Python 3.14 changed the default Linux
     # multiprocessing start method from "fork" to "forkserver", so make the
     # dependency explicit by always requesting the fork context here.
-    ctx = multiprocessing.get_context("fork")
+    try:
+        ctx = multiprocessing.get_context("fork")
+    except ValueError as exc:
+        raise errors.OverlayChrootExecutionError(
+            "multiprocessing start method 'fork' is required for chroot "
+            "execution but is not available on this platform"
+        ) from exc
+
     parent_conn, child_conn = ctx.Pipe()
     child = ctx.Process(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
