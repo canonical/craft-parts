@@ -42,7 +42,6 @@ def test_fetch_stage_slices(tmp_path, fake_apt_cache):
         stage_packages_path=stage_dir,
         base="unused",
         arch="unused",
-        list_only=False,
     )
 
     assert fetched_slices == slices
