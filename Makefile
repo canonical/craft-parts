@@ -334,12 +334,59 @@ endif
 _gh-runner-clean:
 # Prepare and fix issues on Github-hosted runners.
 ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
-	# Delete the (huge) Android SDK in the background.
+	# Android SDK
 	nohup sudo rm -rf /usr/local/lib/android/ > /dev/null &
+
+	# Browsers & WebDrivers (Chrome, Edge, Firefox, Chromium, and drivers)
+	sudo $(APT) purge 'google-chrome*' 'microsoft-edge*' 'firefox*' || true
+	nohup sudo rm -rf \
+		/usr/local/share/chrome_driver \
+		/usr/local/share/chromedriver* \
+		/usr/local/share/chromium \
+		/usr/local/share/edge_driver \
+		/usr/local/share/gecko_driver \
+		/opt/google \
+		/opt/microsoft/msedge \
+		> /dev/null &
+
+	# Languages, Compilers & Package Managers (Haskell, Swift, Julia, Conda, Brew, Boost, vcpkg, Mono, PHP, PowerShell)
+	sudo $(APT) purge 'ghc-*' 'cabal-install-*' 'php*' 'powershell*' 'mono-complete*' 'nuget*' || true
+	nohup sudo rm -rf \
+		/opt/ghc \
+		/usr/local/.ghcup \
+		/root/.ghcup \
+		/usr/share/swift \
+		/usr/local/julia* \
+		/usr/share/miniconda \
+		/home/linuxbrew/.linuxbrew \
+		/usr/local/share/boost \
+		/usr/local/share/vcpkg \
+		/usr/local/share/powershell \
+		/opt/microsoft/powershell \
+		> /dev/null &
+
+	# Databases, Web Servers & Cloud CLIs (MySQL, PostgreSQL, MSSQL, Apache, Nginx, Azure)
+	sudo $(APT) purge \
+		'mysql-server*' \
+		'mysql-client*' \
+		'postgresql*' \
+		'mssql-tools*' \
+		'apache2*' \
+		'nginx*' \
+		'azure-cli*' \
+		|| true
+
+	# Docker container storage & image cache
+	nohup sudo rm -rf /var/lib/docker > /dev/null &
+
+	# CodeQL Action tool cache
+	nohup sudo rm -rf /opt/hostedtoolcache/CodeQL > /dev/null &
+
 	# Remove the github-installed cmake 4 because it breaks the cmake tests.
 	# See: https://github.com/actions/runner-images/issues/13023
 	nohup sudo rm -rf /usr/local/bin/cmake /usr/local/bin/cmake-gui /usr/local/bin/ccmake /usr/local/bin/ctest /usr/local/bin/cpack > /dev/null &
 	nohup sudo rm -rf /usr/local/share/cmake-4* > /dev/null &
+
 	# Remove Github-installed JDK 25 that's not in the repos.
 	# https://github.com/actions/runner-images/issues/13138
 	sudo $(APT) purge temurin-*-jdk || true
@@ -347,18 +394,7 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# Delete the adoptium repository:
 	# https://github.com/actions/runner-images/blob/6fd5896f04e572647774996a7b292b854e6e8bc0/images/ubuntu/scripts/build/install-java-tools.sh#L67
 	sudo rm -f /etc/apt/sources.list.d/adoptium.list
-	# WebDriver packages
-	nohup sudo rm -rf \
-		/usr/local/share/chrome_driver \
-		/usr/local/share/edge_driver \
-		/usr/local/share/gecko_driver \
-		> /dev/null &
-	# Clean up cached Docker images
-	docker system prune --all --force &
-	# Remove Swift, Boost C++, vcpkg
-	nohup sudo rm -rf \
-		/usr/local/share/boost \
-		/usr/local/share/vcpkg \
-		/usr/local/share/swift \
-		> /dev/null &
+
+	# Clean up orphaned packages and apt cache
+	sudo $(APT) autoremove --purge || true
 endif
