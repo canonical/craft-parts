@@ -208,13 +208,14 @@ endif
 ifeq ($(wildcard /usr/share/doc/bison/copyright),)
 APT_PACKAGES += bison
 endif
-# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
-# 22.04 -> 25.10 (and possibly 26.04).
+# DotNet:
 # On focal, we'll get the snap instead.
+# On Jammy -> Oracular, use dotnet 8
+# On Plucky+, use dotnet 10
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
-ifeq ($(filter $(UBUNTU_CODENAME),jammy kinetic lunar mantic noble oracular))
+ifneq ($(filter $(UBUNTU_CODENAME),jammy kinetic lunar mantic noble oracular),)
 APT_PACKAGES += dotnet-sdk-8.0
-else ifeq ($(filter $(UBUNTU_CODENAME),plucky questing resolute stonking))
+else ifneq ($(filter $(UBUNTU_CODENAME),plucky questing resolute stonking),)
 APT_PACKAGES += dotnet-sdk-10.0
 endif
 endif
