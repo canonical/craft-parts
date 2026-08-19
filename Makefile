@@ -212,8 +212,10 @@ endif
 # 22.04 -> 25.10 (and possibly 26.04).
 # On focal, we'll get the snap instead.
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
-ifneq ($(UBUNTU_CODENAME),focal)
+ifeq ($($(UBUNTU_CODENAME),jammy kinetic lunar mantic noble oracular))
 APT_PACKAGES += dotnet-sdk-8.0
+else ifeq ($($(UBUNTU_CODENAME),plucky questing resolute stonking))
+APT_PACKAGES += dotnet-sdk-10.0
 endif
 endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
