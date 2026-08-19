@@ -337,7 +337,7 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# Android SDK
 	nohup sudo rm -rf /usr/local/lib/android/ > /dev/null &
 
-	# Browsers & WebDrivers (Chrome, Edge, Firefox, Chromium, and drivers)
+	# Browsers & WebDrivers (Chrome, Edge, Firefox, Chromium, Selenium, and drivers)
 	sudo $(APT) purge 'google-chrome*' 'microsoft-edge*' 'firefox*' || true
 	nohup sudo rm -rf \
 		/usr/local/share/chrome_driver \
@@ -345,35 +345,54 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 		/usr/local/share/chromium \
 		/usr/local/share/edge_driver \
 		/usr/local/share/gecko_driver \
+		/usr/share/java/selenium* \
 		/opt/google \
 		/opt/microsoft/msedge \
+		/usr/bin/google-chrome* \
+		/usr/bin/chromedriver \
+		/usr/bin/chromium* \
+		/usr/bin/msedgedriver \
+		/usr/bin/geckodriver \
 		> /dev/null &
 
-	# Languages, Compilers & Package Managers (Haskell, Swift, Julia, Conda, Brew, Boost, vcpkg, Mono, PHP, PowerShell, pipx, gfortran, .NET 9)
+	# Languages, Compilers, SDKs & Tool Cache
 	sudo $(APT) purge \
 		'ghc-*' \
 		'cabal-install-*' \
 		'php*' \
 		'powershell*' \
-		'mono-complete*' \
+		'mono*' \
 		'nuget*' \
 		'pipx*' \
 		'gfortran*' \
 		'dotnet*9*' \
 		'aspnetcore*9*' \
+		'r-base*' \
+		'r-cran*' \
+		'r-doc*' \
 		|| true
 	nohup sudo rm -rf \
 		/opt/ghc \
 		/usr/local/.ghcup \
 		/root/.ghcup \
 		/usr/share/swift \
+		/usr/local/bin/swift* \
 		/usr/local/julia* \
+		/usr/local/bin/julia \
 		/usr/share/miniconda \
+		/opt/pypy* \
 		/home/linuxbrew/.linuxbrew \
 		/usr/local/share/boost \
 		/usr/local/share/vcpkg \
+		/usr/local/bin/vcpkg \
 		/usr/local/share/powershell \
 		/opt/microsoft/powershell \
+		/usr/bin/pwsh \
+		/usr/lib/mono \
+		/usr/share/mono \
+		/usr/share/kotlinc \
+		/usr/share/sbt \
+		/usr/local/bin/lein \
 		/opt/pipx \
 		/opt/pipx_bin \
 		/root/.local/share/pipx \
@@ -382,18 +401,54 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 		/usr/share/dotnet/shared/Microsoft.NETCore.App/9* \
 		/usr/share/dotnet/shared/Microsoft.AspNetCore.App/9* \
 		/usr/share/dotnet/packs/*9* \
+		/opt/hostedtoolcache \
 		> /dev/null &
 
-	# Databases, Web Servers & Cloud CLIs (MySQL, PostgreSQL, MSSQL, Apache, Nginx, Azure)
+	# Cloud, Infrastructure & Automation Tools (Terraform, Packer, AWS, GCP, Azure, K8s)
+	sudo $(APT) purge 'google-cloud-cli*' 'azure-cli*' || true
+	nohup sudo rm -rf \
+		/usr/local/bin/terraform \
+		/usr/local/bin/packer \
+		/usr/local/aws-cli \
+		/usr/local/aws-sam-cli \
+		/usr/local/bin/aws \
+		/opt/google-cloud-sdk \
+		/usr/lib/google-cloud-sdk \
+		/usr/share/google-cloud-sdk \
+		/usr/local/bin/kubectl \
+		/usr/local/bin/helm \
+		/usr/local/bin/minikube \
+		/usr/local/bin/kind \
+		/usr/local/bin/bicep \
+		/usr/local/bin/aliyun \
+		/usr/local/bin/heroku \
+		/usr/local/bin/pulumi \
+		/usr/local/bin/oc \
+		/usr/local/bin/oras \
+		> /dev/null &
+
+	# Databases & Web Servers (MySQL, PostgreSQL, MSSQL, SqlPackage, Apache, Nginx)
 	sudo $(APT) purge \
-		'mysql-server*' \
-		'mysql-client*' \
+		'mysql*' \
 		'postgresql*' \
 		'mssql-tools*' \
+		'sqlpackage*' \
 		'apache2*' \
 		'nginx*' \
-		'azure-cli*' \
 		|| true
+	nohup sudo rm -rf \
+		/var/lib/mysql \
+		/var/lib/postgresql \
+		/etc/mysql \
+		/etc/postgresql \
+		/var/log/nginx \
+		/var/log/apache2 \
+		/etc/nginx \
+		/etc/apache2 \
+		/opt/mssql* \
+		/opt/microsoft/sqlpackage \
+		/usr/local/sqlpackage \
+		> /dev/null &
 
 	# Docker & Containerd (services, packages, container storage, image cache)
 	sudo systemctl stop docker.service containerd.service 2>/dev/null || true
@@ -405,9 +460,6 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 		/usr/libexec/docker \
 		/usr/bin/docker-credential-ecr-login \
 		> /dev/null &
-
-	# CodeQL Action tool cache
-	nohup sudo rm -rf /opt/hostedtoolcache/CodeQL > /dev/null &
 
 	# Remove the github-installed cmake 4 because it breaks the cmake tests.
 	# See: https://github.com/actions/runner-images/issues/13023
