@@ -64,7 +64,7 @@ APT_PACKAGES += mmdebstrap
 endif
 
 # Dependencies for sources
-ifeq ($(wildcard /usr/share/doc/p7zip-full/copyright),)
+ifeq ($(wildcard /usr/share/doc/p7zip-*/copyright),)
 APT_PACKAGES += p7zip-full
 endif
 ifeq ($(wildcard /usr/share/doc/curl/copyright),)
@@ -212,9 +212,9 @@ endif
 # 22.04 -> 25.10 (and possibly 26.04).
 # On focal, we'll get the snap instead.
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
-ifeq ($($(UBUNTU_CODENAME),jammy kinetic lunar mantic noble oracular))
+ifeq ($(filter $(UBUNTU_CODENAME),jammy kinetic lunar mantic noble oracular))
 APT_PACKAGES += dotnet-sdk-8.0
-else ifeq ($($(UBUNTU_CODENAME),plucky questing resolute stonking))
+else ifeq ($(filter $(UBUNTU_CODENAME),plucky questing resolute stonking))
 APT_PACKAGES += dotnet-sdk-10.0
 endif
 endif
