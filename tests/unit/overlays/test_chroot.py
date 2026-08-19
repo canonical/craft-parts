@@ -21,7 +21,6 @@ from unittest.mock import ANY, call
 import pytest
 from craft_parts.overlays import chroot
 
-
 _FORK_CTX = multiprocessing.get_context("fork")
 
 
