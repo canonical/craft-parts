@@ -346,8 +346,19 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 		/opt/microsoft/msedge \
 		> /dev/null &
 
-	# Languages, Compilers & Package Managers (Haskell, Swift, Julia, Conda, Brew, Boost, vcpkg, Mono, PHP, PowerShell)
-	sudo $(APT) purge 'ghc-*' 'cabal-install-*' 'php*' 'powershell*' 'mono-complete*' 'nuget*' || true
+	# Languages, Compilers & Package Managers (Haskell, Swift, Julia, Conda, Brew, Boost, vcpkg, Mono, PHP, PowerShell, pipx, gfortran, .NET 9)
+	sudo $(APT) purge \
+		'ghc-*' \
+		'cabal-install-*' \
+		'php*' \
+		'powershell*' \
+		'mono-complete*' \
+		'nuget*' \
+		'pipx*' \
+		'gfortran*' \
+		'dotnet*9*' \
+		'aspnetcore*9*' \
+		|| true
 	nohup sudo rm -rf \
 		/opt/ghc \
 		/usr/local/.ghcup \
@@ -360,6 +371,14 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 		/usr/local/share/vcpkg \
 		/usr/local/share/powershell \
 		/opt/microsoft/powershell \
+		/opt/pipx \
+		/opt/pipx_bin \
+		/root/.local/share/pipx \
+		/home/runner/.local/share/pipx \
+		/usr/share/dotnet/sdk/9* \
+		/usr/share/dotnet/shared/Microsoft.NETCore.App/9* \
+		/usr/share/dotnet/shared/Microsoft.AspNetCore.App/9* \
+		/usr/share/dotnet/packs/*9* \
 		> /dev/null &
 
 	# Databases, Web Servers & Cloud CLIs (MySQL, PostgreSQL, MSSQL, Apache, Nginx, Azure)
@@ -373,8 +392,16 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 		'azure-cli*' \
 		|| true
 
-	# Docker container storage & image cache
-	nohup sudo rm -rf /var/lib/docker > /dev/null &
+	# Docker & Containerd (services, packages, container storage, image cache)
+	sudo systemctl stop docker.service containerd.service 2>/dev/null || true
+	sudo $(APT) purge 'docker*' 'containerd*' 'moby*' || true
+	nohup sudo rm -rf \
+		/var/lib/docker \
+		/var/lib/containerd \
+		/etc/docker \
+		/usr/libexec/docker \
+		/usr/bin/docker-credential-ecr-login \
+		> /dev/null &
 
 	# CodeQL Action tool cache
 	nohup sudo rm -rf /opt/hostedtoolcache/CodeQL > /dev/null &
@@ -394,4 +421,5 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 
 	# Clean up orphaned packages and apt cache
 	sudo $(APT) autoremove --purge || true
+	sudo $(APT) clean || true
 endif
