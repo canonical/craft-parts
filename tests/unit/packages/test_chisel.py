@@ -22,13 +22,13 @@ import pytest
 import yaml
 from craft_parts import Step
 from craft_parts.packages import deb
-from craft_parts.packages.deb import _is_list_of_slices
+from craft_parts.utils.deb_utils import has_slices
 
 
 def test_is_list_of_slices():
-    assert _is_list_of_slices(["package1_slice1", "package1_slice2", "package2_slice2"])
-    assert not _is_list_of_slices(["package1", "package2"])
-    assert not _is_list_of_slices([])
+    assert has_slices(["package1_slice1", "package1_slice2", "package2_slice2"])
+    assert not has_slices(["package1", "package2"])
+    assert not has_slices([])
 
 
 def test_fetch_stage_slices(tmp_path, fake_apt_cache):

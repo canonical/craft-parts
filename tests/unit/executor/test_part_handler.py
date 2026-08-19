@@ -792,14 +792,34 @@ class TestRerunStep:
 class TestPackages:
     """Verify package handling."""
 
-    def test_fetch_stage_packages(self, mocker, new_dir, partitions):
-        mocker.patch(
+    @pytest.mark.parametrize(
+        ("part_key", "declared_names", "fetched_names"),
+        [
+            pytest.param(
+                "stage-packages",
+                ["pkg1"],
+                ["pkg1", "pkg2"],
+                id="stage-packages",
+            ),
+            pytest.param(
+                "stage-slices",
+                ["pkg1_bins"],
+                ["pkg1_bins", "pkg2_bins"],
+                id="stage-slices",
+            ),
+        ],
+    )
+    def test_fetch_stage_packages_or_slices(
+        self, mocker, new_dir, partitions, part_key, declared_names, fetched_names
+    ):
+        """The part handler should handle stage-packages and stage-slices identically."""
+        fetch_stage_packages = mocker.patch(
             "craft_parts.packages.Repository.fetch_stage_packages",
-            return_value=["pkg1", "pkg2"],
+            return_value=fetched_names,
         )
 
         p1 = Part(
-            "p1", {"plugin": "nil", "stage-packages": ["pkg1"]}, partitions=partitions
+            "p1", {"plugin": "nil", part_key: declared_names}, partitions=partitions
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
@@ -812,7 +832,14 @@ class TestPackages:
         )
 
         result = handler._fetch_stage_packages(step_info=step_info)
-        assert result == ["pkg1", "pkg2"]
+        assert result == fetched_names
+        fetch_stage_packages.assert_called_once_with(
+            cache_dir=mocker.ANY,
+            package_names=declared_names,
+            arch=mocker.ANY,
+            base=mocker.ANY,
+            stage_packages_path=mocker.ANY,
+        )
 
     def test_fetch_stage_packages_none(self, mocker, new_dir, partitions):
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
