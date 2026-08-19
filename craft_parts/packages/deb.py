@@ -608,7 +608,6 @@ class Ubuntu(BaseRepository):
         cls,
         package_names: list[str],
         *,
-        list_only: bool = False,
         refresh_package_cache: bool = True,
         include_recommends: bool = False,
     ) -> list[str]:
@@ -630,17 +629,14 @@ class Ubuntu(BaseRepository):
         marked_packages = cls._get_packages_marked_for_installation(package_names)
         marked_package_names = [name for name, _ in sorted(marked_packages)]
 
-        if not list_only:
-            if refresh_package_cache and install_required:
-                cls.refresh_packages_list()
-            if install_required:
-                cls._install_packages(
-                    package_names, include_recommends=include_recommends
-                )
-            else:
-                logger.debug(
-                    "Requested build-packages already installed: %s", package_names
-                )
+        if refresh_package_cache and install_required:
+            cls.refresh_packages_list()
+        if install_required:
+            cls._install_packages(package_names, include_recommends=include_recommends)
+        else:
+            logger.debug(
+                "Requested build-packages already installed: %s", package_names
+            )
 
         # This result is a best effort approach for deps and virtual packages
         # as they are not part of the installation list.
@@ -695,7 +691,6 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
-        list_only: bool = False,
         packages_filters: set[str] | None = None,
     ) -> list[str]:
         """Fetch stage packages to stage_packages_path."""
@@ -715,7 +710,6 @@ class Ubuntu(BaseRepository):
             stage_packages_path=stage_packages_path,
             base=base,
             arch=arch,
-            list_only=list_only,
             packages_filters=packages_filters,
         )
 
@@ -729,7 +723,6 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
-        list_only: bool = False,
         packages_filters: set[str] | None = None,
     ) -> list[str]:
         """Fetch .deb stage packages to stage_packages_path."""
@@ -742,8 +735,7 @@ class Ubuntu(BaseRepository):
         if packages_filters:
             filtered_names.update(packages_filters)
 
-        if not list_only:
-            stage_packages_path.mkdir(exist_ok=True)
+        stage_packages_path.mkdir(exist_ok=True)
 
         stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
         deb_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -769,18 +761,12 @@ class Ubuntu(BaseRepository):
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(filtered_names)
 
-            if list_only:
-                marked_packages = apt_cache.get_packages_marked_for_installation()
-                installed = {
-                    f"{name}={version}" for name, version in sorted(marked_packages)
-                }
-            else:
-                for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                    deb_cache_dir
-                ):
-                    logger.info("Extracting stage package: %s", pkg_name)
-                    installed.add(f"{pkg_name}={pkg_version}")
-                    file_utils.link_or_copy(dl_path, stage_packages_path / dl_path.name)
+            for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
+                deb_cache_dir
+            ):
+                logger.info("Extracting stage package: %s", pkg_name)
+                installed.add(f"{pkg_name}={pkg_version}")
+                file_utils.link_or_copy(dl_path, stage_packages_path / dl_path.name)
 
         return sorted(installed)
 
