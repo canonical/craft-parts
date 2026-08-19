@@ -395,13 +395,11 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 		/usr/local/bin/lein \
 		/opt/pipx \
 		/opt/pipx_bin \
-		/root/.local/share/pipx \
-		/home/runner/.local/share/pipx \
 		/usr/share/dotnet/sdk/9* \
 		/usr/share/dotnet/shared/Microsoft.NETCore.App/9* \
 		/usr/share/dotnet/shared/Microsoft.AspNetCore.App/9* \
 		/usr/share/dotnet/packs/*9* \
-		/opt/hostedtoolcache \
+		/opt/hostedtoolcache/CodeQL \
 		> /dev/null &
 
 	# Cloud, Infrastructure & Automation Tools (Terraform, Packer, AWS, GCP, Azure, K8s)
