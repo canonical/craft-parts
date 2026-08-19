@@ -22,6 +22,9 @@ import pytest
 from craft_parts.overlays import chroot
 
 
+_FORK_CTX = multiprocessing.get_context("fork")
+
+
 def target_func(content: str) -> int:
     Path("foo.txt").write_text(content)
     return 1337
@@ -54,7 +57,7 @@ class TestChroot:
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
-        spy_process = mocker.spy(multiprocessing, "Process")
+        spy_process = mocker.spy(_FORK_CTX, "Process")
         new_root = Path(new_dir, "dir1")
 
         # this runs in the child process
@@ -92,7 +95,7 @@ class TestChroot:
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
-        spy_process = mocker.spy(multiprocessing, "Process")
+        spy_process = mocker.spy(_FORK_CTX, "Process")
         new_root = Path(new_dir, "dir1")
 
         # this runs in the child process
@@ -115,7 +118,7 @@ class TestChroot:
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
-        spy_process = mocker.spy(multiprocessing, "Process")
+        spy_process = mocker.spy(_FORK_CTX, "Process")
         new_root = Path(new_dir, "dir1")
 
         # this runs in the child process
@@ -145,7 +148,7 @@ class TestChroot:
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
 
-        spy_process = mocker.spy(multiprocessing, "Process")
+        spy_process = mocker.spy(_FORK_CTX, "Process")
         new_root = Path(new_dir, "dir1")
 
         # this runs in the child process
@@ -194,7 +197,7 @@ class TestChroot:
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         mock_copytree = mocker.patch("shutil.copytree")
 
-        spy_process = mocker.spy(multiprocessing, "Process")
+        spy_process = mocker.spy(_FORK_CTX, "Process")
         new_root = Path(new_dir, "dir1")
 
         # this runs in the child process
