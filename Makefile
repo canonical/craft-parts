@@ -170,21 +170,13 @@ endif
 endif
 
 # Tools needed for plugin integration tests that aren't java or python
-# Used in flaky tests, so we need to install them regardless.
+ifneq ($(NO_PLUGIN),1)
 ifeq ($(wildcard /usr/share/doc/automake/copyright),)
 APT_PACKAGES += automake
 endif
 ifeq ($(wildcard /usr/share/doc/autopoint/copyright),)
 APT_PACKAGES += autopoint
 endif
-ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
-APT_PACKAGES += gcc
-endif
-ifeq ($(wildcard /usr/share/doc/texinfo/copyright),)
-APT_PACKAGES += texinfo
-endif
-# Not used in flaky tests
-ifneq ($(NO_PLUGIN),1)
 ifeq ($(wildcard /usr/share/doc/cargo/copyright),)
 # Cargo may be installed by other means, like the rustup snap.
 ifeq ($(shell which cargo),)
@@ -224,6 +216,9 @@ ifneq ($(UBUNTU_CODENAME),focal)
 APT_PACKAGES += dotnet-sdk-8.0
 endif
 endif
+ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
+APT_PACKAGES += gcc
+endif
 ifeq ($(wildcard /usr/share/doc/meson/copyright),)
 APT_PACKAGES += meson
 endif
@@ -242,6 +237,9 @@ APT_PACKAGES += gperf
 endif
 ifeq ($(wildcard /usr/share/doc/help2man/copyright),)
 APT_PACKAGES += help2man
+endif
+ifeq ($(wildcard /usr/share/doc/texinfo/copyright),)
+APT_PACKAGES += texinfo
 endif
 # Used by the autotools plugin itself.
 ifeq ($(wildcard /usr/share/doc/libtool/copyright),)
