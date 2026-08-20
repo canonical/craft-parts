@@ -1,9 +1,9 @@
 .. _craft_parts_npm_plugin:
 
-NPM Plugin
-===========
+npm plugin
+==========
 
-The NPM plugin can be used for Node.js projects that use NPM (or Yarn) as the package
+The npm plugin can be used for Node.js projects that use npm (or Yarn) as the package
 manager.
 
 

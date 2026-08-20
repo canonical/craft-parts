@@ -64,6 +64,7 @@ class OverlayState(StepState):
         relevant_properties = [
             "overlay-script",
             "overlay",
+            "override-overlay",
             *(extra_properties or []),
         ]
 

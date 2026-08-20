@@ -44,20 +44,28 @@ class TestLayerHash:
         assert h.hex() == "0a141e28323c46505a64"
 
     @pytest.mark.parametrize(
-        ("pkgs", "files", "script", "result"),
+        ("pkgs", "rec_pkgs", "files", "script", "result"),
         [
-            ([], [], None, "80324ed2458e5d51e851972d092a0996dc038e8b"),
-            ([], ["*"], None, "6554e32fa718d54160d0511b36f81458e4cb2357"),
-            ([], [], "*", "8d272addf312552ba12cd7b4dd89c4d9544366a7"),
-            ([], ["bin"], None, "0aeef6012aca34bf245609066ae16cb477d22f42"),
-            (["bin"], [], None, "9aad6e7062ab06181086b9c27aa3013d892adc34"),
-            (["pkg"], ["*"], None, "ac0ab0b4ff2bbbdd362a3719bf8311f3d73d43bc"),
-            ([], ["*"], "ls", "9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b"),
+            ([], [], [], None, "80324ed2458e5d51e851972d092a0996dc038e8b"),
+            ([], [], ["*"], None, "6554e32fa718d54160d0511b36f81458e4cb2357"),
+            ([], [], [], "*", "8d272addf312552ba12cd7b4dd89c4d9544366a7"),
+            ([], [], ["bin"], None, "0aeef6012aca34bf245609066ae16cb477d22f42"),
+            (["bin"], [], [], None, "9aad6e7062ab06181086b9c27aa3013d892adc34"),
+            (["pkg"], [], ["*"], None, "ac0ab0b4ff2bbbdd362a3719bf8311f3d73d43bc"),
+            ([], [], ["*"], "ls", "9dd8cfd54b554c3a23858ce9ef717f23dd7cae7b"),
+            ([], ["rec"], ["*"], None, "03c8bcdc5ec3310e6f31cba1da5b3fea09926c27"),
+            (["pkg"], ["rec"], ["*"], None, "feb44bc9d4b319890c61d19938c8b3534399fc85"),
         ],
     )
-    def test_compute(self, pkgs, files, script, result):
+    def test_compute(self, pkgs, rec_pkgs, files, script, result):
         p1 = Part(
-            "p1", {"overlay-packages": pkgs, "overlay": files, "overlay-script": script}
+            "p1",
+            {
+                "overlay-packages": pkgs,
+                "overlay-recommended-packages": rec_pkgs,
+                "overlay": files,
+                "overlay-script": script,
+            },
         )
         h1 = LayerHash.for_part(p1, previous_layer_hash=LayerHash(b""))
         assert h1.hex() == result
@@ -142,6 +150,10 @@ class TestLayerStateManager:
             ({"overlay-script": "true"}, "fa8a0be828daebe4fd503d14fa9d6307ae0b01ae"),
             ({"overlay-packages": ["pkg"]}, "1d1f4f14a6809e389bdb6c6d0fb58fa5491c7981"),
             ({"overlay": ["/etc"]}, "b4d14ee52c4ba9c5d5c7610c5e2bce06f2f34b2b"),
+            (
+                {"overlay-recommended-packages": ["pkg2"]},
+                "dca26653d5a834ed73498255dd16054a6ae61ccc",
+            ),
         ],
     )
     def test_compute_layer_hash(self, params, digest):
@@ -158,6 +170,10 @@ class TestLayerStateManager:
             ({"overlay-script": "true"}, "a992882dc823bde22d93b0fe4ea6282926b5cfa9"),
             ({"overlay-packages": ["pkg"]}, "c890ac631a1cde929edefb1b27b10d9ba848d548"),
             ({"overlay": ["/etc"]}, "c1b0caeabdfc607110dbcbb1c58a320127b61622"),
+            (
+                {"overlay-recommended-packages": ["pkg2"]},
+                "54ec2ce2624e6958c813b244e0c6847543f7cca3",
+            ),
         ],
     )
     def test_compute_layer_hash_new_base(self, params, digest):

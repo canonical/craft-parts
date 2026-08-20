@@ -66,6 +66,11 @@ A path to the Python virtual environment to build with. By default, this variabl
 populates itself with the directory in which this plugin will create the virtual
 environment.
 
+Because the default virtual environment is created in ``${CRAFT_PART_INSTALL}``,
+avoid unpacking unrelated ``stage-packages`` into the same part. If those packages
+must be staged, define them in a separate part and list that part in the
+``uv`` part's ``after`` key.
+
 
 UV_PYTHON_DOWNLOADS
 ~~~~~~~~~~~~~~~~~~~

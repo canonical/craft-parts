@@ -56,6 +56,7 @@ class MakePlugin(Plugin):
     """
 
     properties_class = MakePluginProperties
+    default_parameters: list[str] = []
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -73,7 +74,11 @@ class MakePlugin(Plugin):
         return {}
 
     def _get_make_command(self, target: str = "") -> str:
-        cmd = ["make", f'-j"{self._part_info.parallel_build_count}"']
+        cmd = [
+            "make",
+            *self.default_parameters,
+            f'-j"{self._part_info.parallel_build_count}"',
+        ]
 
         if target:
             cmd.append(target)
@@ -88,6 +93,8 @@ class MakePlugin(Plugin):
         """Return a list of commands to run during the build step."""
         return [
             self._get_make_command(),
-            f"{self._get_make_command(target='install')} "
-            f'DESTDIR="{self._part_info.part_install_dir}"',
+            (
+                f"{self._get_make_command(target='install')} "
+                f'DESTDIR="{self._part_info.part_install_dir}"'
+            ),
         ]

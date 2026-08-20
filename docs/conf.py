@@ -75,7 +75,8 @@ html_theme_options = {
     "source_edit_link": "https://github.com/canonical/craft-parts",
 }
 
-# slug = ''
+# The project slug passed to the sphinx-notfound-page extension
+slug = "craft-parts"
 
 
 #######################

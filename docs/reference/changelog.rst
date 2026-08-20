@@ -19,15 +19,113 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-.. _release-2.34.0:
+Unreleased
+----------
 
-2.34.0 (Unreleased)
+New features:
+
+- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
+  snap name and channel.
+
+- Add ``overlay-recommended-packages`` key to install overlay packages with their
+  recommended dependencies.
+
+- The ``colcon`` plugin now passes ``-DBUILD_TESTING=OFF`` to CMake by default,
+  disabling test targets that are not useful inside a rock or snap and would
+  otherwise pull in large test-only dependencies. Users can opt back in by
+  passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
+
+- Add a ``stage-slices`` key to declare Chisel slices separately from the
+  ``stage-packages`` key.
+
+- Add a ``stage_packages_slice_support`` parameter to the ``LifecycleManager``
+  so applications can control whether Chisel slices can be declared in the
+  ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
+  should set this to False and use the ``stage-slices`` key instead.
+
+Bug fixes:
+
+- The Overlay and Build steps of parts that organize content to the overlay
+  are executed before these steps in other parts, even when ``after`` is
+  used.
+- Fix the ``colcon`` plugin to declare ``make`` and
+  ``python3-colcon-recursive-crawl`` as explicit build packages. Both are only
+  *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
+  they were absent when packages are installed with ``--no-install-recommends``,
+  causing builds to fail.
+- Set ``DEBIAN_FRONTEND=noninteractive`` in the global execution environment,
+  so all steps run non-interactively by default.
+
+.. _release-2.34.1:
+
+2.34.1 (2026-07-09)
+-------------------
+
+Bug fixes:
+
+- (Poetry plugin) Don't install the Poetry export plugin if a ``poetry-deps`` part
+  is provided.
+
+For a complete list of commits, check out the `2.34.1`_ release on GitHub.
+
+.. _release-2.33.1:
+
+2.33.1 (2026-06-17)
+-------------------
+
+Bug fixes:
+
+- Always migrate overlay files to Stage and Prime first, even if the part being staged
+  or primed also has contents coming from the install directory.
+
+For a complete list of commits, check out the `2.33.1`_ release on GitHub.
+
+.. _release-2.35.0:
+
+2.35.0 (2026-06-17)
 -------------------
 
 New features:
 
+- Applications can define default parameters for autoconf and make when subclassing
+  the plugins.
+- The plus sign is allowed in partition names. More restrictive rules must be
+  enforced at application level.
+
+Bug fixes:
+
+- Always migrate overlay files to Stage and Prime first, even if the part being staged
+  or primed also has contents coming from the install directory.
+
+For a complete list of commits, check out the `2.35.0`_ release on GitHub.
+
+.. _release-2.34.0:
+
+2.34.0 (2026-06-10)
+-------------------
+
+New features:
+
+- Plugins can now define overlay commands.
+- Add support for organizing files from the build directory using the ``(build)``
+  pseudo-partition.
 - Add a ``gradle-use`` plugin for publishing Gradle artifacts to a local Maven
   repository.
+- For explicit typing of file system operations, switch to the `pathlib module
+  <https://docs.python.org/3/library/pathlib.html>`_. All uses of ``str`` for paths are
+  replaced with ``pathlib.Path``. In the public APIs, this change only impacts the
+  ``files`` and ``directories`` variables of the ``MigrationState`` class.
+- Allow applications to set up build environment variables when creating the
+  lifecycle manager.
+
+Bug fixes:
+
+- Reject organize source entries that resolve outside the part install directory.
+- Fix edge cases when organizing files to the overlay partition.
+- Track ``override-overlay`` changes in part state.
+- Wrap streaming request errors for file sources in ``NetworkRequestError``.
+
+For a complete list of commits, check out the `2.34.0`_ release on GitHub.
 
 .. _release-2.33.0:
 
@@ -99,7 +197,7 @@ New features:
   shared local cache for ``self-contained`` builds.
 - Add support for the ``override-overlay`` key, which runs a script
   inside a chroot environment during the overlay step.
-- The ``go-use`` plugin returns an error if a ``go.mod`` file doesn't exist.
+- The Go-use plugin returns an error if a ``go.mod`` file doesn't exist.
   This prevents the error going unnoticed & appearing at build-time (when the
   module doesn't appear in the Go workspace)
 - Add support for copying Apt configuration from the host into the overlay system
@@ -167,7 +265,7 @@ New features:
 
 Bug fixes:
 
-- The Maven Use plugin now correctly infers a ``groupId`` when there is a parent pom to
+- The Maven-use plugin now correctly infers a ``groupId`` when there is a parent pom to
   infer from.
 - The ``make clean`` command now deletes ``docs/reference/gen``, which fixes
   documentation builds that break because of outdated and leftover files in that
@@ -334,7 +432,7 @@ For a complete list of commits, check out the `2.22.0`_ release on GitHub.
 
 New features:
 
-- Previously, when the Maven Use plugin updated ``pom.xml`` for self-contained projects,
+- Previously, when the Maven-use plugin updated ``pom.xml`` for self-contained projects,
   it wouldn't reliably find the correct dependency versions on the host. It could
   unpredictably declare the wrong package version, or select a vastly different version
   despite a similar one being available.
@@ -805,7 +903,7 @@ New features:
 
 Bug fixes:
 
-- Correctly handle ``source-subdir`` values on the ``go-use`` plugin.
+- Correctly handle ``source-subdir`` values on the Go-use plugin.
 
 Documentation:
 
@@ -868,7 +966,7 @@ New features:
 
 - Add a :ref:`uv plugin<craft_parts_uv_plugin>` for projects that use the `uv
   <https://docs.astral.sh/uv/>`_ build system.
-- Add a :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a
+- Add a :ref:`Go-use plugin<craft_parts_go_use_plugin>` for setting up a
   `workspace <https://go.dev/ref/mod#workspaces>`_ for Go modules.
 - Add new ``poetry-export-extra-args`` and ``poetry-pip-extra-args`` keys
   to the :ref:`poetry plugin<craft_parts_poetry_plugin>`.
@@ -978,7 +1076,7 @@ For a complete list of commits, check out the `2.1.1`_ release on GitHub.
 1.33.1 (2024-09-13)
 -------------------
 
-- Fix NPM plugin to be stateless, allowing lifecycle steps to be
+- Fix npm plugin to be stateless, allowing lifecycle steps to be
   executed in separate runs.
 
 For a complete list of commits, check out the `1.33.1`_ release on GitHub.
@@ -1704,6 +1802,10 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
+.. _2.34.1: https://github.com/canonical/craft-parts/releases/tag/2.34.1
+.. _2.34.0: https://github.com/canonical/craft-parts/releases/tag/2.34.0
+.. _2.33.1: https://github.com/canonical/craft-parts/releases/tag/2.33.1
 .. _2.33.0: https://github.com/canonical/craft-parts/releases/tag/2.33.0
 .. _2.32.0: https://github.com/canonical/craft-parts/releases/tag/2.32.0
 .. _2.31.0: https://github.com/canonical/craft-parts/releases/tag/2.31.0
