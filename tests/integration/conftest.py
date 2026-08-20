@@ -32,8 +32,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]):
     setattr(item, f"rep_{rep.when}", rep)
 
 
-@pytest.fixture(autouse=True)
-def _cleanup_integration_temp_dir(
+def _cleanup_integration_temp_dir_impl(
     request: pytest.FixtureRequest,
 ) -> Generator[None, None, None]:
     """Clean up temporary directory after successful integration tests in CI."""
@@ -64,3 +63,11 @@ def _cleanup_integration_temp_dir(
 
     for path in dirs_to_delete:
         shutil.rmtree(path, ignore_errors=True)
+
+
+@pytest.fixture(autouse=True)
+def _cleanup_integration_temp_dir(
+    request: pytest.FixtureRequest,
+) -> Generator[None, None, None]:
+    """Clean up temporary directory after successful integration tests in CI."""
+    return _cleanup_integration_temp_dir_impl(request)

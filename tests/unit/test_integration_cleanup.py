@@ -17,7 +17,7 @@
 import contextlib
 from unittest.mock import MagicMock
 
-from tests.integration.conftest import _cleanup_integration_temp_dir
+from tests.integration.conftest import _cleanup_integration_temp_dir_impl
 
 pytest_plugins = ["pytester"]
 
@@ -36,7 +36,7 @@ def test_integration_cleanup_success_in_ci(monkeypatch, tmp_path):
         target_dir if name == "new_dir" else None
     )
 
-    gen = _cleanup_integration_temp_dir.__wrapped__(request)
+    gen = _cleanup_integration_temp_dir_impl(request)
     next(gen)  # Yield
     with contextlib.suppress(StopIteration):
         next(gen)
@@ -58,7 +58,7 @@ def test_integration_cleanup_failure_in_ci(monkeypatch, tmp_path):
         target_dir if name == "new_dir" else None
     )
 
-    gen = _cleanup_integration_temp_dir.__wrapped__(request)
+    gen = _cleanup_integration_temp_dir_impl(request)
     next(gen)
     with contextlib.suppress(StopIteration):
         next(gen)
@@ -80,7 +80,7 @@ def test_integration_cleanup_success_not_in_ci(monkeypatch, tmp_path):
         target_dir if name == "new_dir" else None
     )
 
-    gen = _cleanup_integration_temp_dir.__wrapped__(request)
+    gen = _cleanup_integration_temp_dir_impl(request)
     next(gen)
     with contextlib.suppress(StopIteration):
         next(gen)
