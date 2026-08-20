@@ -46,6 +46,7 @@ jobs:
       lowest-python-version: "3.10"
       pytest-markers: not java and not python and not plugin and not flaky
       setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
+      use-lxd: false
   test-flaky:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
@@ -62,6 +63,7 @@ jobs:
       lowest-python-version: "3.10"
       pytest-markers: flaky
       setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
+      use-lxd: false
   test-java-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
@@ -79,6 +81,7 @@ jobs:
       lowest-python-version: ""
       pytest-markers: java
       setup-vars: NO_PYTHON=1 NO_PLUGIN=1
+      use-lxd: false
   test-python-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
@@ -94,6 +97,7 @@ jobs:
       lowest-python-version: ""
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
+      use-lxd: false
   test-python-plugins-jammy:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
@@ -107,6 +111,7 @@ jobs:
       lowest-python-version: ""
       pytest-markers: python
       setup-vars: NO_JAVA=1 NO_PLUGIN=1
+      use-lxd: false
   test-other-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
@@ -125,7 +130,7 @@ jobs:
       lowest-python-version: "3.10"
       pytest-markers: plugin
       setup-vars: NO_JAVA=1 NO_PYTHON=1
-
+      use-lxd: false
   test-requires-root:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
@@ -136,3 +141,4 @@ jobs:
       lowest-python-version: ""
       pytest-markers: requires_root
       test-command-prefix: sudo env "PATH=$PATH"
+      use-lxd: false
