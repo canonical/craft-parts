@@ -18,6 +18,7 @@
 import contextlib
 import os
 import shutil
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -32,7 +33,9 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]):
 
 
 @pytest.fixture(autouse=True)
-def _cleanup_integration_temp_dir(request: pytest.FixtureRequest) -> None:
+def _cleanup_integration_temp_dir(
+    request: pytest.FixtureRequest,
+) -> Generator[None, None, None]:
     """Clean up temporary directory after successful integration tests in CI."""
     yield
 
