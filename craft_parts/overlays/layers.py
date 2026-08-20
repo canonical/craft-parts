@@ -57,6 +57,8 @@ class LayerHash:
             hasher.update(previous_layer_hash.digest)
         for entry in part.spec.overlay_packages:
             hasher.update(entry.encode())
+        for entry in part.spec.overlay_recommended_packages:
+            hasher.update(entry.encode())
         digest = hasher.digest()
 
         hasher = hashlib.sha1()  # noqa: S324

@@ -24,10 +24,24 @@ Unreleased
 
 New features:
 
+- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
+  snap name and channel.
+
+- Add ``overlay-recommended-packages`` key to install overlay packages with their
+  recommended dependencies.
+
 - The ``colcon`` plugin now passes ``-DBUILD_TESTING=OFF`` to CMake by default,
   disabling test targets that are not useful inside a rock or snap and would
   otherwise pull in large test-only dependencies. Users can opt back in by
   passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
+
+- Add a ``stage-slices`` key to declare Chisel slices separately from the
+  ``stage-packages`` key.
+
+- Add a ``stage_packages_slice_support`` parameter to the ``LifecycleManager``
+  so applications can control whether Chisel slices can be declared in the
+  ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
+  should set this to False and use the ``stage-slices`` key instead.
 
 Bug fixes:
 
@@ -39,6 +53,20 @@ Bug fixes:
   *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
   they were absent when packages are installed with ``--no-install-recommends``,
   causing builds to fail.
+- Set ``DEBIAN_FRONTEND=noninteractive`` in the global execution environment,
+  so all steps run non-interactively by default.
+
+.. _release-2.34.1:
+
+2.34.1 (2026-07-09)
+-------------------
+
+Bug fixes:
+
+- (Poetry plugin) Don't install the Poetry export plugin if a ``poetry-deps`` part
+  is provided.
+
+For a complete list of commits, check out the `2.34.1`_ release on GitHub.
 
 Documentation:
 
@@ -1780,6 +1808,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _Poetry: https://python-poetry.org
 
 .. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
+.. _2.34.1: https://github.com/canonical/craft-parts/releases/tag/2.34.1
 .. _2.34.0: https://github.com/canonical/craft-parts/releases/tag/2.34.0
 .. _2.33.1: https://github.com/canonical/craft-parts/releases/tag/2.33.1
 .. _2.33.0: https://github.com/canonical/craft-parts/releases/tag/2.33.0

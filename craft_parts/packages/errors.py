@@ -176,6 +176,23 @@ class UnpackError(PackagesError):
         super().__init__(brief=brief)
 
 
+class SnapInvalidFormat(PackagesError):  # noqa: N818
+    """The given snap specification is not formatted correctly.
+
+    :param snap: The snap specification string.
+    """
+
+    def __init__(self, snap: str) -> None:
+        self.snap = snap
+        brief = f"Invalid snap specification: {snap!r}."
+        resolution = (
+            "Ensure the snap name and channel do not contain leading, "
+            "trailing, or surrounding whitespace."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
 class SnapUnavailable(PackagesError):  # noqa: N818
     """Failed to install or refresh a snap.
 

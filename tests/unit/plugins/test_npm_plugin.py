@@ -240,13 +240,15 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_commands() == [
-            'NPM_VERSION="$(npm --version)"\n'
-            "# use the new-style install command if npm >= 10.0.0\n"
-            "if ((${NPM_VERSION%%.*}>=10)); then\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
-            "else\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
-            "fi\n",
+            (
+                'NPM_VERSION="$(npm --version)"\n'
+                "# use the new-style install command if npm >= 10.0.0\n"
+                "if ((${NPM_VERSION%%.*}>=10)); then\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
+                "else\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
+                "fi\n"
+            ),
         ]
 
     def test_get_build_commands_false(self, part_info, new_dir):
@@ -256,13 +258,15 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_commands() == [
-            'NPM_VERSION="$(npm --version)"\n'
-            "# use the new-style install command if npm >= 10.0.0\n"
-            "if ((${NPM_VERSION%%.*}>=10)); then\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
-            "else\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
-            "fi\n",
+            (
+                'NPM_VERSION="$(npm --version)"\n'
+                "# use the new-style install command if npm >= 10.0.0\n"
+                "if ((${NPM_VERSION%%.*}>=10)); then\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
+                "else\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
+                "fi\n"
+            ),
         ]
 
     @pytest.mark.parametrize(
@@ -301,23 +305,29 @@ class TestPluginNpmPlugin:
         assert plugin.get_pull_commands() == []
 
         assert plugin.get_build_commands() == [
-            f'if [ ! -f "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz" ]; then\n'
-            f'    mkdir -p "{part_info.part_cache_dir}"\n'
-            f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/SHASUMS256.txt" -o "{part_info.part_cache_dir}"/SHASUMS256.txt\n'
-            f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/node-v20.13.1-linux-x64.tar.gz" -o "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"\n'
-            "fi\n"
-            f'pushd "{part_info.part_cache_dir}"\n'
-            "sha256sum --ignore-missing --strict -c SHASUMS256.txt\npopd\n",
-            f'tar -xzf "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"'
-            ' -C "${CRAFT_PART_INSTALL}/"                     --no-same-owner '
-            "--strip-components=1\n",
-            'NPM_VERSION="$(npm --version)"\n'
-            "# use the new-style install command if npm >= 10.0.0\n"
-            "if ((${NPM_VERSION%%.*}>=10)); then\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
-            "else\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
-            "fi\n",
+            (
+                f'if [ ! -f "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz" ]; then\n'
+                f'    mkdir -p "{part_info.part_cache_dir}"\n'
+                f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/SHASUMS256.txt" -o "{part_info.part_cache_dir}"/SHASUMS256.txt\n'
+                f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/node-v20.13.1-linux-x64.tar.gz" -o "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"\n'
+                "fi\n"
+                f'pushd "{part_info.part_cache_dir}"\n'
+                "sha256sum --ignore-missing --strict -c SHASUMS256.txt\npopd\n"
+            ),
+            (
+                f'tar -xzf "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"'
+                ' -C "${CRAFT_PART_INSTALL}/"                     --no-same-owner '
+                "--strip-components=1\n"
+            ),
+            (
+                'NPM_VERSION="$(npm --version)"\n'
+                "# use the new-style install command if npm >= 10.0.0\n"
+                "if ((${NPM_VERSION%%.*}>=10)); then\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
+                "else\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
+                "fi\n"
+            ),
         ]
 
     def test_get_build_commands_include_node_true_no_node_version(
