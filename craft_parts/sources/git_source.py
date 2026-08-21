@@ -49,9 +49,7 @@ def _get_json_extra_schema(type_pattern: str) -> dict[str, Any]:
     """Get extra values for the git source JSON schema.
 
     Declares that ``source-tag``, ``source-branch`` and ``source-commit`` are
-    mutually exclusive using a JSON Schema ``oneOf`` construct, so the
-    constraint is visible to consumers of the generated schema. The existing
-    source-type inference pattern is preserved.
+    mutually exclusive.
     """
     one_of: list[dict[str, Any]] = [
         {
