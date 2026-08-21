@@ -1066,26 +1066,23 @@ def test_dpkg_installed_version_empty_stdout(monkeypatch):
     assert _dpkg_installed_version("bash") is None
 
 
-def test_dpkg_installed_version_not_installed_status(monkeypatch):
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [
+        ("install ok installed", "5.2.15-2ubuntu1"),
+        ("hold ok installed", "5.2.15-2ubuntu1"),
+        ("deinstall ok config-files", None),
+    ],
+)
+def test_dpkg_installed_version_status(monkeypatch, status, expected):
     def fake_run(*args, **kwargs):
-        out = "deinstall ok config-files\t1.2.3\n"
+        out = f"{status}\t5.2.15-2ubuntu1\n"
         return CompletedProcess(
             args=["dpkg-query"], returncode=0, stdout=out, stderr=""
         )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    assert _dpkg_installed_version("bash") is None
-
-
-def test_dpkg_installed_version_installed(monkeypatch):
-    def fake_run(*args, **kwargs):
-        out = "install ok installed\t5.2.15-2ubuntu1\n"
-        return CompletedProcess(
-            args=["dpkg-query"], returncode=0, stdout=out, stderr=""
-        )
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    assert _dpkg_installed_version("bash") == "5.2.15-2ubuntu1"
+    assert _dpkg_installed_version("bash") == expected
 
 
 def test_get_packages_marked_for_installation_apt_get_uses_simulate(monkeypatch):
@@ -1181,6 +1178,7 @@ def test_get_installed_packages_uses_dpkg_query_when_available(monkeypatch):
         assert cmd[:2] == ["dpkg-query", "-W"]
         return (
             "bash\tinstall ok installed\t5.2.15-2ubuntu1\n"
+            "grep\thold ok installed\t3.11-4build1\n"
             "coreutils\tinstall ok installed\t9.4-3ubuntu6\n"
             "bash\tinstall ok installed\t5.2.15-2ubuntu1\n"
             "removed\tdeinstall ok config-files\t1.0\n"
@@ -1190,7 +1188,11 @@ def test_get_installed_packages_uses_dpkg_query_when_available(monkeypatch):
     monkeypatch.setattr(subprocess, "check_output", fake_check_output)
 
     pkgs = Ubuntu.get_installed_packages()
-    assert pkgs == ["bash=5.2.15-2ubuntu1", "coreutils=9.4-3ubuntu6"]
+    assert pkgs == [
+        "bash=5.2.15-2ubuntu1",
+        "coreutils=9.4-3ubuntu6",
+        "grep=3.11-4build1",
+    ]
 
 
 def test_get_installed_packages_dpkg_query_ignores_malformed_lines(monkeypatch):
@@ -1256,6 +1258,10 @@ def test_get_installed_packages_fallback_ignores_not_installed(monkeypatch, tmp_
         "Status: install ok installed\n"
         "Version: 2.0\n"
         "\n"
+        "Package: held\n"
+        "Status: hold ok installed\n"
+        "Version: 3.0\n"
+        "\n"
         "Package: gone\n"
         "Status: deinstall ok config-files\n"
         "Version: 1.0\n"
@@ -1274,7 +1280,7 @@ def test_get_installed_packages_fallback_ignores_not_installed(monkeypatch, tmp_
     monkeypatch.setattr("craft_parts.packages.deb.Path", fake_path)
 
     pkgs = Ubuntu.get_installed_packages()
-    assert pkgs == ["keep=2.0"]
+    assert pkgs == ["held=3.0", "keep=2.0"]
 
 
 def test_install_packages_already_satisfied_uses_empty_marked_manifest(

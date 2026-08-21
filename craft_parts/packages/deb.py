@@ -472,10 +472,16 @@ def _parse_installed_dpkg_query_line(line: str) -> str | None:
         return None
     if not pkg_name or not pkg_version:
         return None
-    if "install ok installed" not in pkg_status:
+    if not _is_dpkg_status_installed(pkg_status):
         return None
 
     return f"{pkg_name}={pkg_version}"
+
+
+def _is_dpkg_status_installed(status: str) -> bool:
+    """Return true when a dpkg status string represents an installed package."""
+    fields = status.split()
+    return len(fields) == 3 and fields[1:] == ["ok", "installed"]
 
 
 def _get_installed_packages_dpkg_query() -> list[str]:
@@ -509,7 +515,7 @@ def _get_installed_packages_dpkg_status() -> list[str]:
                 stanza_version = None
                 installed = False
             elif line.startswith("Status: "):
-                installed = "install ok installed" in line
+                installed = _is_dpkg_status_installed(line.split(":", 1)[1])
             elif line.startswith("Version: "):
                 stanza_version = line.split(":", 1)[1].strip()
             elif not line.strip():
@@ -542,7 +548,7 @@ def _dpkg_installed_version(pkg_name: str) -> str | None:
         return None
 
     status, _, version = line.partition("\t")
-    if "install ok installed" not in status:
+    if not _is_dpkg_status_installed(status):
         return None
     version = version.strip()
     return version or None
@@ -751,7 +757,6 @@ class Ubuntu(BaseRepository):
         cls,
         package_names: list[str],
         *,
-        list_only: bool = False,
         refresh_package_cache: bool = True,
         include_recommends: bool = False,
     ) -> list[str]:
@@ -778,10 +783,6 @@ class Ubuntu(BaseRepository):
             raise errors.BuildPackageNotFound(failed_package) from err
 
         marked_package_names = {name for name, _ in marked}
-
-        if list_only:
-            # For list-only, report what apt would install (deterministic).
-            return [f"{name}={version}" for name, version in sorted(marked)]
 
         if refresh_package_cache and install_required:
             cls.refresh_packages_list()
@@ -846,7 +847,6 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
-        list_only: bool = False,
         packages_filters: set[str] | None = None,
     ) -> list[str]:
         """Fetch stage packages to stage_packages_path."""
@@ -865,7 +865,6 @@ class Ubuntu(BaseRepository):
             stage_packages_path=stage_packages_path,
             base=base,
             arch=arch,
-            list_only=list_only,
             packages_filters=packages_filters,
         )
 
@@ -879,7 +878,6 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
-        list_only: bool = False,
         packages_filters: set[str] | None = None,
     ) -> list[str]:
         """Fetch .deb stage packages to stage_packages_path."""
@@ -892,8 +890,7 @@ class Ubuntu(BaseRepository):
         if packages_filters:
             filtered_names.update(packages_filters)
 
-        if not list_only:
-            stage_packages_path.mkdir(exist_ok=True)
+        stage_packages_path.mkdir(exist_ok=True)
 
         stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
         deb_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -919,18 +916,12 @@ class Ubuntu(BaseRepository):
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(filtered_names)
 
-            if list_only:
-                marked_packages = apt_cache.get_packages_marked_for_installation()
-                installed = {
-                    f"{name}={version}" for name, version in sorted(marked_packages)
-                }
-            else:
-                for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                    deb_cache_dir
-                ):
-                    logger.info("Extracting stage package: %s", pkg_name)
-                    installed.add(f"{pkg_name}={pkg_version}")
-                    file_utils.link_or_copy(dl_path, stage_packages_path / dl_path.name)
+            for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
+                deb_cache_dir
+            ):
+                logger.info("Extracting stage package: %s", pkg_name)
+                installed.add(f"{pkg_name}={pkg_version}")
+                file_utils.link_or_copy(dl_path, stage_packages_path / dl_path.name)
 
         return sorted(installed)
 
