@@ -20,7 +20,7 @@ from __future__ import annotations
 import jsonschema
 import pydantic
 import pytest
-from craft_parts import pydantic_schema
+from craft_parts import pydantic_schema, PartsError
 from craft_parts.plugins import plugins
 
 VALID_PLUGIN_DATAS = [
@@ -88,6 +88,47 @@ INVALID_PART_DATAS = [
         {"plugin": "nil", "source-type": "git", "source": ".", "source-checksum": ""},
         id="checksum-on-git-source",
     ),
+    pytest.param(
+        {
+            "plugin": "nil",
+            "source-type": "git",
+            "source": "https://example.com/repo.git",
+            "source-branch": "main",
+            "source-tag": "v1.0.0",
+        },
+        id="git-branch-and-tag",
+    ),
+    pytest.param(
+        {
+            "plugin": "nil",
+            "source-type": "git",
+            "source": "https://example.com/repo.git",
+            "source-branch": "main",
+            "source-commit": "abcdef1234567890abcdef1234567890abcdef12",
+        },
+        id="git-branch-and-commit",
+    ),
+    pytest.param(
+        {
+            "plugin": "nil",
+            "source-type": "git",
+            "source": "https://example.com/repo.git",
+            "source-tag": "v1.0.0",
+            "source-commit": "abcdef1234567890abcdef1234567890abcdef12",
+        },
+        id="git-tag-and-commit",
+    ),
+    pytest.param(
+        {
+            "plugin": "nil",
+            "source-type": "git",
+            "source": "https://example.com/repo.git",
+            "source-branch": "main",
+            "source-tag": "v1.0.0",
+            "source-commit": "abcdef1234567890abcdef1234567890abcdef12",
+        },
+        id="git-branch-tag-and-commit",
+    ),
 ]
 
 
@@ -129,5 +170,8 @@ def test_invalid_part_data(validator, part_data):
     with pytest.raises(jsonschema.ValidationError):
         validator.validate(part_data)
 
-    with pytest.raises(pydantic.ValidationError):
+    # Some invalid schema cases are caught earlier by the Pydantic model
+    # validator, which raises IncompatibleSourceOptions rather than
+    # ValidationError. Treat either as a rejected part.
+    with pytest.raises((pydantic.ValidationError, PartsError)):
         pydantic_schema.Part.model_validate(part_data)
