@@ -54,7 +54,14 @@ def _get_json_extra_schema(type_pattern: str) -> dict[str, Any]:
     source-type inference pattern is preserved.
     """
     one_of: list[dict[str, Any]] = [
-        {"required": [ref], "not": {"required": [r for r in _SOURCE_REFS if r != ref]}}
+        {
+            "required": [ref],
+            "not": {
+                "anyOf": [
+                    {"required": [other]} for other in _SOURCE_REFS if other != ref
+                ]
+            },
+        }
         for ref in _SOURCE_REFS
     ]
     one_of.append({"not": {"anyOf": [{"required": [ref]} for ref in _SOURCE_REFS]}})
