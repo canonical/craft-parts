@@ -55,6 +55,7 @@ Bug fixes:
   causing builds to fail.
 - Set ``DEBIAN_FRONTEND=noninteractive`` in the global execution environment,
   so all steps run non-interactively by default.
+- Add git source mutual exclusivity to JSON schema.
 
 .. _release-2.34.1:
 
