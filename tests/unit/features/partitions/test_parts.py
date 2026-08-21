@@ -386,6 +386,29 @@ class TestPartPartitionUsage:
             Valid partitions: {", ".join(partition_list)}"""
         )
 
+    def test_part_build_partition_usage_is_invalid(self, partition_list):
+        """Raise an error if the build pseudo-partition is used as a destination."""
+        part_data = {
+            "organize": {"README": "(build)/README"},
+            "stage": ["(build)/README"],
+            "prime": ["(build)/README"],
+        }
+
+        with pytest.raises(errors.PartitionUsageError) as raised:
+            Part("part-a", part_data, partitions=partition_list)
+
+        assert raised.value.brief == "Invalid usage of partitions"
+        assert raised.value.details == dedent(
+            f"""\
+              parts.part-a.organize
+                cannot organize files into the build directory
+              parts.part-a.stage
+                (build) cannot be used in 'stage'
+              parts.part-a.prime
+                (build) cannot be used in 'prime'
+            Valid partitions: {", ".join(partition_list)}"""
+        )
+
     def test_part_invalid_partition_usage_complex(
         self, valid_fileset, invalid_fileset, partition_list
     ):

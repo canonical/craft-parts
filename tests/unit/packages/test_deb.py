@@ -676,7 +676,7 @@ class TestGetPackagesInBase:
             "craft_parts.packages.deb._get_dpkg_list_path", return_value=dpkg_list_path
         )
         with dpkg_list_path.open("w") as dpkg_list_file:
-            print(
+            dpkg_list_file.write(
                 textwrap.dedent(
                     """\
             Desired=Unknown/Install/Remove/Purge/Hold
@@ -692,7 +692,6 @@ class TestGetPackagesInBase:
             ii  zlib1g:amd64                  1:1.2.11.dfsg-2ubuntu1     amd64        compression
             """
                 ),
-                file=dpkg_list_file,
             )
 
         assert deb.get_packages_in_base(base=base) == [
@@ -1018,3 +1017,27 @@ def test_chown_stage_packages(
     # Make sure chown was called properly
     mock_chown.assert_called_once_with(deb_cache_dir, user="_apt")
     assert message.format(deb_cache_dir) in caplog.text
+
+
+class TestIncludeRecommends:
+    def test_download_with_recommends(self, fake_deb_run):
+        deb.Ubuntu.download_packages(["pkg"], include_recommends=True)
+        assert "--no-install-recommends" not in fake_deb_run.mock_calls[-1].args[0]
+
+    def test_download_with_recommends_default(self, fake_deb_run):
+        deb.Ubuntu.download_packages(["pkg"])
+        assert "--no-install-recommends" in fake_deb_run.mock_calls[-1].args[0]
+
+    def test_install_with_recommends(self, fake_deb_run, fake_apt_cache):
+        fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
+            ("pkg", "1.0"),
+        ]
+        deb.Ubuntu.install_packages(["pkg"], include_recommends=True)
+        assert "--no-install-recommends" not in fake_deb_run.mock_calls[-1].args[0]
+
+    def test_install_with_recommends_default(self, fake_deb_run, fake_apt_cache):
+        fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
+            ("pkg", "1.0"),
+        ]
+        deb.Ubuntu.install_packages(["pkg"])
+        assert "--no-install-recommends" in fake_deb_run.mock_calls[-1].args[0]

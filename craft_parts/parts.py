@@ -25,6 +25,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, TypeVar
 
+import pydantic
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -36,14 +37,16 @@ from pydantic import (
 from typing_extensions import Self
 
 from craft_parts import errors, plugins
-from craft_parts.constraints import RelativePathStr
+from craft_parts.constraints import ChiselSliceStr, RelativePathStr
 from craft_parts.dirs import ProjectDirs
 from craft_parts.features import Features
 from craft_parts.packages import platform
 from craft_parts.permissions import Permissions
 from craft_parts.plugins.properties import PluginProperties
 from craft_parts.steps import Step
+from craft_parts.utils.deb_utils import has_debs, has_slices
 from craft_parts.utils.partition_utils import (
+    BUILD_PARTITION,
     DEFAULT_PARTITION,
     OVERLAY_PARTITION,
     get_partition_dir_map,
@@ -287,20 +290,36 @@ class PartSpec(BaseModel):
     using the base layer's package manager.
     """
 
+    overlay_recommended_packages: list[str] = Field(
+        default=[],
+        description="The packages to install in the part's layer with recommended packages.",
+        examples=["[ed]"],
+    )
+    """The packages to install in the part's layer, plus any `recommended packages
+    <https://www.debian.org/doc/manuals/debian-faq/pkg-basics.en.html#depends>`__ they
+    might have.
+
+    During the overlay step, these packages and their recommended packages are
+    installed into the part's layer using the base layer's package manager.
+    """
+
     stage_snaps: list[str] = Field(
         default=[],
         description="The snaps to include in the stage environment.",
-        examples=["[go/1.17, chisel/latest/candidate, mir-kiosk-x11]"],
+        examples=["[go@1.17/stable, chisel@latest/candidate, mir-kiosk-x11]"],
     )
     """During the stage step, these snaps are included in the stage environment.
 
     Entries can be in one of three formats:
 
     * ``<snap-name>``
-    * ``<snap-name>/<channel-name>``
-    * ``<snap-name>/<channel-name>/<version-name>``
+    * ``<snap-name>@<track>/<risk>``
+    * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If an entry contains no version or channel, ``latest/stable`` is used.
+    If an entry specifies no track or risk, ``latest/stable`` is used.
+
+    The ``/`` character may also be used to separate the snap name from the
+    track, but this is deprecated in favor of the ``@`` character.
     """
 
     stage_packages: list[str] = Field(
@@ -311,27 +330,43 @@ class PartSpec(BaseModel):
     """During the stage step, these packages are included in the stage environment
     alongside the build artifacts.
 
-    Chisel slices can be listed using the ``<package-name>_<slice-name>`` syntax.
+    Chisel slices should be declared with the ``stage-slices`` key. Support for
+    chisel slices in the ``stage-packages`` key is deprecated.
 
-    Listing both packages and slices in the same ``stage-packages`` key is not
-    currently supported.
+    This key is mutually incompatible with the ``stage-slices`` key.
+    """
+
+    stage_slices: list[ChiselSliceStr] = Field(
+        default=[],
+        description="The Chisel slices to include in the stage environment.",
+        examples=["[ca-certificates_data, bash_bins]"],
+    )
+    """During the stage step, these Chisel slices are cut into the stage environment
+    alongside the build artifacts.
+
+    Each entry must be listed as ``<package-name>_<slice-name>``.
+
+    This key is mutually incompatible with the ``stage-packages`` key.
     """
 
     build_snaps: list[str] = Field(
         default=[],
         description="The snaps to install in the build environment.",
-        examples=["[go/latest/stable, node/stable]"],
+        examples=["[go@latest/stable, node@stable]"],
     )
     """The snaps to install during the build step, before the build starts. The part
     makes them available in the build environment.
 
-    Entries can be listed in one of three formats.
+    Entries can be in one of three formats:
 
     * ``<snap-name>``
-    * ``<snap-name>/<channel-name>``
-    * ``<snap-name>/<channel-name>/<version-name>``
+    * ``<snap-name>@<track>/<risk>``
+    * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If no version or channel is provided, ``latest/stable`` is used.
+    If an entry specifies no track or risk, ``latest/stable`` is used.
+
+    The ``/`` character may also be used to separate the snap name from the
+    track, but this is deprecated in favor of the ``@`` character.
     """
 
     build_packages: list[str] = Field(
@@ -375,7 +410,7 @@ class PartSpec(BaseModel):
     """
 
     organize_files: dict[str, str] = Field(
-        default_factory=dict,
+        default_factory=dict[str, str],
         alias="organize",
         description="A map of files from the part's install directory to their destinations in the stage directory.",
         examples=["{hello.py: bin/hello}"],
@@ -567,7 +602,11 @@ class PartSpec(BaseModel):
     )
 
     @field_validator(
-        "overlay_packages", "overlay_files", "overlay_script", "override_overlay"
+        "overlay_packages",
+        "overlay_recommended_packages",
+        "overlay_files",
+        "overlay_script",
+        "override_overlay",
     )
     @classmethod
     def validate_overlay_feature(cls, item: _T_validate) -> _T_validate:
@@ -585,37 +624,57 @@ class PartSpec(BaseModel):
             )
         return self
 
+    @model_validator(mode="after")
+    def validate_stage_packages_stage_slices_mutually_exclusive(self) -> Self:
+        """Check that stage-packages and stage-slices are not both defined."""
+        if self.stage_packages and self.stage_slices:
+            raise ValueError(
+                "'stage-packages' and 'stage-slices' cannot be used together"
+            )
+        return self
+
     @model_validator(mode="before")
     @classmethod
-    def validate_root(cls, values: dict[str, Any]) -> dict[str, Any]:
+    def validate_root(
+        cls, values: dict[str, Any], info: pydantic.ValidationInfo
+    ) -> dict[str, Any]:
         """Check if the part spec has a valid configuration of packages and slices."""
         if not platform.is_deb_based():
             # This check is only relevant in deb systems.
             return values
 
-        def is_slice(name: str) -> bool:
-            return "_" in name
-
-        # Detect a mixture of .deb packages and chisel slices.
         stage_packages = values.get("stage-packages", [])
-        has_slices = any(name for name in stage_packages if is_slice(name))
-        has_packages = any(name for name in stage_packages if not is_slice(name))
 
-        if has_slices and has_packages:
-            raise ValueError("Cannot mix packages and slices in stage-packages")
+        if has_slices(stage_packages):
+            if has_debs(stage_packages):
+                raise ValueError("cannot mix packages and slices in 'stage-packages'")
+
+            context: dict[str, Any] = info.context or {}
+            if not context.get("stage_packages_slice_support", True):
+                raise ValueError(
+                    "Chisel slices cannot be declared in 'stage-packages'. "
+                    "Use the 'stage-slices' key instead."
+                )
 
         return values
 
     # pylint: enable=no-self-argument
 
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "PartSpec":
+    def unmarshal(
+        cls,
+        data: dict[str, Any],
+        *,
+        stage_packages_slice_support: bool = True,
+    ) -> "PartSpec":
         """Create and populate a new ``PartSpec`` object from dictionary data.
 
         The unmarshal method validates entries in the input dictionary, populating
         the corresponding fields in the data object.
 
         :param data: The dictionary data to unmarshal.
+        :param stage_packages_slice_support: Whether Chisel slices may be
+            declared in the `stage-packages` key.
 
         :return: The newly created object.
 
@@ -624,7 +683,10 @@ class PartSpec(BaseModel):
         if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError("part data is not a dictionary")
 
-        return PartSpec(**data)
+        return PartSpec.model_validate(
+            data,
+            context={"stage_packages_slice_support": stage_packages_slice_support},
+        )
 
     def marshal(self) -> dict[str, Any]:
         """Create a dictionary containing the part specification data.
@@ -659,6 +721,7 @@ class PartSpec(BaseModel):
         """Return whether this spec declares overlay content."""
         return bool(
             self.overlay_packages
+            or self.overlay_recommended_packages
             or self.override_overlay is not None
             or self.overlay_script is not None
             or self.overlay_files != ["*"]
@@ -671,7 +734,7 @@ class PartSpec(BaseModel):
         if not Features().enable_partitions or not Features().enable_overlay:
             return False
         for dest in self.organize_files.values():
-            partition, _ = get_partition_and_path(dest, DEFAULT_PARTITION)
+            partition, _ = get_partition_and_path(Path(dest), DEFAULT_PARTITION)
             if partition == OVERLAY_PARTITION:
                 return True
         return False
@@ -679,21 +742,58 @@ class PartSpec(BaseModel):
     @property
     def has_slices(self) -> bool:
         """Return whether the part contains chisel slices."""
+        if self.stage_slices:
+            return True
+
         if not self.stage_packages:
             return False
-        return any("_" in p for p in self.stage_packages)
+
+        return has_slices(self.stage_packages)
 
     @property
     def has_chisel_as_build_snap(self) -> bool:
         """Return whether the part has chisel as build snap."""
         if not self.build_snaps:
             return False
-        return any(
-            p for p in self.build_snaps if p == "chisel" or p.startswith("chisel/")
-        )
+        for build_snap in self.build_snaps:
+            normalized_snap = build_snap.strip()
+            if "@" in normalized_snap:
+                snap_name = normalized_snap.split("@", 1)[0]
+            else:
+                snap_name = normalized_snap.split("/", maxsplit=1)[0]
+            if snap_name == "chisel":
+                return True
+        return False
+
+
+def _get_build_partition_usage_error(fileset_name: str, partition: str) -> str | None:
+    """Return an error message if the build pseudo-partition is misused."""
+    if partition != BUILD_PARTITION:
+        return None
+
+    if fileset_name == "organize":
+        return "    cannot organize files into the build directory"
+
+    return f"    ({partition}) cannot be used in {fileset_name!r}"
+
+
+def _get_missing_partition_inner_path_error(
+    filepath: str, default_partition: str, *, require_inner_path: bool
+) -> str | None:
+    """Return an error message if a partition filepath is missing its inner path."""
+    if not require_inner_path:
+        return None
+
+    _, inner_path = get_partition_and_path(filepath, default_partition)
+    if inner_path:
+        return None
+
+    return f"    no path specified after partition in {filepath!r}"
 
 
 # pylint: disable=too-many-public-methods
+
+
 class Part:
     """Each of the components used in the project specification.
 
@@ -707,6 +807,8 @@ class Part:
     :param partitions: A Sequence of partition names if partitions are enabled, or None
     :param project_dirs: The project work directories.
     :param plugin_properties: An optional PluginProperties object for this plugin.
+    :param stage_packages_slice_support: Whether Chisel slices may be
+        declared in the `stage-packages` key.
 
     :raise PartSpecificationError: If part validation fails.
     """
@@ -719,6 +821,7 @@ class Part:
         project_dirs: ProjectDirs | None = None,
         plugin_properties: "PluginProperties | None" = None,
         partitions: Sequence[str] | None = None,
+        stage_packages_slice_support: bool = True,
     ) -> None:
         self._partitions = partitions
         if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -747,7 +850,9 @@ class Part:
         self._part_dir = project_dirs.parts_dir / name
 
         try:
-            self.spec = PartSpec.unmarshal(data)
+            self.spec = PartSpec.unmarshal(
+                data, stage_packages_slice_support=stage_packages_slice_support
+            )
         except ValidationError as err:
             raise errors.PartSpecificationError.from_validation_error(
                 part_name=name, error_list=err.errors()
@@ -1064,7 +1169,11 @@ class Part:
             match = re.match(partition_pattern, filepath)
             if match:
                 partition = match.group("partition")
-                if str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
+                if build_error := _get_build_partition_usage_error(
+                    fileset_name, str(partition)
+                ):
+                    error_list.append(build_error)
+                elif str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
                     # If overlays are enabled we can organize to (overlay)
                     pass
                 elif str(partition) not in self._partitions:
@@ -1080,12 +1189,10 @@ class Part:
                             f"    misused partition {partition!r} in {filepath!r}"
                         )
 
-            if require_inner_path:
-                _, inner_path = get_partition_and_path(filepath, self.default_partition)
-                if not inner_path:
-                    error_list.append(
-                        f"    no path specified after partition in {filepath!r}"
-                    )
+            if path_error := _get_missing_partition_inner_path_error(
+                filepath, self.default_partition, require_inner_path=require_inner_path
+            ):
+                error_list.append(path_error)
 
         if error_list:
             error_list.insert(0, f"  parts.{self.name}.{fileset_name}")

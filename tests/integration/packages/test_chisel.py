@@ -31,7 +31,7 @@ pytestmark = [
 ]
 
 
-def test_slice_error_has_details(new_dir: pathlib.Path, partitions, caplog):
+def test_slice_error_has_details(new_path: pathlib.Path, partitions, caplog):
     caplog.set_level(logging.DEBUG)
     part_yaml = textwrap.dedent(
         """\
@@ -46,8 +46,8 @@ def test_slice_error_has_details(new_dir: pathlib.Path, partitions, caplog):
     lf = LifecycleManager(
         parts,
         application_name="test_chisel",
-        cache_dir=new_dir,
-        work_dir=new_dir,
+        cache_dir=new_path,
+        work_dir=new_path,
         partitions=partitions,
         parallel_build_count=os.cpu_count() or 1,
     )

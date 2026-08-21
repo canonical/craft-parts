@@ -40,7 +40,7 @@ class FileSource(FileSourceHandler):
 
     def __init__(
         self,
-        source: str,
+        source: str | Path,
         part_src_dir: Path,
         *,
         cache_dir: Path,
