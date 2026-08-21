@@ -21,8 +21,8 @@ import jsonschema
 import pydantic
 import pytest
 from craft_parts import pydantic_schema
-from craft_parts.sources import errors as source_errors
 from craft_parts.plugins import plugins
+from craft_parts.sources import errors as source_errors
 
 VALID_PLUGIN_DATAS = [
     *(
