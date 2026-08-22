@@ -128,7 +128,7 @@ class QmakePlugin(Plugin):
             source_subdir = self._part_info.part_src_subdir.relative_to(
                 self._part_info.part_src_dir
             )
-            if source_subdir != Path(".") and project_file.parts[: len(
+            if source_subdir != Path() and project_file.parts[: len(
                 source_subdir.parts
             )] == source_subdir.parts:
                 project_file_path = self._part_info.part_src_dir / project_file

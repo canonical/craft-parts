@@ -194,7 +194,7 @@ class TestPluginQMakePlugin:
                 'QMAKE_LFLAGS+="${LDFLAGS:-}" '
                 f"{part_info.part_src_dir}/sources/hello.pro"
             ),
-            f'env -u CFLAGS -u CXXFLAGS make -j{part_info.parallel_build_count}',
+            f"env -u CFLAGS -u CXXFLAGS make -j{part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={part_info.part_install_dir}",
         ]
 
@@ -220,7 +220,7 @@ class TestPluginQMakePlugin:
                 'QMAKE_LFLAGS+="${LDFLAGS:-}" '
                 f"{part_info.part_src_dir}/sources/sub/hello.pro"
             ),
-            f'env -u CFLAGS -u CXXFLAGS make -j{part_info.parallel_build_count}',
+            f"env -u CFLAGS -u CXXFLAGS make -j{part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={part_info.part_install_dir}",
         ]
 
