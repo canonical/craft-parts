@@ -82,7 +82,7 @@ class TestPluginQMakePlugin:
         plugin = setup_method_fixture(new_dir)
 
         assert plugin.get_build_commands() == [
-            f'qmake QMAKE_CFLAGS+="${{CFLAGS:-}}" QMAKE_CXXFLAGS+="${{CXXFLAGS:-}}" QMAKE_LFLAGS+="${{LDFLAGS:-}}" {plugin._part_info.part_src_dir}',
+            f'qmake QMAKE_CFLAGS+="${{CFLAGS:-}}" QMAKE_CXXFLAGS+="${{CXXFLAGS:-}}" QMAKE_LFLAGS+="${{LDFLAGS:-}}" {plugin._part_info.part_src_subdir}',
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
@@ -91,7 +91,7 @@ class TestPluginQMakePlugin:
         plugin = setup_method_fixture(new_dir, properties={"qmake-major-version": 6})
 
         assert plugin.get_build_commands() == [
-            f'qmake6 QMAKE_CFLAGS+="${{CFLAGS:-}}" QMAKE_CXXFLAGS+="${{CXXFLAGS:-}}" QMAKE_LFLAGS+="${{LDFLAGS:-}}" {plugin._part_info.part_src_dir}',
+            f'qmake6 QMAKE_CFLAGS+="${{CFLAGS:-}}" QMAKE_CXXFLAGS+="${{CXXFLAGS:-}}" QMAKE_LFLAGS+="${{LDFLAGS:-}}" {plugin._part_info.part_src_subdir}',
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
@@ -105,7 +105,7 @@ class TestPluginQMakePlugin:
             (
                 'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" '
                 'QMAKE_LFLAGS+="${LDFLAGS:-}" '
-                f"{plugin._part_info.part_src_dir}/hello.pro"
+                f"{plugin._part_info.part_src_subdir}/hello.pro"
             ),
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
@@ -119,9 +119,31 @@ class TestPluginQMakePlugin:
         plugin = setup_method_fixture(new_dir, {"qmake-parameters": qmake_parameters})
 
         assert plugin.get_build_commands() == [
-            f'qmake QMAKE_CFLAGS+="${{CFLAGS:-}}" QMAKE_CXXFLAGS+="${{CXXFLAGS:-}}" QMAKE_LFLAGS+="${{LDFLAGS:-}}" QMAKE_LIBDIR+=/foo {plugin._part_info.part_src_dir}',
+            f'qmake QMAKE_CFLAGS+="${{CFLAGS:-}}" QMAKE_CXXFLAGS+="${{CXXFLAGS:-}}" QMAKE_LFLAGS+="${{LDFLAGS:-}}" QMAKE_LIBDIR+=/foo {plugin._part_info.part_src_subdir}',
             f"env -u CFLAGS -u CXXFLAGS make -j{plugin._part_info.parallel_build_count}",
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
+        ]
+
+    def test_get_build_commands_source_subdir(self, setup_method_fixture, new_dir):
+        part = Part("foo", {"source-subdir": "sources"})
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        project_info._parallel_build_count = 42
+        part_info = PartInfo(project_info=project_info, part=part)
+        part_info._part_install_dir = Path("install/dir")
+
+        plugin = QmakePlugin(
+            properties=QmakePlugin.properties_class.unmarshal({"source": "."}),
+            part_info=part_info,
+        )
+
+        assert plugin.get_build_commands() == [
+            (
+                'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" '
+                'QMAKE_LFLAGS+="${LDFLAGS:-}" '
+                f"{part_info.part_src_subdir}"
+            ),
+            f"env -u CFLAGS -u CXXFLAGS make -j{part_info.parallel_build_count}",
+            f"make install INSTALL_ROOT={part_info.part_install_dir}",
         ]
 
     def test_get_out_of_source_build(self, setup_method_fixture, new_dir):
