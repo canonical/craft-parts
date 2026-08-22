@@ -104,10 +104,10 @@ def test_build_environment_change_dirty(new_dir):
 
     lf = craft_parts.LifecycleManager(parts, **lf_kwargs)
     assert lf.plan(Step.PRIME) == [
-        Action("foo", Step.PULL, ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.BUILD, ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.STAGE, ActionType.SKIP, reason="already ran"),
-        Action("foo", Step.PRIME, ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.STAGE, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.PRIME, action_type=ActionType.SKIP, reason="already ran"),
     ]
 
     parts["parts"]["foo"]["build-environment"][0]["FOO"] = "two"
