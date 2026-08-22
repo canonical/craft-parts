@@ -43,6 +43,9 @@ New features:
   ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
   should set this to False and use the ``stage-slices`` key instead.
 
+- Collect the names of all invalid apt stage packages instead of raising an error
+  as soon as the first invalid entry is found.
+
 Bug fixes:
 
 - The Overlay and Build steps of parts that organize content to the overlay
