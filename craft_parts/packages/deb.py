@@ -563,8 +563,8 @@ class Ubuntu(BaseRepository):
         with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
             try:
                 apt_cache.mark_packages(set(package_names))
-            except errors.PackageNotFound as error:
-                raise errors.BuildPackageNotFound(error.package_name) from error
+            except errors.PackagesNotFound as error:
+                raise errors.BuildPackagesNotFound(error.packages) from error
 
             return apt_cache.get_packages_marked_for_installation()
 

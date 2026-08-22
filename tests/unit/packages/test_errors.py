@@ -80,10 +80,13 @@ def test_file_provider_not_found():
     assert err.resolution is None
 
 
-def test_build_package_not_found():
-    err = errors.BuildPackageNotFound("foobar")
-    assert err.package == "foobar"
-    assert err.brief == "Cannot find package listed in 'build-packages': foobar"
+def test_build_packages_not_found():
+    err = errors.BuildPackagesNotFound(packages=["foobar", "fizzbuzz"])
+    assert err.packages == ["foobar", "fizzbuzz"]
+    assert (
+        err.brief
+        == "Cannot find packages listed in 'build-packages': 'fizzbuzz' and 'foobar'"
+    )
     assert err.details is None
     assert err.resolution is None
 

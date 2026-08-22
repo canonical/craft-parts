@@ -552,10 +552,10 @@ class TestBuildPackages:
     @pytest.mark.usefixtures("fake_all_packages_installed")
     def test_invalid_package_requested(self, fake_apt_cache, fake_deb_run):
         fake_apt_cache.return_value.__enter__.return_value.mark_packages.side_effect = (
-            errors.PackageNotFound("package-invalid")
+            errors.PackagesNotFound(["package-invalid"])
         )
 
-        with pytest.raises(errors.BuildPackageNotFound):
+        with pytest.raises(errors.BuildPackagesNotFound):
             deb.Ubuntu.install_packages(["package-invalid"])
 
     @pytest.mark.usefixtures("fake_all_packages_installed")

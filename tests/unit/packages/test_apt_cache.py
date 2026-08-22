@@ -219,6 +219,7 @@ class TestAptStageCache:
 
     def test_mark_packages_reports_missing_version(self, tmpdir, mocker):
         """Test that mark_packages aggregates missing pinned versions."""
+
         class MockPackage:
             def __init__(self):
                 self.versions = mocker.MagicMock()
