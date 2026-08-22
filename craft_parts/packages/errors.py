@@ -122,7 +122,7 @@ class FileProviderNotFound(PackagesError):  # noqa: N818
 
 
 class BuildPackagesNotFound(PackagesError):  # noqa: N818
-    """A package listed in 'build-packages' was not found.
+    """One or more packages listed in 'build-packages' were not found.
 
     :param packages: The names of the missing packages.
     """
