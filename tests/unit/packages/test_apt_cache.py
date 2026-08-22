@@ -215,7 +215,11 @@ class TestAptStageCache:
             with pytest.raises(errors.PackagesNotFound) as raised:
                 cache.mark_packages({"missing-1", "missing-2=1.0", "missing-3=2.0"})
 
-        assert sorted(raised.value.packages) == ["missing-1", "missing-2=1.0", "missing-3=2.0"]
+        assert sorted(raised.value.packages) == [
+            "missing-1",
+            "missing-2=1.0",
+            "missing-3=2.0",
+        ]
 
     def test_mark_packages_reports_missing_version(self, tmpdir, mocker):
         """Test that mark_packages aggregates missing pinned versions."""
