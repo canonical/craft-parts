@@ -145,10 +145,8 @@ class BaseRepository(abc.ABC):
     ) -> list[str]:
         """Fetch stage packages to stage_packages_path.
 
-        :param application_name: A unique identifier for the application
-            using Craft Parts.
         :param package_names: A list with the names of the packages to fetch.
-        :stage_packages_path: The path stage packages will be fetched to.
+        :param stage_packages_path: The path stage packages will be fetched to.
         :param base: The base this project will run on.
         :param arch: The architecture of the packages to fetch.
 

@@ -444,21 +444,6 @@ def get_packages_in_base(*, base: str) -> list[DebPackage]:
     return []
 
 
-def _is_list_of_slices(names: list[str]) -> bool:
-    """Whether `names` contains Chisel slices or Deb packages.
-
-    This function does not "validate" the names to see if they refer to existing slices/
-    packages; it only considers the format of the names. It also assumes that the list
-    has been pre-processed and is homogeneous - that is, it does *not* contain a mixture
-    of slices and deb packages.
-
-    :param name: A list of package names.
-    :return: `True` if the list refers to Chisel slices, or `False` if it refers to Deb
-    packages (or is empty).
-    """
-    return any("_" in name for name in names)
-
-
 def _parse_installed_dpkg_query_line(line: str) -> str | None:
     """Parse one dpkg-query output line into package=version, if installed."""
     if not line.strip():
@@ -481,7 +466,11 @@ def _parse_installed_dpkg_query_line(line: str) -> str | None:
 def _is_dpkg_status_installed(status: str) -> bool:
     """Return true when a dpkg status string represents an installed package."""
     fields = status.split()
-    return len(fields) == 3 and fields[1:] == ["ok", "installed"]
+    return (
+        len(fields) == 3
+        and fields[0] in {"install", "hold"}
+        and fields[1:] == ["ok", "installed"]
+    )
 
 
 def _get_installed_packages_dpkg_query() -> list[str]:
@@ -855,7 +844,8 @@ class Ubuntu(BaseRepository):
         if not package_names:
             return []
 
-        if _is_list_of_slices(package_names):
+        # Assumes that the list is all slices or all packages, but not a mix.
+        if deb_utils.has_slices(package_names):
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)
@@ -898,9 +888,10 @@ class Ubuntu(BaseRepository):
         # doesn't own
         try:
             shutil.chown(deb_cache_dir, user="_apt")
-        except (LookupError, PermissionError) as err:
+        except (LookupError, PermissionError, OSError) as err:
             # LookupError: user `_apt` not found
             # PermissionError: non root run, such as unit tests
+            # OSError: restricted filesystems can reject chown
             logger.debug(f"Cannot chown '{deb_cache_dir}' to '_apt': {err!s}")
         else:
             logger.debug(f"Set ownership of '{deb_cache_dir}' to '_apt'")
@@ -937,7 +928,8 @@ class Ubuntu(BaseRepository):
         """Unpack stage packages to install_path."""
         if stage_packages is None:
             stage_packages = []
-        if _is_list_of_slices(stage_packages):
+        # Assumes that the list is all slices or all packages, but not a mix.
+        if deb_utils.has_slices(stage_packages):
             cls._unpack_stage_slices(
                 stage_packages=stage_packages, install_path=install_path
             )
@@ -1042,7 +1034,12 @@ class Ubuntu(BaseRepository):
     def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
         try:
             output = subprocess.check_output(
-                ["dpkg-deb", "--show", "--showformat=${Package}=${Version}", deb_path]
+                [
+                    "dpkg-deb",
+                    "--show",
+                    "--showformat=${binary:Package}=${Version}",
+                    deb_path,
+                ]
             )
         except subprocess.CalledProcessError as err:
             raise errors.UnpackError(str(deb_path)) from err
