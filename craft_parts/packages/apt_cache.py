@@ -314,7 +314,7 @@ class AptCache(ContextDecorator):
 
             name_arch, version = get_pkg_name_parts(name)
             if name_arch not in self.cache:
-                missing_packages.append(name_arch)
+                missing_packages.append(f"{name_arch}={version}" if version else name_arch)
                 continue
 
             package = self.cache[name_arch]
