@@ -24,6 +24,9 @@ Unreleased
 
 New features:
 
+- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
+  snap name and channel.
+
 - Add ``overlay-recommended-packages`` key to install overlay packages with their
   recommended dependencies.
 
@@ -31,6 +34,14 @@ New features:
   disabling test targets that are not useful inside a rock or snap and would
   otherwise pull in large test-only dependencies. Users can opt back in by
   passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
+
+- Add a ``stage-slices`` key to declare Chisel slices separately from the
+  ``stage-packages`` key.
+
+- Add a ``stage_packages_slice_support`` parameter to the ``LifecycleManager``
+  so applications can control whether Chisel slices can be declared in the
+  ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
+  should set this to False and use the ``stage-slices`` key instead.
 
 Bug fixes:
 
@@ -42,6 +53,9 @@ Bug fixes:
   *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
   they were absent when packages are installed with ``--no-install-recommends``,
   causing builds to fail.
+- Set ``DEBIAN_FRONTEND=noninteractive`` in the global execution environment,
+  so all steps run non-interactively by default.
+- Add git source mutual exclusivity to JSON schema.
 
 .. _release-2.34.1:
 

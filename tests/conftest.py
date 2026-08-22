@@ -182,6 +182,13 @@ def partitions():
 
 
 @pytest.fixture
+def is_deb_based(mocker):
+    mocker.patch.object(
+        craft_parts.packages.platform, "is_deb_based", autospec=True, return_value=True
+    )
+
+
+@pytest.fixture
 def enable_all_features():
     assert Features().enable_overlay is False
     assert Features().enable_partitions is False

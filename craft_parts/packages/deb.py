@@ -444,21 +444,6 @@ def get_packages_in_base(*, base: str) -> list[DebPackage]:
     return []
 
 
-def _is_list_of_slices(names: list[str]) -> bool:
-    """Whether `names` contains Chisel slices or Deb packages.
-
-    This function does not "validate" the names to see if they refer to existing slices/
-    packages; it only considers the format of the names. It also assumes that the list
-    has been pre-processed and is homogeneous - that is, it does *not* contain a mixture
-    of slices and deb packages.
-
-    :param name: A list of package names.
-    :return: `True` if the list refers to Chisel slices, or `False` if it refers to Deb
-    packages (or is empty).
-    """
-    return any("_" in name for name in names)
-
-
 class Ubuntu(BaseRepository):
     """Repository management for Ubuntu packages."""
 
@@ -623,7 +608,6 @@ class Ubuntu(BaseRepository):
         cls,
         package_names: list[str],
         *,
-        list_only: bool = False,
         refresh_package_cache: bool = True,
         include_recommends: bool = False,
     ) -> list[str]:
@@ -636,29 +620,24 @@ class Ubuntu(BaseRepository):
 
         logger.debug("Installing packages using apt: %s", package_names)
 
-        # Ensure we have an up-to-date cache first if we will have to
-        # install anything.
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
         # Refresh before marking packages, because marking depends on the
         # current apt package index.
-        if not list_only and refresh_package_cache and install_required:
+        if refresh_package_cache and install_required:
             cls.refresh_packages_list()
 
         # Collect the list of marked packages to later construct a manifest
         marked_packages = cls._get_packages_marked_for_installation(package_names)
         marked_package_names = [name for name, _ in sorted(marked_packages)]
 
-        if not list_only:
-            if install_required:
-                cls._install_packages(
-                    package_names, include_recommends=include_recommends
-                )
-            else:
-                logger.debug(
-                    "Requested build-packages already installed: %s", package_names
-                )
+        if install_required:
+            cls._install_packages(package_names, include_recommends=include_recommends)
+        else:
+            logger.debug(
+                "Requested build-packages already installed: %s", package_names
+            )
 
         # This result is a best effort approach for deps and virtual packages
         # as they are not part of the installation list.
@@ -713,7 +692,6 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
-        list_only: bool = False,
         packages_filters: set[str] | None = None,
     ) -> list[str]:
         """Fetch stage packages to stage_packages_path."""
@@ -722,7 +700,8 @@ class Ubuntu(BaseRepository):
         if not package_names:
             return []
 
-        if _is_list_of_slices(package_names):
+        # assumes that the list is all slices or all packages, but not a mix
+        if deb_utils.has_slices(package_names):
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)
@@ -732,7 +711,6 @@ class Ubuntu(BaseRepository):
             stage_packages_path=stage_packages_path,
             base=base,
             arch=arch,
-            list_only=list_only,
             packages_filters=packages_filters,
         )
 
@@ -746,7 +724,6 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
-        list_only: bool = False,
         packages_filters: set[str] | None = None,
     ) -> list[str]:
         """Fetch .deb stage packages to stage_packages_path."""
@@ -759,8 +736,7 @@ class Ubuntu(BaseRepository):
         if packages_filters:
             filtered_names.update(packages_filters)
 
-        if not list_only:
-            stage_packages_path.mkdir(exist_ok=True)
+        stage_packages_path.mkdir(exist_ok=True)
 
         stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
         deb_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -786,18 +762,12 @@ class Ubuntu(BaseRepository):
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(filtered_names)
 
-            if list_only:
-                marked_packages = apt_cache.get_packages_marked_for_installation()
-                installed = {
-                    f"{name}={version}" for name, version in sorted(marked_packages)
-                }
-            else:
-                for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                    deb_cache_dir
-                ):
-                    logger.info("Extracting stage package: %s", pkg_name)
-                    installed.add(f"{pkg_name}={pkg_version}")
-                    file_utils.link_or_copy(dl_path, stage_packages_path / dl_path.name)
+            for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
+                deb_cache_dir
+            ):
+                logger.info("Extracting stage package: %s", pkg_name)
+                installed.add(f"{pkg_name}={pkg_version}")
+                file_utils.link_or_copy(dl_path, stage_packages_path / dl_path.name)
 
         return sorted(installed)
 
@@ -813,7 +783,9 @@ class Ubuntu(BaseRepository):
         """Unpack stage packages to install_path."""
         if stage_packages is None:
             stage_packages = []
-        if _is_list_of_slices(stage_packages):
+
+        # assumes that the list is all slices or all packages, but not a mix
+        if deb_utils.has_slices(stage_packages):
             cls._unpack_stage_slices(
                 stage_packages=stage_packages, install_path=install_path
             )
@@ -907,7 +879,12 @@ class Ubuntu(BaseRepository):
     def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
         try:
             output = subprocess.check_output(
-                ["dpkg-deb", "--show", "--showformat=${Package}=${Version}", deb_path]
+                [
+                    "dpkg-deb",
+                    "--show",
+                    "--showformat=${binary:Package}=${Version}",
+                    deb_path,
+                ]
             )
         except subprocess.CalledProcessError as err:
             raise errors.UnpackError(str(deb_path)) from err

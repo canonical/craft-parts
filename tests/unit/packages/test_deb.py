@@ -632,6 +632,30 @@ def fake_dpkg_query(mocker):
     mocker.patch("subprocess.check_output", side_effect=dpkg_query)
 
 
+def test_extract_deb_name_version_keeps_architecture(mocker, tmpdir):
+    deb_path = Path(tmpdir, "libc6-i386.deb")
+    deb_path.touch()
+
+    mock_check_output = mocker.patch(
+        "subprocess.check_output",
+        return_value=b"libc6:i386=2.39-0ubuntu8.6\n",
+    )
+
+    result = deb.Ubuntu._extract_deb_name_version(deb_path)
+
+    assert result == "libc6:i386=2.39-0ubuntu8.6"
+    assert mock_check_output.mock_calls == [
+        call(
+            [
+                "dpkg-deb",
+                "--show",
+                "--showformat=${binary:Package}=${Version}",
+                deb_path,
+            ]
+        )
+    ]
+
+
 class TestGetPackagesInBase:
     HARDCODED_BASES = ["core", "core16", "core18"]
     DPKG_BASES = ["core20", "core22", "core24"]
@@ -1058,34 +1082,6 @@ def test_refresh_not_called_when_disabled(mocker: MockerFixture) -> None:
 
     mock_refresh.assert_not_called()
     mock_mark.assert_called_once_with(["foo"])
-
-
-def test_refresh_not_called_when_listing_only(mocker: MockerFixture) -> None:
-    """Do not refresh the apt index when only listing packages."""
-    mock_refresh = mocker.patch.object(deb.Ubuntu, "refresh_packages_list")
-    mock_install = mocker.patch.object(deb.Ubuntu, "_install_packages")
-
-    mocker.patch.object(
-        deb.Ubuntu,
-        "_check_if_all_packages_installed",
-        return_value=False,
-    )
-    mock_mark = mocker.patch.object(
-        deb.Ubuntu,
-        "_get_packages_marked_for_installation",
-        return_value=[],
-    )
-    mocker.patch.object(
-        deb.Ubuntu,
-        "_get_installed_package_versions",
-        return_value=[],
-    )
-
-    deb.Ubuntu.install_packages(["foo"], list_only=True)
-
-    mock_refresh.assert_not_called()
-    mock_mark.assert_called_once_with(["foo"])
-    mock_install.assert_not_called()
 
 
 class TestIncludeRecommends:

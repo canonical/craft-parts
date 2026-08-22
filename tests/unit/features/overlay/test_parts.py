@@ -51,6 +51,7 @@ class TestPartSpecs:
             "overlay-recommended-packages": [],
             "stage-snaps": ["stage-snap1", "stage-snap2"],
             "stage-packages": ["stage-pkg1", "stage-pkg2"],
+            "stage-slices": [],
             "build-snaps": ["build-snap1", "build-snap2"],
             "build-packages": ["build-pkg1", "build-pkg2"],
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
