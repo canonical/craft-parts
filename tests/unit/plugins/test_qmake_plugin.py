@@ -111,7 +111,7 @@ class TestPluginQMakePlugin:
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
 
-    def test_get_build_commands_source_subdir(self, setup_method_fixture, new_dir):
+    def test_get_build_commands_source_subdir(self, new_dir):
         part = Part("foo", {"source-subdir": "sources"})
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(project_info=project_info, part=part)
