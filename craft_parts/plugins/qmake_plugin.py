@@ -18,6 +18,7 @@
 
 """The qmake plugin."""
 
+from pathlib import Path
 from typing import Literal, cast
 
 from typing_extensions import override
@@ -58,8 +59,11 @@ class QmakePlugin(Plugin):
       (string)
       the qmake project file to use. This is usually only needed if
       qmake can not determine what project file to use on its own.
+      If a ``source-subdir`` is set and the value already starts with
+      that prefix, the path is resolved relative to the source directory;
+      otherwise it is resolved relative to the source subdirectory.
 
-    - qmake_major_version:
+    - qmake-major-version:
       (int)
       set the qt major version. This is only needed to support qt6 builds.
       Version 5 is default.
@@ -115,10 +119,22 @@ class QmakePlugin(Plugin):
                 *options.qmake_parameters,
             ]
 
+        # Resolve the project file path. This dual-resolution ensures compatibility
+        # with projects that may have already defined qmake-project-file relative
+        # to the source directory, while still supporting resolution relative
+        # to the source subdirectory.
         if options.qmake_project_file:
-            qmake_configure_command.append(
-                str(self._part_info.part_src_subdir / options.qmake_project_file)
+            project_file = Path(options.qmake_project_file)
+            source_subdir = self._part_info.part_src_subdir.relative_to(
+                self._part_info.part_src_dir
             )
+            if source_subdir != Path(".") and project_file.parts[: len(
+                source_subdir.parts
+            )] == source_subdir.parts:
+                project_file_path = self._part_info.part_src_dir / project_file
+            else:
+                project_file_path = self._part_info.part_src_subdir / project_file
+            qmake_configure_command.append(str(project_file_path))
         else:
             qmake_configure_command.append(str(self._part_info.part_src_subdir))
 

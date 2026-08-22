@@ -146,6 +146,84 @@ class TestPluginQMakePlugin:
             f"make install INSTALL_ROOT={part_info.part_install_dir}",
         ]
 
+    def test_get_build_commands_source_subdir_qmake_project_file(
+        self, setup_method_fixture, new_dir
+    ):
+        part = Part("foo", {"source-subdir": "sources"})
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        project_info._parallel_build_count = 42
+        part_info = PartInfo(project_info=project_info, part=part)
+        part_info._part_install_dir = Path("install/dir")
+
+        plugin = QmakePlugin(
+            properties=QmakePlugin.properties_class.unmarshal(
+                {"source": ".", "qmake-project-file": "hello.pro"}
+            ),
+            part_info=part_info,
+        )
+
+        assert plugin.get_build_commands() == [
+            (
+                'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" '
+                'QMAKE_LFLAGS+="${LDFLAGS:-}" '
+                f"{part_info.part_src_subdir}/hello.pro"
+            ),
+            f"env -u CFLAGS -u CXXFLAGS make -j{part_info.parallel_build_count}",
+            f"make install INSTALL_ROOT={part_info.part_install_dir}",
+        ]
+
+    def test_get_build_commands_source_subdir_qmake_project_file_with_prefix(
+        self, setup_method_fixture, new_dir
+    ):
+        part = Part("foo", {"source-subdir": "sources"})
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        project_info._parallel_build_count = 42
+        part_info = PartInfo(project_info=project_info, part=part)
+        part_info._part_install_dir = Path("install/dir")
+
+        plugin = QmakePlugin(
+            properties=QmakePlugin.properties_class.unmarshal(
+                {"source": ".", "qmake-project-file": "sources/hello.pro"}
+            ),
+            part_info=part_info,
+        )
+
+        assert plugin.get_build_commands() == [
+            (
+                'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" '
+                'QMAKE_LFLAGS+="${LDFLAGS:-}" '
+                f"{part_info.part_src_dir}/sources/hello.pro"
+            ),
+            f'env -u CFLAGS -u CXXFLAGS make -j{part_info.parallel_build_count}',
+            f"make install INSTALL_ROOT={part_info.part_install_dir}",
+        ]
+
+    def test_get_build_commands_source_subdir_qmake_project_file_nested_subdir(
+        self, setup_method_fixture, new_dir
+    ):
+        part = Part("foo", {"source-subdir": "sources/sub"})
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        project_info._parallel_build_count = 42
+        part_info = PartInfo(project_info=project_info, part=part)
+        part_info._part_install_dir = Path("install/dir")
+
+        plugin = QmakePlugin(
+            properties=QmakePlugin.properties_class.unmarshal(
+                {"source": ".", "qmake-project-file": "sources/sub/hello.pro"}
+            ),
+            part_info=part_info,
+        )
+
+        assert plugin.get_build_commands() == [
+            (
+                'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" '
+                'QMAKE_LFLAGS+="${LDFLAGS:-}" '
+                f"{part_info.part_src_dir}/sources/sub/hello.pro"
+            ),
+            f'env -u CFLAGS -u CXXFLAGS make -j{part_info.parallel_build_count}',
+            f"make install INSTALL_ROOT={part_info.part_install_dir}",
+        ]
+
     def test_get_out_of_source_build(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture(new_dir)
 
