@@ -226,11 +226,11 @@ class TestAptStageCache:
 
         class MockPackage:
             def __init__(self):
+                self.name = "good-pkg"
                 self.versions = mocker.MagicMock()
                 self.versions.get = lambda version: None
 
         pkg = MockPackage()
-        pkg.name = "good-pkg"
         mock_cache = mocker.MagicMock()
         mock_cache.is_virtual_package.return_value = False
         mock_cache.__contains__ = lambda self, n: n == "good-pkg"
