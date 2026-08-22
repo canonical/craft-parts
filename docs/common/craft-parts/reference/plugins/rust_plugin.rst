@@ -1,7 +1,7 @@
+.. _craft_parts_rust_plugin:
+
 .. meta::
     :description: Reference for the Rust plugin, including its configuration keys, Rust toolchain behavior, and example part definitions in YAML.
-
-.. _craft_parts_rust_plugin:
 
 Rust plugin
 =============
