@@ -466,11 +466,11 @@ def _parse_installed_dpkg_query_line(line: str) -> str | None:
 def _is_dpkg_status_installed(status: str) -> bool:
     """Return true when a dpkg status string represents an installed package."""
     fields = status.split()
-    return (
-        len(fields) == 3
-        and fields[0] in {"install", "hold"}
-        and fields[1:] == ["ok", "installed"]
-    )
+    match fields:
+        case [state, "ok", "installed"] if state in {"install", "hold"}:
+            return True
+        case _:
+            return False
 
 
 def _get_installed_packages_dpkg_query() -> list[str]:
