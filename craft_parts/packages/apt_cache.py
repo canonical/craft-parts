@@ -303,6 +303,7 @@ class AptCache(ContextDecorator):
         """
         # First pass: resolve names and set candidate versions
         resolved: list[apt.package.Package] = []
+        missing_packages: list[str] = []
         for _name in package_names:
             name = _name[:-4] if _name.endswith(":any") else _name
 
@@ -313,14 +314,22 @@ class AptCache(ContextDecorator):
 
             name_arch, version = get_pkg_name_parts(name)
             if name_arch not in self.cache:
-                raise errors.PackageNotFound(name_arch)
+                missing_packages.append(name_arch)
+                continue
 
             package = self.cache[name_arch]
             if version is not None:
-                _set_pkg_version(package, version)
+                try:
+                    _set_pkg_version(package, version)
+                except errors.PackageNotFound:
+                    missing_packages.append(f"{name_arch}={version}")
+                    continue
 
             logger.debug("package: %s", package)
             resolved.append(package)
+
+        if missing_packages:
+            raise errors.PackagesNotFound(missing_packages)
 
         # Second pass: mark all packages for install
         for package in resolved:

@@ -201,6 +201,46 @@ class TestAptStageCache:
         for pkg in pkg_mocks.values():
             assert pkg.marked_install is True
 
+    def test_mark_packages_reports_all_missing_packages(self, tmpdir, mocker):
+        """Test that mark_packages aggregates all unresolvable packages."""
+        mock_cache = mocker.MagicMock()
+        mock_cache.is_virtual_package.return_value = False
+        mock_cache.__contains__ = lambda self, n: n in {"good-pkg"}
+        mocker.patch("apt.cache.Cache", return_value=mock_cache)
+
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+
+        with AptCache(stage_cache=stage_cache) as cache:
+            with pytest.raises(errors.PackagesNotFound) as raised:
+                cache.mark_packages({"missing-1", "missing-2"})
+
+        assert sorted(raised.value.packages) == ["missing-1", "missing-2"]
+
+    def test_mark_packages_reports_missing_version(self, tmpdir, mocker):
+        """Test that mark_packages aggregates missing pinned versions."""
+        class MockPackage:
+            def __init__(self):
+                self.versions = mocker.MagicMock()
+                self.versions.get = lambda version: None
+
+        pkg = MockPackage()
+        pkg.name = "good-pkg"
+        mock_cache = mocker.MagicMock()
+        mock_cache.is_virtual_package.return_value = False
+        mock_cache.__contains__ = lambda self, n: n == "good-pkg"
+        mock_cache.__getitem__ = lambda self, n: pkg
+        mocker.patch("apt.cache.Cache", return_value=mock_cache)
+
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+
+        with AptCache(stage_cache=stage_cache) as cache:
+            with pytest.raises(errors.PackagesNotFound) as raised:
+                cache.mark_packages({"good-pkg=1.0", "good-pkg=2.0"})
+
+        assert sorted(raised.value.packages) == ["good-pkg=1.0", "good-pkg=2.0"]
+
     def test_packages_without_candidate(self, tmpdir, mocker):
         class MockPackage:
             def __init__(self):
