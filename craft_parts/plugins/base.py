@@ -112,6 +112,15 @@ class Plugin(abc.ABC):
         """
         return set()
 
+    def get_overlay_recommended_packages(self) -> set[str]:
+        """Return a set of packages to install in the overlay with recommended packages.
+
+        Plugins that set ``uses_overlay = True`` can override this method to
+        declare packages that should be installed into the overlay filesystem with their
+        recommended packages.
+        """
+        return set()
+
     def get_overlay_chroot_commands(self) -> list[str]:
         """Return commands to run inside the overlay chroot.
 

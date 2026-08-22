@@ -66,6 +66,7 @@ class AutotoolsPlugin(Plugin):
     """
 
     properties_class = AutotoolsPluginProperties
+    default_configure_parameters: list[str] = []
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -84,7 +85,11 @@ class AutotoolsPlugin(Plugin):
 
     def _get_configure_command(self) -> str:
         options = cast(AutotoolsPluginProperties, self._options)
-        cmd = ["./configure", *options.autotools_configure_parameters]
+        cmd = [
+            "./configure",
+            *self.default_configure_parameters,
+            *options.autotools_configure_parameters,
+        ]
         return " ".join(cmd)
 
     def _get_bootstrap_command(self) -> str:

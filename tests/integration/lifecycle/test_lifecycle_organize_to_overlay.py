@@ -306,6 +306,8 @@ def test_basic_lifecycle_overlay_only(new_dir, mocker):
         Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.OVERLAY, action_type=ActionType.SKIP, reason="already ran"),
         Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foobar", Step.PULL, reason="required to stage 'foo'"),
+        Action("foobar", Step.OVERLAY, reason="required to stage 'foo'"),
         Action("foo", Step.STAGE, reason="required to build 'bar'"),
         # now we can build bar
         Action("bar", Step.BUILD),
@@ -499,3 +501,59 @@ def test_organize_after_lifecycle_actions(new_dir, mocker):
         Action("p2", Step.PRIME),
         Action("p1", Step.PRIME),
     ]
+
+
+issue_1611_parts_yaml = textwrap.dedent(
+    """\
+    parts:
+      rootfs:
+        plugin: nil
+        organize:
+          '*': (overlay)/
+
+      apt-config:
+        plugin: nil
+        after: [rootfs]
+        organize:
+          ubuntu.sources: (overlay)/etc/apt/sources.list.d/ubuntu.sources
+
+      fstab:
+        plugin: nil
+        after: [rootfs]
+        overlay-script: |
+          true
+    """
+)
+
+
+def test_issue_1611_organize_builds_before_first_stage(new_dir, mocker):
+    mocker.patch("os.geteuid", return_value=0)
+
+    parts = yaml.safe_load(issue_1611_parts_yaml)
+    Path("base").mkdir()
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=["default"],
+        base_layer_dir=Path("base"),
+        base_layer_hash=b"hash",
+    )
+
+    actions = lf.plan(Step.PRIME)
+
+    first_rootfs_stage = actions.index(
+        next(a for a in actions if a.part_name == "rootfs" and a.step == Step.STAGE)
+    )
+    apt_config_build = actions.index(
+        Action("apt-config", Step.BUILD, reason="organize contents to overlay")
+    )
+    fstab_overlay = actions.index(Action("fstab", Step.OVERLAY))
+    apt_config_build_count = actions.count(
+        Action("apt-config", Step.BUILD, reason="organize contents to overlay")
+    )
+
+    assert apt_config_build < first_rootfs_stage
+    assert fstab_overlay < first_rootfs_stage
+    assert apt_config_build_count == 1
