@@ -1,3 +1,6 @@
+.. meta::
+    :description: Reference for the Rust plugin, including its configuration keys, Rust toolchain behavior, and example part definitions in YAML.
+
 .. _craft_parts_rust_plugin:
 
 Rust plugin
@@ -17,13 +20,17 @@ rust-channel
 
 **Type:** string
 
-**Default:** stable
+**Default:** unset
 
 Used to select which `Rust channel or
 version <https://rust-lang.github.io/rustup/concepts/channels.html#channels>`_ to use.
 It can be one of "stable", "beta", "nightly" or a version number. If you want to use a
 specific nightly version, use this format: ``"nightly-YYYY-MM-DD"``. If you don't want
 this plugin to install Rust toolchain for you, you can put ``"none"`` for this option.
+
+If this option is left unset, the plugin uses the system ``cargo`` and ``rustc`` when
+they are already available in the build environment. Otherwise, it uses ``rustup`` and
+defaults to the ``stable`` channel.
 
 
 .. _rust-features:
@@ -164,9 +171,32 @@ details.
 Dependencies
 ------------
 
-By default this plugin uses Rust toolchain binaries from the Rust upstream. If this is
-not desired, you can set ``rust-deps: ["rustc", "cargo"]`` and ``rust-channel: "none"``
-in the part definition to override the default behaviour.
+If ``cargo`` and ``rustc`` are already available in the build environment, this plugin
+uses them directly. Otherwise, it uses ``rustup`` to install or select a Rust toolchain.
+
+To provide Rust through another part instead of ``rustup``, define a part named
+``rust-deps`` that provides both ``cargo`` and ``rustc`` and declare it in
+``after`` for the part using the toolchain. For example:
+
+.. code-block:: yaml
+
+    parts:
+      rust-deps:
+        plugin: nil
+        stage-packages:
+          - cargo
+          - rustc
+
+      my-app:
+        plugin: rust
+        source: .
+        after:
+          - rust-deps
+
+When ``after`` includes ``rust-deps``, or when ``rust-channel`` is set to ``"none"``,
+the plugin validates that ``cargo`` and ``rustc`` are available and does not use
+``rustup``. Do not combine ``after: [rust-deps]`` with a non-``none`` ``rust-channel``
+value.
 
 
 .. _perf-tuning:
