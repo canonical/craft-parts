@@ -77,7 +77,9 @@ class PackageFetchError(PackagesError):
     def __init__(self, url: str | None, details: str | None = None) -> None:
         self.url = url
         brief = (
-            f"Failed to fetch package from {url}." if url else "Failed to fetch package."
+            f"Failed to fetch package from {url}."
+            if url
+            else "Failed to fetch package."
         )
 
         super().__init__(brief=brief, details=details)
