@@ -116,3 +116,32 @@ def test_get_out_of_source_build(plugin):
 
 def test_should_remove_symlinks(plugin):
     assert plugin._should_remove_symlinks() is False
+
+
+def test_get_build_environment_uses_native_tls(plugin):
+    env = plugin.get_build_environment()
+    assert env["UV_SYSTEM_CERTS"] == "true"
+    assert env["UV_NATIVE_TLS"] == "true"
+
+
+@pytest.mark.parametrize(
+    "env_var",
+    ["UV_SYSTEM_CERTS", "UV_NATIVE_TLS"],
+)
+def test_get_build_environment_respects_user_tls_settings(
+    new_dir, plugin, env_var, monkeypatch
+):
+    """When the user already set the variable, the plugin must not override it.
+
+    The actual user-provided value will come from the build environment, so it
+    should not appear in the plugin's returned dictionary.
+    """
+    monkeypatch.setenv(env_var, "false")
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=info, part=Part("p1", {}))
+    properties = UvPlugin.properties_class.unmarshal({"source": "."})
+    uv_plugin = UvPlugin(part_info=part_info, properties=properties)
+
+    env = uv_plugin.get_build_environment()
+
+    assert env_var not in env

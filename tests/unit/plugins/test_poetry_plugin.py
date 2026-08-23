@@ -122,6 +122,30 @@ def test_should_remove_symlinks(plugin):
     assert plugin._should_remove_symlinks() is False
 
 
+def test_get_build_environment_uses_system_ca_bundle(plugin):
+    env = plugin.get_build_environment()
+    assert env["REQUESTS_CA_BUNDLE"] == "/etc/ssl/certs/ca-certificates.crt"
+
+
+def test_get_build_environment_respects_user_ca_bundle(
+    plugin, monkeypatch, new_dir
+):
+    """When the user already set the variable, the plugin must not override it.
+
+    The actual user-provided value will come from the build environment, so it
+    should not appear in the plugin's returned dictionary.
+    """
+    monkeypatch.setenv("REQUESTS_CA_BUNDLE", "/custom/certs.pem")
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=info, part=Part("p1", {}))
+    properties = PoetryPlugin.properties_class.unmarshal({"source": "."})
+    poetry_plugin = PoetryPlugin(part_info=part_info, properties=properties)
+
+    env = poetry_plugin.get_build_environment()
+
+    assert "REQUESTS_CA_BUNDLE" not in env
+
+
 def test_call_should_remove_symlinks(plugin, new_dir, mocker):
     mocker.patch(
         "craft_parts.plugins.poetry_plugin.PoetryPlugin._should_remove_symlinks",

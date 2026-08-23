@@ -16,6 +16,7 @@
 
 """The uv plugin."""
 
+import os
 import shlex
 from typing import Literal
 
@@ -131,7 +132,7 @@ class UvPlugin(BasePythonPlugin):
     def get_build_environment(self) -> dict[str, str]:
         """Return a dictionary with the environment to use in the build step."""
         venv_dir = str(self._get_venv_directory().resolve())
-        return super().get_build_environment() | {
+        env = super().get_build_environment() | {
             "VIRTUAL_ENV": venv_dir,
             "UV_COMPILE_BYTECODE": "1",
             "UV_PROJECT_ENVIRONMENT": venv_dir,
@@ -140,3 +141,10 @@ class UvPlugin(BasePythonPlugin):
             "UV_PYTHON": '"${PARTS_PYTHON_INTERPRETER}"',
             "UV_PYTHON_PREFERENCE": "only-system",
         }
+        # Prefer the native OS TLS certificate store over uv's bundled certs,
+        # but respect any user-provided value.
+        if "UV_SYSTEM_CERTS" not in os.environ:
+            env["UV_SYSTEM_CERTS"] = "true"
+        if "UV_NATIVE_TLS" not in os.environ:
+            env["UV_NATIVE_TLS"] = "true"
+        return env

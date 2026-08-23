@@ -207,7 +207,10 @@ class TestPluginNpmPlugin:
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
-        assert plugin.get_build_environment() == {"NODE_ENV": "production"}
+        assert plugin.get_build_environment() == {
+            "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
+        }
 
     def test_get_build_environment_include_node_false(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal(
@@ -218,7 +221,10 @@ class TestPluginNpmPlugin:
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
-        assert plugin.get_build_environment() == {"NODE_ENV": "production"}
+        assert plugin.get_build_environment() == {
+            "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
+        }
 
     def test_get_build_environment_include_node_true(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal(
@@ -233,7 +239,20 @@ class TestPluginNpmPlugin:
         assert plugin.get_build_environment() == {
             "PATH": "${CRAFT_PART_INSTALL}/bin:${PATH}",
             "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
         }
+
+    def test_get_build_environment_respects_user_tls_settings(
+        self, part_info, new_dir, monkeypatch
+    ):
+        """When the user already set the variable, the plugin must not override it."""
+        monkeypatch.setenv("NODE_USE_SYSTEM_CA", "0")
+        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
+        plugin = NpmPlugin(properties=properties, part_info=part_info)
+
+        env = plugin.get_build_environment()
+
+        assert "NODE_USE_SYSTEM_CA" not in env
 
     def test_get_build_commands(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
