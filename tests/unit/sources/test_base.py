@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import stat
 from pathlib import Path
 from re import escape
 from typing import Literal
@@ -20,7 +21,7 @@ from typing import Literal
 import pytest
 import requests
 from craft_parts import ProjectDirs
-from craft_parts.sources import cache, errors
+from craft_parts.sources import base, cache, errors
 from craft_parts.sources.base import (
     BaseFileSourceModel,
     BaseSourceModel,
@@ -180,6 +181,28 @@ class TestFileSourceHandler:
         assert raised.value.expected == "12345"
         assert raised.value.obtained == "9a0364b9e99bb480dd25e1f0284c8555"
 
+    def test_pull_url_checksum_error_preserves_preexisting_file(
+        self, requests_mock, new_dir
+    ):
+        self.set_source(
+            cache_dir=new_dir,
+            source="http://test.com/some_file",
+            source_checksum="md5/12345",
+        )
+        Path("parts/foo/src").mkdir(parents=True)
+        requests_mock.get(self.source.source, text="content")
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        downloaded.write_text("preexisting content")
+
+        with pytest.raises(errors.ChecksumMismatch):
+            self.source.pull()
+
+        # A successful-but-wrong-content download must not clobber a
+        # pre-existing destination file.
+        assert downloaded.read_text() == "preexisting content"
+        assert list(downloaded.parent.glob("*.part")) == []
+
     def test_pull_url(self, requests_mock, new_dir):
         self.source.source = "http://test.com/some_file"
         requests_mock.get(self.source.source, text="content")
@@ -260,7 +283,8 @@ class TestFileSourceHandler:
         "error_code",
         [requests.codes.unauthorized, requests.codes.internal_server_error],
     )
-    def test_pull_url_http_error(self, requests_mock, new_dir, error_code):
+    def test_pull_url_http_error(self, requests_mock, new_dir, error_code, mocker):
+        mocker.patch("time.sleep")
         self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
         requests_mock.get(self.source.source, status_code=error_code, reason="Error")
 
@@ -272,6 +296,7 @@ class TestFileSourceHandler:
             self.source.pull()
 
     def test_pull_url_streaming_request_error(self, mocker, new_dir):
+        mocker.patch("time.sleep")
         self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
         Path("parts/foo/src").mkdir(parents=True)
 
@@ -281,6 +306,8 @@ class TestFileSourceHandler:
         response.iter_content.side_effect = requests.exceptions.ChunkedEncodingError(
             "stream interrupted"
         )
+        response.__enter__ = mocker.Mock(return_value=response)
+        response.__exit__ = mocker.Mock(return_value=False)
 
         mocker.patch("craft_parts.sources.base.requests.get", return_value=response)
 
@@ -292,6 +319,246 @@ class TestFileSourceHandler:
         )
         with pytest.raises(errors.NetworkRequestError, match=expected):
             self.source.pull()
+
+    @pytest.mark.parametrize(
+        "error_code",
+        [
+            requests.codes.too_many_requests,
+            requests.codes.internal_server_error,
+            requests.codes.bad_gateway,
+            requests.codes.service_unavailable,
+            requests.codes.gateway_timeout,
+        ],
+    )
+    def test_pull_url_retries_transient_http_error(
+        self, requests_mock, new_dir, error_code, mocker
+    ):
+        """Transient HTTP errors are retried before eventually succeeding."""
+        mock_sleep = mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        requests_mock.get(
+            self.source.source,
+            [
+                {"status_code": error_code, "reason": "Error"},
+                {"status_code": error_code, "reason": "Error"},
+                {"text": "content", "status_code": requests.codes.ok},
+            ],
+        )
+
+        self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        assert downloaded.is_file()
+        assert downloaded.read_text() == "content"
+        assert requests_mock.call_count == 3
+        assert mock_sleep.call_args_list == [mocker.call(1.0), mocker.call(2.0)]
+
+    def test_pull_url_gives_up_after_max_retries(self, requests_mock, new_dir, mocker):
+        """A transient HTTP error is raised after all retries are exhausted."""
+        mock_sleep = mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        requests_mock.get(
+            self.source.source,
+            status_code=requests.codes.service_unavailable,
+            reason="Service Unavailable",
+        )
+
+        with pytest.raises(errors.HttpRequestError):
+            self.source.pull()
+
+        assert requests_mock.call_count == base._MAX_DOWNLOAD_ATTEMPTS
+        assert mock_sleep.call_args_list == [
+            mocker.call(2.0**i) for i in range(base._MAX_DOWNLOAD_ATTEMPTS - 1)
+        ]
+
+    def test_pull_url_removes_partial_file_after_max_retries(self, new_dir, mocker):
+        """A partially downloaded file is removed once retries are exhausted."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        response = mocker.Mock()
+        response.raise_for_status.return_value = None
+        response.headers = {}
+
+        def iter_content(_chunk_size):
+            # Simulate writing a few bytes before the connection drops.
+            yield b"partial"
+            raise requests.exceptions.ChunkedEncodingError("stream interrupted")
+
+        response.iter_content.side_effect = iter_content
+        response.__enter__ = mocker.Mock(return_value=response)
+        response.__exit__ = mocker.Mock(return_value=False)
+        mocker.patch("craft_parts.sources.base.requests.get", return_value=response)
+
+        with pytest.raises(errors.NetworkRequestError):
+            self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        assert not downloaded.exists()
+        assert list(downloaded.parent.glob("*.part")) == []
+
+    def test_pull_url_preserves_preexisting_file_after_max_retries(
+        self, new_dir, mocker
+    ):
+        """A destination file that existed before pull() is not deleted."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        downloaded.write_bytes(b"preexisting content")
+
+        response = mocker.Mock()
+        response.raise_for_status.return_value = None
+        response.headers = {}
+
+        def iter_content(_chunk_size):
+            # Simulate writing a few bytes before the connection drops,
+            # without ever clearing the file we're appending to.
+            yield b"partial"
+            raise requests.exceptions.ChunkedEncodingError("stream interrupted")
+
+        response.iter_content.side_effect = iter_content
+        response.__enter__ = mocker.Mock(return_value=response)
+        response.__exit__ = mocker.Mock(return_value=False)
+        mocker.patch("craft_parts.sources.base.requests.get", return_value=response)
+
+        with pytest.raises(errors.NetworkRequestError):
+            self.source.pull()
+
+        assert downloaded.exists()
+        assert downloaded.read_bytes() == b"preexisting content"
+        assert list(downloaded.parent.glob("*.part")) == []
+
+    def test_pull_url_overwrites_preexisting_file_on_success(self, new_dir, mocker):
+        """A pre-existing destination file is fully replaced on success, not
+        appended to."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        downloaded.write_bytes(b"stale content")
+
+        ok_response = mocker.Mock()
+        ok_response.raise_for_status.return_value = None
+        ok_response.headers = {}
+        ok_response.iter_content.return_value = [b"fresh content"]
+        ok_response.__enter__ = mocker.Mock(return_value=ok_response)
+        ok_response.__exit__ = mocker.Mock(return_value=False)
+        mocker.patch("craft_parts.sources.base.requests.get", return_value=ok_response)
+
+        self.source.pull()
+
+        assert downloaded.read_bytes() == b"fresh content"
+
+    def test_pull_url_downloaded_file_has_default_permissions(self, new_dir, mocker):
+        """The downloaded file's permissions follow the umask, not the
+        restrictive mode used internally for the temporary download file."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        ok_response = mocker.Mock()
+        ok_response.raise_for_status.return_value = None
+        ok_response.headers = {}
+        ok_response.iter_content.return_value = [b"content"]
+        ok_response.__enter__ = mocker.Mock(return_value=ok_response)
+        ok_response.__exit__ = mocker.Mock(return_value=False)
+        mocker.patch("craft_parts.sources.base.requests.get", return_value=ok_response)
+
+        self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        reference_file = downloaded.with_name("reference_file")
+        reference_file.touch()
+        assert stat.S_IMODE(downloaded.stat().st_mode) == stat.S_IMODE(
+            reference_file.stat().st_mode
+        )
+
+    def test_pull_url_retries_network_error(self, new_dir, mocker):
+        """A network-level exception (e.g. connection reset) is retried."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        ok_response = mocker.Mock()
+        ok_response.raise_for_status.return_value = None
+        ok_response.headers = {}
+        ok_response.iter_content.return_value = [b"content"]
+        ok_response.__enter__ = mocker.Mock(return_value=ok_response)
+        ok_response.__exit__ = mocker.Mock(return_value=False)
+
+        mock_get = mocker.patch(
+            "craft_parts.sources.base.requests.get",
+            side_effect=[
+                requests.exceptions.ConnectionError("connection reset"),
+                ok_response,
+            ],
+        )
+
+        self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        assert downloaded.is_file()
+        assert downloaded.read_bytes() == b"content"
+        assert mock_get.call_count == 2
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            requests.exceptions.InvalidSchema("No connection adapters"),
+            requests.exceptions.InvalidURL("invalid URL"),
+            requests.exceptions.MissingSchema("Invalid URL, no scheme supplied"),
+            requests.exceptions.URLRequired("a valid URL is required"),
+            requests.exceptions.TooManyRedirects("Exceeded 30 redirects"),
+        ],
+    )
+    def test_pull_url_permanent_error_not_retried(self, new_dir, mocker, exception):
+        """A non-transient error fails immediately without retrying."""
+        mock_sleep = mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+
+        mock_get = mocker.patch(
+            "craft_parts.sources.base.requests.get",
+            side_effect=exception,
+        )
+
+        with pytest.raises(errors.NetworkRequestError):
+            self.source.pull()
+
+        assert mock_get.call_count == 1
+        mock_sleep.assert_not_called()
+
+    def test_pull_url_retries_ssl_error(self, new_dir, mocker):
+        """SSLError is retried since it can indicate a transient TLS issue,
+        not just a permanent certificate problem."""
+        mocker.patch("time.sleep")
+        self.set_source(cache_dir=new_dir, source="http://test.com/some_file")
+        Path("parts/foo/src").mkdir(parents=True)
+
+        ok_response = mocker.Mock()
+        ok_response.raise_for_status.return_value = None
+        ok_response.headers = {}
+        ok_response.iter_content.return_value = [b"content"]
+        ok_response.__enter__ = mocker.Mock(return_value=ok_response)
+        ok_response.__exit__ = mocker.Mock(return_value=False)
+
+        mock_get = mocker.patch(
+            "craft_parts.sources.base.requests.get",
+            side_effect=[
+                requests.exceptions.SSLError("TLS handshake failed"),
+                ok_response,
+            ],
+        )
+
+        self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        assert downloaded.is_file()
+        assert downloaded.read_bytes() == b"content"
+        assert mock_get.call_count == 2
 
     def test_file_source_abstract_methods(self):
         class FaultyFileSource(FileSourceHandler):

@@ -18,8 +18,11 @@
 
 import abc
 import logging
+import os
 import shutil
 import subprocess
+import time
+import uuid
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar
@@ -36,6 +39,74 @@ from .cache import FileCache
 from .checksum import verify_checksum
 
 logger = logging.getLogger(__name__)
+
+# HTTP status codes that typically indicate a transient server-side or
+# proxy issue, and are therefore worth retrying.
+_RETRIABLE_HTTP_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
+# Number of times to attempt an HTTP(S) download before giving up, including
+# the initial attempt.
+_MAX_DOWNLOAD_ATTEMPTS = 5
+# Base delay (in seconds) for the exponential backoff between download
+# retries (1, 2, 4, 8 seconds, ...).
+_DOWNLOAD_RETRY_BACKOFF_SECONDS = 1.0
+# Inactivity timeout (in seconds) applied to socket operations for each
+# download attempt. This is *not* a wall-clock limit for the whole request,
+# so it does not need to be divided across retry attempts.
+_DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS = 3600
+# Exceptions that indicate a permanent, non-transient failure (e.g. a
+# malformed URL or scheme), and therefore should never be retried.
+# Note that requests.exceptions.SSLError is intentionally not included here:
+# it's raised both for permanent certificate-validation failures and for
+# transient TLS handshake/connection issues, so excluding it entirely would
+# also prevent retrying genuinely transient failures.
+_NON_RETRIABLE_REQUEST_EXCEPTIONS = (
+    requests.exceptions.InvalidSchema,
+    requests.exceptions.InvalidURL,
+    requests.exceptions.MissingSchema,
+    requests.exceptions.URLRequired,
+    requests.exceptions.TooManyRedirects,
+)
+# Number of unique names to try when creating a temporary download file
+# before giving up (a collision is exceedingly unlikely given the name is a
+# random UUID, so this is only a safety net).
+_TEMP_FILE_CREATION_ATTEMPTS = 100
+
+
+def _create_download_temp_file(destination_dir: Path, prefix: str) -> Path:
+    """Create a uniquely-named temporary file for a download.
+
+    Unlike :func:`tempfile.mkstemp`, the file is created with the default
+    permissions the kernel would apply to any new file (i.e. respecting the
+    umask), rather than the restrictive, hardcoded ``0600`` mode
+    ``mkstemp`` uses. This is done with a single atomic ``os.open()`` call
+    (as ``mkstemp`` itself does internally) so there's no window where the
+    process' umask is altered and no risk of a race with other threads
+    creating files concurrently.
+
+    :param prefix: prefix for the temporary filename. Truncated if
+        necessary so the full name stays within typical filesystem limits
+        (e.g. ext4's 255-byte ``NAME_MAX``) even for long source filenames.
+    """
+    # 32 hex chars (the uuid4 hex digest) + ".part", leaving the rest of
+    # the budget for the caller-supplied prefix.
+    max_prefix_len = 255 - len(".part") - 32
+    prefix = prefix.encode()[:max_prefix_len].decode(errors="ignore")
+    for _ in range(_TEMP_FILE_CREATION_ATTEMPTS):
+        temp_file = destination_dir / f"{prefix}{uuid.uuid4().hex}.part"
+        try:
+            fd = os.open(temp_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o666)
+        except FileExistsError:
+            continue
+        try:
+            os.close(fd)
+        except BaseException:
+            # If closing the freshly-created file fails (or this code is
+            # interrupted, e.g. by KeyboardInterrupt) don't leave an
+            # orphaned file behind.
+            temp_file.unlink(missing_ok=True)
+            raise
+        return temp_file
+    raise FileExistsError("Could not create a unique temporary download file")
 
 
 def get_json_extra_schema(type_pattern: str) -> dict[str, dict[str, Any]]:
@@ -299,30 +370,115 @@ class FileSourceHandler(SourceHandler):
         if url_utils.get_url_scheme(self.source) == "ftp":
             raise NotImplementedError("ftp download not implemented")
 
+        # Download to a uniquely-named temporary file instead of self._file
+        # directly. url_utils.download_request() appends to an existing
+        # destination, so writing straight to self._file would either
+        # corrupt a pre-existing file (by appending the response after it)
+        # or require deleting a file we didn't create when an attempt fails.
+        # A dedicated temporary path (that can't collide with a legitimate
+        # sibling file or a concurrent download) avoids both problems; it's
+        # only moved into place once fully downloaded.
+        self._file.parent.mkdir(parents=True, exist_ok=True)
+        temp_file = _create_download_temp_file(
+            self._file.parent, prefix=f".{self._file.name}."
+        )
+
         try:
-            request = requests.get(
-                self.source, stream=True, allow_redirects=True, timeout=3600
-            )
-            request.raise_for_status()
-            url_utils.download_request(request, self._file)
+            for attempt in range(_MAX_DOWNLOAD_ATTEMPTS):
+                error = self._try_download(temp_file)
+                if error is None:
+                    break
+
+                # Discard any content written by the failed attempt so the
+                # next attempt starts from a clean state. Truncate rather
+                # than unlink: url_utils.download_request() reopens an
+                # existing destination in append mode with a plain
+                # destination.open("ab"), which doesn't use O_EXCL and
+                # would therefore follow a symlink planted at this path
+                # during the backoff sleep if the file had been removed.
+                # Truncating preserves the inode (and the safety
+                # guarantees from the os.open(O_EXCL) call that created
+                # it) while still discarding its content. O_NOFOLLOW
+                # ensures this truncation itself can't be tricked into
+                # following a symlink planted at the temp path either.
+                os.close(os.open(temp_file, os.O_WRONLY | os.O_TRUNC | os.O_NOFOLLOW))
+
+                if attempt >= _MAX_DOWNLOAD_ATTEMPTS - 1:
+                    raise error from error.__cause__
+                self._retry_download(attempt, error=error)
+
+            # Verify the checksum against the temp file before replacing
+            # the destination, so a successful-but-wrong-content download
+            # doesn't destroy a pre-existing destination file.
+            if self.source_checksum:
+                verify_checksum(self.source_checksum, temp_file)
+
+            temp_file.replace(self._file)
+        finally:
+            temp_file.unlink(missing_ok=True)
+
+        # if source_checksum is defined cache the file for future reuse
+        if self.source_checksum:
+            file_cache.cache(filename=str(self._file), key=self.source_checksum)
+        return self._file
+
+    def _try_download(self, destination: Path) -> errors.SourceError | None:
+        """Attempt to download the source file once.
+
+        :param destination: the file to download the source into.
+        :returns: ``None`` on success, or a retriable error if the download
+            failed due to a transient issue. Non-retriable failures (e.g. a
+            404 or a non-transient HTTP error) are raised directly.
+        """
+        try:
+            with requests.get(
+                self.source,
+                stream=True,
+                allow_redirects=True,
+                timeout=_DOWNLOAD_ATTEMPT_TIMEOUT_SECONDS,
+            ) as request:
+                request.raise_for_status()
+                url_utils.download_request(request, destination)
         except requests.HTTPError as err:
             if err.response.status_code == requests.codes.not_found:
                 raise errors.SourceNotFound(source=self.source) from err
 
-            raise errors.HttpRequestError(
+            http_error = errors.HttpRequestError(
                 status_code=err.response.status_code,
                 reason=err.response.reason,
                 source=self.source,
-            ) from err
+            )
+            http_error.__cause__ = err
+            if err.response.status_code not in _RETRIABLE_HTTP_STATUS_CODES:
+                raise http_error from err
+
+            return http_error
         except requests.RequestException as err:
-            raise errors.NetworkRequestError(
+            network_error = errors.NetworkRequestError(
                 message=f"network request failed (request={err.request!r}, "
                 f"response={err.response!r})",
                 source=self.source,
-            ) from err
+            )
+            network_error.__cause__ = err
+            if isinstance(err, _NON_RETRIABLE_REQUEST_EXCEPTIONS):
+                raise network_error from err
 
-        # if source_checksum is defined cache the file for future reuse
-        if self.source_checksum:
-            verify_checksum(self.source_checksum, self._file)
-            file_cache.cache(filename=str(self._file), key=self.source_checksum)
-        return self._file
+            return network_error
+
+        return None
+
+    def _retry_download(self, attempt: int, *, error: errors.SourceError) -> None:
+        """Wait before retrying a failed download.
+
+        :param attempt: The number of the attempt that just failed (0-indexed).
+        :param error: The exception raised by the failed attempt.
+        """
+        delay = _DOWNLOAD_RETRY_BACKOFF_SECONDS * (2**attempt)
+        logger.warning(
+            "Retrying download of %r after transient error (attempt %d/%d): %s",
+            self.source,
+            attempt + 1,
+            _MAX_DOWNLOAD_ATTEMPTS,
+            error.brief,
+        )
+        time.sleep(delay)
