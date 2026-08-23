@@ -127,9 +127,7 @@ def test_get_build_environment_uses_system_ca_bundle(plugin):
     assert env["REQUESTS_CA_BUNDLE"] == "/etc/ssl/certs/ca-certificates.crt"
 
 
-def test_get_build_environment_respects_user_ca_bundle(
-    plugin, monkeypatch, new_dir
-):
+def test_get_build_environment_respects_user_ca_bundle(plugin, monkeypatch, new_dir):
     """When the user already set the variable, the plugin must not override it.
 
     The actual user-provided value will come from the build environment, so it
