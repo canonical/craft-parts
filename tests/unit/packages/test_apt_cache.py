@@ -276,7 +276,7 @@ class TestAptStageCache:
             with pytest.raises(errors.PackageFetchError) as raised:
                 cache.fetch_archives(Path(tmpdir, "debs"))
 
-        assert raised.value.uri is None
+        assert raised.value.url is None
         assert raised.value.brief == "Failed to fetch package."
         assert raised.value.details == "download failed"
 

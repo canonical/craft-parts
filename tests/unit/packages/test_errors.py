@@ -65,7 +65,7 @@ def test_package_fetch_error_with_details():
 
 def test_package_fetch_error_without_uri():
     err = errors.PackageFetchError(None, details="boom")
-    assert err.uri is None
+    assert err.url is None
     assert err.brief == "Failed to fetch package."
     assert err.details == "boom"
     assert err.resolution is None
