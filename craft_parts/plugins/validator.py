@@ -149,4 +149,4 @@ class PluginEnvironmentValidator:
                 text=True,
             )
 
-        return proc.stderr if proc.stderr else proc.stdout
+        return proc.stdout
