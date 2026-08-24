@@ -181,6 +181,8 @@ def get_source_handler(
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
         )
+        # Keep the constructor signature stable for custom source handlers.
+        source_handler.set_part_name(part.name)
 
     return source_handler
 
