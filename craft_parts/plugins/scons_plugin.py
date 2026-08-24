@@ -89,7 +89,7 @@ class SConsPlugin(Plugin):
     variable which contains the root which the SConstruct file should use to
     configure its ``Install()`` builder target.
 
-    The plugin supports the following keywords:
+    The plugin supports the following keys:
 
     - ``scons-parameters``
       (list of strings)
