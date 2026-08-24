@@ -19,6 +19,33 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.35.1:
+
+2.35.1 (2026-08-27)
+-------------------
+
+Bug fixes:
+
+- (Poetry plugin) Don't install the Poetry export plugin if a ``poetry-deps`` part
+  is provided.
+- `#1458 <https://github.com/canonical/craft-parts/issues/1458>`_ Build step fails on
+  special files
+- The Overlay and Build steps of parts that organize content to the overlay
+  are executed before these steps in other parts, even when ``after`` is
+  used.
+- Fix the ``colcon`` plugin to declare ``make`` and
+  ``python3-colcon-recursive-crawl`` as explicit build packages. Both are only
+  *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
+  they were absent when packages are installed with ``--no-install-recommends``,
+  causing builds to fail.
+- Set ``DEBIAN_FRONTEND=noninteractive`` in the global execution environment,
+  so all steps run non-interactively by default.
+- Add git source mutual exclusivity to JSON schema.
+- Normalize leading slashes in migration paths, fixing application of permissions
+  and ownership in files specified with absolute paths.
+
+For a complete list of commits, check out the `2.35.1`_ release on GitHub.
+
 .. _release-2.34.1:
 
 2.34.1 (2026-07-09)
