@@ -56,6 +56,8 @@ Bug fixes:
 - Set ``DEBIAN_FRONTEND=noninteractive`` in the global execution environment,
   so all steps run non-interactively by default.
 - Add git source mutual exclusivity to JSON schema.
+- Add ``build-environment`` values to the build state to rebuild parts when the
+  environment declaration changes.
 
 .. _release-2.34.1:
 

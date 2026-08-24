@@ -117,10 +117,10 @@ class QmakePlugin(Plugin):
 
         if options.qmake_project_file:
             qmake_configure_command.append(
-                str(self._part_info.part_src_dir / options.qmake_project_file)
+                str(self._part_info.part_src_subdir / options.qmake_project_file)
             )
         else:
-            qmake_configure_command.append(str(self._part_info.part_src_dir))
+            qmake_configure_command.append(str(self._part_info.part_src_subdir))
 
         return [
             " ".join(qmake_configure_command),

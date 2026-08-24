@@ -104,6 +104,7 @@ class TestBuildStateChanges:
         relevant_properties = [
             "after",
             "build-attributes",
+            "build-environment",
             "build-packages",
             "disable-parallel",
             "organize",
@@ -132,6 +133,7 @@ class TestBuildStateChanges:
         relevant_properties = [
             "after",
             "build-attributes",
+            "build-environment",
             "build-packages",
             "disable-parallel",
             "organize",

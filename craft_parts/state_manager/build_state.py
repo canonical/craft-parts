@@ -70,6 +70,7 @@ class BuildState(StepState):
         relevant_properties = [
             "after",
             "build-attributes",
+            "build-environment",
             "build-packages",
             "disable-parallel",
             "organize",

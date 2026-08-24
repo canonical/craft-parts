@@ -64,6 +64,7 @@ _build_state_foo = textwrap.dedent(
       build-packages: []
       organize: {}
       build-attributes: []
+      build-environment: []
     project_options:
       target_arch: amd64
     assets: {}
