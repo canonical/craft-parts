@@ -132,7 +132,7 @@ class PluginEnvironmentValidator:
 
         :param cmd: The command to execute.
 
-        :return: The command output or error message.
+        :return: The command stdout.
         """
         logger.debug("plugin validation environment: %s", self._env)
         logger.debug("plugin validation command: %r", cmd)
