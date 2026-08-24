@@ -508,7 +508,7 @@ class PartHandler:
             # files brought in from stage-packages, but in the case of updating build, we
             # want the part to have the ability to organize over the files it organized last
             # time around. We can be confident that this won't overwrite anything else,
-            # because to do so would require changing the `organize` keyword, which will
+            # because to do so would require changing the `organize` key, which will
             # make the build step dirty and require a clean instead of an update.
             organize_install_dirs = {
                 **self._part.part_install_dirs,

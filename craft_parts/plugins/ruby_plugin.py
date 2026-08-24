@@ -111,7 +111,7 @@ class RubyPlugin(Plugin):
 
     The desired Ruby interpreter is compiled using ruby-install.
 
-    The ruby plugin uses the  following ruby-specific keywords:
+    The ruby plugin uses the following plugin-specific keys:
 
     - ``ruby-flavor``
       (string)
