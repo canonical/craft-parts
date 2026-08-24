@@ -513,6 +513,38 @@ class TestFileMigration:
             assert call.owner == 1111
             assert call.group == 2222
 
+    def test_migration_with_leading_slash_permissions(self, mock_chown):
+        source = Path("source")
+        source.mkdir()
+
+        (source / "var").mkdir()
+        (source / "var/lib").mkdir()
+        (source / "var/lib/zincsearch").mkdir()
+        (source / "var/lib/zincsearch/data.txt").touch()
+
+        target = Path("target")
+        target.mkdir()
+
+        permissions = [
+            Permissions(
+                path="/var/lib/zincsearch", owner=584792, group=584792, mode="755"
+            )
+        ]
+
+        migration.migrate_files(
+            files={Path("var/lib/zincsearch/data.txt")},
+            dirs={Path("var/lib"), Path("var/lib/zincsearch")},
+            srcdir=source,
+            destdir=target,
+            permissions=permissions,
+        )
+
+        assert stat.S_IMODE((target / "var/lib/zincsearch").stat().st_mode) == 0o755
+
+        call = mock_chown[Path("target/var/lib/zincsearch")]
+        assert call.owner == 584792
+        assert call.group == 584792
+
     @pytest.mark.parametrize(
         ("filters", "filemap"),
         [
