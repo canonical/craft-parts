@@ -49,7 +49,9 @@ def _normalize_channel(channel: str) -> str:
     if not channel:
         return "latest/stable"
 
-    if any(channel == risk or channel.startswith(f"{risk}/") for risk in _CHANNEL_RISKS):
+    if any(
+        channel == risk or channel.startswith(f"{risk}/") for risk in _CHANNEL_RISKS
+    ):
         return f"latest/{channel}"
 
     return channel
