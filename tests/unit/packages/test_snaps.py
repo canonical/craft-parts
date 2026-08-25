@@ -22,7 +22,24 @@ from craft_parts.packages import errors, snaps
 # pylint: disable=missing-class-docstring
 
 
-class TestGetParsedSnap:
+class TestSnapPackageNormalization:
+    @pytest.mark.parametrize(
+        ("snap", "expected_channel"),
+        [
+            ("fake-snap", "latest/stable"),
+            ("fake-snap@stable", "latest/stable"),
+            ("fake-snap@beta", "latest/beta"),
+            ("fake-snap@candidate", "latest/candidate"),
+            ("fake-snap@edge", "latest/edge"),
+            ("fake-snap@beta/branch", "latest/beta/branch"),
+            ("fake-snap@edge2/stable", "edge2/stable"),
+            ("fake-snap@stable-track/candidate", "stable-track/candidate"),
+        ],
+    )
+    def test_normalization(self, snap, expected_channel):
+        snap_pkg = snaps.SnapPackage(snap)
+        assert snap_pkg.channel == expected_channel
+
     """Tests for _get_parsed_snap with @ and / separators."""
 
     @pytest.mark.parametrize(
@@ -284,6 +301,11 @@ class TestSnapPackageIsValid:
     def test_installed(self):
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable/branch")
         snap_pkg.get_local_snap_info = lambda: {"channel": "strict/stable/branch"}
+        assert snap_pkg.is_valid()
+
+    def test_installed_stable(self):
+        snap_pkg = snaps.SnapPackage("fake-snap")
+        snap_pkg.get_local_snap_info = lambda: {"channel": "stable"}
         assert snap_pkg.is_valid()
 
     def test_404(self, fake_snapd):
@@ -590,6 +612,61 @@ class TestSnapPackageLifecycle:
         ]
 
         installed_snaps = snaps.install_snaps(["fake-snap"])
+        assert installed_snaps == ["fake-snap=test-fake-snap-revision"]
+
+    def test_install_snaps_refreshes_installed_snap_on_channel_change(
+        self, fake_snapd, fake_snap_command
+    ):
+        fake_snapd.find_result = [
+            {
+                "fake-snap": {
+                    "channel": "stable",
+                    "type": "app",
+                    "channels": {
+                        "latest/stable": {"confinement": "strict"},
+                        "2.x/stable": {"confinement": "strict"},
+                    },
+                }
+            }
+        ]
+        fake_snapd.snaps_result = [
+            {
+                "name": "fake-snap",
+                "channel": "2.x/stable",
+                "revision": "test-fake-snap-revision",
+            }
+        ]
+
+        installed_snaps = snaps.install_snaps(["fake-snap"])
+
+        assert fake_snap_command.calls == [
+            ["snap", "refresh", "fake-snap", "--channel", "latest/stable"]
+        ]
+        assert installed_snaps == ["fake-snap=test-fake-snap-revision"]
+
+    def test_install_snaps_does_not_refresh_when_channel_matches(
+        self, fake_snapd, fake_snap_command
+    ):
+        fake_snapd.find_result = [
+            {
+                "fake-snap": {
+                    "channel": "stable",
+                    "type": "app",
+                    "channels": {"latest/stable": {"confinement": "strict"}},
+                }
+            }
+        ]
+        fake_snapd.snaps_result = [
+            {
+                "name": "fake-snap",
+                "channel": "stable",
+                "revision": "test-fake-snap-revision",
+            }
+        ]
+
+        installed_snaps = snaps.install_snaps(["fake-snap"])
+
+        assert fake_snap_command.calls == []
         assert installed_snaps == ["fake-snap=test-fake-snap-revision"]
 
     def test_install_snaps_non_stable_base(self, fake_snapd):

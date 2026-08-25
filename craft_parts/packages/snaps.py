@@ -45,6 +45,16 @@ _CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
 logger = logging.getLogger(__name__)
 
 
+def _normalize_channel(channel: str) -> str:
+    if not channel:
+        return "latest/stable"
+
+    if any(channel == risk or channel.startswith(f"{risk}/") for risk in _CHANNEL_RISKS):
+        return f"latest/{channel}"
+
+    return channel
+
+
 class SnapPackage:
     """SnapPackage acts as a mediator to install or refresh a snap.
 
@@ -77,8 +87,7 @@ class SnapPackage:
         """Lifecycle handler for a snap of the format <snap-name>@<channel> or <snap-name>/<channel>."""
         self.name, self.channel = _get_parsed_snap(snap)
         self._original_channel = self.channel
-        if not self.channel or self.channel == "stable":
-            self.channel = "latest/stable"
+        self.channel = _normalize_channel(self.channel)
 
         # This store information from a local request
         self._local_snap_info: dict[str, Any] | None = None
@@ -156,9 +165,7 @@ class SnapPackage:
         if self.installed:
             local_snap_info = self.get_local_snap_info()
             if local_snap_info:
-                current_channel = local_snap_info["channel"]
-                if any(current_channel.startswith(risk) for risk in _CHANNEL_RISKS):
-                    current_channel = f"latest/{current_channel}"
+                current_channel = _normalize_channel(local_snap_info["channel"])
         return current_channel
 
     def has_assertions(self) -> bool:
@@ -188,12 +195,7 @@ class SnapPackage:
 
     def is_valid(self) -> bool:
         """Check if the snap is valid."""
-        local_snap_info = self.get_local_snap_info()
-        if (
-            local_snap_info
-            and self.installed
-            and local_snap_info["channel"] == self.channel
-        ):
+        if self.installed and self.get_current_channel() == self.channel:
             return True
         if not self.in_store:
             return False
@@ -301,6 +303,8 @@ def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
 
             if not snap_pkg.installed:
                 snap_pkg.install()
+            elif snap_pkg.get_current_channel() != snap_pkg.channel:
+                snap_pkg.refresh()
 
         local_snap_info = snap_pkg.get_local_snap_info()
         if local_snap_info:
