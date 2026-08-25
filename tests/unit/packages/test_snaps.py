@@ -40,7 +40,7 @@ class TestSnapPackageNormalization:
         snap_pkg = snaps.SnapPackage(snap)
         assert snap_pkg.channel == expected_channel
 
-    """Tests for _get_parsed_snap with @ and / separators."""
+    # Tests for _get_parsed_snap with @ and / separators.
 
     @pytest.mark.parametrize(
         ("snap", "expected_name", "expected_channel"),
