@@ -32,8 +32,11 @@ class TestSnapPackageNormalization:
             ("fake-snap@candidate", "latest/candidate"),
             ("fake-snap@edge", "latest/edge"),
             ("fake-snap@beta/branch", "latest/beta/branch"),
+            ("fake-snap@betamax/stable", "betamax/stable"),
             ("fake-snap@edge2/stable", "edge2/stable"),
             ("fake-snap@stable-track/candidate", "stable-track/candidate"),
+            ("fake-snap@edge/branch", "latest/edge/branch"),
+            ("fake-snap@track/candidate/branch", "track/candidate/branch"),
         ],
     )
     def test_normalization(self, snap, expected_channel):
