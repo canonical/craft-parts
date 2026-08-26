@@ -27,6 +27,10 @@ New features:
 - Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
   snap name and channel.
 
+- Allow ``stage-packages`` and ``build-packages`` to use the ``@`` separator
+  between a deb package name and its version, in addition to the existing
+  ``=`` separator.
+
 - Add ``overlay-recommended-packages`` key to install overlay packages with their
   recommended dependencies.
 

@@ -176,6 +176,23 @@ class UnpackError(PackagesError):
         super().__init__(brief=brief)
 
 
+class DebPackageInvalidFormat(PackagesError):  # noqa: N818
+    """The given package specification is not formatted correctly.
+
+    :param package: The package specification string.
+    """
+
+    def __init__(self, package: str) -> None:
+        self.package = package
+        brief = f"Invalid package specification: {package!r}."
+        resolution = (
+            "Ensure the package name, architecture, and version do not "
+            "contain leading, trailing, or surrounding whitespace."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
 class SnapInvalidFormat(PackagesError):  # noqa: N818
     """The given snap specification is not formatted correctly.
 
