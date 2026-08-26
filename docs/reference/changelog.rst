@@ -43,6 +43,8 @@ New features:
   ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
   should set this to False and use the ``stage-slices`` key instead.
 
+- Add part name and resolution to error message for source checksum mismatch.
+
 Bug fixes:
 
 - The Overlay and Build steps of parts that organize content to the overlay
@@ -58,6 +60,8 @@ Bug fixes:
 - Add git source mutual exclusivity to JSON schema.
 - The ``qmake`` plugin recognizes ``source-subdir`` if the part declares it,
   keeping compatibility in cases where ``qmake-project-file`` was also set.
+- Normalize leading slashes in migration paths, fixing application of permissions
+  and ownership in files specified with absolute paths.
 
 .. _release-2.34.1:
 

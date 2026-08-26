@@ -115,7 +115,10 @@ class Permissions(BaseModel):
         if self.path == "*":
             return True
 
-        return fnmatch(str(path), self.path)
+        # Normalize leading slashes so patterns written relative to the filesystem
+        # root (e.g. "/var/lib/foo") also match migration paths, which are always
+        # relative to the prime directory.
+        return fnmatch(str(path).lstrip("/"), self.path.lstrip("/"))
 
     def apply_permissions(self, target: Path) -> None:
         """Apply the permissions configuration to ``target``.
