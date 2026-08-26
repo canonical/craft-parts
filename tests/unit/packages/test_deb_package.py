@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-
 from craft_parts.packages import errors
 from craft_parts.packages.deb_package import DebPackage
 
