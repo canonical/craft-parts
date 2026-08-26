@@ -59,7 +59,7 @@ def test_validate_partitions_failure_feature_disabled(partitions, message):
         ["mypart", "test1/foo-bar2"],
         ["mypart", "test1/foo/bar2"],
         ["test1/mypart", "test1/mypart2"],
-        ["test/foo-bar", "test/foo-baz"],
+        ["test/foo-bar", "test/foo+baz"],
         ["test/foo-bar-baz", "test/foo-bar"],
     ],
 )
@@ -77,12 +77,19 @@ def test_validate_partitions_success_feature_enabled(partitions):
         (["default", "test/foo", "test/foo"], "Partitions must be unique."),
         (["default", "!!!"], "Partition '!!!' is invalid."),
         (["default", "-"], "Partition '-' is invalid."),
+        (["default", "+"], "Partition '+' is invalid."),
         (["default", "woop-"], "Partition 'woop-' is invalid."),
         (["default", "woop."], "Partition 'woop.' is invalid."),
+        (["default", "woop+"], "Partition 'woop+' is invalid."),
         (["default", "/"], "Namespaced partition '/' is invalid."),
         (["default", "test/!!!"], "Namespaced partition 'test/!!!' is invalid."),
         (["default", "test/-"], "Namespaced partition 'test/-' is invalid."),
+        (["default", "test/+"], "Namespaced partition 'test/+' is invalid."),
         (["default", "te-st/foo"], "Namespaced partition 'te-st/foo' is invalid."),
+        (
+            ["default", "te+st/foo"],  # codespell:ignore te
+            "Namespaced partition 'te+st/foo' is invalid.",  # codespell:ignore te
+        ),
         (
             ["default", "test", "test/foo"],
             "Partition name conflicts:\n- 'test', 'test/foo'",
@@ -100,8 +107,8 @@ def test_validate_partitions_success_feature_enabled(partitions):
             ("Partition name conflicts:\n- 'test-foo', 'test/foo'"),
         ),
         (
-            ["default", "test/foo", "test-foo"],
-            ("Partition name conflicts:\n- 'test-foo', 'test/foo'"),
+            ["default", "test/foo", "test+foo"],
+            ("Partition name conflicts:\n- 'test+foo', 'test/foo'"),
         ),
         (
             [
@@ -160,3 +167,13 @@ def test_get_partitions_dir_map_no_partitions(new_dir, suffix):
     )
 
     assert dir_map == {None: Path(new_dir) / suffix}
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_validate_partitions_failure_build_is_reserved():
+    with pytest.raises(errors.FeatureError) as exc_info:
+        partition_utils.validate_partition_names(["default", "build"])
+
+    assert exc_info.value.brief == (
+        "Reserved name 'build' cannot be used to name a partition."
+    )

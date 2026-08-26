@@ -75,11 +75,11 @@ class BazelPlugin(Plugin):
     This plugin runs ``bazel build`` for the configured targets and then copies
     Bazel output artifacts from ``bazel-bin`` into ``$CRAFT_PART_INSTALL``.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Plugin-specific keywords:
+    Plugin-specific keys:
 
     ``bazel-parameters`` (list of strings) passes additional arguments to
     ``bazel build``.

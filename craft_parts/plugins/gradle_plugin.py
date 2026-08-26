@@ -86,11 +86,11 @@ class GradlePlugin(JavaPlugin):
 
     The Gradle build system is commonly used to build Java projects. This
     plugin requires a build.gradle in the root of the source tree.
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
 
     - gradle-init-script:
       (string)
@@ -215,8 +215,8 @@ class GradlePlugin(JavaPlugin):
                 continue
             proxy_url = urlparse(case_insensitive_env[env_name])
 
-            with open(  # noqa: PTH123
-                gradle_properties, "a+", encoding="utf-8"
+            with gradle_properties.open(
+                "a+", encoding="utf-8"
             ) as gradle_properties_file:
                 gradle_properties_file.write(
                     dedent(

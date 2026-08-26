@@ -64,6 +64,7 @@ onboarding
 Open Graph
 openapi
 otf
+pathlib
 PDF
 plantuml
 PNG

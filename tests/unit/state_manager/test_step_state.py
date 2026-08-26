@@ -38,8 +38,8 @@ class TestMigrationState:
     def test_marshal_data(self):
         state = step_state.MigrationState(
             partition="foo",
-            files={"a", "b", "c"},
-            directories={"d", "e", "f"},
+            files={Path("a"), Path("b"), Path("c")},
+            directories={Path("d"), Path("e"), Path("f")},
         )
         assert state.marshal() == {
             "partition": "foo",
@@ -64,52 +64,52 @@ class TestMigrationState:
             (
                 step_state.MigrationState(
                     partition=None,
-                    files={"a", "b", "c"},
-                    directories={"d", "e", "f"},
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
                     partitions_contents={
                         "foo": step_state.MigrationContents(
-                            files={"bar"}, directories={"baz"}
+                            files={Path("bar")}, directories={Path("baz")}
                         )
                     },
                 ),
                 "foo",
-                ({"bar"}, {"baz"}),
+                ({Path("bar")}, {Path("baz")}),
             ),
             (
                 step_state.MigrationState(
                     partition=None,
-                    files={"a", "b", "c"},
-                    directories={"d", "e", "f"},
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
                     partitions_contents={
                         "foo": step_state.MigrationContents(
-                            files={"bar"}, directories={"baz"}
+                            files={Path("bar")}, directories={Path("baz")}
                         )
                     },
                 ),
                 None,
-                ({"a", "b", "c"}, {"d", "e", "f"}),
+                ({Path("a"), Path("b"), Path("c")}, {Path("d"), Path("e"), Path("f")}),
             ),
             (
                 step_state.MigrationState(
                     partition="default",
-                    files={"a", "b", "c"},
-                    directories={"d", "e", "f"},
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
                     partitions_contents={
                         "foo": step_state.MigrationContents(
-                            files={"bar"}, directories={"baz"}
+                            files={Path("bar")}, directories={Path("baz")}
                         )
                     },
                 ),
                 "default",
-                ({"a", "b", "c"}, {"d", "e", "f"}),
+                ({Path("a"), Path("b"), Path("c")}, {Path("d"), Path("e"), Path("f")}),
             ),
             (
                 step_state.MigrationState(
-                    files={"a", "b", "c"},
-                    directories={"d", "e", "f"},
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
                     partitions_contents={
                         "foo": step_state.MigrationContents(
-                            files={"bar"}, directories={"baz"}
+                            files={Path("bar")}, directories={Path("baz")}
                         )
                     },
                 ),
@@ -126,33 +126,33 @@ class TestMigrationState:
         [
             (
                 step_state.MigrationState(
-                    files={"a"},
-                    directories={"b"},
+                    files={Path("a")},
+                    directories={Path("b")},
                 ),
-                {"foo"},
-                {"bar"},
-                {"a", "foo"},
-                {"b", "bar"},
+                {Path("foo")},
+                {Path("bar")},
+                {Path("a"), Path("foo")},
+                {Path("b"), Path("bar")},
             ),
             (
                 step_state.MigrationState(
-                    files={"a"},
-                    directories={"b"},
+                    files={Path("a")},
+                    directories={Path("b")},
                 ),
                 None,
                 None,
-                {"a"},
-                {"b"},
+                {Path("a")},
+                {Path("b")},
             ),
             (
                 step_state.MigrationState(
-                    files={"a", "c"},
-                    directories={"b", "c"},
+                    files={Path("a"), Path("c")},
+                    directories={Path("b"), Path("c")},
                 ),
-                {"c"},
-                {"c"},
-                {"a", "c"},
-                {"b", "c"},
+                {Path("c")},
+                {Path("c")},
+                {Path("a"), Path("c")},
+                {Path("b"), Path("c")},
             ),
         ],
     )
@@ -206,8 +206,8 @@ class TestStepState:
                 "name": "foo",
             },
             project_options=ProjectOptions(),
-            files={"a"},
-            directories={"b"},
+            files={Path("a")},
+            directories={Path("b")},
         )
         assert state.marshal() == {
             "partition": None,
@@ -246,12 +246,12 @@ class TestStepStatePersist:
                 "name": "foo",
             },
             project_options=ProjectOptions(),
-            files={"a"},
-            directories={"b"},
+            files={Path("a")},
+            directories={Path("b")},
         )
 
         state.write(Path("state"))
-        with open("state") as f:  # noqa: PTH123
+        with Path("state").open() as f:
             content = f.read()
 
         new_state = yaml.safe_load(content)

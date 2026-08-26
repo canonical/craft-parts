@@ -13,16 +13,17 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
+from pathlib import Path
 
 import pytest
 from craft_parts import errors
+from craft_parts.executor.organize import organize_files
 
 # Although it's not explicitly used, randomize_iglob is used here as it's an auto-use
 # fixture that checks that the order of an organize doesn't matter.
 from tests.unit.executor.test_organize import (
     organize_and_assert,
-    randomize_iglob,  # noqa: F401
+    randomize_globs,  # noqa: F401
 )
 
 
@@ -31,7 +32,7 @@ from tests.unit.executor.test_organize import (
     [
         # Files in the default partition
         {
-            "setup_files": ["foo", "bar", "baz", "qux1"],
+            "setup_files": [Path("foo"), Path("bar"), Path("baz"), Path("qux1")],
             "organize_map": {
                 "foo": "foo1",
                 "qux": "(default)/qux1",
@@ -152,7 +153,7 @@ from tests.unit.executor.test_organize import (
         },
         # Files that should have the same name in two different partitions
         {
-            "setup_files": ["foo", "bar"],
+            "setup_files": [Path("foo"), Path("bar")],
             "organize_map": {"foo": "baz", "bar": "(mypart)/baz"},
             "expected": [
                 (["baz"], ""),
@@ -164,7 +165,7 @@ from tests.unit.executor.test_organize import (
         # Files that should have the same name in two different partitions where one is
         # a namespaced partition
         {
-            "setup_files": ["foo", "bar"],
+            "setup_files": [Path("foo"), Path("bar")],
             "organize_map": {
                 "foo": "baz",
                 "bar": "(our/special-part)/baz",
@@ -176,17 +177,17 @@ from tests.unit.executor.test_organize import (
         },
         # simple_dir_with_file
         {
-            "setup_dirs": ["foodir"],
-            "setup_files": [os.path.join("foodir", "foo")],  # noqa: PTH118
+            "setup_dirs": [Path("foodir")],
+            "setup_files": [Path("foodir", "foo")],
             "organize_map": {"foodir": "bardir"},
             "expected": [(["bardir"], ""), (["foo"], "bardir")],
         },
         # organize_to_the_same_directory
         {
-            "setup_dirs": ["bardir", "foodir"],
+            "setup_dirs": [Path("bardir"), Path("foodir")],
             "setup_files": [
-                os.path.join("foodir", "foo"),  # noqa: PTH118
-                os.path.join("bardir", "bar"),  # noqa: PTH118
+                Path("foodir", "foo"),
+                Path("bardir", "bar"),
                 "basefoo",
             ],
             "organize_map": {
@@ -201,13 +202,13 @@ from tests.unit.executor.test_organize import (
         },
         # leading_slash_in_value
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "/bar"},
             "expected": [(["bar"], "")],
         },
         # overwrite_existing_file
         {
-            "setup_files": ["foo", "bar"],
+            "setup_files": [Path("foo"), Path("bar")],
             "organize_map": {"foo": "bar"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
@@ -217,7 +218,7 @@ from tests.unit.executor.test_organize import (
         },
         # overwrite_existing_file with partitions
         {
-            "setup_files": ["foo", "bar"],
+            "setup_files": [Path("foo"), Path("bar")],
             "organize_map": {
                 "(default)/foo": "(our/special-part)/bar",
                 "(default)/bar": "(our/special-part)/bar",
@@ -233,7 +234,7 @@ from tests.unit.executor.test_organize import (
         },
         # *_for_files
         {
-            "setup_files": ["foo.conf", "bar.conf"],
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
             "organize_map": {"*.conf": "dir/"},
             "expected": [
                 (["dir"], ""),
@@ -242,14 +243,14 @@ from tests.unit.executor.test_organize import (
         },
         # *_for_files_with_non_dir_dst
         {
-            "setup_files": ["foo.conf", "bar.conf"],
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
             "organize_map": {"*.conf": "dir"},
             "expected": errors.FileOrganizeError,
             "expected_message": r".*multiple files to be organized into 'dir'.*",
         },
         # *_for_files_with_non_dir_dst with partitions
         {
-            "setup_files": ["foo.conf", "bar.conf"],
+            "setup_files": [Path("foo.conf"), Path("bar.conf")],
             "organize_map": {"*.conf": "(our/special-part)/dir"},
             "expected": errors.FileOrganizeError,
             "expected_message": (
@@ -258,48 +259,48 @@ from tests.unit.executor.test_organize import (
         },
         # *_for_directories
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "bar"),  # noqa: PTH118
+                Path("dir1", "foo"),
+                Path("dir2", "bar"),
             ],
             "organize_map": {"dir*": "dir/"},
             "expected": [
                 (["dir"], ""),
                 (["dir1", "dir2"], "dir"),
-                (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
-                (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
+                (["foo"], Path("dir", "dir1")),
+                (["bar"], Path("dir", "dir2")),
             ],
         },
         # combined_*_with_file
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir1", "bar"),  # noqa: PTH118
-                os.path.join("dir2", "bar"),  # noqa: PTH118
+                Path("dir1", "foo"),
+                Path("dir1", "bar"),
+                Path("dir2", "bar"),
             ],
             "organize_map": {"dir*": "dir/", "dir1/bar": "."},
             "expected": [
                 (["bar", "dir"], ""),
                 (["dir1", "dir2"], "dir"),
-                (["foo"], os.path.join("dir", "dir1")),  # noqa: PTH118
-                (["bar"], os.path.join("dir", "dir2")),  # noqa: PTH118
+                (["foo"], Path("dir", "dir1")),
+                (["bar"], Path("dir", "dir2")),
             ],
         },
         # *_into_dir
         {
-            "setup_dirs": ["dir"],
+            "setup_dirs": [Path("dir")],
             "setup_files": [
-                os.path.join("dir", "foo"),  # noqa: PTH118
-                os.path.join("dir", "bar"),  # noqa: PTH118
+                Path("dir", "foo"),
+                Path("dir", "bar"),
             ],
             "organize_map": {"dir/f*": "nested/dir/"},
             "expected": [
                 (["dir", "nested"], ""),
                 (["bar"], "dir"),
                 (["dir"], "nested"),
-                (["foo"], os.path.join("nested", "dir")),  # noqa: PTH118
+                (["foo"], Path("nested", "dir")),
             ],
         },
         # from_*_to_partition
@@ -324,17 +325,17 @@ from tests.unit.executor.test_organize import (
         ),
     ],
 )
-def test_organize(new_dir, data):
+def test_organize(new_path, data):
     install_dirs = {
-        "default": new_dir / "install",
-        "mypart": new_dir / "partitions/mypart/parts/part-name/install",
-        "yourpart": new_dir / "partitions/yourpart/parts/part-name/install",
-        "our/special-part": new_dir
+        "default": new_path / "install",
+        "mypart": new_path / "partitions/mypart/parts/part-name/install",
+        "yourpart": new_path / "partitions/yourpart/parts/part-name/install",
+        "our/special-part": new_path
         / "partitions/our/special-part/parts/part-name/install",
     }
 
     organize_and_assert(
-        tmp_path=new_dir,
+        tmp_path=new_path,
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
@@ -348,7 +349,7 @@ def test_organize(new_dir, data):
 
     # Verify that it can be organized again by overwriting
     organize_and_assert(
-        tmp_path=new_dir,
+        tmp_path=new_path,
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
@@ -366,10 +367,10 @@ def test_organize(new_dir, data):
     [
         # Organize 2 files to the same destination, one with a dir as a destination
         {
-            "setup_dirs": ["dir1", "dir2"],
+            "setup_dirs": [Path("dir1"), Path("dir2")],
             "setup_files": [
-                os.path.join("dir1", "foo"),  # noqa: PTH118
-                os.path.join("dir2", "foo"),  # noqa: PTH118
+                Path("dir1", "foo"),
+                Path("dir2", "foo"),
             ],
             "organize_map": {
                 "dir1/foo": "(our/special-part)/dir/foo",
@@ -382,17 +383,17 @@ def test_organize(new_dir, data):
         },
     ],
 )
-def test_organize_no_overwrite(new_dir, data):
+def test_organize_no_overwrite(new_path, data):
     install_dirs = {
-        "default": new_dir / "install",
-        "mypart": new_dir / "partitions/mypart/parts/part-name/install",
-        "yourpart": new_dir / "partitions/yourpart/parts/part-name/install",
-        "our/special-part": new_dir
+        "default": new_path / "install",
+        "mypart": new_path / "partitions/mypart/parts/part-name/install",
+        "yourpart": new_path / "partitions/yourpart/parts/part-name/install",
+        "our/special-part": new_path
         / "partitions/our/special-part/parts/part-name/install",
     }
 
     organize_and_assert(
-        tmp_path=new_dir,
+        tmp_path=new_path,
         setup_dirs=data.get("setup_dirs", []),
         setup_files=data.get("setup_files", []),
         setup_symlinks=data.get("setup_symlinks", []),
@@ -403,3 +404,72 @@ def test_organize_no_overwrite(new_dir, data):
         overwrite=False,
         install_dirs=install_dirs,
     )
+
+
+def test_organize_file_from_build_copies_and_keeps_source(tmp_path: Path):
+    install_dir = tmp_path / "install"
+    build_dir = tmp_path / "build"
+    install_dir.mkdir()
+    build_dir.mkdir()
+
+    source = build_dir / "README"
+    source.write_text("hello from build")
+
+    organize_files(
+        part_name="part-name",
+        file_map={"(build)/README": "usr/share/doc/README"},
+        install_dir_map={None: install_dir, "default": install_dir, "build": build_dir},
+        overwrite=False,
+        default_partition="default",
+    )
+
+    assert source.read_text() == "hello from build"
+    assert (install_dir / "usr/share/doc/README").read_text() == "hello from build"
+
+
+def test_organize_directory_from_build_copies_and_keeps_source(tmp_path: Path):
+    install_dir = tmp_path / "install"
+    build_dir = tmp_path / "build"
+    install_dir.mkdir()
+    build_dir.mkdir()
+
+    source_dir = build_dir / "examples"
+    source_dir.mkdir()
+    source_file = source_dir / "demo.txt"
+    source_file.write_text("example")
+
+    organize_files(
+        part_name="part-name",
+        file_map={"(build)/examples": "usr/share/doc/examples"},
+        install_dir_map={None: install_dir, "default": install_dir, "build": build_dir},
+        overwrite=False,
+        default_partition="default",
+    )
+
+    assert source_file.read_text() == "example"
+    assert (install_dir / "usr/share/doc/examples/demo.txt").read_text() == "example"
+
+
+def test_organize_into_build_errors(tmp_path: Path):
+    install_dir = tmp_path / "install"
+    build_dir = tmp_path / "build"
+    install_dir.mkdir()
+    build_dir.mkdir()
+
+    (install_dir / "README").write_text("installed")
+
+    with pytest.raises(
+        errors.FileOrganizeError,
+        match="Cannot organize files into the build directory",
+    ):
+        organize_files(
+            part_name="part-name",
+            file_map={"README": "(build)/README"},
+            install_dir_map={
+                None: install_dir,
+                "default": install_dir,
+                "build": build_dir,
+            },
+            overwrite=False,
+            default_partition="default",
+        )
