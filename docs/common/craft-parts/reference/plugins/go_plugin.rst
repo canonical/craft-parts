@@ -32,6 +32,26 @@ Parameters to pass to `go generate`_ before building. Each item on the list will
 separate ``go generate`` call. The default behavior is not to call ``go generate``.
 
 
+go-testtags
+~~~~~~~~~~~
+
+**Type:** list of strings
+
+`Build tags`_ to use when running unit tests with the ``enable-check`` build attribute.
+These are combined with ``go-buildtags`` and passed to ``go test`` through the
+``--tags`` parameter. The default behavior is not to use any test tags.
+
+
+Attributes
+----------
+
+enable-check
+~~~~~~~~~~~~~
+
+When ``enable-check`` is added as a build attribute, Go runs the source's unit tests
+after compiling.
+
+
 Environment variables
 ---------------------
 
@@ -73,6 +93,9 @@ During the build step the plugin performs the following actions:
    to find and download all necessary modules.
 #. Call ``go generate <item>`` for each item in ``go-generate``.
 #. Call ``go install  ./...``, passing the items in ``go-buildtags`` through the
+   ``--tags`` parameter.
+#. If ``enable-check`` is set in ``build-attributes``, call ``go test ./...`` to run
+   unit tests, passing the items in ``go-buildtags`` and ``go-testtags`` through the
    ``--tags`` parameter.
 
 
