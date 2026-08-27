@@ -1,0 +1,40 @@
+# Organize pattern from the craft-parts documentation (Dump plugin how-to,
+# section "To include a local directory and move files to the correct locations").
+# The same two-glob approach (services → systemd system dir, fonts → share/fonts)
+# appears verbatim in the craft-parts include_files tutorial.
+#
+# Source: https://github.com/canonical/craft-parts/blob/main/docs/common/craft-parts/how-to/include_files.rst
+
+description: >
+  Move systemd service files and font assets into FHS-compliant directories
+  using glob patterns. Two separate globs map to two distinct destinations.
+
+parts:
+  my-part:
+    plugin: dump
+    source: src
+    organize:
+      'services/*.service': usr/lib/systemd/system/
+      'fonts/*': usr/share/fonts/
+
+setup_dirs:
+  - src/services
+  - src/fonts
+
+setup_files:
+  - src/services/hello.service
+  - src/services/world.service
+  - src/fonts/good.otf
+  - src/fonts/better.ttf
+
+expected_prime_present:
+  - usr/lib/systemd/system/hello.service
+  - usr/lib/systemd/system/world.service
+  - usr/share/fonts/good.otf
+  - usr/share/fonts/better.ttf
+
+expected_prime_absent:
+  - services/hello.service
+  - services/world.service
+  - fonts/good.otf
+  - fonts/better.ttf
