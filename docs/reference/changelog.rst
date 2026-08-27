@@ -31,8 +31,7 @@ Bug fixes:
 - `#1458 <https://github.com/canonical/craft-parts/issues/1458>`_ Build step fails on
   special files
 - The Overlay and Build steps of parts that organize content to the overlay
-  are executed before these steps in other parts, even when ``after`` is
-  used.
+  are executed before these steps in other parts, even when ``after`` is used.
 - Fix the ``colcon`` plugin to declare ``make`` and
   ``python3-colcon-recursive-crawl`` as explicit build packages. Both are only
   *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
@@ -1780,6 +1779,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.35.1: https://github.com/canonical/craft-parts/releases/tag/2.35.1
 .. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
 .. _2.34.1: https://github.com/canonical/craft-parts/releases/tag/2.34.1
 .. _2.34.0: https://github.com/canonical/craft-parts/releases/tag/2.34.0
