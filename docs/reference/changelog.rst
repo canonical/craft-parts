@@ -61,6 +61,11 @@ Bug fixes:
 - Normalize leading slashes in migration paths, fixing application of permissions
   and ownership in files specified with absolute paths.
 
+Documentation:
+
+- Group the plugins in the reference by the language or technology they
+  support.
+
 .. _release-2.34.1:
 
 2.34.1 (2026-07-09)
