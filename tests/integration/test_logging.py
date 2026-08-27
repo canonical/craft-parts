@@ -43,6 +43,7 @@ parts_yaml = textwrap.dedent(
     """
 )
 
+
 def test_logging_info(new_dir, caplog, monkeypatch):
     """Test some expected INFO-level log messages from whole-program execution."""
     caplog.set_level(logging.INFO, logger="craft_parts")
