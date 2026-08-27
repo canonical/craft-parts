@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 def _normalize_channel(channel: str) -> str:
     if not channel:
-        return "latest/stable"
+        return ""
 
     if any(
         channel == risk or channel.startswith(f"{risk}/") for risk in _CHANNEL_RISKS
@@ -179,11 +179,21 @@ class SnapPackage:
             return False
         return not local_snap_info["revision"].startswith("x")
 
+    def _get_default_store_channel(self) -> str:
+        """Return the default channel from the store information."""
+        snap_store_info = self.get_store_snap_info()
+        if not snap_store_info or not self.in_store:
+            return ""
+
+        default_channel = cast(str, snap_store_info.get("channel", ""))
+        return _normalize_channel(default_channel)
+
     def is_classic(self) -> bool:
         """Verify whether this snap is a classic snap."""
         store_channels = self._get_store_channels()
+        channel = self.channel or self._get_default_store_channel()
         try:
-            return bool(store_channels[self.channel]["confinement"] == "classic")
+            return bool(store_channels[channel]["confinement"] == "classic")
         except KeyError:
             # We have seen some KeyError issues when running tests that are
             # hard to debug as they only occur there, logging in debug mode
@@ -197,12 +207,17 @@ class SnapPackage:
 
     def is_valid(self) -> bool:
         """Check if the snap is valid."""
-        if self.installed and self.get_current_channel() == self.channel:
-            return True
-        if not self.in_store:
-            return False
-        store_channels = self._get_store_channels()
-        return self.channel in store_channels
+        if self.channel:
+            if self.installed and self.get_current_channel() == self.channel:
+                return True
+            if not self.in_store:
+                return False
+            store_channels = self._get_store_channels()
+            return self.channel in store_channels
+
+        # No channel requested; the snap is valid if it is installed or
+        # available in the store.
+        return self.installed or self.in_store
 
     def download(self, *, directory: str | pathlib.Path | None = None) -> None:
         """Download a given snap."""
@@ -252,6 +267,9 @@ class SnapPackage:
 
     def refresh(self) -> None:
         """Refresh a snap onto a channel on the system."""
+        if not self.channel:
+            return
+
         logger.debug("Refreshing snap: %s (channel %s)", self.name, self.channel)
         snap_refresh_cmd = ["snap", "refresh", self.name, "--channel", self.channel]
         with contextlib.suppress(errors.SnapUnavailable, KeyError):
@@ -303,9 +321,11 @@ def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
             if snap_pkg_channel != "stable" and snap_pkg_type == "base":
                 snap_pkg = SnapPackage(f"{snap_pkg.name}/latest/{snap_pkg_channel}")
 
+            target_channel = snap_pkg.channel or _normalize_channel(snap_pkg_channel)
             if not snap_pkg.installed:
                 snap_pkg.install()
-            elif snap_pkg.get_current_channel() != snap_pkg.channel:
+            elif target_channel and snap_pkg.get_current_channel() != target_channel:
+                snap_pkg.channel = target_channel
                 snap_pkg.refresh()
 
         local_snap_info = snap_pkg.get_local_snap_info()

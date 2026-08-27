@@ -26,7 +26,7 @@ class TestSnapPackageNormalization:
     @pytest.mark.parametrize(
         ("snap", "expected_channel"),
         [
-            ("fake-snap", "latest/stable"),
+            ("fake-snap", ""),
             ("fake-snap@stable", "latest/stable"),
             ("fake-snap@beta", "latest/beta"),
             ("fake-snap@candidate", "latest/candidate"),
@@ -640,6 +640,36 @@ class TestSnapPackageLifecycle:
             }
         ]
 
+        installed_snaps = snaps.install_snaps(["fake-snap@latest/stable"])
+
+        assert fake_snap_command.calls == [
+            ["snap", "refresh", "fake-snap", "--channel", "latest/stable"]
+        ]
+        assert installed_snaps == ["fake-snap=test-fake-snap-revision"]
+
+    def test_install_snaps_refreshes_installed_snap_to_default_store_channel(
+        self, fake_snapd, fake_snap_command
+    ):
+        fake_snapd.find_result = [
+            {
+                "fake-snap": {
+                    "channel": "stable",
+                    "type": "app",
+                    "channels": {
+                        "latest/stable": {"confinement": "strict"},
+                        "2.x/stable": {"confinement": "strict"},
+                    },
+                }
+            }
+        ]
+        fake_snapd.snaps_result = [
+            {
+                "name": "fake-snap",
+                "channel": "2.x/stable",
+                "revision": "test-fake-snap-revision",
+            }
+        ]
+
         installed_snaps = snaps.install_snaps(["fake-snap"])
 
         assert fake_snap_command.calls == [
@@ -667,7 +697,7 @@ class TestSnapPackageLifecycle:
             }
         ]
 
-        installed_snaps = snaps.install_snaps(["fake-snap"])
+        installed_snaps = snaps.install_snaps(["fake-snap@latest/stable"])
 
         assert fake_snap_command.calls == []
         assert installed_snaps == ["fake-snap=test-fake-snap-revision"]
