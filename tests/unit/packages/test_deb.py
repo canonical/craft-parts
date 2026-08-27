@@ -632,6 +632,30 @@ def fake_dpkg_query(mocker):
     mocker.patch("subprocess.check_output", side_effect=dpkg_query)
 
 
+def test_extract_deb_name_version_keeps_architecture(mocker, tmpdir):
+    deb_path = Path(tmpdir, "libc6-i386.deb")
+    deb_path.touch()
+
+    mock_check_output = mocker.patch(
+        "subprocess.check_output",
+        return_value=b"libc6:i386=2.39-0ubuntu8.6\n",
+    )
+
+    result = deb.Ubuntu._extract_deb_name_version(deb_path)
+
+    assert result == "libc6:i386=2.39-0ubuntu8.6"
+    assert mock_check_output.mock_calls == [
+        call(
+            [
+                "dpkg-deb",
+                "--show",
+                "--showformat=${binary:Package}=${Version}",
+                deb_path,
+            ]
+        )
+    ]
+
+
 class TestGetPackagesInBase:
     HARDCODED_BASES = ["core", "core16", "core18"]
     DPKG_BASES = ["core20", "core22", "core24"]
@@ -993,3 +1017,92 @@ def test_chown_stage_packages(
     # Make sure chown was called properly
     mock_chown.assert_called_once_with(deb_cache_dir, user="_apt")
     assert message.format(deb_cache_dir) in caplog.text
+
+
+def test_refresh_called_before_mark(mocker: MockerFixture) -> None:
+    """Refresh the apt index before packages are marked for installation."""
+    call_order: list[str] = []
+
+    def record_refresh() -> None:
+        call_order.append("refresh")
+
+    def record_mark(_package_names: list[str]) -> list[tuple[str, str]]:
+        call_order.append("mark")
+        return []
+
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_check_if_all_packages_installed",
+        return_value=False,
+    )
+    mocker.patch.object(
+        deb.Ubuntu,
+        "refresh_packages_list",
+        side_effect=record_refresh,
+    )
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_get_packages_marked_for_installation",
+        side_effect=record_mark,
+    )
+    mocker.patch.object(deb.Ubuntu, "_install_packages")
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_get_installed_package_versions",
+        return_value=[],
+    )
+
+    deb.Ubuntu.install_packages(["foo"])
+
+    assert call_order == ["refresh", "mark"]
+
+
+def test_refresh_not_called_when_disabled(mocker: MockerFixture) -> None:
+    """Do not refresh the apt index when cache refresh is disabled."""
+    mock_refresh = mocker.patch.object(deb.Ubuntu, "refresh_packages_list")
+
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_check_if_all_packages_installed",
+        return_value=False,
+    )
+    mock_mark = mocker.patch.object(
+        deb.Ubuntu,
+        "_get_packages_marked_for_installation",
+        return_value=[],
+    )
+    mocker.patch.object(deb.Ubuntu, "_install_packages")
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_get_installed_package_versions",
+        return_value=[],
+    )
+
+    deb.Ubuntu.install_packages(["foo"], refresh_package_cache=False)
+
+    mock_refresh.assert_not_called()
+    mock_mark.assert_called_once_with(["foo"])
+
+
+class TestIncludeRecommends:
+    def test_download_with_recommends(self, fake_deb_run):
+        deb.Ubuntu.download_packages(["pkg"], include_recommends=True)
+        assert "--no-install-recommends" not in fake_deb_run.mock_calls[-1].args[0]
+
+    def test_download_with_recommends_default(self, fake_deb_run):
+        deb.Ubuntu.download_packages(["pkg"])
+        assert "--no-install-recommends" in fake_deb_run.mock_calls[-1].args[0]
+
+    def test_install_with_recommends(self, fake_deb_run, fake_apt_cache):
+        fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
+            ("pkg", "1.0"),
+        ]
+        deb.Ubuntu.install_packages(["pkg"], include_recommends=True)
+        assert "--no-install-recommends" not in fake_deb_run.mock_calls[-1].args[0]
+
+    def test_install_with_recommends_default(self, fake_deb_run, fake_apt_cache):
+        fake_apt_cache.return_value.__enter__.return_value.get_packages_marked_for_installation.return_value = [
+            ("pkg", "1.0"),
+        ]
+        deb.Ubuntu.install_packages(["pkg"])
+        assert "--no-install-recommends" in fake_deb_run.mock_calls[-1].args[0]
