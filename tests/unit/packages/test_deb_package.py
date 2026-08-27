@@ -72,8 +72,14 @@ def test_parse_version_new_separator():
         "foo = 4.5",
         "foo= 4.5",
         "foo =4.5",
+        "foo@4.5=1.0",
+        "foo=",
+        "foo@",
+        "foo:arch=",
+        "foo:arch =1.5",
+        "foo:arch@ 1.5",
     ],
 )
-def test_parse_rejects_padding(package):
-    with pytest.raises(errors.DebPackageInvalidFormat):
+def test_parse_rejects_invalid_format(package):
+    with pytest.raises(errors.DebPackageInvalidFormatError):
         DebPackage.from_unparsed(package)

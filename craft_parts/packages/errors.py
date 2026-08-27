@@ -176,7 +176,7 @@ class UnpackError(PackagesError):
         super().__init__(brief=brief)
 
 
-class DebPackageInvalidFormat(PackagesError):  # noqa: N818
+class DebPackageInvalidFormatError(PackagesError):
     """The given package specification is not formatted correctly.
 
     :param package: The package specification string.
@@ -187,7 +187,8 @@ class DebPackageInvalidFormat(PackagesError):  # noqa: N818
         brief = f"Invalid package specification: {package!r}."
         resolution = (
             "Ensure the package name, architecture, and version do not "
-            "contain leading, trailing, or surrounding whitespace."
+            "contain leading, trailing, or surrounding whitespace, and "
+            "that no more than one of '@' or '=' is used."
         )
 
         super().__init__(brief=brief, resolution=resolution)
