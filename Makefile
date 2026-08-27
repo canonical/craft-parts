@@ -256,7 +256,7 @@ ifneq ($(shell which chisel),)
 else ifeq ($(shell which snap),)
 	$(warning Cannot install chisel without snap. Please install it yourself.)
 else
-	sudo snap install chisel --channel latest/candidate
+	sudo snap install chisel --channel latest/stable
 endif
 
 .PHONY: install-go
