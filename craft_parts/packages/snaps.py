@@ -178,7 +178,10 @@ class SnapPackage:
         if self.installed:
             local_snap_info = self.get_local_snap_info()
             if local_snap_info:
-                current_channel = _normalize_channel(local_snap_info["channel"])
+                current_channel = _normalize_channel(
+                    local_snap_info.get("tracking-channel")
+                    or local_snap_info.get("channel", "")
+                )
         return current_channel
 
     def has_assertions(self) -> bool:

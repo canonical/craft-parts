@@ -121,6 +121,20 @@ class TestSnapPackageCurrentChannel:
             fake_snapd=fake_snapd,
         )
 
+    def test_tracking_channel_preferred_when_channel_empty(self, fake_snapd):
+        self.assert_channels(
+            snap="fake-snap-stable@latest/stable",
+            installed_snaps=[
+                {
+                    "name": "fake-snap-stable",
+                    "channel": "",
+                    "tracking-channel": "latest/stable",
+                }
+            ],
+            expected="latest/stable",
+            fake_snapd=fake_snapd,
+        )
+
 
 class TestPackageIsInstalled:
     def assert_installed(self, snap, installed_snaps, expected, fake_snapd):
@@ -699,6 +713,32 @@ class TestSnapPackageLifecycle:
             {
                 "name": "fake-snap",
                 "channel": "stable",
+                "revision": "test-fake-snap-revision",
+            }
+        ]
+
+        installed_snaps = snaps.install_snaps(["fake-snap@latest/stable"])
+
+        assert fake_snap_command.calls == []
+        assert installed_snaps == ["fake-snap=test-fake-snap-revision"]
+
+    def test_install_snaps_does_not_refresh_when_tracking_channel_matches(
+        self, fake_snapd, fake_snap_command
+    ):
+        fake_snapd.find_result = [
+            {
+                "fake-snap": {
+                    "channel": "stable",
+                    "type": "app",
+                    "channels": {"latest/stable": {"confinement": "strict"}},
+                }
+            }
+        ]
+        fake_snapd.snaps_result = [
+            {
+                "name": "fake-snap",
+                "channel": "",
+                "tracking-channel": "latest/stable",
                 "revision": "test-fake-snap-revision",
             }
         ]
