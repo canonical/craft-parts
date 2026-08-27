@@ -423,9 +423,11 @@ class TestSnapPackageLifecycle:
 
     def test_install_fails(self, fake_snapd, fake_snap_command):
         fake_snap_command.install_success = False
+        fake_snap_command.install_stderr = b"snap install failed\n"
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
-        with pytest.raises(errors.SnapInstallError):
+        with pytest.raises(errors.SnapInstallError) as raised:
             snap_pkg.install()
+        assert raised.value.details == "snap install failed"
 
     def test_refresh(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
@@ -534,11 +536,13 @@ class TestSnapPackageLifecycle:
             {"fake-snap": {"channels": {"latest/stable": {"confinement": "strict"}}}},
         ]
         fake_snap_command.download_side_effect = [True, False]
+        fake_snap_command.download_stderr = b"snap download failed\n"
 
-        with pytest.raises(errors.SnapDownloadError):
+        with pytest.raises(errors.SnapDownloadError) as raised:
             snaps.download_snaps(
                 snaps_list=["fake-snap", "other-invalid"], directory=Path("fakedir")
             )
+        assert raised.value.details == "snap download failed"
 
         assert fake_snap_command.calls == [
             ["snap", "download", "fake-snap"],
@@ -593,8 +597,10 @@ class TestSnapPackageLifecycle:
     def test_refresh_fails(self, fake_snapd, fake_snap_command):
         snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         fake_snap_command.refresh_success = False
-        with pytest.raises(errors.SnapRefreshError):
+        fake_snap_command.refresh_stderr = b"snap refresh failed\n"
+        with pytest.raises(errors.SnapRefreshError) as raised:
             snap_pkg.refresh()
+        assert raised.value.details == "snap refresh failed"
 
     def test_install_snaps_returns_revision(self, fake_snapd):
         fake_snapd.find_result = [

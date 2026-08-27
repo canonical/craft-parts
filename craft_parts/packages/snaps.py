@@ -57,6 +57,17 @@ def _normalize_channel(channel: str) -> str:
     return channel
 
 
+def _decode_subprocess_stderr(err: subprocess.CalledProcessError) -> str | None:
+    stderr = err.stderr
+    if stderr is None:
+        return None
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode(errors="replace")
+
+    stderr = stderr.strip()
+    return stderr or None
+
+
 class SnapPackage:
     """SnapPackage acts as a mediator to install or refresh a snap.
 
@@ -233,11 +244,13 @@ class SnapPackage:
                 cwd=directory,
                 check=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapDownloadError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_channel=self.channel,
+                detail=_decode_subprocess_stderr(err),
             ) from err
 
     def install(self) -> None:
@@ -255,11 +268,13 @@ class SnapPackage:
                 snap_install_cmd,
                 check=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapInstallError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_channel=self.channel,
+                detail=_decode_subprocess_stderr(err),
             ) from err
 
         # Now that the snap is installed, invalidate the data we had on it.
@@ -281,11 +296,13 @@ class SnapPackage:
                 snap_refresh_cmd,
                 check=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapRefreshError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_channel=self.channel,
+                detail=_decode_subprocess_stderr(err),
             ) from err
 
         # Now that the snap is refreshed, invalidate the data we had on it.
