@@ -349,13 +349,13 @@ class ChmodCall(NamedTuple):
 
 
 @pytest.fixture
-def mock_chown(mocker) -> dict[str, ChmodCall]:
+def mock_chown(mocker) -> dict[Path, ChmodCall]:
     """Mock os.chown() and keep a record of calls to it.
 
     The returned object is a dict where the keys match the ``path`` parameter of the
     os.chown() call and the values are ``ChmodCall`` tuples containing the other parameters.
     """
-    calls = {}
+    calls: dict[Path, ChmodCall] = {}
 
     def fake_chown(path, uid, gid, **kwargs):
         calls[Path(path)] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)
