@@ -43,6 +43,8 @@ New features:
   ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
   should set this to False and use the ``stage-slices`` key instead.
 
+- Add URL of packages that could not be retrieved to ``PackageFetchError``.
+
 Bug fixes:
 
 - The Overlay and Build steps of parts that organize content to the overlay
