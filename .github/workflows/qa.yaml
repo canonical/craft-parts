@@ -50,7 +50,7 @@ jobs:
   test-flaky:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -67,7 +67,7 @@ jobs:
   test-java-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -85,7 +85,7 @@ jobs:
   test-python-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-24.04",
@@ -101,7 +101,7 @@ jobs:
   test-python-plugins-jammy:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -115,7 +115,7 @@ jobs:
   test-other-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-22.04",
