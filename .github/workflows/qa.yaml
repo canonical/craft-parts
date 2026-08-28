@@ -1,5 +1,6 @@
 name: QA
 on:
+  workflow_dispatch:
   push:
     branches:
       - "main"
@@ -7,6 +8,7 @@ on:
       - "hotfix/*"
       - "release/*"
       - "renovate/*"
+      - "work/s390x-bug"
   pull_request:
 
 # Cancel existing jobs for this branch/PR
