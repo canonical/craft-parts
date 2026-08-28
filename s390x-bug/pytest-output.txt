@@ -1,0 +1,1969 @@
+uv run coverage run --source craft_parts,tests -m pytest
+uv run coverage xml -o results/coverage.xml
+# for backwards compatibility
+# https://github.com/canonical/starflow/blob/3447d302cb7883cbb966ce0ec7e5b3dfd4bb3019/.github/workflows/test-python.yaml#L109
+cp results/coverage.xml coverage.xml
+uv run coverage report -m
+uv run coverage html
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/.venv/lib/python3.12/site-packages/coverage/core.py:107: CoverageWarning: Couldn't import C tracer: No module named 'coverage.tracer' (no-ctracer); see https://coverage.readthedocs.io/en/7.14.2/messages.html#warning-no-ctracer
+  warn(f"Couldn't import C tracer: {IMPORT_ERROR}", slug="no-ctracer", once=True)
+============================= test session starts ==============================
+collecting ... collected 5688 items / 5650 deselected / 38 selected
+
+tests/integration/plugins/test_ant.py::test_ant_plugin[none] FAILED      [  2%]
+tests/integration/plugins/test_ant.py::test_ant_plugin[partitions] FAILED [  5%]
+tests/integration/plugins/test_gradle.py::test_gradle_plugin[none-True] PASSED [  7%]
+tests/integration/plugins/test_gradle.py::test_gradle_plugin[none-False] PASSED [ 10%]
+tests/integration/plugins/test_gradle.py::test_gradle_plugin[partitions-True] PASSED [ 13%]
+tests/integration/plugins/test_gradle.py::test_gradle_plugin[partitions-False] PASSED [ 15%]
+tests/integration/plugins/test_gradle.py::test_gradle_self_contained[none] PASSED [ 18%]
+tests/integration/plugins/test_gradle.py::test_gradle_self_contained[partitions] PASSED [ 21%]
+tests/integration/plugins/test_java.py::test_java_plugin[none] FAILED    [ 23%]
+tests/integration/plugins/test_java.py::test_java_plugin[partitions] FAILED [ 26%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_embedded_jar[none] PASSED [ 28%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_embedded_jar[partitions] PASSED [ 31%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_set_modules[none] PASSED [ 34%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_set_modules[partitions] PASSED [ 36%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_add_modules[none] PASSED [ 39%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_add_modules[partitions] PASSED [ 42%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_with_jar[none] PASSED [ 44%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_with_jar[partitions] PASSED [ 47%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_bad_java_home[none] PASSED [ 50%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_bad_java_home[partitions] PASSED [ 52%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_java_home[none] PASSED [ 55%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_java_home[partitions] PASSED [ 57%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_base[none] PASSED [ 60%]
+tests/integration/plugins/test_jlink.py::test_jlink_plugin_base[partitions] PASSED [ 63%]
+tests/integration/plugins/test_maven.py::test_maven_plugin[none-True-[default-jre-headless]] PASSED [ 65%]
+tests/integration/plugins/test_maven.py::test_maven_plugin[none-False-[default-jre-headless, maven]] FAILED [ 68%]
+tests/integration/plugins/test_maven.py::test_maven_plugin[partitions-True-[default-jre-headless]] PASSED [ 71%]
+tests/integration/plugins/test_maven.py::test_maven_plugin[partitions-False-[default-jre-headless, maven]] FAILED [ 73%]
+tests/integration/plugins/test_maven.py::test_maven_plugin_use_maven_wrapper_wrapper_missing[none-False] PASSED [ 76%]
+tests/integration/plugins/test_maven.py::test_maven_plugin_use_maven_wrapper_wrapper_missing[partitions-False] PASSED [ 78%]
+tests/integration/plugins/test_maven_use.py::test_maven_use_plugin[none] FAILED [ 81%]
+tests/integration/plugins/test_maven_use.py::test_maven_use_plugin[partitions] FAILED [ 84%]
+tests/integration/plugins/test_maven_use.py::test_maven_use_plugin_self_contained[none] FAILED [ 86%]
+tests/integration/plugins/test_maven_use.py::test_maven_use_plugin_self_contained[partitions] FAILED [ 89%]
+tests/integration/plugins/test_maven_use.py::test_maven_use_with_modules[none] FAILED [ 92%]
+tests/integration/plugins/test_maven_use.py::test_maven_use_with_modules[partitions] FAILED [ 94%]
+tests/integration/plugins/test_maven_use.py::test_maven_use_from_binaries[none] FAILED [ 97%]
+tests/integration/plugins/test_maven_use.py::test_maven_use_from_binaries[partitions] FAILED [100%]
+
+=================================== FAILURES ===================================
+____________________________ test_ant_plugin[none] _____________________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_none_0')
+partitions = None
+
+    def test_ant_plugin(new_dir, partitions):
+        source_location = Path(__file__).parent / "test_ant"
+    
+        parts_yaml = textwrap.dedent(
+            f"""
+            parts:
+              foo:
+                plugin: ant
+                source: {source_location}
+                stage-packages: [default-jre-headless]
+                ant-build-targets: [compile, jar]
+                ant-build-file: "my-build.xml"
+                ant-properties:
+                  # The build will fail unless this property is propagated to Ant.
+                  EnableBuild: "yes"
+            """
+        )
+        parts = yaml.safe_load(parts_yaml)
+        lf = LifecycleManager(
+            parts,
+            application_name="test_ant",
+            cache_dir=new_dir,
+            work_dir=new_dir,
+            partitions=partitions,
+            parallel_build_count=os.cpu_count() or 1,
+        )
+        actions = lf.plan(Step.PRIME)
+    
+>       with lf.action_executor() as ctx:
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_ant.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.ant_plugin.AntPluginEnvironmentValidator object at 0x3ff9c8371d0>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If ``ant`` is invalid
+          and there are no parts named ant.
+        """
+        version = self.validate_dependency(
+            dependency="ant",
+            plugin_name="ant",
+            part_dependencies=part_dependencies,
+            argument="-version",
+        )
+        if not version.startswith("Apache Ant") and (
+            part_dependencies is None or "ant-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid ant version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'foo': invalid ant version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_none_0/core.9241)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/ant_plugin.py:76: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_none_0/core.9154)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_none_0/core.9177)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_none_0/core.9196)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_none_0/core.9218)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+_________________________ test_ant_plugin[partitions] __________________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_partitions_0')
+partitions = ['default', 'mypart', 'yourpart']
+
+    def test_ant_plugin(new_dir, partitions):
+        source_location = Path(__file__).parent / "test_ant"
+    
+        parts_yaml = textwrap.dedent(
+            f"""
+            parts:
+              foo:
+                plugin: ant
+                source: {source_location}
+                stage-packages: [default-jre-headless]
+                ant-build-targets: [compile, jar]
+                ant-build-file: "my-build.xml"
+                ant-properties:
+                  # The build will fail unless this property is propagated to Ant.
+                  EnableBuild: "yes"
+            """
+        )
+        parts = yaml.safe_load(parts_yaml)
+        lf = LifecycleManager(
+            parts,
+            application_name="test_ant",
+            cache_dir=new_dir,
+            work_dir=new_dir,
+            partitions=partitions,
+            parallel_build_count=os.cpu_count() or 1,
+        )
+        actions = lf.plan(Step.PRIME)
+    
+>       with lf.action_executor() as ctx:
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_ant.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.ant_plugin.AntPluginEnvironmentValidator object at 0x3ff9caedbe0>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If ``ant`` is invalid
+          and there are no parts named ant.
+        """
+        version = self.validate_dependency(
+            dependency="ant",
+            plugin_name="ant",
+            part_dependencies=part_dependencies,
+            argument="-version",
+        )
+        if not version.startswith("Apache Ant") and (
+            part_dependencies is None or "ant-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid ant version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'foo': invalid ant version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_partitions_0/core.9393)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/ant_plugin.py:76: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_partitions_0/core.9306)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_partitions_0/core.9329)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_partitions_0/core.9348)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_ant_plugin_partitions_0/core.9370)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+____________________________ test_java_plugin[none] ____________________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_none_0')
+partitions = None, expected_jdk_version = '21'
+
+    def test_java_plugin(new_dir, partitions, expected_jdk_version):
+        """This test validates that java plugin sets JAVA_HOME.
+        The JAVA_HOME should be set according to the following rules:
+        - Latest version of Java VM is selected
+        - Selected Java VM should be able to compile test test file
+    
+        The test installs multiple Java VMs and asserts that JAVA_HOME
+        is set to Java 21.
+        """
+    
+>       prime_dir = run_build(new_dir, partitions, "test_java_plugin")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_java.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_java.py:84: in run_build
+    with lf.action_executor() as ctx:
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_plugin.MavenPluginEnvironmentValidator object at 0x3ff9cafc050>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        options = cast(MavenPluginProperties, self._options)
+        if options.maven_use_wrapper:
+            return
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'foo': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_none_0/core.19601)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_plugin.py:74: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_none_0/core.19514)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_none_0/core.19537)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_none_0/core.19556)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_none_0/core.19578)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+_________________________ test_java_plugin[partitions] _________________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_partitions_0')
+partitions = ['default', 'mypart', 'yourpart'], expected_jdk_version = '21'
+
+    def test_java_plugin(new_dir, partitions, expected_jdk_version):
+        """This test validates that java plugin sets JAVA_HOME.
+        The JAVA_HOME should be set according to the following rules:
+        - Latest version of Java VM is selected
+        - Selected Java VM should be able to compile test test file
+    
+        The test installs multiple Java VMs and asserts that JAVA_HOME
+        is set to Java 21.
+        """
+    
+>       prime_dir = run_build(new_dir, partitions, "test_java_plugin")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_java.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_java.py:84: in run_build
+    with lf.action_executor() as ctx:
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_plugin.MavenPluginEnvironmentValidator object at 0x3ff99757530>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        options = cast(MavenPluginProperties, self._options)
+        if options.maven_use_wrapper:
+            return
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'foo': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_partitions_0/core.19775)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_plugin.py:74: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_partitions_0/core.19689)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_partitions_0/core.19712)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_partitions_0/core.19731)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_java_plugin_partitions_0/core.19752)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+_________ test_maven_plugin[none-False-[default-jre-headless, maven]] __________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_none_False__0')
+testing_source_dir = PosixPath('/tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_none_False__0')
+partitions = None, use_maven_wrapper = False
+stage_packages = '[default-jre-headless, maven]'
+
+    @pytest.mark.parametrize(
+        ("use_maven_wrapper", "stage_packages"),
+        [(True, "[default-jre-headless]"), (False, "[default-jre-headless, maven]")],
+        indirect=["use_maven_wrapper"],
+    )
+    def test_maven_plugin(
+        new_dir, testing_source_dir, partitions, use_maven_wrapper, stage_packages
+    ):
+        parts_yaml = textwrap.dedent(
+            f"""
+            parts:
+              foo:
+                plugin: maven
+                source: {testing_source_dir}
+                stage-packages: {stage_packages}
+                maven-use-wrapper: {use_maven_wrapper}
+            """
+        )
+        parts = yaml.safe_load(parts_yaml)
+>       _run_maven_test(new_dir=new_dir, partitions=partitions, parts=parts)
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven.py:99: in _run_maven_test
+    with lf.action_executor() as ctx:
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_plugin.MavenPluginEnvironmentValidator object at 0x3ff9a9428a0>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        options = cast(MavenPluginProperties, self._options)
+        if options.maven_use_wrapper:
+            return
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'foo': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_none_False__0/core.23259)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_plugin.py:74: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_none_False__0/core.23173)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_none_False__0/core.23196)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_none_False__0/core.23215)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_none_False__0/core.23236)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+______ test_maven_plugin[partitions-False-[default-jre-headless, maven]] _______
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_partitions_F0')
+testing_source_dir = PosixPath('/tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_partitions_F0')
+partitions = ['default', 'mypart', 'yourpart'], use_maven_wrapper = False
+stage_packages = '[default-jre-headless, maven]'
+
+    @pytest.mark.parametrize(
+        ("use_maven_wrapper", "stage_packages"),
+        [(True, "[default-jre-headless]"), (False, "[default-jre-headless, maven]")],
+        indirect=["use_maven_wrapper"],
+    )
+    def test_maven_plugin(
+        new_dir, testing_source_dir, partitions, use_maven_wrapper, stage_packages
+    ):
+        parts_yaml = textwrap.dedent(
+            f"""
+            parts:
+              foo:
+                plugin: maven
+                source: {testing_source_dir}
+                stage-packages: {stage_packages}
+                maven-use-wrapper: {use_maven_wrapper}
+            """
+        )
+        parts = yaml.safe_load(parts_yaml)
+>       _run_maven_test(new_dir=new_dir, partitions=partitions, parts=parts)
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven.py:99: in _run_maven_test
+    with lf.action_executor() as ctx:
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_plugin.MavenPluginEnvironmentValidator object at 0x3ff9a941550>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        options = cast(MavenPluginProperties, self._options)
+        if options.maven_use_wrapper:
+            return
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'foo': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_partitions_F0/core.24111)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_plugin.py:74: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_partitions_F0/core.24025)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_partitions_F0/core.24048)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_partitions_F0/core.24067)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_plugin_partitions_F0/core.24088)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+_________________________ test_maven_use_plugin[none] __________________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_none_0')
+partitions = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3ff99755cd0>
+
+    def test_maven_use_plugin(new_dir, partitions, monkeypatch):
+        project_dir = Path(new_dir) / "project"
+        shutil.copytree(SOURCE_DIR / "simple", project_dir)
+        monkeypatch.chdir(project_dir)
+        work_dir = Path(new_dir)
+        parts_yaml = (project_dir / "parts.yaml").read_text()
+        parts = yaml.safe_load(parts_yaml)
+    
+        lf = LifecycleManager(
+            parts,
+            application_name="simple",
+            cache_dir=new_dir,
+            work_dir=work_dir,
+            partitions=partitions,
+        )
+        actions = lf.plan(Step.PRIME)
+    
+>       with lf.action_executor() as ctx:
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_use_plugin.MavenUsePluginEnvironmentValidator object at 0x3ff99754980>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'java-dep-add': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_none_0/project/core.25272)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_use_plugin.py:72: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_none_0/project/core.25185)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_none_0/project/core.25208)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_none_0/project/core.25227)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_none_0/project/core.25249)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+______________________ test_maven_use_plugin[partitions] _______________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_partitio0')
+partitions = ['default', 'mypart', 'yourpart']
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3ff9ab931d0>
+
+    def test_maven_use_plugin(new_dir, partitions, monkeypatch):
+        project_dir = Path(new_dir) / "project"
+        shutil.copytree(SOURCE_DIR / "simple", project_dir)
+        monkeypatch.chdir(project_dir)
+        work_dir = Path(new_dir)
+        parts_yaml = (project_dir / "parts.yaml").read_text()
+        parts = yaml.safe_load(parts_yaml)
+    
+        lf = LifecycleManager(
+            parts,
+            application_name="simple",
+            cache_dir=new_dir,
+            work_dir=work_dir,
+            partitions=partitions,
+        )
+        actions = lf.plan(Step.PRIME)
+    
+>       with lf.action_executor() as ctx:
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_use_plugin.MavenUsePluginEnvironmentValidator object at 0x3ff9ab92690>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'java-dep-add': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_partitio0/project/core.25448)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_use_plugin.py:72: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_partitio0/project/core.25362)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_partitio0/project/core.25385)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_partitio0/project/core.25404)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_partitio0/project/core.25425)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+__________________ test_maven_use_plugin_self_contained[none] __________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0')
+partitions = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3ff9a941640>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x3ff9a943830>
+
+    def test_maven_use_plugin_self_contained(new_dir, partitions, monkeypatch, caplog):
+        caplog.set_level(logging.DEBUG)
+        project_dir = Path(new_dir) / "project"
+        shutil.copytree(SOURCE_DIR / "self-contained", project_dir)
+        monkeypatch.chdir(project_dir)
+        work_dir = Path(new_dir)
+        parts_yaml = (project_dir / "parts.yaml").read_text()
+        parts = yaml.safe_load(parts_yaml)
+    
+        lf = LifecycleManager(
+            parts,
+            application_name="test_maven_use_self_contained",
+            cache_dir=new_dir,
+            work_dir=work_dir,
+            partitions=partitions,
+        )
+        actions = lf.plan(Step.PRIME)
+    
+>       with lf.action_executor() as ctx:
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_use_plugin.MavenUsePluginEnvironmentValidator object at 0x3ff9a977d70>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'java-dep-add': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/project/core.25624)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_use_plugin.py:72: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/project/core.25537)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/project/core.25560)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/project/core.25579)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/project/core.25601)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+------------------------------ Captured log call -------------------------------
+DEBUG    craft_parts.utils.os_utils:os_utils.py:171 is_snap: False, SNAP_NAME set to None
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:3
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:3
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:3
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:1
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:1(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:3
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:3(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:4
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:1
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:1(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:3
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:3(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:4
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:3
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:1
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):1 is outdated
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:1(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:3
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):3 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:3(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:4(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:4(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):4 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:4(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:5
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:5(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:5
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:5(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:5
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:5(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:5
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:5(0)
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.executor.part_handler:part_handler.py:1486 part build packages: ['libmaven-resources-plugin-java', 'libmaven-compiler-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-install-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+INFO     craft_parts.executor.executor:executor.py:299 Installing build-packages
+DEBUG    craft_parts.packages.deb:deb.py:621 Installing packages using apt: ['libmaven-compiler-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-install-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-resources-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-compiler-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-compiler-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-deploy-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-deploy-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-jar-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-jar-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-resources-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-resources-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-install-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-install-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-shade-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-shade-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libsurefire-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libsurefire-java
+DEBUG    craft_parts.packages.deb:deb.py:638 Requested build-packages already installed: ['libmaven-compiler-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-install-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-resources-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.executor.executor:executor.py:325 verify plugin environment for part 'java-dep-add'
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-11-openjdk-s390x. Java version 11.
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-17-openjdk-s390x. Java version 17.
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-21-openjdk-s390x. Java version 21.
+DEBUG    root:java_plugin.py:61 /usr/lib/jvm/java-8-openjdk-s390x/bin/javac is not a valid Java compiler: 
+INFO     root:java_plugin.py:69 JDK not found.
+DEBUG    craft_parts.plugins.validator:validator.py:137 plugin validation environment: # Environment
+## Application environment
+## Part environment
+export CRAFT_ARCH_TRIPLET="s390x-linux-gnu"
+export CRAFT_TARGET_ARCH="s390x"
+export CRAFT_ARCH_BUILD_ON="s390x"
+export CRAFT_ARCH_BUILD_FOR="s390x"
+export CRAFT_ARCH_TRIPLET_BUILD_ON="s390x-linux-gnu"
+export CRAFT_ARCH_TRIPLET_BUILD_FOR="s390x-linux-gnu"
+export CRAFT_PARALLEL_BUILD_COUNT="1"
+export CRAFT_PROJECT_DIR="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/project"
+export DEBIAN_FRONTEND="noninteractive"
+export CRAFT_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/stage"
+export CRAFT_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/prime"
+export CRAFT_PART_NAME="java-dep-add"
+export CRAFT_STEP_NAME="BUILD"
+export CRAFT_PART_SRC="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/parts/java-dep-add/src"
+export CRAFT_PART_SRC_WORK="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/parts/java-dep-add/src"
+export CRAFT_PART_BUILD="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/parts/java-dep-add/build"
+export CRAFT_PART_BUILD_WORK="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/parts/java-dep-add/build"
+export CRAFT_PART_INSTALL="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/parts/java-dep-add/install"
+## Plugin environment
+export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-s390x"
+## User environment
+
+DEBUG    craft_parts.plugins.validator:validator.py:138 plugin validation command: 'mvn --version'
+DEBUG    craft_parts.plugins.validator:validator.py:102 executed mvn --version with output Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con0/project/core.25624)
+_______________ test_maven_use_plugin_self_contained[partitions] _______________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1')
+partitions = ['default', 'mypart', 'yourpart']
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3ff9a974410>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x3ff9a9756d0>
+
+    def test_maven_use_plugin_self_contained(new_dir, partitions, monkeypatch, caplog):
+        caplog.set_level(logging.DEBUG)
+        project_dir = Path(new_dir) / "project"
+        shutil.copytree(SOURCE_DIR / "self-contained", project_dir)
+        monkeypatch.chdir(project_dir)
+        work_dir = Path(new_dir)
+        parts_yaml = (project_dir / "parts.yaml").read_text()
+        parts = yaml.safe_load(parts_yaml)
+    
+        lf = LifecycleManager(
+            parts,
+            application_name="test_maven_use_self_contained",
+            cache_dir=new_dir,
+            work_dir=work_dir,
+            partitions=partitions,
+        )
+        actions = lf.plan(Step.PRIME)
+    
+>       with lf.action_executor() as ctx:
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_use_plugin.MavenUsePluginEnvironmentValidator object at 0x3ff9a9425a0>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'java-dep-add': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/project/core.25799)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_use_plugin.py:72: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/project/core.25713)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/project/core.25736)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/project/core.25755)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/project/core.25776)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+------------------------------ Captured log call -------------------------------
+DEBUG    craft_parts.utils.os_utils:os_utils.py:171 is_snap: False, SNAP_NAME set to None
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:3
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:3
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:3
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:1
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:1(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:3
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:3(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:4
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:1
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:1(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:3
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:3(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:4
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:3
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:1
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):1 is outdated
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:1(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:3
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):3 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:3(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:4(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:4(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):4 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:4(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-add:5
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-add:5(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-parent:5
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-parent:5(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-print-addition:5
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-print-addition:5(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:5
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-parent'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-parent'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-add'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-add'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-print-addition'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-print-addition'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:5(0)
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.executor.part_handler:part_handler.py:1486 part build packages: ['libmaven-resources-plugin-java', 'libmaven-compiler-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-install-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+INFO     craft_parts.executor.executor:executor.py:299 Installing build-packages
+DEBUG    craft_parts.packages.deb:deb.py:621 Installing packages using apt: ['libmaven-compiler-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-install-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-resources-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-compiler-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-compiler-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-deploy-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-deploy-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-jar-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-jar-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-resources-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-resources-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-install-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-install-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-shade-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-shade-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libsurefire-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libsurefire-java
+DEBUG    craft_parts.packages.deb:deb.py:638 Requested build-packages already installed: ['libmaven-compiler-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-install-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-resources-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.executor.executor:executor.py:325 verify plugin environment for part 'java-dep-add'
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-11-openjdk-s390x. Java version 11.
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-17-openjdk-s390x. Java version 17.
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-21-openjdk-s390x. Java version 21.
+DEBUG    root:java_plugin.py:61 /usr/lib/jvm/java-8-openjdk-s390x/bin/javac is not a valid Java compiler: 
+INFO     root:java_plugin.py:69 JDK not found.
+DEBUG    craft_parts.plugins.validator:validator.py:137 plugin validation environment: # Environment
+## Application environment
+## Part environment
+export CRAFT_ARCH_TRIPLET="s390x-linux-gnu"
+export CRAFT_TARGET_ARCH="s390x"
+export CRAFT_ARCH_BUILD_ON="s390x"
+export CRAFT_ARCH_BUILD_FOR="s390x"
+export CRAFT_ARCH_TRIPLET_BUILD_ON="s390x-linux-gnu"
+export CRAFT_ARCH_TRIPLET_BUILD_FOR="s390x-linux-gnu"
+export CRAFT_PARALLEL_BUILD_COUNT="1"
+export CRAFT_PROJECT_DIR="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/project"
+export DEBIAN_FRONTEND="noninteractive"
+export CRAFT_DEFAULT_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/stage"
+export CRAFT_DEFAULT_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/prime"
+export CRAFT_MYPART_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/partitions/mypart/stage"
+export CRAFT_MYPART_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/partitions/mypart/prime"
+export CRAFT_YOURPART_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/partitions/yourpart/stage"
+export CRAFT_YOURPART_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/partitions/yourpart/prime"
+export CRAFT_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/stage"
+export CRAFT_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/prime"
+export CRAFT_PART_NAME="java-dep-add"
+export CRAFT_STEP_NAME="BUILD"
+export CRAFT_PART_SRC="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/parts/java-dep-add/src"
+export CRAFT_PART_SRC_WORK="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/parts/java-dep-add/src"
+export CRAFT_PART_BUILD="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/parts/java-dep-add/build"
+export CRAFT_PART_BUILD_WORK="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/parts/java-dep-add/build"
+export CRAFT_PART_INSTALL="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/parts/java-dep-add/install"
+## Plugin environment
+export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-s390x"
+## User environment
+
+DEBUG    craft_parts.plugins.validator:validator.py:138 plugin validation command: 'mvn --version'
+DEBUG    craft_parts.plugins.validator:validator.py:102 executed mvn --version with output Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_plugin_self_con1/project/core.25799)
+______________________ test_maven_use_with_modules[none] _______________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0')
+partitions = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3ff9a976d80>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x3ff9a977ec0>
+
+    def test_maven_use_with_modules(
+        new_dir: Path,
+        partitions: list[str],
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        caplog.set_level(logging.DEBUG)
+        project_dir = Path(new_dir) / "project"
+        shutil.copytree(SOURCE_DIR / "multi-module", project_dir)
+        monkeypatch.chdir(project_dir)
+        work_dir = Path(new_dir)
+        parts_yaml = (project_dir / "parts.yaml").read_text()
+        parts = yaml.safe_load(parts_yaml)
+    
+        lf = LifecycleManager(
+            parts,
+            application_name="test_maven_use_with_modules",
+            cache_dir=new_dir,
+            work_dir=work_dir,
+            partitions=partitions,
+        )
+        actions = lf.plan(Step.PRIME)
+    
+>       with lf.action_executor() as ctx:
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_use_plugin.MavenUsePluginEnvironmentValidator object at 0x3ff9ab9aa80>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'java-dep-top': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/project/core.25975)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_use_plugin.py:72: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/project/core.25888)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/project/core.25911)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/project/core.25930)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/project/core.25952)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+------------------------------ Captured log call -------------------------------
+DEBUG    craft_parts.utils.os_utils:os_utils.py:171 is_snap: False, SNAP_NAME set to None
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:3
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:3
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:1
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):1 is outdated
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:1(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:3
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):3 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:3(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:4
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):4 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:4(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:5
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:5(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:5
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:5(0)
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.executor.part_handler:part_handler.py:1486 part build packages: ['libmaven-resources-plugin-java', 'libmaven-compiler-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-install-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+INFO     craft_parts.executor.executor:executor.py:299 Installing build-packages
+DEBUG    craft_parts.packages.deb:deb.py:621 Installing packages using apt: ['libmaven-compiler-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-install-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-resources-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-compiler-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-compiler-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-deploy-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-deploy-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-jar-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-jar-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-resources-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-resources-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-install-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-install-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-shade-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-shade-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libsurefire-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libsurefire-java
+DEBUG    craft_parts.packages.deb:deb.py:638 Requested build-packages already installed: ['libmaven-compiler-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-install-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-resources-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.executor.executor:executor.py:325 verify plugin environment for part 'java-dep-top'
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-11-openjdk-s390x. Java version 11.
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-17-openjdk-s390x. Java version 17.
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-21-openjdk-s390x. Java version 21.
+DEBUG    root:java_plugin.py:61 /usr/lib/jvm/java-8-openjdk-s390x/bin/javac is not a valid Java compiler: 
+INFO     root:java_plugin.py:69 JDK not found.
+DEBUG    craft_parts.plugins.validator:validator.py:137 plugin validation environment: # Environment
+## Application environment
+## Part environment
+export CRAFT_ARCH_TRIPLET="s390x-linux-gnu"
+export CRAFT_TARGET_ARCH="s390x"
+export CRAFT_ARCH_BUILD_ON="s390x"
+export CRAFT_ARCH_BUILD_FOR="s390x"
+export CRAFT_ARCH_TRIPLET_BUILD_ON="s390x-linux-gnu"
+export CRAFT_ARCH_TRIPLET_BUILD_FOR="s390x-linux-gnu"
+export CRAFT_PARALLEL_BUILD_COUNT="1"
+export CRAFT_PROJECT_DIR="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/project"
+export DEBIAN_FRONTEND="noninteractive"
+export CRAFT_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/stage"
+export CRAFT_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/prime"
+export CRAFT_PART_NAME="java-dep-top"
+export CRAFT_STEP_NAME="BUILD"
+export CRAFT_PART_SRC="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/parts/java-dep-top/src"
+export CRAFT_PART_SRC_WORK="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/parts/java-dep-top/src"
+export CRAFT_PART_BUILD="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/parts/java-dep-top/build"
+export CRAFT_PART_BUILD_WORK="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/parts/java-dep-top/build"
+export CRAFT_PART_INSTALL="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/parts/java-dep-top/install"
+## Plugin environment
+export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-s390x"
+## User environment
+
+DEBUG    craft_parts.plugins.validator:validator.py:138 plugin validation command: 'mvn --version'
+DEBUG    craft_parts.plugins.validator:validator.py:102 executed mvn --version with output Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_no0/project/core.25975)
+___________________ test_maven_use_with_modules[partitions] ____________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0')
+partitions = ['default', 'mypart', 'yourpart']
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3ff9ab81550>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x3ff9ab81430>
+
+    def test_maven_use_with_modules(
+        new_dir: Path,
+        partitions: list[str],
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        caplog.set_level(logging.DEBUG)
+        project_dir = Path(new_dir) / "project"
+        shutil.copytree(SOURCE_DIR / "multi-module", project_dir)
+        monkeypatch.chdir(project_dir)
+        work_dir = Path(new_dir)
+        parts_yaml = (project_dir / "parts.yaml").read_text()
+        parts = yaml.safe_load(parts_yaml)
+    
+        lf = LifecycleManager(
+            parts,
+            application_name="test_maven_use_with_modules",
+            cache_dir=new_dir,
+            work_dir=work_dir,
+            partitions=partitions,
+        )
+        actions = lf.plan(Step.PRIME)
+    
+>       with lf.action_executor() as ctx:
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_use_plugin.MavenUsePluginEnvironmentValidator object at 0x3ff9ab81790>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'java-dep-top': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/project/core.26149)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_use_plugin.py:72: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/project/core.26063)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/project/core.26086)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/project/core.26105)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/project/core.26126)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+------------------------------ Captured log call -------------------------------
+DEBUG    craft_parts.utils.os_utils:os_utils.py:171 is_snap: False, SNAP_NAME set to None
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:1
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:1(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:3
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:3
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:1
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):1 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):1 is outdated
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:1(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:3
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):3 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:3(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:4
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:3(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):4 is outdated
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:4(2)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:4
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:4(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-dep-top:5
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-dep-top:5(0)
+DEBUG    craft_parts.sequencer:sequencer.py:115 process java-main-part:5
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):5 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):5 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):4 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):4 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):3 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):3 is dirty
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:298 check if Part('java-dep-top'):1 is outdated
+DEBUG    craft_parts.state_manager.state_manager:state_manager.py:365 check if Part('java-dep-top'):1 is dirty
+DEBUG    craft_parts.sequencer:sequencer.py:392 add action java-main-part:5(0)
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+DEBUG    craft_parts.executor.part_handler:part_handler.py:1486 part build packages: ['libmaven-resources-plugin-java', 'libmaven-compiler-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-install-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.sources.local_source:local_source.py:87 ignore patterns: []
+INFO     craft_parts.executor.executor:executor.py:299 Installing build-packages
+DEBUG    craft_parts.packages.deb:deb.py:621 Installing packages using apt: ['libmaven-compiler-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-install-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-resources-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-compiler-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-compiler-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-deploy-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-deploy-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-jar-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-jar-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-resources-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-resources-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-install-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-install-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libmaven-shade-plugin-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libmaven-shade-plugin-java
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:312 Marking libsurefire-java (and its dependencies) to be fetched
+DEBUG    craft_parts.packages.apt_cache:apt_cache.py:322 package: libsurefire-java
+DEBUG    craft_parts.packages.deb:deb.py:638 Requested build-packages already installed: ['libmaven-compiler-plugin-java', 'libmaven-deploy-plugin-java', 'libmaven-install-plugin-java', 'libmaven-jar-plugin-java', 'libmaven-resources-plugin-java', 'libmaven-shade-plugin-java', 'libsurefire-java']
+DEBUG    craft_parts.executor.executor:executor.py:325 verify plugin environment for part 'java-dep-top'
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-11-openjdk-s390x. Java version 11.
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-17-openjdk-s390x. Java version 17.
+INFO     root:java_plugin.py:67 Found JAVA_HOME /usr/lib/jvm/java-21-openjdk-s390x. Java version 21.
+DEBUG    root:java_plugin.py:61 /usr/lib/jvm/java-8-openjdk-s390x/bin/javac is not a valid Java compiler: 
+INFO     root:java_plugin.py:69 JDK not found.
+DEBUG    craft_parts.plugins.validator:validator.py:137 plugin validation environment: # Environment
+## Application environment
+## Part environment
+export CRAFT_ARCH_TRIPLET="s390x-linux-gnu"
+export CRAFT_TARGET_ARCH="s390x"
+export CRAFT_ARCH_BUILD_ON="s390x"
+export CRAFT_ARCH_BUILD_FOR="s390x"
+export CRAFT_ARCH_TRIPLET_BUILD_ON="s390x-linux-gnu"
+export CRAFT_ARCH_TRIPLET_BUILD_FOR="s390x-linux-gnu"
+export CRAFT_PARALLEL_BUILD_COUNT="1"
+export CRAFT_PROJECT_DIR="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/project"
+export DEBIAN_FRONTEND="noninteractive"
+export CRAFT_DEFAULT_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/stage"
+export CRAFT_DEFAULT_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/prime"
+export CRAFT_MYPART_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/partitions/mypart/stage"
+export CRAFT_MYPART_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/partitions/mypart/prime"
+export CRAFT_YOURPART_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/partitions/yourpart/stage"
+export CRAFT_YOURPART_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/partitions/yourpart/prime"
+export CRAFT_STAGE="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/stage"
+export CRAFT_PRIME="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/prime"
+export CRAFT_PART_NAME="java-dep-top"
+export CRAFT_STEP_NAME="BUILD"
+export CRAFT_PART_SRC="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/parts/java-dep-top/src"
+export CRAFT_PART_SRC_WORK="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/parts/java-dep-top/src"
+export CRAFT_PART_BUILD="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/parts/java-dep-top/build"
+export CRAFT_PART_BUILD_WORK="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/parts/java-dep-top/build"
+export CRAFT_PART_INSTALL="/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/parts/java-dep-top/install"
+## Plugin environment
+export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-s390x"
+## User environment
+
+DEBUG    craft_parts.plugins.validator:validator.py:138 plugin validation command: 'mvn --version'
+DEBUG    craft_parts.plugins.validator:validator.py:102 executed mvn --version with output Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_with_modules_pa0/project/core.26149)
+______________________ test_maven_use_from_binaries[none] ______________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_n0')
+partitions = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3ff9ab2d280>
+prepare_binaries = <function prepare_binaries.<locals>.run at 0x3ff9aa4b2e0>
+
+    def test_maven_use_from_binaries(new_dir, partitions, monkeypatch, prepare_binaries):
+        """Test the maven-use plugin when consuming directly from binaries.
+    
+        The test runs two lifecycles: the first one, called in ``prepare_binaries()``,
+        builds Maven artifacts for two Java projects, which are then used as dependencies
+        in the second lifecycle.
+        """
+        project_dir = Path(new_dir) / "binaries_consume"
+        shutil.copytree(SOURCE_DIR / "from_binaries/binaries_consume", project_dir)
+    
+>       prepare_binaries(project_dir)
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:239: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:206: in run
+    with lf.action_executor() as ctx:
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_use_plugin.MavenUsePluginEnvironmentValidator object at 0x3ff9a975130>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'java-dep-add': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_n0/binaries_source/core.26326)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_use_plugin.py:72: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_n0/binaries_source/core.26239)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_n0/binaries_source/core.26262)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_n0/binaries_source/core.26281)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_n0/binaries_source/core.26303)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+___________________ test_maven_use_from_binaries[partitions] ___________________
+
+new_dir = local('/tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_p0')
+partitions = ['default', 'mypart', 'yourpart']
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3ff9a9429f0>
+prepare_binaries = <function prepare_binaries.<locals>.run at 0x3ff9aa4bb00>
+
+    def test_maven_use_from_binaries(new_dir, partitions, monkeypatch, prepare_binaries):
+        """Test the maven-use plugin when consuming directly from binaries.
+    
+        The test runs two lifecycles: the first one, called in ``prepare_binaries()``,
+        builds Maven artifacts for two Java projects, which are then used as dependencies
+        in the second lifecycle.
+        """
+        project_dir = Path(new_dir) / "binaries_consume"
+        shutil.copytree(SOURCE_DIR / "from_binaries/binaries_consume", project_dir)
+    
+>       prepare_binaries(project_dir)
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:239: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/tests/integration/plugins/test_maven_use.py:206: in run
+    with lf.action_executor() as ctx:
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:355: in __enter__
+    self._executor.prologue()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:116: in prologue
+    self._verify_plugin_environment()
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/executor/executor.py:341: in _verify_plugin_environment
+    validator.validate_environment(part_dependencies=part.dependencies)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <craft_parts.plugins.maven_use_plugin.MavenUsePluginEnvironmentValidator object at 0x3ff989d9340>
+part_dependencies = []
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure the environment contains dependencies needed by the plugin.
+    
+        :param part_dependencies: A list of the parts this part depends on.
+    
+        :raises PluginEnvironmentValidationError: If maven is invalid
+          and there are no parts named maven-deps.
+        """
+        version = self.validate_dependency(
+            dependency="mvn",
+            plugin_name="maven",
+            part_dependencies=part_dependencies,
+        )
+        if not re.match(r"(\x1b\[1m)?Apache Maven ", version) and (
+            part_dependencies is None or "maven-deps" not in part_dependencies
+        ):
+>           raise errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason=f"invalid maven version {version!r}",
+            )
+E           craft_parts.errors.PluginEnvironmentValidationError: Environment validation failed for part 'java-dep-add': invalid maven version 'Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError\nOpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_p0/binaries_source/core.26502)'.
+
+/home/ubuntu/actions-runner/_work/craft-parts/craft-parts/craft_parts/plugins/maven_use_plugin.py:72: PluginEnvironmentValidationError
+------------------------------ Captured log setup ------------------------------
+WARNING  root:features.py:42 deleting current features configuration
+----------------------------- Captured stderr call -----------------------------
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_p0/binaries_source/core.26415)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_p0/binaries_source/core.26438)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_p0/binaries_source/core.26457)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+OpenJDK 64-Bit Server VM warning: CreateCoredumpOnCrash specified, but core dumps may be further processed by the following: "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -F%F -- %E" (alternatively, falling back to /tmp/pytest-of-ubuntu/pytest-0/test_maven_use_from_binaries_p0/binaries_source/core.26479)
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+Picked up JAVA_TOOL_OPTIONS: -XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError
+Unrecognized VM option 'CreateCoredumpOnCrash'
+Did you mean '(+/-)CreateMinidumpOnCrash'?
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/_pytest/python.py:124
+  /home/ubuntu/actions-runner/_work/craft-parts/craft-parts/.venv/lib/python3.12/site-packages/_pytest/python.py:124: PytestRemovedIn10Warning: Passing a non-Collection iterable to parametrize is deprecated.
+  Test: tests/unit/utils/test_path_utils.py::test_get_partition_compatible_filepath_partition, argvalues type: zip
+  Please convert to a list or tuple.
+  See https://docs.pytest.org/en/stable/deprecations.html#parametrize-iterators
+    metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==== 14 failed, 24 passed, 5650 deselected, 1 warning in 1569.51s (0:26:09) ====
+make: *** [common.mk:236: test-coverage] Error 1

@@ -1,0 +1,57 @@
+ii  ant                                              1.10.14-1                                        all          Java based build tool like make
+ii  ant-optional                                     1.10.14-1                                        all          Java based build tool like make - optional libraries
+ii  automake                                         1:1.16.5-1.3ubuntu1                              all          Tool for generating GNU Standards-compliant Makefiles
+ii  dash                                             0.5.12-6ubuntu5                                  s390x        POSIX-compliant shell
+ii  default-jdk                                      2:1.21-75+exp1                                   s390x        Standard Java or Java compatible Development Kit
+ii  default-jdk-headless                             2:1.21-75+exp1                                   s390x        Standard Java or Java compatible Development Kit (headless)
+ii  default-jre                                      2:1.21-75+exp1                                   s390x        Standard Java or Java compatible Runtime
+ii  default-jre-headless                             2:1.21-75+exp1                                   s390x        Standard Java or Java compatible Runtime (headless)
+ii  fonts-dejavu-extra                               2.37-8                                           all          Vera font family derivate with additional characters (extra variants)
+ii  handlebars                                       3:4.7.7+~4.1.0-1                                 all          build semantic templates effectively with no frustration
+ii  libhttpclient-java                               4.5.14-1                                         all          HTTP/1.1 compliant HTTP agent implementation
+ii  libimagequant0:s390x                             2.18.0-1build1                                   s390x        palette quantization library
+ii  libmaven-archiver-java                           3.6.0-1                                          all          Archiver component for Maven
+ii  libmaven-artifact-transfer-java                  0.13.1-2                                         all          Apache Maven Artifact Transfer
+ii  libmaven-common-artifact-filters-java            3.3.2-1                                          all          Maven Common Artifact Filters
+ii  libmaven-compiler-plugin-java                    3.10.1-2                                         all          Maven Compiler plugin
+ii  libmaven-dependency-tree-java                    3.2.1-1                                          all          Maven Dependency Tree
+ii  libmaven-deploy-plugin-java                      3.1.1-1                                          all          Maven Deploy plugin
+ii  libmaven-file-management-java                    3.0.0-1                                          all          Maven File Management API
+ii  libmaven-filtering-java                          3.3.0-1                                          all          Maven Filtering
+ii  libmaven-install-plugin-java                     3.1.1-1                                          all          Maven install plugin
+ii  libmaven-jar-plugin-java                         3.3.0-2                                          all          Maven Jar Plugin
+ii  libmaven-parent-java                             35-1                                             all          Maven metadata for Apache Maven itself
+ii  libmaven-plugin-tools-java                       3.7.1-1                                          all          Maven Plugin Tools
+ii  libmaven-reporting-api-java                      3.1.1-1                                          all          Maven Reporting API
+ii  libmaven-reporting-impl-java                     3.2.0-2                                          all          Maven Reporting API Implementation
+ii  libmaven-resolver-java                           1.6.3-1                                          all          Library to handle Java artifact repositories
+ii  libmaven-resources-plugin-java                   3.3.0-1                                          all          Maven resources plugin
+ii  libmaven-shade-plugin-java                       3.4.1-2                                          all          Maven shade plugin
+ii  libmaven-shared-incremental-java                 1.1-4                                            all          Maven incremental build utilities
+ii  libmaven-shared-io-java                          3.0.0-4                                          all          Maven API for I/O support
+ii  libmaven-shared-utils-java                       3.3.4-1                                          all          Replacement for plexus-utils in Maven
+ii  libmaven3-core-java                              3.8.7-2                                          all          Core libraries for Maven 3
+ii  libplexus-ant-factory-java                       1.0~alpha2.1-4                                   all          Plexus Ant Factory
+ii  maven                                            3.8.7-2                                          all          Java software project management and comprehension tool
+ii  node-cacache                                     17.0.3+~cs10.3.7-1                               all          fast, fault-tolerant, disk-based, data-agnostic, content-addressable cache
+ii  node-eslint-visitor-keys                         3.3.0+~1.0.0-1                                   all          Constants and utilities about visitor keys to traverse AST
+ii  node-punycode                                    2.2.3-2                                          all          Nodejs robust Punycode converter fully RFC compliant
+ii  node-semver                                      7.5.4+~7.5.0-2                                   all          Semantic Versioning for Node.js
+ii  openjdk-11-jdk:s390x                             11.0.32+9-1ubuntu1~24.04                         s390x        OpenJDK Development Kit (JDK)
+ii  openjdk-11-jdk-headless:s390x                    11.0.32+9-1ubuntu1~24.04                         s390x        OpenJDK Development Kit (JDK) (headless)
+ii  openjdk-11-jre:s390x                             11.0.32+9-1ubuntu1~24.04                         s390x        OpenJDK Java runtime, using Hotspot JIT
+ii  openjdk-11-jre-headless:s390x                    11.0.32+9-1ubuntu1~24.04                         s390x        OpenJDK Java runtime, using Hotspot JIT (headless)
+ii  openjdk-17-jdk:s390x                             17.0.20+8-1~24.04                                s390x        OpenJDK Development Kit (JDK)
+ii  openjdk-17-jdk-headless:s390x                    17.0.20+8-1~24.04                                s390x        OpenJDK Development Kit (JDK) (headless)
+ii  openjdk-17-jre:s390x                             17.0.20+8-1~24.04                                s390x        OpenJDK Java runtime, using Hotspot JIT
+ii  openjdk-17-jre-headless:s390x                    17.0.20+8-1~24.04                                s390x        OpenJDK Java runtime, using Hotspot JIT (headless)
+ii  openjdk-21-dbg:s390x                             21.0.12+8-1~24.04                                s390x        Java runtime based on OpenJDK (debugging symbols)
+ii  openjdk-21-jdk:s390x                             21.0.12+8-1~24.04                                s390x        OpenJDK Development Kit (JDK)
+ii  openjdk-21-jdk-headless:s390x                    21.0.12+8-1~24.04                                s390x        OpenJDK Development Kit (JDK) (headless)
+ii  openjdk-21-jre:s390x                             21.0.12+8-1~24.04                                s390x        OpenJDK Java runtime, using Hotspot JIT
+ii  openjdk-21-jre-headless:s390x                    21.0.12+8-1~24.04                                s390x        OpenJDK Java runtime, using Hotspot JIT (headless)
+ii  openjdk-8-jdk-headless:s390x                     8u502-ga~us1-0ubuntu1~24.04                      s390x        OpenJDK Development Kit (JDK) (headless)
+ii  openjdk-8-jre-headless:s390x                     8u502-ga~us1-0ubuntu1~24.04                      s390x        OpenJDK Java runtime, using Hotspot Zero (headless)
+ii  python3-constantly                               23.10.4-1                                        all          Symbolic constants in Python
+ii  python3-oauthlib                                 3.2.2-1                                          all          generic, spec-compliant implementation of OAuth for Python3
+ii  python3-requests                                 2.31.0+dfsg-1ubuntu1.1                           all          elegant and simple HTTP library for Python3, built for human beings

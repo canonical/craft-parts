@@ -1,0 +1,5 @@
+[1mApache Maven 3.8.7[m
+Maven home: /usr/share/maven
+Java version: 21.0.12, vendor: Ubuntu, runtime: /usr/lib/jvm/java-21-openjdk-s390x
+Default locale: en, platform encoding: UTF-8
+OS name: "linux", version: "6.14.0-37-generic", arch: "s390x", family: "unix"

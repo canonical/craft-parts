@@ -1,0 +1,4 @@
+Error: VM option 'ReplayCompiles' is diagnostic and must be enabled via -XX:+UnlockDiagnosticVMOptions.
+Error: The unlock option must precede 'ReplayCompiles'.
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
