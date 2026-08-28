@@ -284,7 +284,7 @@ class TestPluginNpmPlugin:
                 "npm-node-version": version,
             }
         )
-        NpmPlugin._fetch_node_release_index = lambda: [
+        NpmPlugin._fetch_node_release_index = lambda: [  # ty: ignore[invalid-assignment]
             {
                 "version": "v99.99.99",
                 "date": "3304-12-31",
@@ -421,4 +421,4 @@ class TestPluginNpmPlugin:
         part = Part("my-part", spec, plugin_properties=properties)
 
         assert part.spec.build_attributes == ["self-contained"]
-        assert part.plugin_properties.build_attributes == ["self-contained"]  # type: ignore[reportAttributeAccessIssue]
+        assert part.plugin_properties.build_attributes == ["self-contained"]  # type: ignore[reportAttributeAccessIssue]  # ty: ignore[unresolved-attribute]

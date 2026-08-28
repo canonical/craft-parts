@@ -91,7 +91,7 @@ class TestPartSpecs:
 
     def test_unmarshal_not_dict(self):
         with pytest.raises(TypeError) as raised:
-            PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues]
+            PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
         assert str(raised.value) == "part data is not a dictionary"
 
     def test_unmarshal_both_overlay_key(self):
@@ -442,7 +442,7 @@ class TestPartUnmarshal:
 
     def test_part_spec_not_dict(self):
         with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", False)  # type: ignore[reportGeneralTypeIssues]
+            Part("foo", False)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
         assert raised.value.part_name == "foo"
         assert raised.value.message == "part data is not a dictionary"
 
@@ -568,7 +568,7 @@ class TestPartValidation:
 
     def test_part_validation_data_type(self):
         with pytest.raises(TypeError) as raised:
-            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]
+            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
 
         assert str(raised.value) == "value must be a dictionary"
 

@@ -310,8 +310,8 @@ class TestFileSourceHandler:
         )
         with pytest.raises(TypeError, match=expected):
             FaultyFileSource(  # type: ignore[reportGeneralTypeIssues]
-                source=None,  # type: ignore[reportGeneralTypeIssues]
-                part_src_dir=None,  # type: ignore[reportGeneralTypeIssues]
+                source=None,  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
+                part_src_dir=None,  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
                 cache_dir=Path(),
                 project_dirs=self._dirs,
             )

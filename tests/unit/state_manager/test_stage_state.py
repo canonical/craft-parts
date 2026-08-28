@@ -69,7 +69,7 @@ class TestStageState:
 
     def test_unmarshal_invalid(self):
         with pytest.raises(TypeError, match="^state data is not a dictionary$"):
-            StageState.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
+            StageState.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.usefixtures("new_dir")
