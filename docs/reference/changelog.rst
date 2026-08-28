@@ -19,6 +19,8 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.36.0:
+
 Unreleased
 ----------
 
@@ -26,6 +28,10 @@ New features:
 
 - Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
   snap name and channel.
+
+- Allow ``stage-packages`` and ``build-packages`` to use the ``@`` separator
+  between a deb package name and its version, in addition to the existing
+  ``=`` separator.
 
 - Add ``overlay-recommended-packages`` key to install overlay packages with their
   recommended dependencies.
@@ -50,6 +56,22 @@ Bug fixes:
 - The Overlay and Build steps of parts that organize content to the overlay
   are executed before these steps in other parts, even when ``after`` is
   used.
+
+For a complete list of commits, check out the `2.36.0`_ release on GitHub.
+
+.. _release-2.35.1:
+
+2.35.1 (2026-08-27)
+-------------------
+
+Bug fixes:
+
+- (Poetry plugin) Don't install the Poetry export plugin if a ``poetry-deps`` part
+  is provided.
+- `#1458 <https://github.com/canonical/craft-parts/issues/1458>`_ Build step fails on
+  special files
+- The Overlay and Build steps of parts that organize content to the overlay
+  are executed before these steps in other parts, even when ``after`` is used.
 - Fix the ``colcon`` plugin to declare ``make`` and
   ``python3-colcon-recursive-crawl`` as explicit build packages. Both are only
   *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
@@ -60,6 +82,8 @@ Bug fixes:
 - Add git source mutual exclusivity to JSON schema.
 - Normalize leading slashes in migration paths, fixing application of permissions
   and ownership in files specified with absolute paths.
+
+For a complete list of commits, check out the `2.35.1`_ release on GitHub.
 
 .. _release-2.34.1:
 
@@ -1807,6 +1831,8 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.36.0: https://github.com/canonical/craft-parts/releases/tag/2.36.0
+.. _2.35.1: https://github.com/canonical/craft-parts/releases/tag/2.35.1
 .. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
 .. _2.34.1: https://github.com/canonical/craft-parts/releases/tag/2.34.1
 .. _2.34.0: https://github.com/canonical/craft-parts/releases/tag/2.34.0
