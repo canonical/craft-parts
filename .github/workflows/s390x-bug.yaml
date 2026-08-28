@@ -1,17 +1,11 @@
-name: QA
+name: Collect s390x Bug Info
 on:
   workflow_dispatch:
   push:
     branches:
-      - "main"
-      - "feature/*"
-      - "hotfix/*"
-      - "release/*"
-      - "renovate/*"
       - "work/s390x-bug"
   pull_request:
 
-# Cancel existing jobs for this branch/PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
