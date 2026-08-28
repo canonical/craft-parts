@@ -15,130 +15,75 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    uses: canonical/starflow/.github/workflows/lint-python.yaml@main
-  test-common:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
-    with:
-      fast-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
-      fast-test-python-versions: '["3.10", "3.12", "3.13", "3.14"]'
-      slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
-      slow-test-python-versions: '["3.12"]'
-      # We must always test on at least one EOL base to ensure that chisel behaves
-      # correctly on said EOL base.
-      lowest-python-platform: '["amd64", "focal"]'
-      lowest-python-version: "3.10"
-      pytest-markers: not java and not python and not plugin and not flaky
-      setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
-      use-lxd: false
-  test-flaky:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
-    with:
-      fast-test-platforms: "[]"
-      slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-        ]
-      slow-test-python-versions: '["3.12"]'
-      lowest-python-platform: '["amd64", "focal"]'
-      lowest-python-version: "3.10"
-      pytest-markers: flaky
-      setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
-      use-lxd: false
-  test-java-plugins:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
-    with:
-      fast-test-platforms: "[]"
-      slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
-      slow-test-python-versions: '["3.12"]'
-      lowest-python-version: ""
-      pytest-markers: java
-      setup-vars: NO_PYTHON=1 NO_PLUGIN=1
-      use-lxd: false
-  test-python-plugins:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
-    with:
-      fast-test-platforms: "[]"
-      slow-test-platforms: >
-        [
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
-      slow-test-python-versions: '["3.12"]'
-      lowest-python-version: ""
-      pytest-markers: python
-      setup-vars: NO_JAVA=1 NO_PLUGIN=1
-      use-lxd: false
-  test-python-plugins-jammy:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
-    with:
-      fast-test-platforms: "[]"
-      slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-        ]
-      slow-test-python-versions: '["3.10"]'
-      lowest-python-version: ""
-      pytest-markers: python
-      setup-vars: NO_JAVA=1 NO_PLUGIN=1
-      use-lxd: false
-  test-other-plugins:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
-    with:
-      fast-test-platforms: "[]"
-      slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
-      slow-test-python-versions: '["3.12"]'
-      lowest-python-platform: '["focal"]'
-      lowest-python-version: "3.10"
-      pytest-markers: plugin
-      setup-vars: NO_JAVA=1 NO_PYTHON=1
-      use-lxd: false
-  test-requires-root:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
-    with:
-      fast-test-platforms: '["ubuntu-24.04"]'
-      fast-test-python-versions: '["3.12"]'
-      slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
-      slow-test-python-versions: '["3.12"]'
-      lowest-python-version: ""
-      pytest-markers: requires_root
-      test-command-prefix: sudo env "PATH=$PATH"
-      use-lxd: false
+  collect-s390x-bug-info:
+    name: Collect s390x JVM Crash Info
+    runs-on: [noble, s390x, edge]
+    steps:
+      - name: Set up runner
+        uses: canonical/starflow/setup-python-runner@main
+        with:
+          python-version: "3.12"
+          use-lxd: false
+
+      - name: Install tools & debug symbols
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-21-dbg || true
+          make -j setup-tests NO_PYTHON=1 NO_PLUGIN=1
+
+      - name: Collect Environment & System Information
+        run: |
+          mkdir -p s390x-bug /tmp/jvm-crashes
+          uname -a > s390x-bug/uname.txt
+          cat /etc/os-release > s390x-bug/os-release.txt
+          cat /proc/cpuinfo > s390x-bug/cpuinfo.txt
+          lscpu > s390x-bug/lscpu.txt 2>&1 || true
+          dpkg -l | grep -E 'openjdk|jdk|jre|maven|ant' > s390x-bug/dpkg-packages.txt
+          java -version 2> s390x-bug/java-version.txt
+          mvn -version > s390x-bug/mvn-version.txt 2>&1 || true
+
+      - name: Run Java tests to reproduce crash
+        id: run_tests
+        env:
+          JAVA_TOOL_OPTIONS: "-XX:ErrorFile=/tmp/jvm-crashes/hs_err_pid%p.log -XX:ReplayDataFile=/tmp/jvm-crashes/replay_pid%p.log -XX:+CreateCoredumpOnCrash -XX:+DumpReplayDataOnError"
+        run: |
+          echo "Running Java plugin tests to capture crash..."
+          make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow and java'" > s390x-bug/pytest-output.txt 2>&1 || true
+          
+          # If no crash in first run, loop on maven integration tests to trigger it
+          if ! ls /tmp/jvm-crashes/hs_err_*.log 1> /dev/null 2>&1 && ! find /tmp -name "hs_err_*.log" 2>/dev/null | grep -q hs_err; then
+            echo "Running test loop to trigger crash..."
+            for i in $(seq 1 10); do
+              echo "Iteration $i..."
+              uv run pytest tests/integration/plugins/test_maven.py tests/integration/plugins/test_jlink.py -v || true
+              if ls /tmp/jvm-crashes/hs_err_*.log 1> /dev/null 2>&1; then
+                echo "Crash captured on iteration $i!"
+                break
+              fi
+            done
+          fi
+
+      - name: Gather Crash Files and Test Replay
+        if: always()
+        run: |
+          # Copy any hs_err, replay, core files from /tmp and runner
+          find /tmp /home/ubuntu -name "hs_err_*.log" -exec cp -v {} s390x-bug/ \; 2>/dev/null || true
+          find /tmp /home/ubuntu -name "replay_*.log" -exec cp -v {} s390x-bug/ \; 2>/dev/null || true
+          find /tmp /home/ubuntu -name "core*" -maxdepth 4 -exec cp -v {} s390x-bug/ \; 2>/dev/null || true
+          
+          # Test Compiler Replay if replay file exists
+          REPLAY_FILE=$(ls s390x-bug/replay_*.log 2>/dev/null | head -n 1 || true)
+          if [ -n "$REPLAY_FILE" ] && [ -f "$REPLAY_FILE" ]; then
+            echo "Testing compiler replay with $REPLAY_FILE..."
+            java -XX:+ReplayCompiles -XX:ReplayDataFile="$REPLAY_FILE" > s390x-bug/replay_test_output.txt 2>&1 || true
+            echo "Replay test completed."
+          fi
+          
+          ls -la s390x-bug/
+
+      - name: Upload s390x-bug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s390x-bug-artifacts
+          path: s390x-bug/
