@@ -169,8 +169,11 @@ class TestFileSourceHandler:
 
     def test_pull_file_checksum_error(self, new_dir):
         self.set_source(
-            cache_dir=new_dir, source="src/my_file", source_checksum="md5/12345"
+            cache_dir=new_dir,
+            source="src/my_file",
+            source_checksum="md5/12345",
         )
+        self.source.set_part_name("foo")
         Path("src").mkdir()
         Path("src/my_file").write_text("content")
         Path("parts/foo/src").mkdir(parents=True)
@@ -179,6 +182,10 @@ class TestFileSourceHandler:
             self.source.pull()
         assert raised.value.expected == "12345"
         assert raised.value.obtained == "9a0364b9e99bb480dd25e1f0284c8555"
+        assert (
+            raised.value.brief
+            == "Failed to pull source: checksum mismatch for part 'foo'."
+        )
 
     def test_pull_url(self, requests_mock, new_dir):
         self.source.source = "http://test.com/some_file"
