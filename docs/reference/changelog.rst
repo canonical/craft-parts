@@ -49,6 +49,8 @@ New features:
   ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
   should set this to False and use the ``stage-slices`` key instead.
 
+- Add the request URL to the error message for package download errors.
+
 - Add part name and resolution to error message for source checksum mismatch.
 
 Bug fixes:
