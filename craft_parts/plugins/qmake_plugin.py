@@ -138,8 +138,8 @@ class QmakePlugin(Plugin):
             ):
                 logger.warning(
                     "qmake-project-file %r in part %r starts with source-subdir %r; "
-                    "update the project to define the file relative to the source "
-                    "subdirectory instead of the source directory.",
+                    "update the part definition to set qmake-project-file relative to the "
+                    "source subdirectory instead of the source directory.",
                     options.qmake_project_file,
                     self._part_info.part_name,
                     str(source_subdir),
