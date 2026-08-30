@@ -59,6 +59,9 @@ Bug fixes:
   are executed before these steps in other parts, even when ``after`` is
   used.
 
+- Skip organization when the resolved destination path and the source path
+  are the same, preventing self-copy and delete.
+
 For a complete list of commits, check out the `2.36.0`_ release on GitHub.
 
 .. _release-2.35.1:
