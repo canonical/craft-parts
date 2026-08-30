@@ -257,7 +257,8 @@ class AptCache(ContextDecorator):
                     str(download_path), progress=self.progress
                 )
             except apt.package.FetchError as err:
-                raise errors.PackageFetchError(str(err)) from err
+                package_url = package.candidate.uri
+                raise errors.PackageFetchError(package_url, details=str(err)) from err
 
             if package.candidate is None:  # type: ignore[reportUnnecessaryComparison] # this appears to be possible after `fetch_binary`
                 raise errors.PackageNotFound(package.name)

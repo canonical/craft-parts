@@ -36,7 +36,6 @@ basic_parts_yaml = textwrap.dedent(
 
 
 @pytest.mark.requires_root
-@pytest.mark.skip(reason="Fails due to #1458")
 def test_organize_special_files(new_dir, mocker):
     parts = yaml.safe_load(basic_parts_yaml)
 
@@ -69,4 +68,4 @@ def test_organize_special_files(new_dir, mocker):
     assert stat.S_ISCHR(os.stat("prime/dest/dev/null").st_mode)  # noqa: PTH116
     assert stat.S_ISBLK(os.stat("prime/dest/dev/loop99").st_mode)  # noqa: PTH116
     assert stat.S_ISFIFO(os.stat("prime/dest/bar.fifo").st_mode)  # noqa: PTH116
-    assert Path("prime/dest/qux").readlink() == "quux"
+    assert Path("prime/dest/qux").readlink() == Path("quux")

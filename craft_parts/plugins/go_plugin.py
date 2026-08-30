@@ -86,8 +86,8 @@ class GoPlugin(Plugin):
     or to have it installed or built in a different part. In this case, the
     name of the part supplying the go compiler must be "go".
 
-    The go plugin uses the common plugin keywords as well as those for "sources".
-    Additionally, the following plugin-specific keywords can be used:
+    The go plugin uses the common plugin keys as well as those for "sources".
+    Additionally, the following plugin-specific keys can be used:
 
     - ``go-buildtags``
       (list of strings)

@@ -24,7 +24,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
-from craft_parts.utils.file_utils import get_path_differences
+from craft_parts.utils.file_utils import get_path_differences, link_or_copy
 from typing_extensions import Any
 
 
@@ -188,6 +188,43 @@ class TestCopy:
         with pytest.raises(errors.CopyFileNotFound) as raised:
             file_utils.copy(Path("2"), Path("3"))
         assert raised.value.name == "2"
+
+    @pytest.mark.requires_root
+    def test_copy_chardev(self):
+        Path("1").unlink()
+        os.mknod("1", 0o750 | stat.S_IFCHR, os.makedev(1, 5))
+
+        file_utils.copy("1", "3")
+        dest_stat = os.stat("3")  # noqa: PTH116
+
+        assert Path("3").exists()
+        assert stat.S_ISCHR(dest_stat.st_mode)
+        assert os.major(dest_stat.st_rdev) == 1
+        assert os.minor(dest_stat.st_rdev) == 5
+
+    @pytest.mark.requires_root
+    def test_copy_blockdev(self):
+        Path("1").unlink()
+        os.mknod("1", 0o750 | stat.S_IFBLK, os.makedev(7, 99))
+
+        file_utils.copy("1", "3")
+        dest_stat = os.stat("3")  # noqa: PTH116
+
+        assert Path("3").exists()
+        assert stat.S_ISBLK(dest_stat.st_mode)
+        assert os.major(dest_stat.st_rdev) == 7
+        assert os.minor(dest_stat.st_rdev) == 99
+
+    def test_copy_fifo(self):
+        Path("1").unlink()
+        os.mkfifo("1", 0o640)
+
+        file_utils.copy("1", "3")
+        dest_stat = os.stat("3")  # noqa: PTH116
+
+        assert Path("3").exists()
+        assert stat.S_ISFIFO(dest_stat.st_mode)
+        assert stat.S_IMODE(dest_stat.st_mode) == 0o640
 
 
 class TestMove:
@@ -708,3 +745,24 @@ def test_find_merge_conflicts_broken_symlink_vs_file(tmp_path: pathlib.Path):
     conflicts = file_utils.find_merge_conflicts(source_root, dest_root)
 
     assert conflicts == {pathlib.Path("my-link"): ["different types (symlink, file)"]}
+
+
+def test_link_or_copy_samefile_symlink(tmp_path: Path) -> None:
+    """Ensure link_or_copy does not crash or delete the file when dest symlinks to source."""
+
+    # Create a source file
+    source = tmp_path / "source.txt"
+    source.write_text("test data")
+
+    # Create a destination that is a symlink pointing directly to the source
+    destination = tmp_path / "dest.txt"
+    destination.symlink_to(source.name)
+
+    # Run the function - this should return silently without throwing FileExistsError
+    link_or_copy(source, destination)
+
+    # Verify the source was NOT deleted (which was the root cause of the bug)
+    assert source.exists()
+    assert source.read_text() == "test data"
+    assert destination.exists()
+    assert destination.is_symlink()
