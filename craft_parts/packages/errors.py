@@ -128,7 +128,10 @@ class BuildPackagesNotFound(PackagesError):  # noqa: N818
     """
 
     def __init__(self, packages: Sequence[str]) -> None:
-        self.packages = packages
+        if isinstance(packages, str):
+            self.packages = [packages]
+        else:
+            self.packages = packages
         missing_pkgs = formatting_utils.humanize_list(packages, "and")
         brief = f"Cannot find packages listed in 'build-packages': {missing_pkgs}"
 
