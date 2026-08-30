@@ -14,12 +14,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The Go Use plugin."""
+"""The Go-use plugin."""
 
 import logging
 from typing import Literal
 
 from typing_extensions import override
+
+from craft_parts import errors
 
 from .base import Plugin
 from .go_plugin import GoPluginEnvironmentValidator
@@ -29,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class GoUsePluginProperties(PluginProperties, frozen=True):
-    """The part properties used by the Go Use plugin."""
+    """The part properties used by the Go-use plugin."""
 
     plugin: Literal["go-use"] = "go-use"
 
@@ -75,6 +77,13 @@ class GoUsePlugin(Plugin):
         dest_dir = (
             self._part_info.part_export_dir / "go-use" / self._part_info.part_name
         )
+        go_mod_path = self._part_info.part_src_subdir / "go.mod"
+        if not go_mod_path.is_file():
+            raise errors.PartsError(
+                brief=f"go.mod not found in '{self._part_info.part_src_subdir}.",
+                resolution="Make sure the source directory contains a go.mod file",
+            )
+
         return [
             f"mkdir -p '{dest_dir.parent}'",
             f"ln -sf '{self._part_info.part_src_subdir}' '{dest_dir}'",

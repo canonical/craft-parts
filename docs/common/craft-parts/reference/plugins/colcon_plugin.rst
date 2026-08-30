@@ -80,8 +80,12 @@ How it works
 During the build step the plugin performs the following actions:
 
 #. Source colcon workspaces present in any stage snaps, and on the system.
-#. Call ``colcon build`` with any colcon-specific keywords set in the part,
+#. Call ``colcon build`` with any colcon-specific keys set in the part,
    with ``--install-base $CRAFT_PART_INSTALL`` to install the built artifacts
+
+The plugin injects ``-DCMAKE_BUILD_TYPE=Release`` and ``-DBUILD_TESTING=OFF``
+into the CMake arguments by default. Each argument can be overridden with its own entry
+in the ``colcon-cmake-args`` key.
 
 
 Example

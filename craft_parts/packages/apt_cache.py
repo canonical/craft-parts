@@ -24,6 +24,8 @@ from collections.abc import Iterable
 from contextlib import ContextDecorator
 from pathlib import Path
 
+from typing_extensions import Self
+
 try:
     import apt
     import apt.cache
@@ -92,7 +94,7 @@ class AptCache(ContextDecorator):
         self.progress: LogProgress | None = None
 
     # pylint: disable=attribute-defined-outside-init
-    def __enter__(self) -> "AptCache":
+    def __enter__(self) -> Self:
         if self.stage_cache is not None:
             self.progress = LogProgress()
             self._populate_stage_cache_dir()
@@ -118,22 +120,22 @@ class AptCache(ContextDecorator):
         apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
 
         # Methods and solvers dir for when in the SNAP.
-        snap_dir = os.getenv("SNAP")
+        snap_dir = Path(os.environ["SNAP"]) if "SNAP" in os.environ else None
         if (
             os_utils.is_snap(application_package_name)
-            and snap_dir
-            and os.path.exists(snap_dir)  # noqa: PTH110
+            and snap_dir is not None
+            and snap_dir.exists()
         ):
-            apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")  # noqa: PTH118
-            apt_pkg.config.set("Dir", apt_dir)
+            apt_dir = snap_dir / "usr" / "lib" / "apt"
+            apt_pkg.config.set("Dir", str(apt_dir))
             # yes apt is broken like that we need to append os.path.sep
-            methods_dir = os.path.join(apt_dir, "methods")  # noqa: PTH118
-            apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
-            solvers_dir = os.path.join(apt_dir, "solvers")  # noqa: PTH118
-            apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
-            apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")  # noqa: PTH118
+            methods_dir = str(apt_dir / "methods") + os.path.sep
+            apt_pkg.config.set("Dir::Bin::methods", methods_dir)
+            solvers_dir = str(apt_dir / "solvers") + os.path.sep
+            apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir)
+            apt_key_path = str(snap_dir / "usr" / "bin" / "apt-key")
             apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
-            gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")  # noqa: PTH118
+            gpgv_path = str(snap_dir / "usr" / "bin" / "gpgv")
             apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
 
         apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
@@ -251,7 +253,8 @@ class AptCache(ContextDecorator):
                     str(download_path), progress=self.progress
                 )
             except apt.package.FetchError as err:
-                raise errors.PackageFetchError(str(err)) from err
+                package_url = package.candidate.uri
+                raise errors.PackageFetchError(package_url, details=str(err)) from err
 
             if package.candidate is None:  # type: ignore[reportUnnecessaryComparison] # this appears to be possible after `fetch_binary`
                 raise errors.PackageNotFound(package.name)

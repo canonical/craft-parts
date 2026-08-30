@@ -23,6 +23,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal, TypeVar, cast
 
+from typing_extensions import Self
+
 from craft_parts import packages
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
@@ -64,6 +66,8 @@ class OverlayManager:
         if the project doesn't use overlay parameters.
     :param cache_level: The number of part layers to be mounted before the
         package cache.
+    :param use_host_sources: Configure chroot to use package sources from
+        the host environment.
     """
 
     def __init__(
@@ -73,6 +77,7 @@ class OverlayManager:
         part_list: list[Part],
         base_layer_dir: Path | None,
         cache_level: int,
+        use_host_sources: bool = False,
     ) -> None:
         self._project_info = project_info
         self._part_list = part_list
@@ -80,6 +85,7 @@ class OverlayManager:
         self._overlay_fs: OverlayFS | None = None
         self._base_layer_dir = base_layer_dir
         self._cache_level = cache_level
+        self._use_host_sources = use_host_sources
 
     @property
     def base_layer_dir(self) -> Path | None:
@@ -182,38 +188,55 @@ class OverlayManager:
         # Ensure we always run refresh_packages_list by resetting the cache
         packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
         chroot.chroot(
-            mount_dir, _defer_evaluation(packages.Repository.refresh_packages_list)
+            mount_dir,
+            _defer_evaluation(packages.Repository.refresh_packages_list),
+            use_host_sources=self._use_host_sources,
         )
 
-    def download_packages(self, package_names: list[str]) -> None:
+    def download_packages(
+        self, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download packages and populate the overlay package cache.
 
         :param package_names: The list of packages to download.
+        :param include_recommends: Whether or not to include recommended packages.
         """
-        if not self._overlay_fs:
-            raise RuntimeError("overlay filesystem not mounted")
-
-        mount_dir = self._project_info.overlay_mount_dir
-        chroot.chroot(
-            mount_dir,
+        self.run(
             _defer_evaluation(packages.Repository.download_packages),
             package_names,
+            use_host_sources=self._use_host_sources,
+            include_recommends=include_recommends,
         )
 
-    def install_packages(self, package_names: list[str]) -> None:
+    def install_packages(
+        self, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Install packages on the overlay area using chroot.
 
         :param package_names: The list of packages to install.
+        :param include_recommends: Whether or not to include recommended packages.
         """
-        if not self._overlay_fs:
-            raise RuntimeError("overlay filesystem not mounted")
-
-        mount_dir = self._project_info.overlay_mount_dir
-        chroot.chroot(
-            mount_dir,
+        self.run(
             _defer_evaluation(packages.Repository.install_packages),
             package_names,
             refresh_package_cache=False,
+            use_host_sources=self._use_host_sources,
+            include_recommends=include_recommends,
+        )
+
+    def run(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+        """Run the given callable inside the chroot environment."""
+        if not self._overlay_fs:
+            raise RuntimeError("overlay filesystem not mounted")
+
+        # Allow callers to override the default behavior of using host sources per-call.
+        kwargs.setdefault("use_host_sources", self._use_host_sources)
+
+        return chroot.chroot(
+            self._project_info.overlay_mount_dir,
+            target,
+            *args,
+            **kwargs,
         )
 
 
@@ -237,7 +260,7 @@ class LayerMount:
         self._pkg_cache = pkg_cache
         self._pid = os.getpid()
 
-    def __enter__(self) -> "LayerMount":
+    def __enter__(self) -> Self:
         logger.debug("---- Enter layer mount context ----")
         self._overlay_manager.mount_layer(
             self._top_part,
@@ -253,12 +276,17 @@ class LayerMount:
         logger.debug("---- Exit layer mount context ----")
         return False
 
-    def install_packages(self, package_names: list[str]) -> None:
+    def install_packages(
+        self, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Install the specified packages on the local system.
 
         :param package_names: The list of packages to install.
+        :param include_recommends: Whether or not to include recommended packages.
         """
-        self._overlay_manager.install_packages(package_names)
+        self._overlay_manager.install_packages(
+            package_names, include_recommends=include_recommends
+        )
 
 
 class PackageCacheMount:
@@ -272,7 +300,7 @@ class PackageCacheMount:
         self._overlay_manager.mkdirs()
         self._pid = os.getpid()
 
-    def __enter__(self) -> "PackageCacheMount":
+    def __enter__(self) -> Self:
         logger.debug("---- Enter package cache mount context ----")
         self._overlay_manager.mount_pkg_cache()
         return self
@@ -289,9 +317,22 @@ class PackageCacheMount:
         """Update the list of available packages in the overlay system."""
         self._overlay_manager.refresh_packages_list()
 
-    def download_packages(self, package_names: list[str]) -> None:
+    def download_packages(
+        self, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local system.
 
         :param package_names: The list of packages to download.
+        :param include_recommends: Whether or not to include recommended packages.
         """
-        self._overlay_manager.download_packages(package_names)
+        self._overlay_manager.download_packages(
+            package_names, include_recommends=include_recommends
+        )
+
+
+class ChrootMount(LayerMount):
+    """Context manager that mounts an overlay for step processing and runs code inside a chroot environment."""
+
+    def __call__(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+        """Syntactic sugar method to run within chroot."""
+        return self._overlay_manager.run(target, *args, **kwargs)

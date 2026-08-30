@@ -16,6 +16,7 @@
 
 """Exceptions raised by the packages handling subsystem."""
 
+import pathlib
 from collections.abc import Sequence
 
 from craft_parts.errors import PartsError
@@ -69,14 +70,19 @@ class PackagesNotFound(PackagesError):  # noqa: N818
 class PackageFetchError(PackagesError):
     """Failed to fetch package from remote repository.
 
-    :param message: The error message.
+    :param url: The package URL, if known.
+    :param details: Additional error details from the underlying exception.
     """
 
-    def __init__(self, message: str) -> None:
-        self.message = message
-        brief = f"Failed to fetch package: {message}."
+    def __init__(self, url: str | None, details: str | None = None) -> None:
+        self.url = url
+        brief = (
+            f"Failed to fetch package from {url}."
+            if url
+            else "Failed to fetch package."
+        )
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, details=details)
 
 
 class PackageListRefreshError(PackagesError):
@@ -173,6 +179,41 @@ class UnpackError(PackagesError):
         brief = f"Error unpacking {package!r}"
 
         super().__init__(brief=brief)
+
+
+class DebPackageInvalidFormatError(PackagesError):
+    """The given package specification is not formatted correctly.
+
+    :param package: The package specification string.
+    """
+
+    def __init__(self, package: str) -> None:
+        self.package = package
+        brief = f"Invalid package specification: {package!r}."
+        resolution = (
+            "Ensure the package name, architecture, and version do not "
+            "contain leading, trailing, or surrounding whitespace, and "
+            "that no more than one of '@' or '=' is used."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class SnapInvalidFormat(PackagesError):  # noqa: N818
+    """The given snap specification is not formatted correctly.
+
+    :param snap: The snap specification string.
+    """
+
+    def __init__(self, snap: str) -> None:
+        self.snap = snap
+        brief = f"Invalid snap specification: {snap!r}."
+        resolution = (
+            "Ensure the snap name and channel do not contain leading, "
+            "trailing, or surrounding whitespace."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
 
 
 class SnapUnavailable(PackagesError):  # noqa: N818
@@ -273,6 +314,22 @@ class SnapdConnectionError(PackagesError):
         )
 
         super().__init__(brief=brief)
+
+
+class BaseManifestError(PackagesError):
+    """Failed to read the base snap package manifest.
+
+    :param manifest_path: Path to the manifest file.
+    :param reason: A description of the failure.
+    """
+
+    def __init__(self, manifest_path: pathlib.Path, reason: str) -> None:
+        self.manifest_path = manifest_path
+        self.reason = reason
+        super().__init__(
+            brief=f"Failed to read package manifest {str(manifest_path)!r}.",
+            details=reason,
+        )
 
 
 class ChiselError(PackagesError):

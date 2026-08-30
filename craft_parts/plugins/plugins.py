@@ -25,6 +25,7 @@ from craft_parts import errors
 from .ant_plugin import AntPlugin
 from .autotools_plugin import AutotoolsPlugin
 from .base import Plugin
+from .bazel_plugin import BazelPlugin
 from .cargo_use_plugin import CargoUsePlugin
 from .cmake_plugin import CMakePlugin
 from .dotnet_plugin import DotnetPlugin
@@ -32,6 +33,7 @@ from .dump_plugin import DumpPlugin
 from .go_plugin import GoPlugin
 from .go_use_plugin import GoUsePlugin
 from .gradle_plugin import GradlePlugin
+from .gradle_use_plugin import GradleUsePlugin
 from .jlink_plugin import JLinkPlugin
 from .make_plugin import MakePlugin
 from .maven_plugin import MavenPlugin
@@ -39,6 +41,7 @@ from .maven_use_plugin import MavenUsePlugin
 from .meson_plugin import MesonPlugin
 from .nil_plugin import NilPlugin
 from .npm_plugin import NpmPlugin
+from .npm_use_plugin import NpmUsePlugin
 from .poetry_plugin import PoetryPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
@@ -73,18 +76,21 @@ class PluginGroup(enum.Enum):
     DEFAULT = MINIMAL | {
         "ant": AntPlugin,
         "autotools": AutotoolsPlugin,
+        "bazel": BazelPlugin,
         "cargo-use": CargoUsePlugin,
         "cmake": CMakePlugin,
         "dotnet": DotnetPlugin,
         "go": GoPlugin,
         "go-use": GoUsePlugin,
         "gradle": GradlePlugin,
+        "gradle-use": GradleUsePlugin,
         "jlink": JLinkPlugin,
         "make": MakePlugin,
         "maven": MavenPlugin,
         "maven-use": MavenUsePlugin,
         "meson": MesonPlugin,
         "npm": NpmPlugin,
+        "npm-use": NpmUsePlugin,
         "poetry": PoetryPlugin,
         "python": PythonPlugin,
         "qmake": QmakePlugin,

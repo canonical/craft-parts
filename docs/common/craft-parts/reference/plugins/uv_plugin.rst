@@ -45,7 +45,7 @@ own special variables.
     This section describes how this plugin uses uv-specific environment
     variables. For more information, as well as a complete list of environment
     variables for uv, see the `uv environment documentation
-    <https://docs.astral.sh/uv/configuration/environment/>`_.
+    <https://docs.astral.sh/uv/reference/environment/>`_.
 
 UV_FROZEN
 ~~~~~~~~~
@@ -65,6 +65,11 @@ UV_PROJECT_ENVIRONMENT
 A path to the Python virtual environment to build with. By default, this variable
 populates itself with the directory in which this plugin will create the virtual
 environment.
+
+Because the default virtual environment is created in ``${CRAFT_PART_INSTALL}``,
+avoid unpacking unrelated ``stage-packages`` into the same part. If those packages
+must be staged, define them in a separate part and list that part in the
+``uv`` part's ``after`` key.
 
 
 UV_PYTHON_DOWNLOADS
@@ -86,7 +91,7 @@ The version of Python that uv should use.
 UV_PYTHON_PREFERENCE
 ~~~~~~~~~~~~~~~~~~~~
 
-**Type:** ``only-system``, ``only-managed``, ``system``, or ``managed``
+**Choices:** "only-system", "only-managed", "system", or "managed"
 
 **Default:** "only-system"
 
@@ -103,6 +108,16 @@ UV_LINK_MODE
 The method to use when installing packages from the uv global cache. When uv's cache
 directory is mounted from a build host, hard-linking from the global cache (uv's default
 behavior) is not possible.
+
+
+UV_COMPILE_BYTECODE
+~~~~~~~~~~~~~~~~~~~
+
+**Default:** true
+
+Whether uv should compile Python sources to bytecode when creating the virtual
+environment.
+
 
 .. _uv-details-begin:
 

@@ -30,6 +30,7 @@ from craft_parts.utils.formatting_utils import humanize_list
 if TYPE_CHECKING:
     import pathlib
     from collections.abc import Iterable
+    from pathlib import Path
 
     from pydantic_core import ErrorDetails
 
@@ -89,13 +90,21 @@ class FeatureError(PartsError):
 
 
 class PartDependencyCycle(PartsError):  # noqa: N818
-    """A dependency cycle has been detected in the parts definition."""
+    """A dependency cycle has been detected in the parts definition.
 
-    def __init__(self) -> None:
+    :param part_names: The names of the parts involved in the cycle.
+    """
+
+    def __init__(self, *, part_names: list[str] | None = None) -> None:
         brief = "A circular dependency chain was detected."
         resolution = "Review the parts definition to remove dependency cycles."
 
-        super().__init__(brief=brief, resolution=resolution)
+        if part_names:
+            details = f"Part processing order: {' -> '.join(part_names)}"
+        else:
+            details = None
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
 
 
 class InvalidApplicationName(PartsError):  # noqa: N818
@@ -245,7 +254,7 @@ class XAttributeError(PartsError):
     def __init__(
         self,
         key: str,
-        path: str,
+        path: Path,
         *,
         is_write: bool = False,
     ) -> None:
@@ -254,7 +263,7 @@ class XAttributeError(PartsError):
         self.is_write = is_write
         action = "write" if is_write else "read"
         brief = f"Unable to {action} extended attribute."
-        details = f"Failed to {action} attribute {key!r} on {path!r}."
+        details = f"Failed to {action} attribute {key!r} on {str(path)!r}."
         resolution = "Make sure your filesystem supports extended attributes."
 
         super().__init__(brief=brief, details=details, resolution=resolution)
@@ -268,7 +277,7 @@ class XAttributeTooLong(PartsError):  # noqa: N818
     :param path: The file path.
     """
 
-    def __init__(self, key: str, value: str, path: str) -> None:
+    def __init__(self, key: str, value: str, path: Path) -> None:
         self.key = key
         self.value = value
         self.path = path
@@ -412,6 +421,35 @@ class FileOrganizeError(PartsError):
 
         super().__init__(brief=brief)
 
+    @classmethod
+    def from_merge_conflicts(
+        cls,
+        *,
+        part_name: str,
+        key: str,
+        destination: str,
+        conflicts: dict[pathlib.Path, list[str]],
+    ) -> FileOrganizeError:
+        """Create from directory merge conflicts.
+
+        :param part_name: The name of the part being processed.
+        :param key: The organize key (source pattern).
+        :param destination: The organize destination value.
+        :param conflicts: A mapping of paths to their conflict descriptions.
+        """
+        conflicts_list = "\n".join(
+            f" - {path}: {msg}" for path, msg in conflicts.items()
+        )
+        return cls(
+            part_name=part_name,
+            message=(
+                f"trying to organize directory {key!r} to "
+                f"{destination!r} but conflicts exist while "
+                f"merging the directories:\n"
+                f"{conflicts_list}"
+            ),
+        )
+
 
 class PartFilesConflict(PartsError):  # noqa: N818
     """Different parts list the same files with different contents.
@@ -427,7 +465,7 @@ class PartFilesConflict(PartsError):  # noqa: N818
         *,
         part_name: str,
         other_part_name: str,
-        conflicting_files: list[str],
+        conflicting_files: list[pathlib.Path],
         partition: str | None = None,
     ) -> None:
         self.part_name = part_name
@@ -435,7 +473,7 @@ class PartFilesConflict(PartsError):  # noqa: N818
         self.conflicting_files = conflicting_files
         self.partition = partition
 
-        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
+        indented_conflicting_files = (f"    {i.as_posix()}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         partition_info = f" for the {partition!r} partition" if partition else ""
         brief = (
@@ -459,7 +497,7 @@ class OverlayStageConflict(PartsError):  # noqa: N818
         *,
         part_name: str,
         overlay_part_name: str,
-        conflicting_files: list[str],
+        conflicting_files: list[pathlib.Path],
         partition: str | None = None,
     ) -> None:
         self.part_name = part_name
@@ -467,7 +505,7 @@ class OverlayStageConflict(PartsError):  # noqa: N818
         self.conflicting_files = conflicting_files
         self.partition = partition
 
-        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
+        indented_conflicting_files = (f"    {i.as_posix()}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         partition_info = f" for the {partition!r} partition" if partition else ""
         brief = (
@@ -490,10 +528,12 @@ class StageFilesConflict(PartsError):  # noqa: N818
     :param conflicting_files: The list of confictling files.
     """
 
-    def __init__(self, *, part_name: str, conflicting_files: list[str]) -> None:
+    def __init__(
+        self, *, part_name: str, conflicting_files: list[pathlib.Path]
+    ) -> None:
         self.part_name = part_name
         self.conflicting_files = conflicting_files
-        indented_conflicting_files = (f"    {i}" for i in conflicting_files)
+        indented_conflicting_files = (f"    {i.as_posix()}" for i in conflicting_files)
         file_paths = "\n".join(sorted(indented_conflicting_files))
         brief = "Failed to stage: part files conflict with files already being staged."
         details = (

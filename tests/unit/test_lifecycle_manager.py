@@ -29,6 +29,7 @@ import craft_parts
 import pytest
 import yaml
 from craft_parts import errors, lifecycle_manager
+from craft_parts.packages import platform
 from craft_parts.plugins import nil_plugin
 from craft_parts.plugins.make_plugin import MakePluginProperties
 from craft_parts.state_manager import states
@@ -145,6 +146,65 @@ class TestLifecycleManager:
         assert info.base_layer_dir == base_layer_dir
         assert info.base_layer_hash == base_layer_hash
 
+    @pytest.mark.parametrize("stage_packages_slice_support", [True, False])
+    def test_project_info_stage_packages_slice_support(
+        self, new_dir, stage_packages_slice_support
+    ):
+        lf = lifecycle_manager.LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            stage_packages_slice_support=stage_packages_slice_support,
+            **self._lcm_kwargs,
+        )
+        info = lf.project_info
+
+        assert info.stage_packages_slice_support == stage_packages_slice_support
+
+    def test_project_info_stage_packages_slice_support_default(self, new_dir):
+        lf = lifecycle_manager.LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            **self._lcm_kwargs,
+        )
+        info = lf.project_info
+
+        assert info.stage_packages_slice_support is True
+
+    def test_lifecycle_manager_stage_packages_slices_allowed(self, new_dir, mocker):
+        """Allow slices inside 'stage-packages'."""
+        mocker.patch.object(platform, "is_deb_based", autospec=True, return_value=True)
+        data = {"parts": {"foo": {"plugin": "nil", "stage-packages": ["pkg1_bin"]}}}
+
+        lf = lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            stage_packages_slice_support=True,
+            **self._lcm_kwargs,
+        )
+
+        assert lf._part_list[0].spec.stage_packages == ["pkg1_bin"]
+
+    def test_lifecycle_manager_stage_packages_slices_not_allowed(self, new_dir, mocker):
+        """Error when slices are used in stage-packages but aren't allowed."""
+        mocker.patch.object(platform, "is_deb_based", autospec=True, return_value=True)
+        data = {
+            "parts": {"test-part": {"plugin": "nil", "stage-packages": ["pkg1_bin"]}}
+        }
+
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            lifecycle_manager.LifecycleManager(
+                data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                stage_packages_slice_support=False,
+                **self._lcm_kwargs,
+            )
+
+        assert raised.value.part_name == "test-part"
+
     def test_part_initialization(self, new_dir, mocker):
         mock_seq = mocker.patch("craft_parts.sequencer.Sequencer")
 
@@ -219,6 +279,36 @@ class TestLifecycleManager:
                 track_stage_packages=False,
                 base_layer_dir=None,
                 base_layer_hash=None,
+                use_host_sources=False,
+                build_environment=None,
+            )
+        ]
+
+    def test_executor_creation_stage_slices_triggers_chisel(self, new_dir, mocker):
+        """A part using stage-slices should add chisel as a build snap."""
+        mock_executor = mocker.patch("craft_parts.executor.Executor")
+
+        data = {"parts": {"foo": {"plugin": "nil", "stage-slices": ["pkg1_bin"]}}}
+
+        lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            **self._lcm_kwargs,
+        )
+
+        assert mock_executor.mock_calls == [
+            call(
+                part_list=[ANY],
+                project_info=ANY,
+                ignore_patterns=None,
+                extra_build_packages=None,
+                extra_build_snaps=["chisel@latest/stable"],
+                track_stage_packages=False,
+                base_layer_dir=None,
+                base_layer_hash=None,
+                use_host_sources=False,
+                build_environment=None,
             )
         ]
 

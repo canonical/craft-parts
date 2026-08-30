@@ -70,8 +70,14 @@ directory.
 .. kitbash-field:: PartSpec overlay_packages
     :label: reference-part-properties-overlay-packages
 
+.. kitbash-field:: PartSpec overlay_recommended_packages
+    :label: reference-part-properties-overlay-recommended-packages
+
 .. kitbash-field:: PartSpec overlay_script
     :label: reference-part-properties-overlay-script
+
+.. kitbash-field:: PartSpec override_overlay
+    :label: reference-part-properties-override-overlay
 
 
 .. _reference-part-properties-build-step-keys:
@@ -121,6 +127,10 @@ part's build directory are represented in the stage directory.
 
 .. kitbash-field:: PartSpec stage_packages
     :label: reference-part-properties-stage-packages
+
+.. kitbash-field:: PartSpec stage_slices
+    :override-type: list[str]
+    :label: reference-part-properties-stage-slices
 
 .. kitbash-field:: PartSpec stage_snaps
     :label: reference-part-properties-stage-snaps

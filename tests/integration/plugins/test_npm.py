@@ -172,6 +172,7 @@ def test_npm_plugin_include_node(new_dir, partitions):
     binary = Path(lifecycle.project_info.prime_dir, "bin", "npm-hello")
     node_path = Path(lifecycle.project_info.prime_dir, "bin", "node")
     assert node_path.exists()
+
     # try to use bundled Node.js to execute the script
     output = subprocess.check_output([str(node_path), str(binary)], text=True)
     assert output == "hello world\n"
@@ -185,9 +186,8 @@ def test_npm_self_contained(new_dir, partitions):
         f"""\
         parts:
           hello-dep:
-            plugin: npm
+            plugin: npm-use
             source: {new_dir / "hello-dep-v1"}
-            npm-publish-to-cache: true
             build-attributes:
               - self-contained
           hello-app:
@@ -239,29 +239,25 @@ def test_npm_self_contained_version_resolution(new_dir, partitions):
         f"""\
         parts:
           hello-dep-v1:
-            plugin: npm
+            plugin: npm-use
             source: {new_dir / "hello-dep-v1"}
-            npm-publish-to-cache: true
             build-attributes:
               - self-contained
           hello-dep-v1-1:
-            plugin: npm
+            plugin: npm-use
             source: {new_dir / "hello-dep-v1.1"}
-            npm-publish-to-cache: true
             after:
               - another-dep-v2
             build-attributes:
               - self-contained
           hello-dep-v2:
-            plugin: npm
+            plugin: npm-use
             source: {new_dir / "hello-dep-v2"}
-            npm-publish-to-cache: true
             build-attributes:
               - self-contained
           another-dep-v2:
-            plugin: npm
+            plugin: npm-use
             source: {new_dir / "another-dep-v2"}
-            npm-publish-to-cache: true
             build-attributes:
               - self-contained
           hello-app:

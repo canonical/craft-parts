@@ -19,10 +19,10 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 from typing_extensions import override
 
 from craft_parts.infos import ProjectOptions
@@ -31,11 +31,15 @@ from craft_parts.utils import os_utils
 logger = logging.getLogger(__name__)
 
 
+def _serialize_path_set(value: set[Path]) -> set[str]:
+    return {v.as_posix() for v in value}
+
+
 class MigrationContents(BaseModel):
     """Files and directories migrated."""
 
-    files: set[str] = set()
-    directories: set[str] = set()
+    files: Annotated[set[Path], PlainSerializer(_serialize_path_set)] = set()
+    directories: Annotated[set[Path], PlainSerializer(_serialize_path_set)] = set()
 
 
 class MigrationState(BaseModel):
@@ -47,8 +51,8 @@ class MigrationState(BaseModel):
     """
 
     partition: str | None = None
-    files: set[str] = set()
-    directories: set[str] = set()
+    files: Annotated[set[Path], PlainSerializer(_serialize_path_set)] = set()
+    directories: Annotated[set[Path], PlainSerializer(_serialize_path_set)] = set()
     partitions_contents: dict[str, MigrationContents] = Field(default_factory=dict)
 
     @classmethod
@@ -77,7 +81,7 @@ class MigrationState(BaseModel):
         yaml_data = yaml.safe_dump(self.model_dump())
         os_utils.TimedWriter.write_text(filepath, yaml_data)
 
-    def contents(self, partition: str | None) -> tuple[set[str], set[str]] | None:
+    def contents(self, partition: str | None) -> tuple[set[Path], set[Path]] | None:
         """Return migrated contents for a given partition."""
         if partition is None or partition == self.partition:
             return self.files, self.directories
@@ -88,7 +92,7 @@ class MigrationState(BaseModel):
         return None
 
     def add(
-        self, *, files: set[str] | None = None, directories: set[str] | None = None
+        self, *, files: set[Path] | None = None, directories: set[Path] | None = None
     ) -> None:
         """Add files and directories to migrated contents."""
         if files:

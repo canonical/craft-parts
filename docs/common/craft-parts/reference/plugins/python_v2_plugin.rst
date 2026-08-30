@@ -26,6 +26,16 @@ python-requirements
 
 List of paths to requirements files.
 
+Use this key when dependencies must be installed from one or more explicit
+requirements files, such as ``requirements.txt``. The plugin does not
+automatically select a requirements file from the source tree; each file must be
+listed here.
+
+A part does not need this key when its dependencies are already declared by the
+project metadata used during package installation. For example, when the source
+contains a ``setup.py`` or ``pyproject.toml`` file, the plugin installs the
+project and pip resolves the dependencies declared by the package itself. That metadata may also come from configuration files such as ``setup.cfg``.
+
 
 python-packages
 ~~~~~~~~~~~~~~~
@@ -99,3 +109,35 @@ During the build step, the plugin performs the following actions:
 #. A `sitecustomize <https://docs.python.org/3/library/site.html>`_ file is created,
    which adds the files from the part's install directory to Python's runtime import
    path.
+
+Examples
+--------
+
+The following example declares a part using the Python plugin with a Git source.
+It installs the ``pyfiglet`` package from a remote Git repository:
+
+.. code-block:: yaml
+
+  parts:
+    pyfiglet:
+      plugin: python
+      source-type: git
+      source: https://github.com/snapcraft-docs/pyfiglet
+
+The following example declares a part using the Python plugin with an index mirror.
+It selects the project's ``requirements.txt`` file with the ``python-requirements`` key:
+
+.. code-block:: yaml
+
+   parts:
+     my-part:
+       plugin: python
+       python-requirements:
+         - requirements.txt
+
+The ``requirements.txt`` declares a custom mirror for its package index:
+
+.. code-block:: text
+
+   -i https://example-mirror.com
+

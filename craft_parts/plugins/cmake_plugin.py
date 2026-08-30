@@ -42,7 +42,7 @@ class CMakePlugin(Plugin):
     These are projects that have a CMakeLists.txt that drives the build.
     The plugin requires a CMakeLists.txt in the root of the source tree.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
@@ -55,7 +55,7 @@ class CMakePlugin(Plugin):
     part to be automatically recognized without defining additional
     parameters such as ``CMAKE_INCLUDE_PATH`` or ``CMAKE_INSTALL_PATH``.
 
-    This plugin uses the following plugin-specific keywords:
+    This plugin uses the following plugin-specific keys:
 
         - cmake-parameters
           (list of strings)

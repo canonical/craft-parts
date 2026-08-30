@@ -76,7 +76,7 @@ class MavenUsePluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
 
 class MavenUsePlugin(JavaPlugin):
-    """The Maven use plugin."""
+    """The Maven-use plugin."""
 
     properties_class = MavenUsePluginProperties
     validator_class = MavenUsePluginEnvironmentValidator
