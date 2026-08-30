@@ -78,6 +78,7 @@ class PullState(StepState):
             "source-submodules",
             "override-pull",
             "stage-packages",
+            "stage-slices",
             "overlay-packages",
             "overlay-recommended-packages",
             *(extra_properties or []),

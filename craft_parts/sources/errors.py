@@ -109,14 +109,35 @@ class ChecksumMismatch(SourceError):  # noqa: N818
 
     :param expected: The expected checksum.
     :param obtained: The actual checksum.
+    :param part_name: The name of the part being pulled.
+    :param source: The source being pulled.
     """
 
-    def __init__(self, *, expected: str, obtained: str) -> None:
+    def __init__(
+        self,
+        *,
+        expected: str,
+        obtained: str,
+        part_name: str | None = None,
+        source: str | None = None,
+    ) -> None:
         self.expected = expected
         self.obtained = obtained
-        brief = f"Expected digest {expected}, obtained {obtained}."
+        self.part_name = part_name
+        self.source = source
 
-        super().__init__(brief=brief)
+        if part_name:
+            subject = f" for part {part_name!r}"
+        elif source:
+            subject = f" for {source!r}"
+        else:
+            subject = ""
+
+        brief = f"Failed to pull source: checksum mismatch{subject}."
+        details = f"Expected digest {expected}, obtained {obtained}."
+        resolution = "Make sure the source-checksum matches the downloaded source."
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
 
 
 class SourceUpdateUnsupported(SourceError):  # noqa: N818
