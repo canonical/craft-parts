@@ -18,6 +18,7 @@
 
 """The qmake plugin."""
 
+import logging
 from pathlib import Path
 from typing import Literal, cast
 
@@ -25,6 +26,8 @@ from typing_extensions import override
 
 from .base import Plugin
 from .properties import PluginProperties
+
+logger = logging.getLogger(__name__)
 
 
 class QmakePluginProperties(PluginProperties, frozen=True):
@@ -133,6 +136,14 @@ class QmakePlugin(Plugin):
                 and project_file.parts[: len(source_subdir.parts)]
                 == source_subdir.parts
             ):
+                logger.warning(
+                    "qmake-project-file %r in part %r starts with source-subdir %r; "
+                    "update the project to define the file relative to the source "
+                    "subdirectory instead of the source directory.",
+                    options.qmake_project_file,
+                    self._part_info.part_name,
+                    str(source_subdir),
+                )
                 project_file_path = self._part_info.part_src_dir / project_file
             else:
                 project_file_path = self._part_info.part_src_subdir / project_file
