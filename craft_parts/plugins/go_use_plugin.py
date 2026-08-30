@@ -14,13 +14,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The Go Use plugin."""
+"""The Go-use plugin."""
 
 import logging
-import subprocess
 from typing import Literal
 
-from overrides import override
+from typing_extensions import override
 
 from craft_parts import errors
 
@@ -32,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class GoUsePluginProperties(PluginProperties, frozen=True):
-    """The part properties used by the Go Use plugin."""
+    """The part properties used by the Go-use plugin."""
 
     plugin: Literal["go-use"] = "go-use"
 
@@ -75,30 +74,17 @@ class GoUsePlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        # Set the go workspace directory to live at the root of all parts.
-        workspace_dir = self._part_info.project_info.dirs.parts_dir
-        workspace = workspace_dir / "go.work"
-
-        # We do not want this implementation detail exposed in the run script
-        if not workspace.exists():
-            logger.debug(f"Init go workspace at {workspace}")
-            try:
-                subprocess.run(
-                    ["go", "work", "init"],
-                    capture_output=True,
-                    check=True,
-                    cwd=workspace_dir,
-                )
-            except subprocess.CalledProcessError as call_error:
-                logger.debug(
-                    f"Workspace init failed {call_error!r} "
-                    f"stdout: {call_error.stdout!r} "
-                    f"stderr: {call_error.stderr}"
-                )
-                raise errors.PluginBuildError(
-                    part_name=self._part_info.part_name, plugin_name="go-use"
-                )
+        dest_dir = (
+            self._part_info.part_export_dir / "go-use" / self._part_info.part_name
+        )
+        go_mod_path = self._part_info.part_src_subdir / "go.mod"
+        if not go_mod_path.is_file():
+            raise errors.PartsError(
+                brief=f"go.mod not found in '{self._part_info.part_src_subdir}.",
+                resolution="Make sure the source directory contains a go.mod file",
+            )
 
         return [
-            f"go work use {self._part_info.part_src_dir}",
+            f"mkdir -p '{dest_dir.parent}'",
+            f"ln -sf '{self._part_info.part_src_subdir}' '{dest_dir}'",
         ]

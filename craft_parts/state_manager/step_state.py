@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2023 Canonical Ltd.
+# Copyright 2016-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,16 +19,27 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, model_validator
-from typing_extensions import Self
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
+from typing_extensions import override
 
-from craft_parts.infos import ProjectVar
+from craft_parts.infos import ProjectOptions
 from craft_parts.utils import os_utils
 
 logger = logging.getLogger(__name__)
+
+
+def _serialize_path_set(value: set[Path]) -> set[str]:
+    return {v.as_posix() for v in value}
+
+
+class MigrationContents(BaseModel):
+    """Files and directories migrated."""
+
+    files: Annotated[set[Path], PlainSerializer(_serialize_path_set)] = set()
+    directories: Annotated[set[Path], PlainSerializer(_serialize_path_set)] = set()
 
 
 class MigrationState(BaseModel):
@@ -39,8 +50,10 @@ class MigrationState(BaseModel):
     files from shared areas on step cleanup.
     """
 
-    files: set[str] = set()
-    directories: set[str] = set()
+    partition: str | None = None
+    files: Annotated[set[Path], PlainSerializer(_serialize_path_set)] = set()
+    directories: Annotated[set[Path], PlainSerializer(_serialize_path_set)] = set()
+    partitions_contents: dict[str, MigrationContents] = Field(default_factory=dict)
 
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> "MigrationState":
@@ -68,6 +81,25 @@ class MigrationState(BaseModel):
         yaml_data = yaml.safe_dump(self.model_dump())
         os_utils.TimedWriter.write_text(filepath, yaml_data)
 
+    def contents(self, partition: str | None) -> tuple[set[Path], set[Path]] | None:
+        """Return migrated contents for a given partition."""
+        if partition is None or partition == self.partition:
+            return self.files, self.directories
+        partition_content = self.partitions_contents.get(partition)
+        if partition_content:
+            return partition_content.files, partition_content.directories
+
+        return None
+
+    def add(
+        self, *, files: set[Path] | None = None, directories: set[Path] | None = None
+    ) -> None:
+        """Add files and directories to migrated contents."""
+        if files:
+            self.files |= files
+        if directories:
+            self.directories |= directories
+
 
 class StepState(MigrationState, ABC):
     """Contextual information collected when a step is executed.
@@ -78,7 +110,7 @@ class StepState(MigrationState, ABC):
     """
 
     part_properties: dict[str, Any] = {}
-    project_options: dict[str, Any] = {}
+    project_options: ProjectOptions = ProjectOptions()
     model_config = ConfigDict(
         validate_assignment=True,
         extra="ignore",
@@ -86,21 +118,6 @@ class StepState(MigrationState, ABC):
         alias_generator=lambda s: s.replace("_", "-"),
         populate_by_name=True,
     )
-
-    @model_validator(mode="after")
-    def _coerce_project_vars(self) -> Self:
-        """Coerce project_vars options to ProjectVar types."""
-        # FIXME: add proper type definition for project_options so that
-        # ProjectVar can be created by pydantic during model unmarshaling.
-        if self.project_options:
-            pvars = self.project_options.get("project_vars")
-            if pvars:
-                for key, val in pvars.items():
-                    self.project_options["project_vars"][key] = (
-                        ProjectVar.model_validate(val)
-                    )
-
-        return self
 
     @abstractmethod
     def properties_of_interest(
@@ -113,7 +130,7 @@ class StepState(MigrationState, ABC):
 
     @abstractmethod
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
+        self, project_options: ProjectOptions
     ) -> dict[str, Any]:
         """Return relevant project options concerning this step."""
 
@@ -140,7 +157,7 @@ class StepState(MigrationState, ABC):
         )
 
     def diff_project_options_of_interest(
-        self, other_project_options: dict[str, Any]
+        self, other_project_options: ProjectOptions
     ) -> set[str]:
         """Return project options that differ.
 
@@ -157,8 +174,9 @@ class StepState(MigrationState, ABC):
             self.project_options_of_interest(other_project_options),
         )
 
+    @override
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> "StepState":  # noqa: ARG003
+    def unmarshal(cls, data: dict[str, Any]) -> "StepState":
         """Create and populate a new state object from dictionary data."""
         raise RuntimeError("this must be implemented by the step-specific class.")
 
@@ -170,7 +188,7 @@ def _get_differing_keys(dict1: dict[str, Any], dict2: dict[str, Any]) -> set[str
     that don't have the same value in both dictionaries. Entries with value
     of None are equivalent to a non-existing entry.
     """
-    differing_keys = set()
+    differing_keys: set[str] = set()
     for key, dict1_value in dict1.items():
         dict2_value = dict2.get(key)
         if dict1_value != dict2_value:

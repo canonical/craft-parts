@@ -1,0 +1,4 @@
+parts:
+  my-part:
+    plugin: make
+    source: rsync://code-host.internal/my-app

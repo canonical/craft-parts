@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,6 +30,7 @@ from functools import partial
 from pathlib import Path
 
 import yaml
+from typing_extensions import Any
 from xdg import BaseDirectory  # type: ignore[import]
 
 import craft_parts
@@ -49,10 +50,14 @@ def main() -> None:
 
     logging.basicConfig(level=log_level)
 
-    craft_parts.Features(enable_overlay=True)
+    features = {"enable_overlay": True}
+    if options.partitions:
+        features["enable_partitions"] = True
+
+    craft_parts.Features(**features)
 
     try:
-        _process_parts(options)
+        _process_inputs(options)
     except OSError as err:
         msg = err.strerror
         if err.filename:
@@ -73,8 +78,8 @@ def main() -> None:
         sys.exit(5)
 
 
-def _process_parts(options: argparse.Namespace) -> None:
-    with open(options.file) as opt_file:
+def _process_inputs(options: argparse.Namespace) -> None:
+    with options.file.open() as opt_file:
         part_data = yaml.safe_load(opt_file)
 
     cache_dir = options.cache_dir
@@ -86,11 +91,23 @@ def _process_parts(options: argparse.Namespace) -> None:
         # that remains constant for a given base. The CLI tool just uses the path
         # to the base for simplicity, but applications can (and probably should)
         # use a real digest.
-        base_layer_hash = options.overlay_base.encode()
-        overlay_base = Path(options.overlay_base)
+        base_layer_hash = options.overlay_base.as_posix().encode()
+        overlay_base = options.overlay_base
     else:
         base_layer_hash = b""
         overlay_base = None
+
+    partitions = options.partitions.split(",") if options.partitions else None
+
+    filesystem_mounts_data = None
+    if options.filesystem_mounts:
+        with options.filesystem_mounts.open() as opt_filesystem_mounts_file:
+            filesystems_data: dict[str, Any] | list[dict[str, Any]] = yaml.safe_load(
+                opt_filesystem_mounts_file
+            )
+            if not isinstance(filesystems_data, dict):
+                raise TypeError("filesystem_mounts definition must be a dictionary")
+            filesystem_mounts_data = filesystems_data.get("filesystems")
 
     lcm = craft_parts.LifecycleManager(
         part_data,
@@ -101,6 +118,8 @@ def _process_parts(options: argparse.Namespace) -> None:
         base=options.base,
         base_layer_dir=overlay_base,
         base_layer_hash=base_layer_hash,
+        partitions=partitions,
+        filesystem_mounts=filesystem_mounts_data,
     )
 
     command = options.command if options.command else "prime"
@@ -223,6 +242,7 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="filename",
         default="parts.yaml",
         help="The parts specification file. Default is 'parts.yaml'.",
+        type=Path,
     )
     parser.add_argument(
         "--refresh",
@@ -249,6 +269,7 @@ def _parse_arguments() -> argparse.Namespace:
         metavar="dirname",
         default=".",
         help="Use the specified work directory. Defaults to current dir.",
+        type=Path,
     )
     parser.add_argument(
         "--application-name",
@@ -260,6 +281,7 @@ def _parse_arguments() -> argparse.Namespace:
         "--overlay-base",
         metavar="dirname",
         help="The overlay base directory",
+        type=Path,
     )
     parser.add_argument(
         "--base",
@@ -270,8 +292,21 @@ def _parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--cache-dir",
         metavar="dirname",
-        default="",
+        default=None,
         help="Set an alternate cache directory location.",
+        type=Path,
+    )
+    parser.add_argument(
+        "--partitions",
+        metavar="name",
+        default="",
+        help="List of partitions to create.",
+    )
+    parser.add_argument(
+        "--filesystem-mounts",
+        metavar="filesystem_mounts",
+        help="The filesystem mounts file.",
+        type=Path,
     )
     parser.add_argument(
         "-v",

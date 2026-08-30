@@ -22,6 +22,7 @@ import craft_parts
 import pytest
 import yaml
 from craft_parts import Action, ActionType, Step, errors, plugins
+from craft_parts.features import Features
 
 
 class AppPluginProperties(plugins.PluginProperties, frozen=True):
@@ -58,7 +59,9 @@ def teardown_module():
     plugins.unregister_all()
 
 
-def test_application_plugin_happy(new_dir, partitions, mocker):
+def test_application_plugin_happy(
+    enabled_features: Features, new_dir, partitions, mocker
+):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -87,10 +90,17 @@ def test_application_plugin_happy(new_dir, partitions, mocker):
 
     # plugins act on the build step
     actions = lf.plan(Step.BUILD)
-    assert actions == [
-        Action("foo", Step.PULL, action_type=ActionType.RUN),
-        Action("foo", Step.BUILD, action_type=ActionType.RUN),
-    ]
+    if enabled_features.enable_overlay:
+        assert actions == [
+            Action("foo", Step.PULL, action_type=ActionType.RUN),
+            Action("foo", Step.OVERLAY, action_type=ActionType.RUN),
+            Action("foo", Step.BUILD, action_type=ActionType.RUN),
+        ]
+    else:
+        assert actions == [
+            Action("foo", Step.PULL, action_type=ActionType.RUN),
+            Action("foo", Step.BUILD, action_type=ActionType.RUN),
+        ]
 
     mock_install_packages = mocker.patch(
         "craft_parts.packages.Repository.install_packages"
@@ -103,7 +113,7 @@ def test_application_plugin_happy(new_dir, partitions, mocker):
 
     with output_path.open("w") as output, error_path.open("w") as error:
         with lf.action_executor() as exe:
-            exe.execute(actions[1], stdout=output, stderr=error)
+            exe.execute(actions[-1], stdout=output, stderr=error)
 
     assert output_path.read_text() == "hello application plugin\n"
     assert error_path.read_text() == "+ echo hello application plugin\n"

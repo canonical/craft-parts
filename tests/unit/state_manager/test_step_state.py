@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@ from typing import Any
 
 import pytest
 import yaml
+from craft_parts.infos import ProjectOptions
 from craft_parts.state_manager import step_state
 
 
@@ -28,27 +29,138 @@ class TestMigrationState:
     def test_marshal_empty(self):
         state = step_state.MigrationState()
         assert state.marshal() == {
+            "partition": None,
             "files": set(),
             "directories": set(),
+            "partitions_contents": {},
         }
 
     def test_marshal_data(self):
         state = step_state.MigrationState(
-            files={"a", "b", "c"},
-            directories={"d", "e", "f"},
+            partition="foo",
+            files={Path("a"), Path("b"), Path("c")},
+            directories={Path("d"), Path("e"), Path("f")},
         )
         assert state.marshal() == {
+            "partition": "foo",
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
+            "partitions_contents": {},
         }
 
     def test_unmarshal(self):
         data = {
+            "partition": "foo",
             "files": {"a", "b", "c"},
             "directories": {"d", "e", "f"},
+            "partitions_contents": {},
         }
         state = step_state.MigrationState.unmarshal(data)
         assert state.marshal() == data
+
+    @pytest.mark.parametrize(
+        ("state", "partition", "contents"),
+        [
+            (
+                step_state.MigrationState(
+                    partition=None,
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={Path("bar")}, directories={Path("baz")}
+                        )
+                    },
+                ),
+                "foo",
+                ({Path("bar")}, {Path("baz")}),
+            ),
+            (
+                step_state.MigrationState(
+                    partition=None,
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={Path("bar")}, directories={Path("baz")}
+                        )
+                    },
+                ),
+                None,
+                ({Path("a"), Path("b"), Path("c")}, {Path("d"), Path("e"), Path("f")}),
+            ),
+            (
+                step_state.MigrationState(
+                    partition="default",
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={Path("bar")}, directories={Path("baz")}
+                        )
+                    },
+                ),
+                "default",
+                ({Path("a"), Path("b"), Path("c")}, {Path("d"), Path("e"), Path("f")}),
+            ),
+            (
+                step_state.MigrationState(
+                    files={Path("a"), Path("b"), Path("c")},
+                    directories={Path("d"), Path("e"), Path("f")},
+                    partitions_contents={
+                        "foo": step_state.MigrationContents(
+                            files={Path("bar")}, directories={Path("baz")}
+                        )
+                    },
+                ),
+                "qux",
+                None,
+            ),
+        ],
+    )
+    def test_contents(self, state, partition, contents):
+        assert state.contents(partition=partition) == contents
+
+    @pytest.mark.parametrize(
+        ("state", "files", "directories", "result_files", "result_directories"),
+        [
+            (
+                step_state.MigrationState(
+                    files={Path("a")},
+                    directories={Path("b")},
+                ),
+                {Path("foo")},
+                {Path("bar")},
+                {Path("a"), Path("foo")},
+                {Path("b"), Path("bar")},
+            ),
+            (
+                step_state.MigrationState(
+                    files={Path("a")},
+                    directories={Path("b")},
+                ),
+                None,
+                None,
+                {Path("a")},
+                {Path("b")},
+            ),
+            (
+                step_state.MigrationState(
+                    files={Path("a"), Path("c")},
+                    directories={Path("b"), Path("c")},
+                ),
+                {Path("c")},
+                {Path("c")},
+                {Path("a"), Path("c")},
+                {Path("b"), Path("c")},
+            ),
+        ],
+    )
+    def test_add(self, state, files, directories, result_files, result_directories):
+        state.add(files=files, directories=directories)
+
+        assert state.files == result_files
+        assert state.directories == result_directories
 
 
 class SomeStepState(step_state.StepState):
@@ -63,9 +175,9 @@ class SomeStepState(step_state.StepState):
         return {"name": part_properties.get("name")}
 
     def project_options_of_interest(
-        self, project_options: dict[str, Any]
+        self, project_options: ProjectOptions
     ) -> dict[str, Any]:
-        return {"number": project_options.get("number")}
+        return {"target_arch": project_options.target_arch}
 
 
 class TestStepState:
@@ -74,10 +186,18 @@ class TestStepState:
     def test_marshal_empty(self):
         state = SomeStepState()
         assert state.marshal() == {
+            "partition": None,
             "part-properties": {},
-            "project-options": {},
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": set(),
             "directories": set(),
+            "partitions-contents": {},
         }
 
     def test_marshal_data(self):
@@ -85,26 +205,34 @@ class TestStepState:
             part_properties={
                 "name": "foo",
             },
-            project_options={
-                "number": 42,
-            },
-            files={"a"},
-            directories={"b"},
+            project_options=ProjectOptions(),
+            files={Path("a")},
+            directories={Path("b")},
         )
         assert state.marshal() == {
+            "partition": None,
             "part-properties": {"name": "foo"},
-            "project-options": {"number": 42},
+            "project-options": ProjectOptions().model_dump(),
             "files": {"a"},
             "directories": {"b"},
+            "partitions-contents": {},
         }
 
     def test_ignore_additional_data(self):
         state = SomeStepState(extra="something")  # type: ignore[reportGeneralTypeIssues]
         assert state.marshal() == {
+            "partition": None,
             "part-properties": {},
-            "project-options": {},
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": set(),
             "directories": set(),
+            "partitions-contents": {},
         }
 
 
@@ -117,15 +245,13 @@ class TestStepStatePersist:
             part_properties={
                 "name": "foo",
             },
-            project_options={
-                "number": 42,
-            },
-            files={"a"},
-            directories={"b"},
+            project_options=ProjectOptions(),
+            files={Path("a")},
+            directories={Path("b")},
         )
 
         state.write(Path("state"))
-        with open("state") as f:
+        with Path("state").open() as f:
             content = f.read()
 
         new_state = yaml.safe_load(content)
@@ -152,21 +278,15 @@ class TestStateChanges:
         assert state.diff_properties_of_interest({"name": "bob"}) == {"name"}
 
     def test_project_options_changes(self):
-        state = SomeStepState(
-            project_options={
-                "number": 42,
-                "useful": False,
-            },
-        )
+        state = SomeStepState(project_options=ProjectOptions())
 
         # relevant project options didn't change
-        assert (
-            state.diff_project_options_of_interest({"number": 42, "useful": True})
-            == set()
-        )
+        assert state.diff_project_options_of_interest(ProjectOptions()) == set()
 
         # relevant project options changed
-        assert state.diff_project_options_of_interest({"number": 50}) == {"number"}
+        assert state.diff_project_options_of_interest(
+            ProjectOptions(target_arch="different")
+        ) == {"target_arch"}
 
 
 class TestHelpers:

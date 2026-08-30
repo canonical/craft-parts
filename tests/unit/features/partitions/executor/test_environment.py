@@ -36,6 +36,18 @@ from craft_parts.executor import environment
                 "CRAFT_FOO1_BAR_BAZ2_PRIME",
             },
         ),
+        (
+            # exercise aliased default partition
+            ["foo", "bar"],
+            {
+                "CRAFT_DEFAULT_STAGE",
+                "CRAFT_DEFAULT_PRIME",
+                "CRAFT_FOO_STAGE",
+                "CRAFT_FOO_PRIME",
+                "CRAFT_BAR_STAGE",
+                "CRAFT_BAR_PRIME",
+            },
+        ),
     ],
 )
 def test_get_global_environment(new_dir, partitions, variables: set):

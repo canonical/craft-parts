@@ -22,7 +22,7 @@ from pathlib import Path
 import craft_parts
 import pytest
 import yaml
-from craft_parts import Action, ActionType, Step, errors
+from craft_parts import Action, ActionType, ProjectVar, ProjectVarInfo, Step, errors
 
 from tests import TESTS_DIR
 
@@ -204,6 +204,32 @@ def test_craftctl_set(new_dir, partitions):
     with lf.action_executor() as ctx:
         ctx.execute(Action("foo", Step.PULL))
     assert lf.project_info.get_project_var("myvar") == "myvalue"
+
+
+def test_craftctl_set_nested(new_dir, partitions):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            override-pull: |
+              craftctl set myvar.mysubvar=myvalue
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_set",
+        cache_dir=new_dir,
+        project_vars=ProjectVarInfo.unmarshal(
+            {"myvar": {"mysubvar": ProjectVar(part_name="foo").marshal()}}
+        ),
+        partitions=partitions,
+    )
+    with lf.action_executor() as ctx:
+        ctx.execute(Action("foo", Step.PULL))
+    assert lf.project_info.get_project_var("myvar.mysubvar") == "myvalue"
 
 
 def test_craftctl_set_multiple(new_dir, partitions, capfd):

@@ -14,12 +14,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import subprocess
 import textwrap
 from pathlib import Path
 
+import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
+
+pytestmark = [pytest.mark.plugin]
 
 
 def test_autotools_plugin(new_dir, partitions):
@@ -47,6 +51,7 @@ def test_autotools_plugin(new_dir, partitions):
         cache_dir=new_dir,
         work_dir=new_dir,
         partitions=partitions,
+        parallel_build_count=os.cpu_count() or 1,
     )
     actions = lf.plan(Step.PRIME)
 

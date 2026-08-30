@@ -16,12 +16,11 @@
 
 """The Meson plugin."""
 
-
 import logging
 import shlex
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from . import validator
 from .base import Plugin
@@ -74,8 +73,8 @@ class MesonPlugin(Plugin):
     or ``build-snaps``, or to have it installed or built in a different part.
     In this case, the name of the part supplying meson must be "meson".
 
-    The meson plugin uses the common plugin keywords as well as those for "sources".
-    Additionally, the following plugin-specific keywords can be used:
+    The meson plugin uses the common plugin keys as well as those for "sources".
+    Additionally, the following plugin-specific keys can be used:
 
     - ``meson-parameters``
       (list of strings)
@@ -111,7 +110,7 @@ class MesonPlugin(Plugin):
         """Return a list of commands to run during the build step."""
         options = cast(MesonPluginProperties, self._options)
 
-        meson_cmd = ["meson", str(self._part_info.part_src_subdir)]
+        meson_cmd = ["meson", "setup", str(self._part_info.part_src_subdir)]
         if options.meson_parameters:
             meson_cmd.extend(shlex.quote(p) for p in options.meson_parameters)
 

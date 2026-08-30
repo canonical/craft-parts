@@ -17,15 +17,18 @@
 """The Go plugin."""
 
 import logging
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from craft_parts import errors
 
 from . import validator
 from .base import Plugin
 from .properties import PluginProperties
+
+if TYPE_CHECKING:
+    import pathlib
 
 logger = logging.getLogger(__name__)
 
@@ -83,8 +86,8 @@ class GoPlugin(Plugin):
     or to have it installed or built in a different part. In this case, the
     name of the part supplying the go compiler must be "go".
 
-    The go plugin uses the common plugin keywords as well as those for "sources".
-    Additionally, the following plugin-specific keywords can be used:
+    The go plugin uses the common plugin keys as well as those for "sources".
+    Additionally, the following plugin-specific keys can be used:
 
     - ``go-buildtags``
       (list of strings)
@@ -121,20 +124,26 @@ class GoPlugin(Plugin):
         options = cast(GoPluginProperties, self._options)
 
         # Matches go-use plugin expectation.
-        workspace_dir = self._part_info.project_info.dirs.parts_dir
-        workspace = workspace_dir / "go.work"
-
-        if workspace.exists():
-            init_cmd = f"go work use {self._part_info.part_build_dir}"
+        dependencies_dir: pathlib.Path = self._part_info.backstage_dir / "go-use"
+        if dependencies_dir.is_dir():
+            setup_cmds = [
+                "go work init .",
+                "go work use .",
+                *(
+                    f"go work use '{dependencies_dir}/{dep_part}'"
+                    for dep_part in self._part_info.part_dependencies
+                    if (dependencies_dir / dep_part).exists()
+                ),
+            ]
         else:
-            init_cmd = "go mod download all"
+            setup_cmds = ["go mod download all"]
 
         tags = f"-tags={','.join(options.go_buildtags)}" if options.go_buildtags else ""
 
         generate_cmds: list[str] = [f"go generate {cmd}" for cmd in options.go_generate]
 
         return [
-            init_cmd,
+            *setup_cmds,
             *generate_cmds,
             f'go install -p "{self._part_info.parallel_build_count}" {tags} ./...',
         ]

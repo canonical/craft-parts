@@ -132,6 +132,56 @@ class TestCollisions:
             (install_dir / "a").symlink_to("bar")
         return part
 
+    @pytest.fixture
+    def part7(self, tmpdir, partitions) -> Part:
+        # Create a new part with a symlink that points to a relative place
+        # outside of the install dir.
+        part = Part(
+            name="part7",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "a/b/c").mkdir(parents=True)
+            (install_dir / "a/b/c" / "d.txt").symlink_to("../../../foo/bar.txt")
+        return part
+
+    @pytest.fixture
+    def part8(self, tmpdir, partitions) -> Part:
+        # Create a new part with a symlink that points to a relative place
+        # up in the directory tree.
+        part = Part(
+            name="part8",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "a/b/c").mkdir(parents=True)
+            (install_dir / "a/b/c" / "d.txt").symlink_to(
+                # This is NOT pointing at /foo/bar.txt
+                "../foo/bar.txt"
+            )
+        return part
+
+    @pytest.fixture
+    def part9(self, tmpdir, partitions) -> Part:
+        # Create a new part with a symlink that points to a relative place
+        part = Part(
+            name="part9",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "a/b/c").mkdir(parents=True)
+            (install_dir / "a/b/c" / "d.txt").symlink_to("bar.txt")
+        return part
+
     def test_no_collisions(self, part1, part2, partitions):
         """No exception is expected as there are no collisions."""
         check_for_stage_collisions([part1, part2], partitions)
@@ -147,7 +197,7 @@ class TestCollisions:
 
         assert raised.value.other_part_name == "part2"
         assert raised.value.part_name == "part3"
-        assert sorted(raised.value.conflicting_files) == ["1", "a/2"]
+        assert sorted(raised.value.conflicting_files) == [Path("1"), Path("a/2")]
 
     def test_collisions_checks_symlinks(self, part5, part6, partitions):
         """Symlinks point to different targets."""
@@ -156,7 +206,7 @@ class TestCollisions:
 
         assert raised.value.other_part_name == "part5"
         assert raised.value.part_name == "part6"
-        assert raised.value.conflicting_files == ["a"]
+        assert raised.value.conflicting_files == [Path("a")]
 
     def test_collisions_not_both_symlinks(self, part1, part5, partitions):
         """Same name for directory and symlink."""
@@ -165,7 +215,7 @@ class TestCollisions:
 
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part5"
-        assert raised.value.conflicting_files == ["a"]
+        assert raised.value.conflicting_files == [Path("a")]
 
     def test_collisions_between_two_parts_pc_files(self, part1, part4, partitions):
         """Pkg-config files have different entries that are not prefix."""
@@ -174,7 +224,7 @@ class TestCollisions:
 
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part4"
-        assert raised.value.conflicting_files == ["file.pc"]
+        assert raised.value.conflicting_files == [Path("file.pc")]
 
     def test_collision_with_part_not_built(self, tmpdir, partitions):
         part_built = Part(
@@ -247,7 +297,136 @@ class TestCollisions:
         # Therefore, only "2" should be marked as conflicting.
         assert raised.value.other_part_name == "part1"
         assert raised.value.part_name == "part2"
-        assert raised.value.conflicting_files == ["2"]
+        assert raised.value.conflicting_files == [Path("2")]
+
+    @pytest.fixture
+    def overlay_part0(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part0",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "conflict.txt").write_text("regular contents")
+        return part
+
+    @pytest.fixture
+    def overlay_part1(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part1",
+            data={"overlay-script": "echo hello"},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for layer_dir in part.part_layer_dirs.values():
+            layer_dir.mkdir(parents=True)
+            (layer_dir / "conflict.txt").write_text("from part1 overlay")
+        return part
+
+    @pytest.fixture
+    def overlay_part2(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part2",
+            data={"overlay-script": "echo hello"},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for layer_dir in part.part_layer_dirs.values():
+            layer_dir.mkdir(parents=True)
+            (layer_dir / "conflict.txt").write_text("regular contents")
+        return part
+
+    @pytest.fixture
+    def overlay_part3(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part3",
+            data={"overlay-script": "echo hello"},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for layer_dir in part.part_layer_dirs.values():
+            layer_dir.mkdir(parents=True)
+            (layer_dir / "a/b/c/").mkdir(parents=True)
+            (layer_dir / "a/b/c" / "d.txt").symlink_to("/foo/bar.txt")
+        return part
+
+    @pytest.fixture
+    def overlay_part4(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part4",
+            data={"overlay-script": "echo hello"},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for layer_dir in part.part_layer_dirs.values():
+            layer_dir.mkdir(parents=True)
+            (layer_dir / "a/b/c/").mkdir(parents=True)
+            (layer_dir / "a/b/c" / "d.txt").symlink_to("/a/b/foo/bar.txt")
+        return part
+
+    @pytest.fixture
+    def overlay_part5(self, tmpdir, partitions) -> Part:
+        part = Part(
+            name="part5",
+            data={"overlay-script": "echo hello"},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for layer_dir in part.part_layer_dirs.values():
+            layer_dir.mkdir(parents=True)
+            (layer_dir / "a/b/c/").mkdir(parents=True)
+            (layer_dir / "a/b/c" / "d.txt").symlink_to("bar.txt")
+        return part
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_collisions_between_install_and_overlay(
+        self, overlay_part0, overlay_part1, partitions
+    ):
+        """Files have different contents."""
+        with pytest.raises(errors.OverlayStageConflict):
+            check_for_stage_collisions([overlay_part0, overlay_part1], partitions)
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_collisions_symlinks(self, part8, overlay_part3, partitions):
+        """Overlay and the part staging 2 different symlinks.
+
+        They are not targeting the same file even after normalization.
+        """
+        with pytest.raises(errors.OverlayStageConflict):
+            check_for_stage_collisions([part8, overlay_part3], partitions)
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_no_collisions_between_install_and_overlay(
+        self, overlay_part0, overlay_part2, partitions
+    ):
+        """Files have same contents."""
+        check_for_stage_collisions([overlay_part0, overlay_part2], partitions)
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_no_collisions_symlinks(self, part7, overlay_part3, partitions):
+        """Overlay and the part staging 2 different symlinks.
+
+        They are targeting the same file in the final artifact and should not collide.
+        """
+        check_for_stage_collisions([part7, overlay_part3], partitions)
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_no_collisions_buried_symlinks(self, part8, overlay_part4, partitions):
+        """Layer of a part and another part staging a symlink.
+
+        They are targeting the same file in the final artifact and should not collide.
+        """
+        check_for_stage_collisions([part8, overlay_part4], partitions)
+
+    @pytest.mark.usefixtures("add_overlay_feature")
+    def test_no_collisions_relative_symlinks(self, part9, overlay_part5, partitions):
+        """Layer of a part and another part staging a relative symlink.
+
+        They are targeting the same file in the final artifact and should not collide.
+        """
+        check_for_stage_collisions([part9, overlay_part5], partitions)
 
 
 class TestCollisionsPartitionError:

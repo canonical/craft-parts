@@ -16,6 +16,7 @@
 
 """Exceptions raised by the packages handling subsystem."""
 
+import pathlib
 from collections.abc import Sequence
 
 from craft_parts.errors import PartsError
@@ -26,7 +27,7 @@ class PackagesError(PartsError):
     """Base class for package handler errors."""
 
 
-class PackageBackendNotSupported(PartsError):
+class PackageBackendNotSupported(PartsError):  # noqa: N818
     """Requested package resolved not supported on this host."""
 
     def __init__(self, backend: str) -> None:
@@ -36,7 +37,7 @@ class PackageBackendNotSupported(PartsError):
         )
 
 
-class PackageNotFound(PackagesError):
+class PackageNotFound(PackagesError):  # noqa: N818
     """Requested package doesn't exist in the remote repository.
 
     :param package_name: The name of the missing package.
@@ -49,7 +50,7 @@ class PackageNotFound(PackagesError):
         super().__init__(brief=brief)
 
 
-class PackagesNotFound(PackagesError):
+class PackagesNotFound(PackagesError):  # noqa: N818
     """Requested package doesn't exist in the remote repository.
 
     :param package_name: The names of the missing packages.
@@ -69,14 +70,19 @@ class PackagesNotFound(PackagesError):
 class PackageFetchError(PackagesError):
     """Failed to fetch package from remote repository.
 
-    :param message: The error message.
+    :param url: The package URL, if known.
+    :param details: Additional error details from the underlying exception.
     """
 
-    def __init__(self, message: str) -> None:
-        self.message = message
-        brief = f"Failed to fetch package: {message}."
+    def __init__(self, url: str | None, details: str | None = None) -> None:
+        self.url = url
+        brief = (
+            f"Failed to fetch package from {url}."
+            if url
+            else "Failed to fetch package."
+        )
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, details=details)
 
 
 class PackageListRefreshError(PackagesError):
@@ -92,7 +98,7 @@ class PackageListRefreshError(PackagesError):
         super().__init__(brief=brief)
 
 
-class PackageBroken(PackagesError):
+class PackageBroken(PackagesError):  # noqa: N818
     """Package has unmet dependencies.
 
     :param package_name: The name of the package with unmet dependencies.
@@ -107,7 +113,7 @@ class PackageBroken(PackagesError):
         super().__init__(brief=brief)
 
 
-class FileProviderNotFound(PackagesError):
+class FileProviderNotFound(PackagesError):  # noqa: N818
     """A file is not provided by any package.
 
     :param file_path: The file path.
@@ -120,7 +126,7 @@ class FileProviderNotFound(PackagesError):
         super().__init__(brief=brief)
 
 
-class BuildPackageNotFound(PackagesError):
+class BuildPackageNotFound(PackagesError):  # noqa: N818
     """A package listed in 'build-packages' was not found.
 
     :param package: The name of the missing package.
@@ -133,7 +139,7 @@ class BuildPackageNotFound(PackagesError):
         super().__init__(brief=brief)
 
 
-class BuildPackagesNotInstalled(PackagesError):
+class BuildPackagesNotInstalled(PackagesError):  # noqa: N818
     """Could not install all requested build packages.
 
     :param packages: The packages to install.
@@ -175,7 +181,42 @@ class UnpackError(PackagesError):
         super().__init__(brief=brief)
 
 
-class SnapUnavailable(PackagesError):
+class DebPackageInvalidFormatError(PackagesError):
+    """The given package specification is not formatted correctly.
+
+    :param package: The package specification string.
+    """
+
+    def __init__(self, package: str) -> None:
+        self.package = package
+        brief = f"Invalid package specification: {package!r}."
+        resolution = (
+            "Ensure the package name, architecture, and version do not "
+            "contain leading, trailing, or surrounding whitespace, and "
+            "that no more than one of '@' or '=' is used."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class SnapInvalidFormat(PackagesError):  # noqa: N818
+    """The given snap specification is not formatted correctly.
+
+    :param snap: The snap specification string.
+    """
+
+    def __init__(self, snap: str) -> None:
+        self.snap = snap
+        brief = f"Invalid snap specification: {snap!r}."
+        resolution = (
+            "Ensure the snap name and channel do not contain leading, "
+            "trailing, or surrounding whitespace."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
+class SnapUnavailable(PackagesError):  # noqa: N818
     """Failed to install or refresh a snap.
 
     :param snap_name: The snap name.
@@ -273,6 +314,22 @@ class SnapdConnectionError(PackagesError):
         )
 
         super().__init__(brief=brief)
+
+
+class BaseManifestError(PackagesError):
+    """Failed to read the base snap package manifest.
+
+    :param manifest_path: Path to the manifest file.
+    :param reason: A description of the failure.
+    """
+
+    def __init__(self, manifest_path: pathlib.Path, reason: str) -> None:
+        self.manifest_path = manifest_path
+        self.reason = reason
+        super().__init__(
+            brief=f"Failed to read package manifest {str(manifest_path)!r}.",
+            details=reason,
+        )
 
 
 class ChiselError(PackagesError):

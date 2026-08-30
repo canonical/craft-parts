@@ -20,15 +20,16 @@ import logging
 import os
 import platform
 import re
+from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
 
 import requests
-from overrides import override
 from pydantic import model_validator
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from craft_parts.errors import InvalidArchitecture
+from craft_parts.utils.npm_utils import get_install_from_local_tarballs_commands
 
 from . import validator
 from .base import Plugin
@@ -46,19 +47,31 @@ _NODE_ARCH_FROM_SNAP_ARCH = {
 }
 _NODE_ARCH_FROM_PLATFORM = {
     "x86_64": {"32bit": "x86", "64bit": "x64"},
-    "aarch64": {"64bit": "arm64"},
+    "aarch64": {"32bit": "armv7l", "64bit": "arm64"},
+    "ppc64le": {"64bit": "ppc64le"},
+    "s390x": {"64bit": "s390x"},
 }
 
 
 class NpmPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the npm plugin."""
 
-    plugin: Literal["npm"] = "npm"
+    plugin: Literal["npm", "npm-use"] = "npm"
 
     # part properties required by the plugin
     npm_include_node: bool = False
     npm_node_version: str | None = None
     source: str  # pyright: ignore[reportGeneralTypeIssues]
+    build_attributes: list[str] = []
+
+    @model_validator(mode="after")
+    def include_node_not_self_contained(self) -> Self:
+        """If npm-include-node is true, then self-contained must not be in build-attributes."""
+        if self.npm_include_node and "self-contained" in self.build_attributes:
+            raise ValueError(
+                "npm-include-node cannot be true if `self-contained` in build attributes"
+            )
+        return self
 
     @model_validator(mode="after")
     def node_version_defined(self) -> Self:
@@ -102,11 +115,11 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 class NpmPlugin(Plugin):
     """A plugin for npm projects.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
         - npm-include-node
           (bool; default: False)
           If true, download and include the node binary and its dependencies.
@@ -133,6 +146,15 @@ class NpmPlugin(Plugin):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._node_binary_path: str | None = None
+
+    @property
+    def _is_self_contained(self) -> bool:
+        return "self-contained" in self._part_info.build_attributes
+
+    @property
+    def _npm_cache_backstage(self) -> Path:
+        """Path to npm cache to consume packages from."""
+        return self._part_info.project_info.dirs.backstage_dir / "npm-cache"
 
     @staticmethod
     def _get_architecture() -> str:
@@ -172,7 +194,7 @@ class NpmPlugin(Plugin):
         return versions
 
     @staticmethod
-    def _get_best_node_version(
+    def _get_best_node_version(  # noqa: PLR0912
         node_version: str | None, target_arch: str
     ) -> tuple[str, str]:
         """Get the best matching Node.js version using NVM-style version tags.
@@ -264,6 +286,11 @@ class NpmPlugin(Plugin):
         }
         if cast(NpmPluginProperties, self._options).npm_include_node:
             base_env["PATH"] = "${CRAFT_PART_INSTALL}/bin:${PATH}"
+
+        if self._is_self_contained:
+            # explicitly block registry access during offline builds
+            base_env["npm_config_registry"] = "https://localhost:1"
+
         return base_env
 
     @override
@@ -274,7 +301,10 @@ class NpmPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        cmd = []
+        if self._is_self_contained:
+            return self._get_self_contained_build_commands()
+
+        cmd: list[str] = []
         options = cast(NpmPluginProperties, self._options)
         if options.npm_include_node:
             arch = self._get_architecture()
@@ -283,9 +313,9 @@ class NpmPlugin(Plugin):
 
             node_uri = f"https://nodejs.org/dist/{resolved_version}/{file_name}"
             checksum_uri = f"https://nodejs.org/dist/{resolved_version}/SHASUMS256.txt"
-            self._node_binary_path = os.path.join(
-                self._part_info.part_cache_dir, file_name
-            )
+            self._node_binary_path = (
+                self._part_info.part_cache_dir / file_name
+            ).as_posix()
             cmd += [
                 dedent(
                     f"""\
@@ -322,4 +352,24 @@ class NpmPlugin(Plugin):
             """
             )
         ]
+
         return cmd
+
+    def _get_self_contained_build_commands(self) -> list[str]:
+        """Return a list of commands to run during self-contained build step."""
+        pkg_path = self._part_info.part_build_dir / "package.json"
+        bundled_pkg_path = (
+            self._part_info.part_build_subdir / ".parts" / "package.bundled.json"
+        )
+        return [
+            *get_install_from_local_tarballs_commands(
+                pkg_path, bundled_pkg_path, self._npm_cache_backstage
+            ),
+            'npm install --offline -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"',
+        ]
+
+    @classmethod
+    @override
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports."""
+        return {"self-contained"}

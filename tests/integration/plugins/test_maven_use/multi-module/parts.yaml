@@ -1,0 +1,22 @@
+parts:
+  java-dep-top:
+    plugin: maven-use
+    source: java-dep-top
+    build-attributes:
+      - self-contained
+
+  java-main-part:
+    after:
+      - java-dep-top
+    plugin: maven
+    source: java-main-part
+    build-packages:
+      - libmaven-resources-plugin-java
+      - libmaven-compiler-plugin-java
+      - libmaven-jar-plugin-java
+      - libmaven-install-plugin-java
+      - libmaven-deploy-plugin-java
+      - libmaven-shade-plugin-java
+      - libsurefire-java
+    build-attributes:
+      - self-contained

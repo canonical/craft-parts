@@ -1,0 +1,110 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright 2024 Canonical Ltd.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import subprocess
+import textwrap
+import warnings
+from pathlib import Path
+
+import pytest
+import yaml
+from craft_parts import LifecycleManager, Step
+from craft_parts.utils.os_utils import OsRelease
+
+pytestmark = [pytest.mark.java]
+
+
+@pytest.fixture
+def expected_jdk_version() -> str:
+    """The expected JDK for the current platform.
+
+    This method should be expanded as tests are supported on more platforms."""
+
+    platform = OsRelease().version_id()
+
+    match platform:
+        # Even though 22.04's "default-jdk" virtual package resolves to JDK 11,
+        # the Makefile currently installs many versions of the JDK and JDK 21 seems
+        # to be consistently picked up first on the path
+        case p if p in ("22.04", "24.04", "25.10"):
+            return "21"
+        case "26.04":
+            return "25"
+        case _:
+            warnings.warn(
+                "Cannot determine which version of the JDK to expect on this platform, defaulting to latest.",
+                FutureWarning,
+                stacklevel=3,
+            )
+            return "25"
+
+
+def run_build(new_dir, partitions, application):
+    source_location = Path(__file__).parent / "test_maven"
+
+    parts_yaml = textwrap.dedent(
+        f"""
+        parts:
+          foo:
+            plugin: maven
+            source: {source_location}
+            stage-packages: [openjdk-21-jre-headless]
+            build-packages:
+                - openjdk-8-jdk-headless
+                - openjdk-17-jdk-headless
+                - openjdk-21-jdk-headless
+            override-build: |
+                echo ${{JAVA_HOME:-default}} > $CRAFT_PART_INSTALL/java_home
+                craftctl default
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+    lf = LifecycleManager(
+        parts,
+        application_name=application,
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.PRIME)
+
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    return lf.project_info.prime_dir
+
+
+def test_java_plugin(new_dir, partitions, expected_jdk_version):
+    """This test validates that java plugin sets JAVA_HOME.
+    The JAVA_HOME should be set according to the following rules:
+    - Latest version of Java VM is selected
+    - Selected Java VM should be able to compile test test file
+
+    The test installs multiple Java VMs and asserts that JAVA_HOME
+    is set to Java 21.
+    """
+
+    prime_dir = run_build(new_dir, partitions, "test_java_plugin")
+    java_binary = prime_dir / "bin/java"
+    assert java_binary.is_file()
+
+    content = (prime_dir / "java_home").read_text()
+    assert expected_jdk_version in content
+
+    output = subprocess.check_output(
+        [str(java_binary), "-jar", f"{prime_dir}/jar/HelloWorld-1.0.jar"], text=True
+    )
+    assert output.strip() == "Hello from Maven-built Java"

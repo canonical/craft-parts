@@ -1,3 +1,4 @@
+# noqa: A005 (this module shadows the stdlib platform module)
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright 2017-2023 Canonical Ltd.

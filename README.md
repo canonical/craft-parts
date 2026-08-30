@@ -1,116 +1,49 @@
 # Craft Parts
 
-[![Documentation Status](https://readthedocs.com/projects/canonical-craft-parts/badge/?version=latest)](https://canonical-craft-parts.readthedocs-hosted.com/en/latest/?badge=latest)
+[![Documentation Status][rtd-badge]][rtd-latest]
+[![Codecov Status][codecov-badge]][codecov-status]
+[![Code Style][ruff-badge]][ruff-site]
 
-Craft-parts provides a mechanism to obtain data from different sources,
-process it in various ways, and prepare a filesystem subtree suitable for
-deployment. The components used in its project specification are called
-*parts*, which can be independently downloaded, built and installed, and
-also depend on each other in order to assemble the subtree containing the
-final artifacts.
+Craft Parts supports the _parts_ mechanism common to all craft applications. It
+provides a declarative way to obtain, process, and organize data from different sources
+before it is packaged into the final artifact.
 
+This library is most useful for app developers in the Starcraft family.
 
-# License
+## Documentation
 
-Free software: GNU Lesser General Public License v3
+The [Craft Parts documentation][rtd-latest] describes the library's key components and
+provides guidance on its usage.
 
+## Community and support
 
-# Documentation
+You can report any issues or bugs on the project's [GitHub
+repository](https://github.com/canonical/craft-parts/issues).
 
-https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
+Craft Parts is covered by the [Ubuntu Code of
+Conduct](https://ubuntu.com/community/ethos/code-of-conduct).
 
-# Contributing
+## Contribute to Craft Parts
 
-A `Makefile` is provided for easy interaction with the project. To see
-all available options run:
+Craft Parts is open source and part of the Canonical family. We would love
+your help.
 
-```
-make help
-```
+If you're interested, start with the [contribution guide](CONTRIBUTING.md).
 
-## Development Environment
+We welcome any suggestions and help with the docs. The [Canonical Open
+Documentation Academy](https://github.com/canonical/open-documentation-academy)
+is the hub for doc development, including Craft Parts docs. No prior
+coding experience is required.
 
-In order to develop any `apt` related items, the `python-apt` package is needed.
-The `apt` extra will require this package in general.
+## License and copyright
 
-> Ubuntu 22.04 is assumed in the rest of this setup
+Craft Parts is released under the [LGPL-3.0 license](LICENSE).
 
-Development packages, such as those to build the Apt Python package are required:
+© 2021-2025 Canonical Ltd.
 
-```bash
-sudo apt install libapt-pkg-dev intltool fuse-overlayfs python3.10-venv python3-dev gcc g++ make
-```
-
-The following are required to run integration tests (it is a default target for `make tests`):
-```bash
-sudo snap install chisel --candidate
-sudo apt install ninja-build cmake scons qt5-qmake p7zip rpm \
-                 autoconf automake autopoint gcc git gperf help2man libtool texinfo \
-                 pkg-config
-```
-
-Create virtual environment to develop in and activate it:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-Install the required Python packages
-
-```bash
-pip install -e .[dev,docs]
-pip install https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
-```
-
-### Python Apt across Ubuntu series
-* focal (20.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.0.1ubuntu0.20.04.1/python-apt_2.0.1ubuntu0.20.04.1.tar.xz
-* jammy (22.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz
-* lunar (23.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.5.3ubuntu1/python-apt_2.5.3ubuntu1.tar.xz
-* noble (24.04): https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.7.7ubuntu1/python-apt_2.7.7ubuntu1.tar.xz
-
-## Running tests
-
-To run all tests in the suite run:
-
-```bash
-make tests
-```
-
-To get coverage information for Craft Parts from the unit tests:
-
-```bash
-make coverage
-```
-## Adding new requirements
-
-If a new dependency is added to the project run:
-
-```bash
-make freeze-requirements
-```
-
-## Verifying documentation changes
-
-To locally verify documentation changes run:
-
-```bash
-make docs
-```
-
-After running, newly generated documentation shall be available at
-`./docs/_build/html/`.
-
-
-## Committing code
-
-Please follow these guidelines when committing code for this project:
-
-- Use a topic with a colon to start the subject
-- Separate subject from body with a blank line
-- Limit the subject line to 50 characters
-- Do not capitalize the subject line
-- Do not end the subject line with a period
-- Use the imperative mood in the subject line
-- Wrap the body at 72 characters
-- Use the body to explain what and why (instead of how)
+[rtd-badge]: https://readthedocs.com/projects/canonical-craft-parts/badge/?version=latest
+[rtd-latest]: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/
+[ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+[ruff-site]: https://github.com/astral-sh/ruff
+[codecov-badge]: https://codecov.io/github/canonical/craft-parts/coverage.svg?branch=main
+[codecov-status]: https://codecov.io/github/canonical/craft-parts?branch=main

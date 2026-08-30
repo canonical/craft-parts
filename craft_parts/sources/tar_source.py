@@ -23,7 +23,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Literal
 
-from overrides import overrides
+from typing_extensions import override
 
 from .base import (
     BaseFileSourceModel,
@@ -36,6 +36,7 @@ from .base import (
 class TarSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a tar file source."""
 
+    pattern = r"\.(tar(\.[a-z0-9]+)?|tgz)$"
     model_config = get_model_config(
         get_json_extra_schema(r"\.(tar(\.[a-z0-9]+)?|tgz)$")
     )
@@ -47,20 +48,20 @@ class TarSource(FileSourceHandler):
 
     source_model = TarSourceModel
 
-    @overrides
+    @override
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
+        keep: bool = False,
         src: Path | None = None,
     ) -> None:
         """Extract tarball contents to the part source dir."""
-        tarball = src if src else self.part_src_dir / os.path.basename(self.source)
+        tarball = src if src else self.part_src_dir / Path(self.source).name
 
         _extract(tarball, dst)
 
         if not keep:
-            os.remove(tarball)
+            tarball.unlink()
 
 
 def _extract(tarball: Path, dst: Path) -> None:
@@ -76,13 +77,14 @@ def _extract(tarball: Path, dst: Path) -> None:
             # check all members either start with common dir
             for member in members:
                 if not (
-                    member.name.startswith(common + "/")
+                    Path(member.name).is_relative_to(common)
+                    and Path(member.name).relative_to(common) != Path()
                     or member.isdir()
                     and member.name == common
                 ):
                     # commonprefix() didn't return a dir name; go up one
                     # level
-                    common = os.path.dirname(common)
+                    common = Path(common).parent.as_posix()
                     break
 
             for member in members:
@@ -99,12 +101,12 @@ def _extract(tarball: Path, dst: Path) -> None:
 
 
 def _strip_prefix(common: str, member: tarfile.TarInfo) -> None:
-    if member.name.startswith(common + "/"):
-        member.name = member.name[len(common + "/") :]
+    if Path(member.name).is_relative_to(common):
+        member.name = Path(member.name).relative_to(common).as_posix()
     # strip leading '/', './' or '../' as many times as needed
     member.name = re.sub(r"^(\.{0,2}/)*", r"", member.name)
     # do the same for linkname if this is a hardlink
     if member.islnk() and not member.issym():
-        if member.linkname.startswith(common + "/"):
-            member.linkname = member.linkname[len(common + "/") :]
+        if Path(member.linkname).is_relative_to(common):
+            member.linkname = Path(member.linkname).relative_to(common).as_posix()
         member.linkname = re.sub(r"^(\.{0,2}/)*", r"", member.linkname)

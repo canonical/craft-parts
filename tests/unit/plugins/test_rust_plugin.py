@@ -21,6 +21,7 @@ from craft_parts.errors import PluginEnvironmentValidationError
 from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.rust_plugin import RustPlugin, RustPluginProperties
+from craft_parts.plugins.validator import PluginEnvironmentValidator
 from pydantic import ValidationError
 
 
@@ -30,6 +31,17 @@ def part_info(new_dir):
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )
+
+
+@pytest.fixture
+def mock_validator(monkeypatch):
+    def fake_execute(self, cmd: str):
+        return subprocess.check_output(  # noqa: S602
+            cmd,
+            shell=True,
+        )
+
+    monkeypatch.setattr(PluginEnvironmentValidator, "_execute", fake_execute)
 
 
 @pytest.mark.parametrize(
@@ -44,9 +56,7 @@ def part_info(new_dir):
     ],
 )
 def test_validate_rust_channel(rust_channel):
-    RustPluginProperties.validate_rust_channel(
-        rust_channel
-    )  # pyright: ignore[reportCallIssue]
+    RustPluginProperties.validate_rust_channel(rust_channel)
 
 
 def test_get_build_snaps(fake_process: pytest_subprocess.FakeProcess, part_info):
@@ -70,11 +80,22 @@ def test_get_build_packages(part_info):
     }
 
 
-def test_get_build_environment(part_info):
+@pytest.mark.parametrize(
+    "cargo_registry", [False, True], ids=["without_registry", "with_registry"]
+)
+def test_get_build_environment(part_info, *, cargo_registry: bool):
+    expected_env = {"PATH": "${HOME}/.cargo/bin:${PATH}"}
+
+    if cargo_registry:
+        (part_info.project_info.dirs.backstage_dir / "cargo-registry").mkdir(
+            parents=True
+        )
+        expected_env["CARGO_HOME"] = str(part_info.work_dir / "cargo")
+
     properties = RustPlugin.properties_class.unmarshal({"source": "."})
     plugin = RustPlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_build_environment() == {"PATH": "${HOME}/.cargo/bin:${PATH}"}
+    assert plugin.get_build_environment() == expected_env
 
 
 def test_get_build_commands_default(part_info):
@@ -260,6 +281,56 @@ def test_get_pull_commands_compat_with_exceptions(
         "rustup update stable",
         "rustup default stable",
     ]
+
+
+@pytest.mark.parametrize("after", [["something-else"], []])
+def test_validate_environment_should_have_rustup(
+    after, fake_process: pytest_subprocess.FakeProcess, mock_validator
+):
+    def exec_fail(x):
+        raise subprocess.CalledProcessError(127, x)
+
+    fake_process.register(
+        ["cargo", "--version"], stdout="cargo 1.84.0-nightly (69e595908 2024-11-16)"
+    )
+    fake_process.register(
+        ["rustc", "--version"], stdout="rustc 1.84.0-nightly (5ec7d6eee 2024-11-17)"
+    )
+    fake_process.register(["rustup", "dump-testament"], callback=exec_fail)
+
+    properties = RustPlugin.properties_class.unmarshal({"source": ".", "after": after})
+    validator = RustPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    # positive test
+    validator.validate_environment(part_dependencies=["rust-deps"])
+    # negative test
+    with pytest.raises(PluginEnvironmentValidationError):
+        validator.validate_environment(part_dependencies=after)
+
+
+def test_validate_environment_should_not_have_rustup(
+    fake_process: pytest_subprocess.FakeProcess, mock_validator
+):
+    def exec_fail(x):
+        raise subprocess.CalledProcessError(127, x)
+
+    fake_process.register(["cargo", "--version"], callback=exec_fail)
+    fake_process.register(["rustc", "--version"], callback=exec_fail)
+    fake_process.register(
+        ["rustup", "dump-testament"],
+        stdout="Rustup version renders as: 1.27.1 (2024-05-07)",
+    )
+
+    properties = RustPlugin.properties_class.unmarshal(
+        {"source": ".", "after": ["rust-deps"]}
+    )
+    validator = RustPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    # positive test
+    validator.validate_environment(part_dependencies=[])
+    validator.validate_environment(part_dependencies=["rust-deps"])
 
 
 def test_get_out_of_source_build(part_info):

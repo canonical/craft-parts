@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import re
+
 import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo, ProjectInfo
@@ -29,15 +31,6 @@ def part_info(new_dir):
         project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
         part=Part("my-part", {}),
     )
-
-
-@pytest.fixture
-def go_workspace(part_info):
-    part_info._project_info.dirs.parts_dir.mkdir()
-    go_workspace = part_info._project_info.dirs.parts_dir / "go.work"
-    go_workspace.touch()
-    yield go_workspace
-    go_workspace.unlink()
 
 
 def test_validate_environment(dependency_fixture, part_info):
@@ -155,33 +148,33 @@ def test_get_out_of_source_build(part_info):
     assert plugin.get_out_of_source_build() is True
 
 
-def test_get_build_commands(mocker, part_info, go_workspace):
+@pytest.mark.parametrize(
+    "part_data", [{"source": "."}, {"source": ".", "source-subdir": "my/subdir"}]
+)
+def test_get_build_commands(mocker, part_info, part_data):
     """Test that go work is created and that work.go is created."""
+
+    # Create a go.mod file
+    part_info.part_src_subdir.mkdir(parents=True, exist_ok=True)
+    (part_info.part_src_subdir / "go.mod").write_text(
+        "module example.com/test\n\ngo 1.21\n"
+    )
+
+    properties = GoUsePlugin.properties_class.unmarshal(part_data)
+    plugin = GoUsePlugin(properties=properties, part_info=part_info)
+
+    dest_dir = part_info.part_export_dir / "go-use" / part_info.part_name
+
+    assert plugin.get_build_commands() == [
+        f"mkdir -p '{part_info.part_export_dir}/go-use'",
+        f"ln -sf '{part_info.part_src_subdir}' '{dest_dir}'",
+    ]
+
+
+def test_get_build_commands_missing_go_mod(part_info):
+    """Test that a PartsError is raised when go.mod is missing."""
     properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
     plugin = GoUsePlugin(properties=properties, part_info=part_info)
 
-    # Let the plugin set it up
-    go_workspace.unlink()
-    run_mock = mocker.patch(
-        "subprocess.run", side_effect=lambda *args, **kwargs: go_workspace.touch()
-    )
-
-    assert plugin.get_build_commands() == [
-        f"go work use {plugin._part_info.part_src_dir}",
-    ]
-    run_mock.assert_called_once_with(
-        ["go", "work", "init"], capture_output=True, check=True, cwd=go_workspace.parent
-    )
-
-
-@pytest.mark.usefixtures("go_workspace")
-def test_get_build_commands_workspace_in_use(mocker, part_info):
-    properties = GoUsePlugin.properties_class.unmarshal({"source": "."})
-    plugin = GoUsePlugin(properties=properties, part_info=part_info)
-
-    run_mock = mocker.patch("subprocess.run")
-
-    assert plugin.get_build_commands() == [
-        f"go work use {plugin._part_info.part_src_dir}",
-    ]
-    run_mock.assert_not_called()
+    with pytest.raises(errors.PartsError, match=re.escape("go.mod not found")):
+        plugin.get_build_commands()

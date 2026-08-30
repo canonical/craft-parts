@@ -1,0 +1,22 @@
+parts:
+  hello:
+    plugin: gradle-use
+    source: java-dep-hello
+    build-attributes:
+      - self-contained
+
+  hello-plugin:
+    plugin: gradle-use
+    source: gradle-plugin
+    build-attributes:
+      - self-contained
+
+  main:
+    plugin: gradle
+    source: java-main
+    gradle-task: installDist
+    after:
+      - hello
+      - hello-plugin
+    build-attributes:
+      - self-contained

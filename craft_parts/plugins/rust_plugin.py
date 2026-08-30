@@ -17,14 +17,13 @@
 """The craft Rust plugin."""
 
 import logging
-import os
 import re
 import subprocess
 from textwrap import dedent
 from typing import Literal, cast
 
 import pydantic
-from overrides import override
+from typing_extensions import override
 
 from craft_parts.constraints import UniqueList
 
@@ -85,9 +84,14 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 
         :param part_dependencies: A list of the parts this part depends on.
         """
-        if "rust-deps" in (part_dependencies or []):
-            options = cast(RustPluginProperties, self._options)
-            if options.rust_channel and options.rust_channel != "none":
+        options = cast(RustPluginProperties, self._options)
+        has_rust_deps = "rust-deps" in (part_dependencies or [])
+        if has_rust_deps or options.rust_channel == "none":
+            if (
+                has_rust_deps
+                and options.rust_channel
+                and options.rust_channel != "none"
+            ):
                 raise validator.errors.PluginEnvironmentValidationError(
                     part_name=self._part_name,
                     reason="rust-deps can not be used"
@@ -99,6 +103,14 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
                     plugin_name="rust",
                     part_dependencies=part_dependencies,
                 )
+            return
+        # Check if rustup is properly installed
+        self.validate_dependency(
+            dependency="rustup",
+            argument="dump-testament",
+            plugin_name="rust",
+            part_dependencies=part_dependencies,
+        )
 
 
 class RustPlugin(Plugin):
@@ -108,11 +120,11 @@ class RustPlugin(Plugin):
 
     Rust uses cargo to drive the build.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
         - rust-channel
           (string, default "stable")
           Used to select which Rust channel or version to use.
@@ -172,6 +184,8 @@ class RustPlugin(Plugin):
         if not options.rust_channel and self._check_system_rust():
             logger.info("Rust is installed on the system, skipping rustup")
             return set()
+        if options.rust_channel == "none" or "rust-deps" in (options.after or []):
+            return set()
         return {"rustup"}
 
     @override
@@ -194,7 +208,9 @@ class RustPlugin(Plugin):
         options = cast(RustPluginProperties, self._options)
         if options.rust_ignore_toolchain_file:
             return False
-        return os.path.exists("rust-toolchain.toml") or os.path.exists("rust-toolchain")
+        return (self._part_info.part_build_subdir / "rust-toolchain.toml").exists() or (
+            self._part_info.part_build_subdir / "rust-toolchain"
+        ).exists()
 
     @override
     def get_build_environment(self) -> dict[str, str]:
@@ -202,6 +218,13 @@ class RustPlugin(Plugin):
         variables = {
             "PATH": "${HOME}/.cargo/bin:${PATH}",
         }
+
+        registry_dir = (
+            self._part_info.project_info.dirs.backstage_dir / "cargo-registry"
+        )
+        if registry_dir.exists():
+            variables["CARGO_HOME"] = str(self._part_info.work_dir / "cargo")
+
         options = cast(RustPluginProperties, self._options)
         if options.rust_ignore_toolchain_file:
             # add a forced override to ignore the toolchain file

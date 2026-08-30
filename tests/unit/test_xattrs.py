@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import sys
 from pathlib import Path
 
@@ -33,7 +32,7 @@ class TestXattrs:
         file_path = Path(".tests-xattr-test-file")
         file_path.touch()
 
-        yield str(file_path)
+        yield file_path
 
         file_path.unlink()
 
@@ -48,7 +47,7 @@ class TestXattrs:
 
     def test_read_xattr_nonexistent(self):
         with pytest.raises(FileNotFoundError):
-            xattrs.read_xattr("I-DONT-EXIST", "attr")
+            xattrs.read_xattr(Path("I-DONT-EXIST"), "attr")
 
     def test_write_xattr(self, test_file):
         value = "foo"
@@ -84,9 +83,9 @@ class TestXattrs:
 
     @linux_only
     def test_symlink(self, test_file):
-        test_symlink = test_file + "-symlink"
+        test_symlink = test_file.with_name(f"{test_file.name}-symlink")
         try:
-            os.symlink(test_file, test_symlink)
+            test_symlink.symlink_to(test_file)
 
             result = xattrs.read_xattr(test_symlink, "attr")
             assert result is None
@@ -95,7 +94,7 @@ class TestXattrs:
             result = xattrs.read_xattr(test_symlink, "attr")
             assert result is None
         finally:
-            os.unlink(test_symlink)
+            test_symlink.unlink()
 
     def test_read_non_linux(self, test_file, mocker):
         mocker.patch("sys.platform", return_value="win32")

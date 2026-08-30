@@ -16,14 +16,13 @@
 
 """The snap source handler."""
 
-import os
 import shutil
 import tempfile
 from pathlib import Path
 from typing import Literal, cast
 
 import yaml
-from overrides import overrides
+from typing_extensions import override
 
 from craft_parts.utils import file_utils
 
@@ -39,7 +38,8 @@ from .base import (
 class SnapSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a snap file source."""
 
-    model_config = get_model_config(get_json_extra_schema(r"\.snap$"))
+    pattern = r"\.snap$"
+    model_config = get_model_config(get_json_extra_schema(pattern))
     source_type: Literal["snap"] = "snap"
 
 
@@ -53,11 +53,11 @@ class SnapSource(FileSourceHandler):
 
     source_model = SnapSourceModel
 
-    @overrides
+    @override
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
+        keep: bool = False,
         src: Path | None = None,
     ) -> None:
         """Provision the snap source.
@@ -68,7 +68,7 @@ class SnapSource(FileSourceHandler):
 
         raises errors.InvalidSnap: If trying to provision an invalid snap.
         """
-        snap_file = src if src else self.part_src_dir / os.path.basename(self.source)
+        snap_file = src if src else self.part_src_dir / Path(self.source).name
         snap_file = snap_file.resolve()
 
         # unsquashfs [options] filesystem [directories or files to extract]
@@ -76,7 +76,7 @@ class SnapSource(FileSourceHandler):
         # -force: if file already exists then overwrite
         # -dest <pathname>: unsquash to <pathname>
         with tempfile.TemporaryDirectory(prefix=str(snap_file.parent)) as temp_dir:
-            extract_command = [
+            extract_command: list[str | Path] = [
                 "unsquashfs",
                 "-force",
                 "-dest",
@@ -84,21 +84,20 @@ class SnapSource(FileSourceHandler):
                 snap_file,
             ]
             self._run_output(extract_command)
-            snap_name = _get_snap_name(snap_file.name, temp_dir)
+            temp_path = Path(temp_dir)
+            snap_name = _get_snap_name(snap_file.name, temp_path)
             # Rename meta and snap dirs from the snap
-            rename_paths = (os.path.join(temp_dir, d) for d in ["meta", "snap"])
-            rename_paths = (d for d in rename_paths if os.path.exists(d))
+            rename_paths = ((temp_path / d) for d in ("meta", "snap"))
+            rename_paths = (d for d in rename_paths if d.exists())
             for rename in rename_paths:
-                shutil.move(rename, f"{rename}.{snap_name}")
-            file_utils.link_or_copy_tree(
-                source_tree=temp_dir, destination_tree=str(dst)
-            )
+                shutil.move(rename, f"{str(rename)}.{snap_name}")
+            file_utils.link_or_copy_tree(source_tree=temp_path, destination_tree=dst)
 
         if not keep:
-            os.remove(snap_file)
+            snap_file.unlink()
 
 
-def _get_snap_name(snap: str, snap_dir: str) -> str:
+def _get_snap_name(snap: str, snap_dir: Path) -> str:
     """Obtain the snap name from the snap details file.
 
     :param snap: The snap package file.
@@ -107,7 +106,7 @@ def _get_snap_name(snap: str, snap_dir: str) -> str:
     :return: The snap name.
     """
     try:
-        with open(os.path.join(snap_dir, "meta", "snap.yaml")) as snap_yaml:
+        with (snap_dir / "meta" / "snap.yaml").open() as snap_yaml:
             return cast(str, yaml.safe_load(snap_yaml)["name"])
     except (FileNotFoundError, KeyError) as snap_error:
         raise errors.InvalidSnapPackage(snap) from snap_error

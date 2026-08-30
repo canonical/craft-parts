@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2021,2024 Canonical Ltd.
+# Copyright 2015-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,15 +14,19 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import itertools
-import os
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from craft_parts import plugins, sources
+from craft_parts import errors, plugins, sources
 from craft_parts.dirs import ProjectDirs
 from craft_parts.executor.environment import generate_step_environment
-from craft_parts.executor.step_handler import StepContents, StepHandler
+from craft_parts.executor.step_handler import (
+    StagePartitionContents,
+    StepContents,
+    StepHandler,
+    StepPartitionContents,
+)
 from craft_parts.infos import (
     _DEB_TO_TRIPLET,
     PartInfo,
@@ -32,6 +36,7 @@ from craft_parts.infos import (
 )
 from craft_parts.parts import Part
 from craft_parts.steps import Step
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 from tests.unit.common_plugins import StrictTestPlugin
 
@@ -61,7 +66,7 @@ def _step_handler_for_step(
     part: Part,
     dirs: ProjectDirs,
     plugin_class: type[plugins.Plugin] = FooPlugin,
-    partitions: set[str] | None = None,
+    partitions: list[str] | None = None,
 ) -> StepHandler:
     step_info = StepInfo(part_info=part_info, step=step)
     props = plugins.PluginProperties()
@@ -85,7 +90,7 @@ def _step_handler_for_step(
 
 def get_mode(path) -> int:
     """Shortcut the retrieve the read/write/execute mode for a given path."""
-    return os.stat(path).st_mode & 0o777
+    return Path(path).stat().st_mode & 0o777
 
 
 class TestStepHandlerBuiltins:
@@ -137,7 +142,7 @@ class TestStepHandlerBuiltins:
         assert result == StepContents()
 
     def test_run_builtin_build(self, new_dir, partitions, mocker):
-        mock_run = mocker.patch("subprocess.run")
+        mock_run = mocker.patch("craft_parts.utils.process.run")
 
         Path("parts/p1/run").mkdir(parents=True)
         sh = _step_handler_for_step(
@@ -153,20 +158,26 @@ class TestStepHandlerBuiltins:
         deb = _get_host_architecture()
         triplet = _DEB_TO_TRIPLET[deb]
         if partitions is not None:
-            partition_script_lines = [
-                f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
-                f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
+            default_partition = partitions[0]
+            partition_script_lines = []
+            if default_partition != DEFAULT_PARTITION:
+                partition_script_lines = [
+                    f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
+                    f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
+                ]
+
+            partition_script_lines += [
+                f'export CRAFT_{default_partition.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/stage"',
+                f'export CRAFT_{default_partition.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/prime"',
                 *itertools.chain.from_iterable(
                     zip(
                         [
                             f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/partitions/{p}/stage"'
-                            for p in partitions
-                            if p != "default"
+                            for p in partitions[1:]
                         ],
                         [
                             f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/partitions/{p}/prime"'
-                            for p in partitions
-                            if p != "default"
+                            for p in partitions[1:]
                         ],
                     )
                 ),
@@ -187,6 +198,7 @@ class TestStepHandlerBuiltins:
                 f'export CRAFT_ARCH_TRIPLET_BUILD_FOR="{triplet}"',
                 'export CRAFT_PARALLEL_BUILD_COUNT="1"',
                 f'export CRAFT_PROJECT_DIR="{new_dir}"',
+                'export DEBIAN_FRONTEND="noninteractive"',
                 *partition_script_lines,
                 f'export CRAFT_STAGE="{new_dir}/stage"',
                 f'export CRAFT_PRIME="{new_dir}/prime"',
@@ -204,11 +216,11 @@ class TestStepHandlerBuiltins:
         )
 
         assert get_mode(environment_script_path) == 0o644
-        with open(environment_script_path) as file:
+        with environment_script_path.open() as file:
             assert file.read() == expected_script
 
         assert get_mode(build_script_path) == 0o755
-        with open(build_script_path) as file:
+        with build_script_path.open() as file:
             assert file.read() == dedent(
                 f"""\
                 #!/bin/bash
@@ -225,6 +237,7 @@ class TestStepHandlerBuiltins:
             check=True,
             stdout=None,
             stderr=None,
+            selector=None,
         )
         assert result == StepContents()
 
@@ -234,6 +247,10 @@ class TestStepHandlerBuiltins:
         Path("parts/p1/install/foo").write_text("content")
         Path("parts/p1/install/subdir/bar").write_text("content")
         Path("stage").mkdir()
+        Path("parts/p1/export/subdir").mkdir(parents=True)
+        Path("parts/p1/export/foo").write_text("content")
+        Path("parts/p1/export/subdir/bar").write_text("content")
+        Path("backstage").mkdir()
         sh = _step_handler_for_step(
             Step.STAGE,
             cache_dir=new_dir,
@@ -244,7 +261,21 @@ class TestStepHandlerBuiltins:
         )
         result = sh.run_builtin()
 
-        assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
+        step_contents = StepContents(stage=True)
+        default_partition = partitions[0] if partitions else "default"
+        step_contents.partitions_contents[default_partition] = StagePartitionContents(
+            files={Path("subdir/bar"), Path("foo")},
+            dirs={Path("subdir")},
+            backstage_files={Path("foo"), Path("subdir/bar")},
+            backstage_dirs={Path("subdir")},
+        )
+        if partitions:
+            for partition in partitions[1:]:
+                step_contents.partitions_contents[partition] = StagePartitionContents(
+                    files=set(), dirs=set()
+                )
+
+        assert result == step_contents
 
     def test_run_builtin_prime(self, new_dir, partitions):
         Path("parts/p1/install").mkdir(parents=True)
@@ -263,8 +294,18 @@ class TestStepHandlerBuiltins:
             partitions=partitions,
         )
         result = sh.run_builtin()
+        step_contents = StepContents()
+        default_partition = partitions[0] if partitions else "default"
+        step_contents.partitions_contents[default_partition] = StepPartitionContents(
+            files={Path("subdir/bar"), Path("foo")}, dirs={Path("subdir")}
+        )
+        if partitions:
+            for partition in partitions[1:]:
+                step_contents.partitions_contents[partition] = StepPartitionContents(
+                    files=set(), dirs=set()
+                )
 
-        assert result == StepContents(files={"subdir/bar", "foo"}, dirs={"subdir"})
+        assert result == step_contents
 
     def test_run_builtin_invalid(self, new_dir):
         sh = _step_handler_for_step(
@@ -283,7 +324,7 @@ class TestStepHandlerBuiltins:
     def test_run_builtin_pull_strict(self, new_dir, mocker):
         """Test the Pull step in strict mode calls get_pull_commands()"""
         Path("parts/p1/run").mkdir(parents=True)
-        mock_run = mocker.patch("subprocess.run")
+        mock_run = mocker.patch("craft_parts.utils.process.run")
         self._project_info._strict_mode = True
         sh = _step_handler_for_step(
             Step.PULL,
@@ -325,7 +366,7 @@ class TestStepHandlerRunScriptlet:
 
     def test_run_scriptlet(self, new_dir, capfd):
         sh = _step_handler_for_step(
-            Step.PULL,
+            Step.BUILD,
             cache_dir=new_dir,
             part_info=self._part_info,
             part=self._part,
@@ -337,4 +378,163 @@ class TestStepHandlerRunScriptlet:
         captured = capfd.readouterr()
         assert captured.out == "hello world\n"
 
-    # TODO: test ctl api server
+    def test_run_scriptlet_error(self, new_dir, capfd):
+        sh = _step_handler_for_step(
+            Step.BUILD,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
+        with pytest.raises(errors.ScriptletRunError) as raised:
+            sh.run_scriptlet(
+                "echo uh-oh>&2;false",
+                scriptlet_name="name",
+                step=Step.BUILD,
+                work_dir=new_dir,
+            )
+        assert raised.value.stderr is not None
+        assert raised.value.stderr.endswith(b"\nuh-oh\n+ false\n")
+
+
+class OverlayChrootPlugin(plugins.Plugin):
+    """A test plugin with overlay chroot commands."""
+
+    properties_class = plugins.PluginProperties
+    uses_overlay = True
+
+    def get_overlay_chroot_commands(self):
+        return ["echo chroot-ran > /tmp/chroot-proof.txt"]
+
+    def get_build_snaps(self) -> set[str]:
+        return set()
+
+    def get_build_packages(self) -> set[str]:
+        return set()
+
+    def get_build_environment(self) -> dict[str, str]:
+        return {}
+
+    def get_build_commands(self) -> list[str]:
+        return []
+
+
+class TestOverlayScriptlet:
+    """Test the overlay scriptlet injection for override-overlay."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, new_dir):
+        p_info = ProjectInfo(
+            project_dirs=ProjectDirs(work_dir=new_dir),
+            application_name="test",
+            cache_dir=new_dir,
+        )
+        self._dirs = p_info.dirs
+        self._part = Part(
+            "mypart", {"plugin": "nil", "source": "."}, project_dirs=self._dirs
+        )
+        self._part_info = PartInfo(project_info=p_info, part=self._part)
+        self._part.part_run_dir.mkdir(parents=True, exist_ok=True)
+
+    def test_run_overlay_scriptlet_craftctl_default(self, new_dir):
+        """craftctl default runs plugin chroot commands."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=OverlayChrootPlugin,
+        )
+        sh._run_overlay_scriptlet(
+            "craftctl default",
+            work_dir=new_dir,
+        )
+        assert (Path("/tmp/chroot-proof.txt")).exists()
+        Path("/tmp/chroot-proof.txt").unlink()
+
+    def test_run_overlay_scriptlet_craftctl_invalid(self, new_dir):
+        """craftctl with non-default command fails."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=OverlayChrootPlugin,
+        )
+        with pytest.raises(errors.ScriptletRunError):
+            sh._run_overlay_scriptlet(
+                "craftctl set version=1.0",
+                work_dir=new_dir,
+            )
+
+    def test_run_overlay_scriptlet_with_user_commands(self, new_dir):
+        """User commands in override-overlay run alongside craftctl default."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=OverlayChrootPlugin,
+        )
+        sh._run_overlay_scriptlet(
+            "craftctl default\ntouch /tmp/user-proof.txt",
+            work_dir=new_dir,
+        )
+        assert Path("/tmp/chroot-proof.txt").exists()
+        assert Path("/tmp/user-proof.txt").exists()
+        Path("/tmp/chroot-proof.txt").unlink()
+        Path("/tmp/user-proof.txt").unlink()
+
+    def test_run_overlay_scriptlet_no_plugin_overlay(self, new_dir):
+        """override-overlay without overlay plugin: craftctl default is no-op."""
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=FooPlugin,
+        )
+        # Should succeed — craftctl default does nothing (`:` no-op)
+        sh._run_overlay_scriptlet(
+            "craftctl default\ntouch /tmp/no-plugin-proof.txt",
+            work_dir=new_dir,
+        )
+        assert Path("/tmp/no-plugin-proof.txt").exists()
+        Path("/tmp/no-plugin-proof.txt").unlink()
+
+    def test_builtin_overlay_empty_commands(self, new_dir):
+        """Plugin with uses_overlay=True but empty chroot commands: no-op."""
+
+        class EmptyOverlayPlugin(plugins.Plugin):
+            properties_class = plugins.PluginProperties
+            uses_overlay = True
+
+            def get_overlay_chroot_commands(self):
+                return []
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=EmptyOverlayPlugin,
+        )
+        # Should succeed without error (no-op function body runs `:`)
+        sh.run_builtin()

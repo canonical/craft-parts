@@ -1,8 +1,7 @@
 .. _overlays:
 
-************
-Overlay Step
-************
+Overlay step
+============
 
 Some Craft applications, such as Rockcraft_, include entire base filesystems in
 addition to the usual part-generated payload. The ``OVERLAY`` step provides the
@@ -12,7 +11,7 @@ means to modify the base filesystem.
 
 .. _overlay_visibility:
 
-Overlay Visibility
+Overlay visibility
 ------------------
 
 By default, a part does not get access to the filesystem overlay. However,
@@ -59,10 +58,10 @@ Each layer's checksum is derived from the combination of the layer's properties
 and the checksum of the layer below it. As a result, a change to any layer will
 require the recalculation of the overlay for all layers above it, and an
 update to the base layer results in the recalculation of all overlays. The
-order of layers is determined by the :ref:`part_processing_order`.
+order of layers is determined by the part processing order.
 
-Filesystem Mutations
-====================
+Filesystem mutations
+--------------------
 
 Mutations to the filesystem may include changes caused by the installation of OS
 packages (including package database updates), the execution of user scripts in
@@ -75,11 +74,8 @@ the four-step lifecycle without overlays. Subtractive changes such as file
 removals are allowed and handled through special whiteout files conforming to
 the `OCI image layer specification`_.
 
-Overlay Processing
-------------------
-
-Step Execution
-==============
+Step execution
+--------------
 
 Each layer in the overlay step is generated under the following rules:
 
@@ -94,8 +90,8 @@ Each layer in the overlay step is generated under the following rules:
 #. Disable the mechanism that handles filesystem layering.
 #. Generate the overlay step state.
 
-Staging Overlay Files
-=====================
+Staging overlay files
+---------------------
 
 When executing the stage step for a part that declares overlay content, the
 consolidated content generated in the overlay step is added to the common stage
@@ -111,7 +107,7 @@ not the intermediate version, of the file is what is made available to relevant
 parts during the build step.
 
 Normalization
-=============
+-------------
 
 Overlay files may be adjusted to work better on a non-root filesystem
 environment (such as converting absolute paths to relative path in symbolic link
@@ -119,8 +115,8 @@ targets), but must not be changed in a way that precludes it from running
 correctly on a root filesystem environment (such as setting an absolute path to
 a non-root environment in a configuration file).
 
-Overlay Package Installation
-============================
+Overlay package installation
+----------------------------
 
 Overlay packages are downloaded in the pull stage into a package cache area and
 made available for installation during the overlay stage, from sources
@@ -138,8 +134,8 @@ Note that the package installation process runs in the context of the overlay
 filesystem (i.e. considering the base filesystem as the root filesystem) so
 that package maintainer scripts are always executed correctly.
 
-Overlay State
--------------
+Overlay state
+~~~~~~~~~~~~~
 
 The overlay state for a particular part includes the overlay script and
 any overlay filesets. The list of overlay packages is included in the state of
@@ -150,4 +146,4 @@ ensuring proper invalidation of those steps if overlay data changes.
 
 
 .. _OCI image layer specification: https://github.com/opencontainers/image-spec/blob/main/layer.md
-.. _Rockcraft: https://documentation.ubuntu.com/rockcraft/en/stable/
+.. _Rockcraft: https://documentation.ubuntu.com/rockcraft/stable/

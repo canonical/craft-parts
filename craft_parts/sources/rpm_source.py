@@ -17,13 +17,12 @@
 """The RPM source handler."""
 
 import logging
-import os
 import subprocess
 import tarfile
 from pathlib import Path
 from typing import Literal
 
-from overrides import override
+from typing_extensions import override
 
 from . import errors
 from .base import (
@@ -39,7 +38,8 @@ logger = logging.getLogger(__name__)
 class RpmSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for an rpm file source."""
 
-    model_config = get_model_config(get_json_extra_schema(r"\.rpm$"))
+    pattern = r"\.rpm$"
+    model_config = get_model_config(get_json_extra_schema(pattern))
     source_type: Literal["rpm"] = "rpm"
 
 
@@ -52,11 +52,11 @@ class RpmSource(FileSourceHandler):
     def provision(
         self,
         dst: Path,
-        keep: bool = False,  # noqa: FBT001, FBT002
+        keep: bool = False,
         src: Path | None = None,
     ) -> None:
         """Extract rpm file contents to the part source dir."""
-        rpm_path = src or self.part_src_dir / os.path.basename(self.source)
+        rpm_path = src or self.part_src_dir / Path(self.source).name
         # NOTE: rpm2archive chosen here because while it's slower, it has broader
         # compatibility than rpm2cpio.
         # --nocompression parameter excluded until all supported platforms

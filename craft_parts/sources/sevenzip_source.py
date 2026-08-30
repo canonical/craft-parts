@@ -17,7 +17,6 @@
 
 """Implement the 7zip file source handler."""
 
-import os
 from pathlib import Path
 from typing import Literal
 
@@ -32,7 +31,8 @@ from .base import (
 class SevenzipSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic for a 7zip file source."""
 
-    model_config = get_model_config(get_json_extra_schema(r"\.7z$"))
+    pattern = r"\.7z$"
+    model_config = get_model_config(get_json_extra_schema(pattern))
     source_type: Literal["7z"] = "7z"
 
 
@@ -48,13 +48,10 @@ class SevenzipSource(FileSourceHandler):
         src: Path | None = None,
     ) -> None:
         """Extract 7z file contents to the part source dir."""
-        if src:
-            sevenzip_file = src
-        else:
-            sevenzip_file = Path(self.part_src_dir, os.path.basename(self.source))
+        sevenzip_file = src or Path(self.part_src_dir, Path(self.source).name)
 
         sevenzip_file = sevenzip_file.expanduser().resolve()
         self._run_output(["7z", "x", f"-o{dst}", str(sevenzip_file)])
 
         if not keep:
-            os.remove(sevenzip_file)
+            sevenzip_file.unlink()

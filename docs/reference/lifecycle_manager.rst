@@ -1,6 +1,5 @@
-*****************
 Lifecycle manager
-*****************
+=================
 
 The lifecycle manager holds information about the parts specification
 and the project state, and coordinates planning and execution of actions

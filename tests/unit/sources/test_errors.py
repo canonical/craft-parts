@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 from craft_parts.sources import errors
 
 
@@ -23,6 +24,15 @@ def test_invalid_source_type():
     assert err.brief == (
         "Failed to pull source: unable to determine source type of 't-death.adf'."
     )
+    assert err.details is None
+    assert err.resolution is None
+
+
+def test_invalid_source_type_with_type():
+    err = errors.InvalidSourceType("t-death.adf", source_type="yolo")
+    assert err.source == "t-death.adf"
+    assert err.source_type == "yolo"
+    assert err.brief == ("Failed to pull source: unknown source-type 'yolo'.")
     assert err.details is None
     assert err.resolution is None
 
@@ -56,9 +66,36 @@ def test_checksum_mismatch():
     err = errors.ChecksumMismatch(expected="1234", obtained="5678")
     assert err.expected == "1234"
     assert err.obtained == "5678"
-    assert err.brief == "Expected digest 1234, obtained 5678."
-    assert err.details is None
-    assert err.resolution is None
+    assert err.part_name is None
+    assert err.source is None
+    assert err.brief == "Failed to pull source: checksum mismatch."
+    assert err.details == "Expected digest 1234, obtained 5678."
+    assert (
+        err.resolution == "Make sure the source-checksum matches the downloaded source."
+    )
+
+
+def test_checksum_mismatch_with_part_name():
+    err = errors.ChecksumMismatch(
+        expected="1234",
+        obtained="5678",
+        part_name="foo",
+        source="http://test.com/some_file",
+    )
+    assert err.part_name == "foo"
+    assert err.source == "http://test.com/some_file"
+    assert err.brief == "Failed to pull source: checksum mismatch for part 'foo'."
+    assert err.details == "Expected digest 1234, obtained 5678."
+
+
+def test_checksum_mismatch_with_source_only():
+    err = errors.ChecksumMismatch(
+        expected="1234", obtained="5678", source="http://test.com/some_file"
+    )
+    assert err.part_name is None
+    assert err.brief == (
+        "Failed to pull source: checksum mismatch for 'http://test.com/some_file'."
+    )
 
 
 def test_source_update_unsupported():
@@ -128,9 +165,12 @@ def test_pull_error():
     assert err.resolution == "Make sure sources are correctly specified."
 
 
-def test_vcs_error():
-    err = errors.VCSError("cvs: everything failed")
+@pytest.mark.parametrize(
+    "args", [{}, {"resolution": None}, {"resolution": "test-resolution"}]
+)
+def test_vcs_error(args):
+    err = errors.VCSError("cvs: everything failed", **args)
     assert err.message == "cvs: everything failed"
     assert err.brief == "cvs: everything failed"
     assert err.details is None
-    assert err.resolution is None
+    assert err.resolution == args.get("resolution")

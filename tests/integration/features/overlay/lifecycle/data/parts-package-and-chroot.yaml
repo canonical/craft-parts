@@ -1,0 +1,4 @@
+parts:
+  mypart:
+    plugin: package-overlay
+    source: .

@@ -1,0 +1,143 @@
+.. _python_v2_plugin:
+
+Python plugin (v2)
+==================
+
+The Python plugin (v2) is the successor to the :ref:`craft_parts_python_plugin`. It can
+be used for Python projects where you would want to do any of the following things:
+
+* Import Python modules with a ``requirements.txt`` file.
+* Build a Python project that has a ``setup.py`` or ``pyproject.toml`` file.
+* Install packages with pip.
+
+
+.. _python_v2_plugin-keywords:
+
+Keys
+----
+
+This plugin provides the following unique keys.
+
+
+python-requirements
+~~~~~~~~~~~~~~~~~~~
+
+**Type:** list of strings
+
+List of paths to requirements files.
+
+Use this key when dependencies must be installed from one or more explicit
+requirements files, such as ``requirements.txt``. The plugin does not
+automatically select a requirements file from the source tree; each file must be
+listed here.
+
+A part does not need this key when its dependencies are already declared by the
+project metadata used during package installation. For example, when the source
+contains a ``setup.py`` or ``pyproject.toml`` file, the plugin installs the
+project and pip resolves the dependencies declared by the package itself. That metadata may also come from configuration files such as ``setup.cfg``.
+
+
+python-packages
+~~~~~~~~~~~~~~~
+
+**Type:** list of strings
+
+Additional Python packages to install with pip.
+
+
+.. _python_plugin_v2-environment_variables:
+
+Environment variables
+---------------------
+
+This plugin also sets environment variables in the build environment. These are defined
+in the following sections.
+
+
+PIP_PYTHON
+~~~~~~~~~~
+
+**Default:** The first instance of ``python3`` in the ``PATH``.
+
+The Python interpreter for pip to use.
+
+
+.. _python_plugin_v2-details-begin:
+
+Dependencies
+------------
+
+The Python plugin (v2) needs the ``python3`` executable, but it does not provision it
+itself and won't use a system-wide executable.
+
+The recommended way of providing a Python executable to the plugin is to install it as a
+``stage-package``. Alternatively, a part can be added to build ``python3`` from source
+and stage the binary. Then, the consuming part can declare its dependence on the binary
+by using the ``after`` key, like so:
+
+.. code-block:: yaml
+
+    parts:
+      python-bin:
+        plugin: autotools
+        source: https://github.com/python/cpython.git
+        stage:
+          - ./python
+
+      python-app:
+        plugin: python
+        source: .
+        after:
+          - python-bin
+
+.. _python_plugin_v2-details-end:
+
+
+How it works
+------------
+
+During the build step, the plugin performs the following actions:
+
+#. Set ``PIP_USER`` to ``1``, equivalent to the ``--user`` argument. The `the pip
+   documentation <https://pip.pypa.io/en/stable/cli/pip_install/#install-user>`_
+   describes this argument in detail.
+#. The ``PYTHONUSERBASE`` is set to the part's install directory, which pip uses as a
+   destination.
+#. Use pip to install all of the requirements from ``python-requirements`` and packages
+   from ``python-packages``. This step will also install the project described in the
+   ``setup.py`` or ``pyproject.toml`` file, if present.
+#. A `sitecustomize <https://docs.python.org/3/library/site.html>`_ file is created,
+   which adds the files from the part's install directory to Python's runtime import
+   path.
+
+Examples
+--------
+
+The following example declares a part using the Python plugin with a Git source.
+It installs the ``pyfiglet`` package from a remote Git repository:
+
+.. code-block:: yaml
+
+  parts:
+    pyfiglet:
+      plugin: python
+      source-type: git
+      source: https://github.com/snapcraft-docs/pyfiglet
+
+The following example declares a part using the Python plugin with an index mirror.
+It selects the project's ``requirements.txt`` file with the ``python-requirements`` key:
+
+.. code-block:: yaml
+
+   parts:
+     my-part:
+       plugin: python
+       python-requirements:
+         - requirements.txt
+
+The ``requirements.txt`` declares a custom mirror for its package index:
+
+.. code-block:: text
+
+   -i https://example-mirror.com
+

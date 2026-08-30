@@ -29,13 +29,19 @@ from .local_source import LocalSource, LocalSourceModel
 from .rpm_source import RpmSource, RpmSourceModel
 from .sevenzip_source import SevenzipSource, SevenzipSourceModel
 from .snap_source import SnapSource, SnapSourceModel
-from .sources import SourceHandler, get_source_handler, get_source_type_from_uri
+from .sources import (
+    SourceHandler,
+    get_source_handler,
+    get_source_type_from_uri,
+    register,
+    unregister,
+)
 from .tar_source import TarSource, TarSourceModel
 from .zip_source import ZipSource, ZipSourceModel
 
 
 def _detect_source_type(
-    data: SourceModel | dict[str, Any]
+    data: SourceModel | dict[str, Any],
 ) -> SourceModel | dict[str, Any]:
     """Get the source type for a source if it's not already provided."""
     if isinstance(data, BaseSourceModel) or "source-type" in data:
@@ -60,11 +66,13 @@ SourceModel = Annotated[
 
 
 __all__ = [
+    "BaseFileSourceModel",
     "errors",
     "DebSource",
     "DebSourceModel",
     "FileSource",
     "FileSourceModel",
+    "get_source_handler",
     "GitSource",
     "GitSourceModel",
     "LocalSource",
@@ -75,8 +83,11 @@ __all__ = [
     "SevenzipSourceModel",
     "SnapSource",
     "SnapSourceModel",
+    "SourceHandler",
     "TarSource",
     "TarSourceModel",
     "ZipSource",
     "ZipSourceModel",
+    "register",
+    "unregister",
 ]

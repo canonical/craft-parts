@@ -83,12 +83,12 @@ def _fix_artifacts(unpack_dir: Path, repository: "RepositoryType") -> None:
         # non-directories will be in files.
         for entry in itertools.chain(files, dirs):
             path = Path(root, entry)
-            if path.is_symlink() and Path(os.readlink(path)).is_absolute():
+            if path.is_symlink() and path.readlink().is_absolute():
                 _fix_symlink(path, unpack_dir, Path(root), repository)
             elif path.exists():
                 _fix_filemode(path)
 
-            if path.name.endswith(".pc") and path.is_file() and not path.is_symlink():
+            if path.suffix == ".pc" and path.is_file() and not path.is_symlink():
                 fix_pkg_config(unpack_dir, path)
 
 
@@ -123,13 +123,13 @@ def _fix_symlink(
         str(unpack_dir),
         str(root),
     )
-    host_target = os.readlink(path)
-    if host_target in repository.get_package_libraries("libc6"):
+    host_target = path.readlink()
+    if host_target.as_posix() in repository.get_package_libraries("libc6"):
         logger.debug("Not fixing symlink %s: it's pointing to libc", host_target)
         return
 
-    target = unpack_dir / os.readlink(path)[1:]
-    logger.debug("fix symlink: target=%r", str(target))
+    target = unpack_dir / path.readlink().as_posix()[1:]
+    logger.debug("fix symlink: target=%r", target)
 
     if not target.exists() and not _try_copy_local(path, target):
         return
@@ -150,7 +150,7 @@ def _try_copy_local(path: Path, target: Path) -> bool:
     if real_path.exists():
         logger.warning("Copying needed target link from the system: %s", real_path)
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(os.readlink(path), target)
+        shutil.copyfile(path.readlink(), target)
         return True
 
     logger.warning("%s will be a dangling symlink", path)
@@ -173,6 +173,10 @@ def fix_pkg_config(
     - From snaps built locally: `<local-path-to-project>/stage`
     - Built during the build stage: the install directory
 
+    But if the prefix begins with `pcfiledir` variable, it must be kept as-is,
+    because that variable refers to the current location of the .pc file. It
+    allows to create "relocatable" pkgconfig files, so no changes are required.
+
     :param pkg_config_file: pkg-config (.pc) file to modify
     :param prefix_prepend: directory to prepend to the prefix
     :param prefix_trim: directory to remove from prefix
@@ -185,10 +189,17 @@ def fix_pkg_config(
         f"^prefix=(?P<trim>{'|'.join(prefixes_to_trim)})(?P<prefix>.*)"
     )
     pattern = re.compile("^prefix=(?P<prefix>.*)")
+    pattern_pcfiledir = re.compile("^prefix *= *[$]{pcfiledir}.*")
 
     # process .pc file
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
         for line in input_file:
+            # If the prefix begins with ${pcfiledir} statement, this is
+            # a position-independent (thus, "relocatable") .pc file, so
+            # no changes are required.
+            if pattern_pcfiledir.search(line) is not None:
+                print(line, end="")
+                continue
             match = pattern.search(line)
             match_trim = pattern_trim.search(line)
 
@@ -252,7 +263,10 @@ def _rewrite_python_shebangs(root_dir: Path) -> None:
 
 
 def _replace_in_file(
-    directory: Path, file_pattern: Pattern, search_pattern: Pattern, replacement: str
+    directory: Path,
+    file_pattern: Pattern[str],
+    search_pattern: Pattern[str],
+    replacement: str,
 ) -> None:
     """Search and replaces patterns that match a file pattern.
 
@@ -272,7 +286,7 @@ def _replace_in_file(
 
 
 def _search_and_replace_contents(
-    file_path: Path, search_pattern: Pattern, replacement: str
+    file_path: Path, search_pattern: Pattern[str], replacement: str
 ) -> None:
     """Search file and replace any occurrence of pattern with replacement.
 
@@ -281,7 +295,7 @@ def _search_and_replace_contents(
     :param replacement: The string to replace pattern.
     """
     try:
-        with open(file_path, "r+") as fil:
+        with file_path.open("r+") as fil:
             try:
                 original = fil.read()
             except UnicodeDecodeError:

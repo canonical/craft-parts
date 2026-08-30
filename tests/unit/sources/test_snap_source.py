@@ -14,10 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -31,11 +29,11 @@ class TestSnapSource:
     """Snap source pull tests."""
 
     @pytest.fixture(autouse=True)
-    def setup_method_fixture(self, new_dir, partitions):
+    def setup_method_fixture(self, new_path, partitions):
         # pylint: disable=attribute-defined-outside-init
-        self._path = new_dir
+        self._path = new_path
         self._test_file = _LOCAL_DIR / "data" / "test-snap.snap"
-        self._dest_dir = new_dir / "dest_dir"
+        self._dest_dir = new_path / "dest_dir"
         self._dest_dir.mkdir()
         self._dirs = ProjectDirs(partitions=partitions)
         # pylint: enable=attribute-defined-outside-init
@@ -61,11 +59,11 @@ class TestSnapSource:
             )
         assert raised.value.option == param.replace("_", "-")
 
-    def test_pull_snap_file_must_extract(self, new_dir):
+    def test_pull_snap_file_must_extract(self, new_path):
         source = sources.SnapSource(
-            str(self._test_file),
+            self._test_file,
             self._dest_dir,
-            cache_dir=new_dir,
+            cache_dir=new_path,
             project_dirs=self._dirs,
         )
         source.pull()
@@ -73,11 +71,11 @@ class TestSnapSource:
         assert Path(self._dest_dir / "meta.basic").is_dir()
         assert Path(self._dest_dir / "meta.basic/snap.yaml").is_file()
 
-    def test_has_source_handler_entry_on_linux(self):
-        if sys.platform == "linux":
-            assert sources._source_handler["snap"] is sources.SnapSource
-        else:
-            assert "snap" not in sources._source_handler
+    def test_has_source_handler_entry(self):
+        assert (
+            sources._get_source_handler_class("", source_type="snap")
+            is sources.SnapSource
+        )
 
     def test_pull_failure_bad_unsquash(self, new_dir, mocker):
         mocker.patch(
@@ -106,25 +104,22 @@ class TestGetName:
     """Checks for snap name retrieval from snap.yaml."""
 
     def test_get_name(self):
-        os.mkdir("meta")
+        Path("meta").mkdir()
+        Path("meta", "snap.yaml").write_text("name: my-snap\n")
 
-        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:
-            print("name: my-snap", file=snap_yaml_file)
-        assert snap_source._get_snap_name("snap", ".") == "my-snap"
+        assert snap_source._get_snap_name("snap", Path()) == "my-snap"
 
     def test_no_name_yaml(self):
-        os.mkdir("meta")
-
-        with open(os.path.join("meta", "snap.yaml"), "w") as snap_yaml_file:
-            print("summary: no name", file=snap_yaml_file)
+        Path("meta").mkdir()
+        Path("meta", "snap.yaml").write_text("summary: no name\n")
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:
-            snap_source._get_snap_name("snap", ".")
+            snap_source._get_snap_name("snap", Path())
         assert raised.value.snap_file == "snap"
 
     def test_no_snap_yaml(self):
-        os.mkdir("meta")
+        Path("meta").mkdir()
 
         with pytest.raises(sources.errors.InvalidSnapPackage) as raised:
-            snap_source._get_snap_name("snap", ".")
+            snap_source._get_snap_name("snap", Path())
         assert raised.value.snap_file == "snap"

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021 Canonical Ltd.
+# Copyright 2021,2024 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,11 +14,59 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+from typing import Literal
+
 import pytest
 from craft_parts.dirs import ProjectDirs
 from craft_parts.parts import Part
-from craft_parts.sources import LocalSource, errors, sources
+from craft_parts.sources import LocalSource, base, errors, sources
 from craft_parts.sources.tar_source import TarSource
+
+
+class FakeSourceModel(base.BaseSourceModel, frozen=True):
+    pattern = "a"  # Intentionally a very broad pattern, used below.
+    source_type: Literal["fake"] = "fake"
+
+
+class FakeSource(sources.SourceHandler):
+    source_model = FakeSourceModel
+
+    def pull(self) -> None:
+        raise NotImplementedError
+
+
+@pytest.fixture(autouse=True)
+def reset_sources():
+    sources._SOURCES.clear()
+
+
+def test_register_source():
+    assert "fake" not in sources._SOURCES
+
+    sources.register(FakeSource)
+
+    assert "fake" in sources._SOURCES
+
+
+@pytest.mark.parametrize("source", sources._MANDATORY_SOURCES.values())
+def test_register_builtin_source(source):
+    with pytest.raises(
+        ValueError, match="^Built-in source types cannot be overridden: '"
+    ):
+        sources.register(source)
+
+
+def test_register_unregister_source():
+    assert "fake" not in sources._SOURCES
+
+    sources.register(FakeSource)
+
+    assert "fake" in sources._SOURCES
+
+    sources.unregister("fake")
+
+    assert "fake" not in sources._SOURCES
 
 
 @pytest.mark.parametrize(
@@ -45,24 +93,55 @@ def test_get_source_handler_class_with_invalid_type():
 @pytest.mark.parametrize(
     ("source", "result"),
     [
+        (".", "local"),
+        (".7z", "7z"),
+        (".deb", "deb"),
+        (
+            "http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.39-0ubuntu8.3_amd64.deb",
+            "deb",
+        ),
+        (".rpm", "rpm"),
+        (".snap", "snap"),
         (".tar.gz", "tar"),
         (".tar.bz2", "tar"),
+        (".tar.zst", "tar"),
         (".tgz", "tar"),
         (".tar", "tar"),
         ("git:", "git"),
         ("git@", "git"),
         ("git+ssh:", "git"),
+        ("git+https:", "git"),
         (".git", "git"),
-        ("lp:", "bzr"),
-        ("bzr:", "bzr"),
-        ("svn:", "subversion"),
+        (".zip", "zip"),
     ],
 )
 def test_type_from_uri(source, result):
     assert sources.get_source_type_from_uri(source) == result
 
 
-# pylint: disable=too-many-arguments
+@pytest.mark.parametrize(
+    "source",
+    [
+        # Sources that don't quite match the appropriate value.
+        "7z",
+        "bzr",
+        "deb",
+        "git",
+        "lp",
+        "rpm",
+        "snap",
+        "svn",
+        "zip",
+        "http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.39-0ubuntu8.3_amd64.deb?undetectable_source_type=True",
+        # Sources that are wildly off
+        "https://canonical.com",
+    ],
+)
+def test_unknown_source_type_from_uri(source):
+    with pytest.raises(errors.InvalidSourceType):
+        sources.get_source_type_from_uri(source)
+
+
 @pytest.mark.parametrize(
     ("source_type", "source_branch", "source_tag", "source_commit", "error"),
     [
@@ -100,4 +179,17 @@ def test_sources_with_branch_errors(
     assert err.value.option == error
 
 
-# pylint: enable=too-many-arguments
+@pytest.mark.parametrize("uri", ["a", ".snappy", "some-tar", "a-deb", "git+a"])
+def test_get_registered_source_type_from_uri_success(uri):
+    sources.register(FakeSource)
+
+    assert sources.get_source_type_from_uri(uri) == "fake"
+
+
+@pytest.mark.parametrize("uri", [".snap", "some.tar", "a.deb", "git+https://a"])
+def test_built_in_source_types_preferred_over_registered(uri: str):
+    pattern = str(FakeSourceModel.pattern)
+    assert re.search(pattern, uri), f"URI doesn't match FakeSource pattern: {uri!r}"
+    sources.register(FakeSource)
+
+    assert sources.get_source_type_from_uri(uri) != "fake"
