@@ -17,7 +17,6 @@
 """The craft Rust plugin."""
 
 import logging
-import os
 import re
 import subprocess
 from textwrap import dedent
@@ -121,11 +120,11 @@ class RustPlugin(Plugin):
 
     Rust uses cargo to drive the build.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
         - rust-channel
           (string, default "stable")
           Used to select which Rust channel or version to use.
@@ -209,7 +208,9 @@ class RustPlugin(Plugin):
         options = cast(RustPluginProperties, self._options)
         if options.rust_ignore_toolchain_file:
             return False
-        return os.path.exists("rust-toolchain.toml") or os.path.exists("rust-toolchain")  # noqa: PTH110
+        return (self._part_info.part_build_subdir / "rust-toolchain.toml").exists() or (
+            self._part_info.part_build_subdir / "rust-toolchain"
+        ).exists()
 
     @override
     def get_build_environment(self) -> dict[str, str]:

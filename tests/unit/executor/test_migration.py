@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
 import os
 import stat
 from pathlib import Path
@@ -49,7 +50,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -78,7 +79,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -99,7 +100,7 @@ class TestFileMigration:
             "Expected migrated 'bar' to still be a symlink."
         )
 
-        assert os.readlink(os.path.join(stage_dir, "bar")) == "foo", (  # noqa: PTH115, PTH118
+        assert Path(stage_dir, "bar").readlink() == Path("foo"), (
             "Expected migrated 'bar' to point to 'foo'"
         )
 
@@ -115,7 +116,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -146,7 +147,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["-usr"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition=partition,
         )
@@ -159,7 +160,7 @@ class TestFileMigration:
         assert migrated_dirs == dirs
 
         # Verify that the symlinks were preserved
-        assert files == {"bin"}
+        assert files == {Path("bin")}
         assert dirs == set()
         assert Path(stage_dir, bin_path).is_symlink()
 
@@ -176,7 +177,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -207,7 +208,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -237,7 +238,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -268,7 +269,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -285,7 +286,7 @@ class TestFileMigration:
             "Expected migrated 'bar' to be a symlink."
         )
 
-        assert os.path.islink(os.path.join("stage", "a", "bar")), (  # noqa: PTH114, PTH118
+        assert Path("stage", "a", "bar").is_symlink(), (
             "Expected migrated 'a/bar' to be a symlink."
         )
 
@@ -301,7 +302,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -343,7 +344,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -376,7 +377,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(["*"]),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -391,6 +392,77 @@ class TestFileMigration:
         assert new_mode == stat.S_IMODE(Path(stage_dir, "foo").stat().st_mode)
         assert new_mode == stat.S_IMODE(Path(stage_dir, "foo/bar").stat().st_mode)
 
+    def test_migrate_files_preserves_ownership(self, mock_chown, mocker, partitions):
+        install_dir = Path("install")
+        stage_dir = Path("stage")
+
+        Path(install_dir, "foo").mkdir(parents=True)
+        stage_dir.mkdir()
+
+        Path(install_dir, "foo", "bar").write_text("installed")
+
+        # Force the file to be copied so the implicit chown in copy() runs.
+        mocker.patch.object(
+            os, "link", side_effect=OSError(errno.EXDEV, "cross-device link")
+        )
+
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]),
+            install_dir,
+            default_partition="default",
+            partition="default" if partitions else None,
+        )
+        migration.migrate_files(
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
+            follow_symlinks=False,
+        )
+
+        for source, destination in [
+            (install_dir / "foo", stage_dir / "foo"),
+            (install_dir / "foo" / "bar", stage_dir / "foo" / "bar"),
+        ]:
+            source_stat = source.stat()
+            call = mock_chown[destination]
+            assert call.owner == source_stat.st_uid
+            assert call.group == source_stat.st_gid
+
+    def test_migrate_files_ownership_permission_error(self, mocker, partitions):
+        install_dir = Path("install")
+        stage_dir = Path("stage")
+
+        Path(install_dir, "foo").mkdir(parents=True)
+        stage_dir.mkdir()
+
+        Path(install_dir, "foo", "bar").write_text("installed")
+
+        # Force a copy path so the implicit chown in copy() is exercised.
+        mocker.patch.object(
+            os, "link", side_effect=OSError(errno.EXDEV, "cross-device link")
+        )
+        mocker.patch.object(os, "chown", side_effect=PermissionError)
+
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]),
+            install_dir,
+            default_partition="default",
+            partition="default" if partitions else None,
+        )
+
+        # Should not raise, ownership errors are logged and ignored.
+        migration.migrate_files(
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
+            follow_symlinks=False,
+        )
+
+        assert (stage_dir / "foo").is_dir()
+        assert (stage_dir / "foo" / "bar").read_text() == "installed"
+
     def test_migration_with_permissions(self, mock_chown):
         source = Path("source")
         source.mkdir()
@@ -403,8 +475,8 @@ class TestFileMigration:
         (source / "baz/qux").mkdir()
         (source / "baz/qux/4.txt").touch()
 
-        os.chmod(source / "1.txt", 0o644)  # noqa: PTH101
-        os.chmod(source / "bar/2.txt", 0o555)  # noqa: PTH101
+        (source / "1.txt").chmod(0o644)
+        (source / "bar/2.txt").chmod(0o555)
 
         target = Path("target")
         target.mkdir()
@@ -416,15 +488,20 @@ class TestFileMigration:
         ]
 
         migration.migrate_files(
-            files={"1.txt", "bar/2.txt", "baz/3.txt", "baz/qux/4.txt"},
-            dirs={"bar", "baz", "baz/qux"},
+            files={
+                Path("1.txt"),
+                Path("bar/2.txt"),
+                Path("baz/3.txt"),
+                Path("baz/qux/4.txt"),
+            },
+            dirs={Path("bar"), Path("baz"), Path("baz/qux")},
             srcdir=source,
             destdir=target,
             permissions=permissions,
         )
 
-        assert stat.S_IMODE(os.stat(target / "1.txt").st_mode) == 0o755  # noqa: PTH116
-        assert stat.S_IMODE(os.stat(target / "bar/2.txt").st_mode) == 0o444  # noqa: PTH116
+        assert stat.S_IMODE((target / "1.txt").stat().st_mode) == 0o755
+        assert stat.S_IMODE((target / "bar/2.txt").stat().st_mode) == 0o444
 
         paths_with_chown = [
             "target/baz/3.txt",
@@ -432,9 +509,41 @@ class TestFileMigration:
             "target/baz/qux/4.txt",
         ]
         for p in paths_with_chown:
-            call = mock_chown[p]
+            call = mock_chown[Path(p)]
             assert call.owner == 1111
             assert call.group == 2222
+
+    def test_migration_with_leading_slash_permissions(self, mock_chown):
+        source = Path("source")
+        source.mkdir()
+
+        (source / "var").mkdir()
+        (source / "var/lib").mkdir()
+        (source / "var/lib/zincsearch").mkdir()
+        (source / "var/lib/zincsearch/data.txt").touch()
+
+        target = Path("target")
+        target.mkdir()
+
+        permissions = [
+            Permissions(
+                path="/var/lib/zincsearch", owner=584792, group=584792, mode="755"
+            )
+        ]
+
+        migration.migrate_files(
+            files={Path("var/lib/zincsearch/data.txt")},
+            dirs={Path("var/lib"), Path("var/lib/zincsearch")},
+            srcdir=source,
+            destdir=target,
+            permissions=permissions,
+        )
+
+        assert stat.S_IMODE((target / "var/lib/zincsearch").stat().st_mode) == 0o755
+
+        call = mock_chown[Path("target/var/lib/zincsearch")]
+        assert call.owner == 584792
+        assert call.group == 584792
 
     @pytest.mark.parametrize(
         ("filters", "filemap"),
@@ -471,7 +580,7 @@ class TestFileMigration:
 
         files, dirs = filesets.migratable_filesets(
             Fileset(filters),
-            "install",
+            install_dir,
             default_partition="default",
             partition="default" if partitions else None,
         )
@@ -494,7 +603,7 @@ class TestFileMigrationErrors:
         with pytest.raises(errors.FeatureError) as raised:
             filesets.migratable_filesets(
                 Fileset(["*"]),
-                "install",
+                Path("install"),
                 default_partition="default",
                 partition="default",
             )
@@ -607,7 +716,7 @@ class TestHelpers:
         assert foo_path.is_file()
         assert bar_path.is_dir()
 
-        migration._clean_migrated_files({"foo.txt"}, {"bar"}, stage)
+        migration._clean_migrated_files({Path("foo.txt")}, {Path("bar")}, stage)
 
         assert not foo_path.exists()
         assert not bar_path.exists()
@@ -632,7 +741,7 @@ class TestHelpers:
         handler.run_action(Action("p1", Step.STAGE))
 
         # this shouldn't raise an exception
-        migration._clean_migrated_files({"foo.txt"}, {"bar"}, Path("stage"))
+        migration._clean_migrated_files({Path("foo.txt")}, {Path("bar")}, Path("stage"))
 
 
 class TestFilterWhiteouts:
@@ -641,16 +750,16 @@ class TestFilterWhiteouts:
     def test_file_whiteout_removal(self, new_dir):
         """Expect all whiteout files to be removed."""
         files = {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "a/.wh.bar2.txt",
-            "b/baz.txt",
-            "b/.wh..wh..opq",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("a/.wh.bar2.txt"),
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),
         }
-        dirs = {"a", "b", "c"}
+        dirs = {Path("a"), Path("b"), Path("c")}
 
         # Create a backing file and dir
         Path("foo.txt").touch()
@@ -662,69 +771,69 @@ class TestFilterWhiteouts:
 
         # expect no modification in files or dirs
         assert files == {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",  # backing file exists
-            "a/.wh.bar.txt",  # backing file exists
-            "b/baz.txt",
-            "b/.wh..wh..opq",  # backing dir exists
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),  # backing file exists
+            Path("a/.wh.bar.txt"),  # backing file exists
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),  # backing dir exists
         }
-        assert dirs == {"a", "b", "c"}
+        assert dirs == {Path("a"), Path("b"), Path("c")}
 
     def test_file_whiteout_removal_no_base(self):
         """Ignore whiteout files if no base set."""
         files = {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "b/baz.txt",
-            "b/.wh..wh..opq",
-            ".wh..wh..opq",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),
+            Path(".wh..wh..opq"),
         }
-        dirs = {"a", "b", "c"}
+        dirs = {Path("a"), Path("b"), Path("c")}
 
         migration.filter_dangling_whiteouts(files, dirs, base_dir=None)
 
         # expect no modification in files or dirs
         assert files == {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "b/baz.txt",
-            "b/.wh..wh..opq",
-            ".wh..wh..opq",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),
+            Path(".wh..wh..opq"),
         }
-        assert dirs == {"a", "b", "c"}
+        assert dirs == {Path("a"), Path("b"), Path("c")}
 
     def test_filter_all_whiteouts(self):
         """Expect all whiteout files to be removed."""
         files = {
-            "f1",
-            "f2",
-            "f3",
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "b/baz.txt",
-            "b/.wh..wh..opq",
-            ".wh..wh..opq",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("b/baz.txt"),
+            Path("b/.wh..wh..opq"),
+            Path(".wh..wh..opq"),
         }
 
         whiteouts = migration.filter_all_whiteouts(files)
 
         assert files == {
-            "f1",
-            "f2",
-            "f3",
-            "b/baz.txt",
+            Path("f1"),
+            Path("f2"),
+            Path("f3"),
+            Path("b/baz.txt"),
         }
         assert whiteouts == {
-            ".wh.foo.txt",
-            "a/.wh.bar.txt",
-            "b/.wh..wh..opq",
-            ".wh..wh..opq",
+            Path(".wh.foo.txt"),
+            Path("a/.wh.bar.txt"),
+            Path("b/.wh..wh..opq"),
+            Path(".wh..wh..opq"),
         }

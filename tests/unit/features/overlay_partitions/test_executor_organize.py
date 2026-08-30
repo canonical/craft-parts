@@ -18,12 +18,14 @@ from pathlib import Path
 
 import pytest
 from craft_parts import errors
+from craft_parts.executor.organize import organize_files
+from craft_parts.utils.partition_utils import BUILD_PARTITION, OVERLAY_PARTITION
 
 # Although it's not explicitly used, randomize_iglob is used here as it's an auto-use
 # fixture that checks that the order of an organize doesn't matter.
 from tests.unit.executor.test_organize import (
     organize_and_assert,
-    randomize_iglob,  # noqa: F401
+    randomize_globs,  # noqa: F401
 )
 
 
@@ -44,7 +46,7 @@ from tests.unit.executor.test_organize import (
         ),
         # simple_file
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "bar"},
             "expected": [(["bar"], "")],
         },
@@ -57,7 +59,7 @@ from tests.unit.executor.test_organize import (
         },
         # organize into overlay
         {
-            "setup_files": ["foo"],
+            "setup_files": [Path("foo")],
             "organize_map": {"foo": "(overlay)/bar"},
             "expected": [([], ""), (["bar"], "../overlay_dir")],
         },
@@ -249,10 +251,12 @@ def test_organize(new_dir, data):
                 },
                 "expected": [
                     (["dir"], "../overlay_dir"),
-                    (["child"], "../overlay_dir/dir"),
+                    (["dir1", "dir2"], "../overlay_dir/dir"),
+                    (["child"], "../overlay_dir/dir/dir1"),
+                    (["child"], "../overlay_dir/dir/dir2"),
                 ],
             },
-            id="merge-dir-globs-in-overlay-success",
+            id="nest-dir-globs-in-overlay-success",
         ),
         pytest.param(
             {
@@ -311,5 +315,184 @@ def test_organize_no_overwrite_idempotent(tmp_path, data):
             "default": Path(tmp_path / "install"),
             "overlay": Path(tmp_path / "overlay_dir"),
             "build": Path(tmp_path / "build"),
+        },
+    )
+
+
+def test_organize_glob_to_overlay_with_shared_directory_across_parts(tmp_path):
+    overlay_dir = tmp_path / "overlay_dir"
+    part_a_install = tmp_path / "part-a" / "install"
+    part_b_install = tmp_path / "part-b" / "install"
+    part_a_build = tmp_path / "part-a" / "build"
+    part_b_build = tmp_path / "part-b" / "build"
+
+    for path in [
+        overlay_dir,
+        part_a_install,
+        part_b_install,
+        part_a_build,
+        part_b_build,
+    ]:
+        path.mkdir(parents=True, exist_ok=True)
+
+    (part_a_install / "my-dir").mkdir()
+    organize_files(
+        part_name="part-a",
+        file_map={"*": "(overlay)/"},
+        install_dir_map={
+            "default": part_a_install,
+            "overlay": overlay_dir,
+            "build": part_a_build,
+        },
+        overwrite=False,
+        default_partition="default",
+    )
+
+    (part_b_install / "my-other-dir" / "subdir").mkdir(parents=True)
+    (part_b_install / "my-dir" / "subdir").mkdir(parents=True)
+    organize_files(
+        part_name="part-b",
+        file_map={"*": "(overlay)/"},
+        install_dir_map={
+            "default": part_b_install,
+            "overlay": overlay_dir,
+            "build": part_b_build,
+        },
+        overwrite=False,
+        default_partition="default",
+    )
+
+    assert sorted(path.name for path in overlay_dir.iterdir()) == [
+        "my-dir",
+        "my-other-dir",
+    ]
+    assert (overlay_dir / "my-dir" / "subdir").is_dir()
+    assert (overlay_dir / "my-other-dir" / "subdir").is_dir()
+
+
+def test_organize_merge_overlay_directories(new_path):
+    """Verify that multiple parts can contribute to the same directory in the overlay."""
+    install_dir_a = new_path / "install_a"
+    install_dir_b = new_path / "install_b"
+    overlay_dir = new_path / "overlay_dir"
+
+    install_dir_a.mkdir()
+    install_dir_b.mkdir()
+    overlay_dir.mkdir()
+
+    # Part A contributes a directory
+    (install_dir_a / "my-dir").mkdir(mode=0o755)
+    (install_dir_a / "my-dir" / "file-a").touch()
+
+    organize_files(
+        part_name="part-a",
+        file_map={"*": "(overlay)/"},
+        install_dir_map={"default": install_dir_a, "overlay": overlay_dir},
+        overwrite=False,
+        default_partition="default",
+    )
+
+    # Part B contributes to the same directory with different permissions
+    (install_dir_b / "my-dir").mkdir(mode=0o700)
+    (install_dir_b / "my-dir" / "file-b").touch()
+
+    organize_files(
+        part_name="part-b",
+        file_map={"*": "(overlay)/"},
+        install_dir_map={"default": install_dir_b, "overlay": overlay_dir},
+        overwrite=False,
+        default_partition="default",
+    )
+
+    assert (overlay_dir / "my-dir").is_dir()
+    assert (overlay_dir / "my-dir" / "file-a").exists()
+    assert (overlay_dir / "my-dir" / "file-b").exists()
+
+    # Check that metadata of my-dir was PRESERVED (from Part A)
+    # Part A had 0o755, Part B had 0o700
+    assert ((overlay_dir / "my-dir").stat().st_mode & 0o777) == 0o755
+
+
+def _partition_dirs(base: Path) -> dict[str | None, Path]:
+    base = Path(base)
+    dirs: dict[str | None, Path] = {
+        "default": base / "install",
+        OVERLAY_PARTITION: base / "overlay_dir",
+        BUILD_PARTITION: base / "build_dir",
+    }
+    for directory in dirs.values():
+        directory.mkdir(parents=True, exist_ok=True)
+    return dirs
+
+
+def test_organize_build_file_to_existing_overlay_preserves_build_source(
+    new_dir: Path,
+):
+    """Organizing equivalent files from (build) to (overlay) preserves the source."""
+    install_dirs = _partition_dirs(new_dir)
+    build_file = install_dirs[BUILD_PARTITION] / "foo"
+    overlay_file = install_dirs[OVERLAY_PARTITION] / "foo"
+    build_file.write_text("content", encoding="utf-8")
+    overlay_file.write_text("content", encoding="utf-8")
+
+    organize_files(
+        part_name="part",
+        file_map={"(build)/foo": "(overlay)/foo"},
+        install_dir_map=install_dirs,
+        overwrite=False,
+        default_partition="default",
+    )
+
+    assert build_file.read_text(encoding="utf-8") == "content"
+    assert overlay_file.read_text(encoding="utf-8") == "content"
+
+
+def test_organize_build_symlink_to_overlay_preserves_build_source(
+    new_dir: Path,
+):
+    """Organizing a symlink from (build) to (overlay) preserves the source."""
+    install_dirs = _partition_dirs(new_dir)
+    default_target = install_dirs["default"] / "target"
+    default_target.write_text("content", encoding="utf-8")
+    build_link = install_dirs[BUILD_PARTITION] / "target-link"
+    build_link.symlink_to(default_target)
+
+    organize_files(
+        part_name="part",
+        file_map={"(build)/target-link": "(overlay)/target-link"},
+        install_dir_map=install_dirs,
+        overwrite=False,
+        default_partition="default",
+    )
+
+    overlay_link = install_dirs[OVERLAY_PARTITION] / "target-link"
+
+    assert build_link.is_symlink()
+    assert build_link.readlink() == default_target
+    assert overlay_link.is_symlink()
+    assert overlay_link.readlink() == install_dirs[OVERLAY_PARTITION] / "target"
+
+
+def test_organize_build_file_to_new_overlay_directory(new_dir: Path):
+    """Organizing from (build) to a new overlay directory preserves the source."""
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[],
+        setup_files=[],
+        setup_symlinks=[],
+        setup_build_files=["generated.txt"],
+        organize_map={"(build)/generated.txt": "(overlay)/generated/generated.txt"},
+        expected=[
+            (["generated"], "../overlay_dir"),
+            (["generated.txt"], "../overlay_dir/generated"),
+            (["generated.txt"], "../build_dir"),
+        ],
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={
+            "default": Path(new_dir / "install"),
+            OVERLAY_PARTITION: Path(new_dir / "overlay_dir"),
+            BUILD_PARTITION: Path(new_dir / "build_dir"),
         },
     )

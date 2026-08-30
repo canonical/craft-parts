@@ -98,7 +98,7 @@ build tools and which build tools are used to download and verify dependencies.
     - `Meson <https://mesonbuild.com>`_
     - not provisioned
 
-  * - :ref:`NPM <craft_parts_npm_plugin>`
+  * - :ref:`npm <craft_parts_npm_plugin>`
     - `npm <https://www.npmjs.com/>`_
     - Requests library and `curl <https://curl.se/>`_
 

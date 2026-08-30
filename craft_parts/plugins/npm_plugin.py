@@ -115,11 +115,11 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 class NpmPlugin(Plugin):
     """A plugin for npm projects.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
         - npm-include-node
           (bool; default: False)
           If true, download and include the node binary and its dependencies.
@@ -313,9 +313,9 @@ class NpmPlugin(Plugin):
 
             node_uri = f"https://nodejs.org/dist/{resolved_version}/{file_name}"
             checksum_uri = f"https://nodejs.org/dist/{resolved_version}/SHASUMS256.txt"
-            self._node_binary_path = os.path.join(  # noqa: PTH118
-                self._part_info.part_cache_dir, file_name
-            )
+            self._node_binary_path = (
+                self._part_info.part_cache_dir / file_name
+            ).as_posix()
             cmd += [
                 dedent(
                     f"""\
