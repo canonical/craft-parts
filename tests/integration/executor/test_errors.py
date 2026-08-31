@@ -98,5 +98,5 @@ def test_nested_part_name_errors(new_dir):
     with pytest.raises(errors.PartNameConflict) as raised:
         LifecycleManager(parts, application_name="test", cache_dir=new_dir)
 
-    assert raised.value.part_name == "foo"
-    assert raised.value.conflicting_part_name == "foo/bar"
+    assert raised.value.part_name == "foo/bar"
+    assert raised.value.conflicting_part_name == "foo"
