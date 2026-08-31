@@ -62,31 +62,26 @@ def test_get_build_commands_packages_with_version_operator(new_dir):
     python_plugin = PythonPlugin(part_info=part_info, properties=properties)
 
     commands = python_plugin.get_build_commands()
-    pip_install_index = next(
-        (
-            index
-            for index, command in enumerate(commands)
-            if command.startswith("pip install ")
-        ),
-        None,
-    )
-    assert pip_install_index is not None
+    pip_commands = [
+        command
+        for command in commands
+        if command.startswith(("REQUIREMENTS=", "PACKAGES=", "pip install "))
+    ]
     script = "\n".join(
         [
-            "PIP_PYTHON=python3",
             "pip() { printf '%s\\n' \"$@\"; }",
-            *commands[: pip_install_index + 1],
+            *pip_commands,
         ]
     )
 
     result = subprocess.run(
         ["bash", "-c", script],
-        check=True,
         capture_output=True,
         text=True,
         cwd=new_dir,
     )
 
+    assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == ["install", "gunicorn>=20.0"]
 
 
