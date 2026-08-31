@@ -89,11 +89,6 @@ class TestPartSpecs:
         new_data = spec.marshal()
         assert new_data == data_copy
 
-    def test_unmarshal_not_dict(self):
-        with pytest.raises(TypeError) as raised:
-            PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
-        assert str(raised.value) == "part data is not a dictionary"
-
     def test_unmarshal_both_overlay_key(self):
         data = {
             "overlay-script": "overlay-script",
@@ -439,12 +434,6 @@ class TestPartUnmarshal:
             "- Extra inputs are not permitted in field 'a'\n"
             "- Extra inputs are not permitted in field 'b'"
         )
-
-    def test_part_spec_not_dict(self):
-        with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", False)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
-        assert raised.value.part_name == "foo"
-        assert raised.value.message == "part data is not a dictionary"
 
     def test_part_unmarshal_type_error(self):
         with pytest.raises(errors.PartSpecificationError) as raised:

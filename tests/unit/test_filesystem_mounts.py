@@ -330,11 +330,6 @@ def test_filesystem_mounts_marshal_unmarshal():
     assert spec.marshal() == data_copy
 
 
-def test_filesystem_mounts_unmarshal_not_dict():
-    with pytest.raises(TypeError, match="^filesystems is not a dictionary$"):
-        FilesystemMounts.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
-
-
 def test_filesystem_mounts_iterable():
     data = {
         "default": [

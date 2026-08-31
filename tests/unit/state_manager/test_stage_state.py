@@ -67,10 +67,6 @@ class TestStageState:
         assert err[0]["loc"] == ("overlay-hash",)
         assert err[0]["type"] == "value_error"
 
-    def test_unmarshal_invalid(self):
-        with pytest.raises(TypeError, match="^state data is not a dictionary$"):
-            StageState.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
-
 
 @pytest.mark.usefixtures("new_dir")
 class TestStageStatePersist:

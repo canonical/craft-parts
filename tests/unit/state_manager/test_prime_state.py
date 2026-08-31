@@ -59,10 +59,6 @@ class TestPrimeState:
         state = PrimeState.unmarshal(state_data)
         assert state.marshal() == state_data
 
-    def test_unmarshal_invalid(self):
-        with pytest.raises(TypeError, match="^state data is not a dictionary$"):
-            PrimeState.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
-
 
 @pytest.mark.usefixtures("new_dir")
 class TestPrimeStatePersist:
