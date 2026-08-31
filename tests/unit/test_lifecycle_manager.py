@@ -105,13 +105,13 @@ class TestLifecycleManager:
         [
             (
                 {"foo": {"plugin": "nil"}, "foo/bar": {"plugin": "nil"}},
-                ("foo", "foo/bar"),
+                ("foo/bar", "foo"),
             ),
             (
                 {"foo/bar": {"plugin": "nil"}, "foo": {"plugin": "nil"}},
                 ("foo/bar", "foo"),
             ),
-            ({"a/b": {"plugin": "nil"}, "a/b/c": {"plugin": "nil"}}, ("a/b", "a/b/c")),
+            ({"a/b": {"plugin": "nil"}, "a/b/c": {"plugin": "nil"}}, ("a/b/c", "a/b")),
         ],
     )
     def test_part_name_conflict(self, new_dir, parts, conflict):

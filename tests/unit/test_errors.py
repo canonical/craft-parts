@@ -90,10 +90,10 @@ def test_invalid_part_name():
 
 
 def test_part_name_conflict():
-    err = errors.PartNameConflict(part_name="foo", conflicting_part_name="foo/bar")
-    assert err.part_name == "foo"
-    assert err.conflicting_part_name == "foo/bar"
-    assert err.brief == "Part 'foo' conflicts with 'foo/bar'."
+    err = errors.PartNameConflict(part_name="foo/bar", conflicting_part_name="foo")
+    assert err.part_name == "foo/bar"
+    assert err.conflicting_part_name == "foo"
+    assert err.brief == "Part 'foo/bar' conflicts with 'foo'."
     assert err.details is None
     assert (
         err.resolution
