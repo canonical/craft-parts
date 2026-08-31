@@ -21,8 +21,8 @@ Changelog
 
 .. _release-2.36.0:
 
-Unreleased
-----------
+2.36.0 (2026-08-31)
+-------------------
 
 New features:
 
