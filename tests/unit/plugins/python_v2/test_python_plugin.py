@@ -11,6 +11,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import subprocess
 from textwrap import dedent
 
 from craft_parts import Part, PartInfo, ProjectInfo
@@ -46,6 +47,37 @@ def test_get_build_commands(new_dir):
     ]
 
     assert commands[-1].startswith("# Add a sitecustomize")
+
+
+def test_get_build_commands_packages_with_version_operator(new_dir):
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=info, part=Part("p1", {}))
+    properties = PythonPlugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "python-packages": ["gunicorn~=26.0"],
+        }
+    )
+
+    python_plugin = PythonPlugin(part_info=part_info, properties=properties)
+
+    commands = python_plugin.get_build_commands()
+    script = "\n".join(
+        [
+            "pip() { printf '%s\\n' \"$@\"; }",
+            *commands[1:5],
+        ]
+    )
+
+    result = subprocess.run(
+        ["bash", "-c", script],
+        check=True,
+        capture_output=True,
+        text=True,
+        cwd=new_dir,
+    )
+
+    assert result.stdout.splitlines() == ["install", "gunicorn~=26.0"]
 
 
 def test_get_build_environment(new_dir):
