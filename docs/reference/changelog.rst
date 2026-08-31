@@ -102,6 +102,11 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.34.1`_ release on GitHub.
 
+Documentation:
+
+- Document the ``disable-parallel`` key and parallel build behavior in the
+  Autotools plugin reference.
+
 .. _release-2.33.1:
 
 2.33.1 (2026-06-17)
