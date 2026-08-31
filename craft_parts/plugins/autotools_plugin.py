@@ -47,11 +47,11 @@ class AutotoolsPlugin(Plugin):
     cannot be found, it will first try to run 'autogen.sh' or 'bootstrap'
     to generate one.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    In addition, this plugin uses the following plugin-specific keywords:
+    In addition, this plugin uses the following plugin-specific keys:
 
         - autotools-bootstrap-parameters
           (list of strings)

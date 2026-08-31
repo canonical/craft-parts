@@ -763,6 +763,11 @@ class Ubuntu(BaseRepository):
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
+        # Refresh before resolving packages, because apt-get simulation depends on
+        # the current apt package index.
+        if refresh_package_cache and install_required:
+            cls.refresh_packages_list()
+
         try:
             marked = _get_packages_marked_for_installation_apt_get(
                 package_names, include_recommends=include_recommends
@@ -772,9 +777,6 @@ class Ubuntu(BaseRepository):
             raise errors.BuildPackageNotFound(failed_package) from err
 
         marked_package_names = {name for name, _ in marked}
-
-        if refresh_package_cache and install_required:
-            cls.refresh_packages_list()
 
         if install_required:
             cls._install_packages(package_names, include_recommends=include_recommends)
