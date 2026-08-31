@@ -50,6 +50,7 @@ from craft_parts.utils.partition_utils import (
     DEFAULT_PARTITION,
     OVERLAY_PARTITION,
     get_partition_dir_map,
+    normalize_partition_names,
 )
 from craft_parts.utils.path_utils import get_partition_and_path
 
@@ -731,7 +732,7 @@ class PartSpec(BaseModel):
     @property
     def organizes_to_overlay(self) -> bool:
         """Return whether the part organizes file to the overlay."""
-        if not Features().enable_partitions or not Features().enable_overlay:
+        if not Features().enable_overlay:
             return False
         for dest in self.organize_files.values():
             partition, _ = get_partition_and_path(Path(dest), DEFAULT_PARTITION)
@@ -823,7 +824,7 @@ class Part:
         partitions: Sequence[str] | None = None,
         stage_packages_slice_support: bool = True,
     ) -> None:
-        self._partitions = partitions
+        self._partitions = normalize_partition_names(partitions)
         if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise errors.PartSpecificationError(
                 part_name=name, message="part data is not a dictionary"
@@ -858,7 +859,6 @@ class Part:
                 part_name=name, error_list=err.errors()
             ) from err
 
-        self._check_partition_feature()
         self._check_partition_usage()
         self._check_overlay_script_plugin_conflict()
 
@@ -927,10 +927,10 @@ class Part:
         return self._part_dir / "export"
 
     @property
-    def part_install_dirs(self) -> Mapping[str | None, Path]:
+    def part_install_dirs(self) -> Mapping[str, Path]:
         """Return a mapping of partition names to install directories.
 
-        With partitions disabled, the only partition name is ``None``
+        The default partition maps to the top-level install directory.
         """
         dir_map = get_partition_dir_map(
             base_dir=self.dirs.work_dir,
@@ -972,10 +972,10 @@ class Part:
         return self._part_dir / "layer"
 
     @property
-    def part_layer_dirs(self) -> Mapping[str | None, Path]:
+    def part_layer_dirs(self) -> Mapping[str, Path]:
         """Return a mapping of partition names to layer directories.
 
-        With partitions disabled, the only partition name is ``None``
+        The default partition maps to the top-level layer directory.
         """
         return MappingProxyType(
             get_partition_dir_map(
@@ -991,10 +991,10 @@ class Part:
         return self.dirs.overlay_dir
 
     @property
-    def overlay_dirs(self) -> Mapping[str | None, Path]:
+    def overlay_dirs(self) -> Mapping[str, Path]:
         """A mapping of partition name to partition overlay directory.
 
-        If partitions are disabled, the only key is ``None``.
+        The default partition maps to the top-level overlay directory.
         """
         return self.dirs.overlay_dirs
 
@@ -1012,10 +1012,10 @@ class Part:
         return self.dirs.stage_dir
 
     @property
-    def stage_dirs(self) -> Mapping[str | None, Path]:
+    def stage_dirs(self) -> Mapping[str, Path]:
         """A mapping of partition name to partition staging directory.
 
-        If partitions are disabled, the only key is ``None``.
+        The default partition maps to the top-level stage directory.
         """
         return self.dirs.stage_dirs
 
@@ -1028,10 +1028,10 @@ class Part:
         return self.dirs.prime_dir
 
     @property
-    def prime_dirs(self) -> Mapping[str | None, Path]:
+    def prime_dirs(self) -> Mapping[str, Path]:
         """A mapping of partition name to partition prime directory.
 
-        If partitions are disabled, the only key is ``None``.
+        The default partition maps to the top-level prime directory.
         """
         return self.dirs.prime_dirs
 
@@ -1071,36 +1071,14 @@ class Part:
     @property
     def default_partition(self) -> str:
         """Get the "default" partition from a partition list."""
-        if self._partitions:
-            return self._partitions[0]
-        return DEFAULT_PARTITION
-
-    def _check_partition_feature(self) -> None:
-        """Check if the partitions feature is properly used.
-
-        :raises FeatureError: If partitions are defined but the feature is not enabled.
-        """
-        if self._partitions and not Features().enable_partitions:
-            raise errors.FeatureError(
-                "Partitions specified but partitions feature is not enabled."
-            )
-
-        if self._partitions is None and Features().enable_partitions:
-            raise errors.FeatureError(
-                "Partitions feature is enabled but no partitions specified."
-            )
+        return self._partitions[0]
 
     def _check_partition_usage(self) -> None:
         """Check if partitions are properly used in a part.
 
-        Assumes the partition feature is enabled.
-
         :raises PartitionError: If partitions are not used properly in a fileset.
         :raises PartitionWarning: If a fileset entry is misusing a partition.
         """
-        if not self._partitions:
-            return
-
         error_list: list[str] = []
         warning_list: list[str] = []
 
@@ -1158,9 +1136,6 @@ class Part:
         """
         error_list: list[str] = []
         warning_list: list[str] = []
-
-        if not self._partitions:
-            return warning_list, error_list
 
         partition_pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
         possible_partition_pattern = re.compile("^-?(?P<possible_partition>[a-z]+)/?")

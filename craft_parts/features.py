@@ -30,7 +30,7 @@ class Features(metaclass=Singleton):
     """Configurable craft-parts features.
 
     :cvar enable_overlay: Enables the overlay step.
-    :cvar enable_partitions: Enables the usage of partitions.
+    :cvar enable_partitions: Compatibility-only no-op. Partitions are always enabled.
     """
 
     enable_overlay: bool = False
