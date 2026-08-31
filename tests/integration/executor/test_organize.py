@@ -69,3 +69,85 @@ def test_organize_special_files(new_dir, mocker):
     assert stat.S_ISBLK(os.stat("prime/dest/dev/loop99").st_mode)  # noqa: PTH116
     assert stat.S_ISFIFO(os.stat("prime/dest/bar.fifo").st_mode)  # noqa: PTH116
     assert Path("prime/dest/qux").readlink() == Path("quux")
+
+
+def test_organize_from_empty_string(new_dir, mocker):
+    mocker.patch("craft_parts.lifecycle_manager.packages.Repository.configure")
+    mocker.patch(
+        "craft_parts.executor.part_handler.packages.Repository.get_installed_packages",
+        return_value=[],
+    )
+    mocker.patch(
+        "craft_parts.executor.part_handler.packages.snaps.get_installed_snaps",
+        return_value=[],
+    )
+
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          a:
+            plugin: nil
+            override-build: |
+              mkdir -p "${CRAFT_PART_INSTALL}/my-dir/subdir-a"
+              touch "${CRAFT_PART_INSTALL}/my-file"
+              touch "${CRAFT_PART_INSTALL}/my-dir/subdir-a/file"
+            organize:
+              '': ''
+        """
+    )
+
+    parts = yaml.safe_load(parts_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_organize_from_empty_string",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+    )
+
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert (lf.project_info.prime_dir / "my-file").is_file()
+    assert (lf.project_info.prime_dir / "my-dir/subdir-a/file").is_file()
+
+
+def test_organize_to_same_directory_alias(new_dir, mocker):
+    mocker.patch("craft_parts.lifecycle_manager.packages.Repository.configure")
+    mocker.patch(
+        "craft_parts.executor.part_handler.packages.Repository.get_installed_packages",
+        return_value=[],
+    )
+    mocker.patch(
+        "craft_parts.executor.part_handler.packages.snaps.get_installed_snaps",
+        return_value=[],
+    )
+
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          a:
+            plugin: nil
+            override-build: |
+              mkdir -p "${CRAFT_PART_INSTALL}/my-dir/subdir-a"
+              touch "${CRAFT_PART_INSTALL}/my-file"
+              touch "${CRAFT_PART_INSTALL}/my-dir/subdir-a/file"
+            organize:
+              '': 'my-dir/..'
+        """
+    )
+
+    parts = yaml.safe_load(parts_yaml)
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_organize_to_same_directory_alias",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+    )
+
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert (lf.project_info.prime_dir / "my-file").is_file()
+    assert (lf.project_info.prime_dir / "my-dir/subdir-a/file").is_file()

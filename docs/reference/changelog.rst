@@ -49,6 +49,8 @@ New features:
   ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
   should set this to False and use the ``stage-slices`` key instead.
 
+- Add the request URL to the error message for package download errors.
+
 - Add part name and resolution to error message for source checksum mismatch.
 
 Bug fixes:
@@ -56,6 +58,9 @@ Bug fixes:
 - The Overlay and Build steps of parts that organize content to the overlay
   are executed before these steps in other parts, even when ``after`` is
   used.
+
+- Skip organization when the resolved destination path and the source path
+  are the same, preventing self-copy and delete.
 
 For a complete list of commits, check out the `2.36.0`_ release on GitHub.
 
