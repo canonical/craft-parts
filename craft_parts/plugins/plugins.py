@@ -39,15 +39,19 @@ from .make_plugin import MakePlugin
 from .maven_plugin import MavenPlugin
 from .maven_use_plugin import MavenUsePlugin
 from .meson_plugin import MesonPlugin
+from .mill_plugin import MillPlugin
 from .nil_plugin import NilPlugin
+from .ninja_plugin import NinjaPlugin
 from .npm_plugin import NpmPlugin
 from .npm_use_plugin import NpmUsePlugin
+from .pnpm_plugin import PnpmPlugin
 from .poetry_plugin import PoetryPlugin
 from .properties import PluginProperties
 from .python_plugin import PythonPlugin
 from .qmake_plugin import QmakePlugin
 from .ruby_plugin import RubyPlugin
 from .rust_plugin import RustPlugin
+from .sbt_plugin import SbtPlugin
 from .scons_plugin import SConsPlugin
 from .uv_plugin import UvPlugin
 
@@ -89,13 +93,17 @@ class PluginGroup(enum.Enum):
         "maven": MavenPlugin,
         "maven-use": MavenUsePlugin,
         "meson": MesonPlugin,
+        "mill": MillPlugin,
+        "ninja": NinjaPlugin,
         "npm": NpmPlugin,
         "npm-use": NpmUsePlugin,
+        "pnpm": PnpmPlugin,
         "poetry": PoetryPlugin,
         "python": PythonPlugin,
         "qmake": QmakePlugin,
         "ruby": RubyPlugin,
         "rust": RustPlugin,
+        "sbt": SbtPlugin,
         "scons": SConsPlugin,
         "uv": UvPlugin,
     }

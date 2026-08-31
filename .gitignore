@@ -166,3 +166,6 @@ prime/
 
 # Ruby plugin artifacts
 ruby-install.tar.gz
+
+# Temporary real-world example projects used for plugin validation
+/examples/.local-tests/
