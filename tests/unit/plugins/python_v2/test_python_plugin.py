@@ -55,7 +55,7 @@ def test_get_build_commands_packages_with_version_operator(new_dir):
     properties = PythonPlugin.properties_class.unmarshal(
         {
             "source": ".",
-            "python-packages": ["gunicorn~=26.0"],
+            "python-packages": ["gunicorn>=20.0"],
         }
     )
 
@@ -65,7 +65,7 @@ def test_get_build_commands_packages_with_version_operator(new_dir):
     script = "\n".join(
         [
             "pip() { printf '%s\\n' \"$@\"; }",
-            *commands[1:5],
+            *commands[1:-1],
         ]
     )
 
@@ -77,7 +77,7 @@ def test_get_build_commands_packages_with_version_operator(new_dir):
         cwd=new_dir,
     )
 
-    assert result.stdout.splitlines() == ["install", "gunicorn~=26.0"]
+    assert result.stdout.splitlines() == ["install", "gunicorn>=20.0"]
 
 
 def test_get_build_environment(new_dir):
