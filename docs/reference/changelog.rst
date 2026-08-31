@@ -55,6 +55,9 @@ New features:
 
 Bug fixes:
 
+- Generalize the ``PartitionUsageError`` resolution message to cover invalid
+  partition usage beyond invalid partition names.
+
 - The Overlay and Build steps of parts that organize content to the overlay
   are executed before these steps in other parts, even when ``after`` is
   used.
