@@ -627,6 +627,50 @@ class TestPartUpdateHandler:
         assert out == "hello\n"
         assert err == "+ echo hello\n"
 
+    def test_update_pull_applies_patches(self, mocker, new_dir, partitions):
+        part = Part(
+            "foo",
+            {
+                "plugin": "dump",
+                "source": "subdir",
+                "patches": ["patches/fix.patch"],
+            },
+            partitions=partitions,
+        )
+        project_info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+            project_dirs=self._dirs,
+        )
+        part_info = PartInfo(project_info, part)
+        ovmgr = OverlayManager(
+            project_info=project_info,
+            part_list=[part],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=ovmgr,
+        )
+
+        check_if_outdated = mocker.patch.object(
+            handler._source_handler, "check_if_outdated"
+        )
+        update = mocker.patch.object(handler._source_handler, "update")
+        apply_patches = mocker.patch(
+            "craft_parts.executor.part_handler.apply_source_patches"
+        )
+
+        handler._update_pull(StepInfo(part_info, Step.PULL), stdout=None, stderr=None)
+
+        check_if_outdated.assert_called_once()
+        update.assert_called_once_with()
+        apply_patches.assert_called_once_with(part, stdout=None, stderr=None)
+
     _update_build_path = Path("parts/foo/install/foo.txt")
 
     @pytest.mark.slow

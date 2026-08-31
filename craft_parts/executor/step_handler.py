@@ -38,6 +38,7 @@ from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 from . import filesets
 from .filesets import Fileset
 from .migration import migrate_files
+from .source_patches import apply_source_patches
 
 logger = logging.getLogger(__name__)
 
@@ -142,6 +143,8 @@ class StepHandler:
     def _builtin_pull(self) -> StepContents:
         if self._source_handler:
             self._source_handler.pull()
+
+        apply_source_patches(self._part, stdout=self._stdout, stderr=self._stderr)
 
         pull_commands = self._plugin.get_pull_commands()
 

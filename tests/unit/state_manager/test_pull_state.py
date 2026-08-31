@@ -96,6 +96,7 @@ class TestPullStateChanges:
         relevant_properties = [
             "plugin",
             "source",
+            "patches",
             "source-commit",
             "source-depth",
             "source-tag",
@@ -130,6 +131,7 @@ class TestPullStateChanges:
         relevant_properties = [
             "plugin",
             "source",
+            "patches",
             "source-commit",
             "source-depth",
             "source-tag",

@@ -51,6 +51,9 @@ from the declared location.
 .. kitbash-field:: PartSpec source_subdir
     :label: reference-part-properties-source-subdir
 
+.. kitbash-field:: PartSpec patches
+    :label: reference-part-properties-patches
+
 .. kitbash-field:: PartSpec override_pull
     :label: reference-part-properties-override-pull
 
