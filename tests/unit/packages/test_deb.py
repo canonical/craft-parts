@@ -317,7 +317,7 @@ class TestPackages:
     ):
         mocker.patch("os.geteuid", return_value=0)
         fake_apt_cache.return_value.__enter__.return_value.fetch_archives.side_effect = errors.PackageFetchError(
-            "foo"
+            "http://example.com/mock.deb"
         )
 
         with pytest.raises(errors.PackageFetchError) as raised:
@@ -329,7 +329,7 @@ class TestPackages:
                 arch="amd64",
             )
 
-        assert raised.value.message == "foo"
+        assert raised.value.url == "http://example.com/mock.deb"
         assert fake_deb_run.mock_calls == [call(["apt-get", "update"])]
 
     def test_unpack_stage_packages_dont_normalize(self, tmpdir, mocker):
