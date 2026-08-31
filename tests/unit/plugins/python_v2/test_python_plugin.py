@@ -63,13 +63,17 @@ def test_get_build_commands_packages_with_version_operator(new_dir):
 
     commands = python_plugin.get_build_commands()
     pip_install_index = next(
-        index
-        for index, command in enumerate(commands)
-        if command.startswith("pip install ")
+        (
+            index
+            for index, command in enumerate(commands)
+            if command.startswith("pip install ")
+        ),
+        None,
     )
+    assert pip_install_index is not None
     script = "\n".join(
         [
-            "PIP_PYTHON=/tmp/python3",
+            "PIP_PYTHON=python3",
             "pip() { printf '%s\\n' \"$@\"; }",
             *commands[: pip_install_index + 1],
         ]
