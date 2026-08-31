@@ -1185,6 +1185,22 @@ def test_get_apt_get_error_package_uses_package_reported_by_apt_get():
     )
 
 
+@pytest.mark.parametrize("reported_package", ["libdbus-1-3", "python3-dbus"])
+def test_get_apt_get_error_package_does_not_match_package_name_substring(
+    reported_package,
+):
+    err = subprocess.CalledProcessError(
+        100,
+        ["apt-get", "--simulate", "install"],
+        stderr=f"E: Unable to locate package {reported_package}\n",
+    )
+
+    assert (
+        _get_apt_get_error_package(["dbus", reported_package], err)
+        == reported_package
+    )
+
+
 def test_get_apt_get_error_package_falls_back_to_first_package_name():
     err = subprocess.CalledProcessError(
         100,

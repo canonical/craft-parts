@@ -23,6 +23,7 @@ import json
 import logging
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -566,7 +567,9 @@ def _get_apt_get_error_package(
     output = f"{err.stdout or ''}\n{err.stderr or ''}"
     for package_name in package_names:
         pkg_name, _ = get_pkg_name_parts(package_name)
-        if package_name in output or pkg_name in output:
+        package_pattern = rf"(?<![a-z0-9+.-]){re.escape(package_name)}(?![a-z0-9+.-])"
+        pkg_name_pattern = rf"(?<![a-z0-9+.-]){re.escape(pkg_name)}(?![a-z0-9+.-])"
+        if re.search(package_pattern, output) or re.search(pkg_name_pattern, output):
             return pkg_name
 
     return get_pkg_name_parts(package_names[0])[0]
