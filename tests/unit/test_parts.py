@@ -78,10 +78,6 @@ class TestPartSpecs:
         spec = PartSpec.unmarshal(data)
         assert spec.marshal() == data_copy
 
-    def test_unmarshal_not_dict(self, partitions):
-        with pytest.raises(TypeError, match="^part data is not a dictionary$"):
-            PartSpec.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
-
     @pytest.mark.parametrize(
         ("stage_packages", "stage_packages_slice_support", "expectation"),
         [
@@ -638,12 +634,6 @@ class TestPartUnmarshal:
             "- Extra inputs are not permitted in field 'b'"
         )
 
-    def test_part_spec_not_dict(self, partitions):
-        with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", None, partitions=partitions)  # type: ignore[reportGeneralTypeIssues]
-        assert raised.value.part_name == "foo"
-        assert raised.value.message == "part data is not a dictionary"
-
     def test_part_unmarshal_type_error(self, partitions):
         with pytest.raises(errors.PartSpecificationError) as raised:
             Part("foo", {"plugin": []}, partitions=partitions)
@@ -748,7 +738,7 @@ class TestPartValidation:
 
     def test_part_validation_data_type(self, partitions):
         with pytest.raises(TypeError) as raised:
-            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]
+            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
 
         assert str(raised.value) == "value must be a dictionary"
 

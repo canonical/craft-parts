@@ -477,7 +477,7 @@ class TestPluginProperties:
     """Verify if plugin properties are correctly handled."""
 
     def _get_manager(self, new_dir, **kwargs):
-        manager_kwargs = {
+        manager_kwargs: dict[str, Any] = {
             "application_name": "test_manager",
             "cache_dir": new_dir,
         }

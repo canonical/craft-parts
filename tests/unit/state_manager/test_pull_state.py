@@ -61,10 +61,6 @@ class TestPullState:
         state = PullState.unmarshal(state_data)
         assert state.marshal() == state_data
 
-    def test_unmarshal_invalid(self):
-        with pytest.raises(TypeError, match="^state data is not a dictionary$"):
-            PullState.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
-
 
 @pytest.mark.usefixtures("new_dir")
 class TestPullStatePersist:

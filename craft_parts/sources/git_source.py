@@ -489,8 +489,8 @@ class GitSource(SourceHandler):
         components = version.split(".", maxsplit=2)
 
         # Ignore the type, the regex already asserts that it will be a 3-piece tuple
-        # but mypy believes this is `tuple[int, ...]`
-        return tuple(int(component) for component in components)  # type: ignore[return-value]
+        # but type checkers believe this is `tuple[int, ...]`
+        return tuple(int(component) for component in components)  # type: ignore[return-value]  # ty: ignore[invalid-return-type]
 
 
 class ShallowFetchError(Exception):

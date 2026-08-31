@@ -1,4 +1,4 @@
-import distro  # type: ignore[import-not-found]
+import distro  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
 
 
 def main() -> int:
