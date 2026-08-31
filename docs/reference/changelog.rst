@@ -49,6 +49,9 @@ New features:
   ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
   should set this to False and use the ``stage-slices`` key instead.
 
+- Collect the names of all invalid apt stage packages instead of raising an error
+  as soon as the first invalid entry is found.
+  
 - Add the request URL to the error message for package download errors.
 
 - Add part name and resolution to error message for source checksum mismatch.

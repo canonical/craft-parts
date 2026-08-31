@@ -102,10 +102,11 @@ class BaseRepository(abc.ABC):
         should return a list of the actually installed packages in the form
         "package=version".
 
-        If one of the packages cannot be found :class:`BuildPackageNotFound`
-        should be raised. If dependencies for a package cannot be resolved
-        :class:`PackageBroken` should be raised. If installing a package on the
-        host failed :class:`BuildPackagesNotInstalled` should be raised.
+        If any of the packages cannot be found :class:`BuildPackagesNotFound`
+        should be raised (including all missing package entries). If dependencies
+        for a package cannot be resolved :class:`PackageBroken` should be raised.
+        If installing a package on the host failed :class:`BuildPackagesNotInstalled`
+        should be raised.
 
         :param package_names: A list of package names to install.
         :param refresh_package_cache: Refresh the cache before installing.

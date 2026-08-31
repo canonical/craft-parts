@@ -126,15 +126,19 @@ class FileProviderNotFound(PackagesError):  # noqa: N818
         super().__init__(brief=brief)
 
 
-class BuildPackageNotFound(PackagesError):  # noqa: N818
-    """A package listed in 'build-packages' was not found.
+class BuildPackagesNotFound(PackagesError):  # noqa: N818
+    """One or more packages listed in 'build-packages' were not found.
 
-    :param package: The name of the missing package.
+    :param packages: The names of the missing packages.
     """
 
-    def __init__(self, package: str) -> None:
-        self.package = package
-        brief = f"Cannot find package listed in 'build-packages': {package}"
+    def __init__(self, packages: Sequence[str]) -> None:
+        if isinstance(packages, str):
+            self.packages = [packages]
+        else:
+            self.packages = packages
+        missing_pkgs = formatting_utils.humanize_list(packages, "and")
+        brief = f"Cannot find packages listed in 'build-packages': {missing_pkgs}"
 
         super().__init__(brief=brief)
 
