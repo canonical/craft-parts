@@ -437,8 +437,13 @@ def _validate_part_names(parts_data: dict[str, Any]) -> None:
     for i, part_name in enumerate(part_names):
         for other_name in part_names[i + 1 :]:
             if _part_names_conflict(part_name, other_name):
+                nested, parent = (
+                    (part_name, other_name)
+                    if len(part_name.split("/")) > len(other_name.split("/"))
+                    else (other_name, part_name)
+                )
                 raise errors.PartNameConflict(
-                    part_name=part_name, conflicting_part_name=other_name
+                    part_name=nested, conflicting_part_name=parent
                 )
 
 
