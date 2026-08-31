@@ -177,6 +177,8 @@ class LifecycleManager:
 
         executor.expand_environment(parts_data, info=project_info)
 
+        _validate_part_names(parts_data)
+
         part_list: list[Part] = []
         for name, spec in parts_data.items():
             part = _build_part(
@@ -417,3 +419,46 @@ def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
     for name in part.dependencies:
         if name not in parts_data:
             raise errors.InvalidPartName(name)
+
+
+def _validate_part_names(parts_data: dict[str, Any]) -> None:
+    """Validate that no part name conflicts with another.
+
+    A part name conflicts with another when one part name is nested inside
+    another, e.g. ``foo`` and ``foo/bar``. Nested parts are undefined and may
+    cause a broken build.
+
+    :param parts_data: A mapping of part names to their specification data.
+
+    :raises PartNameConflict: if a conflict is detected.
+    """
+    part_names = list(parts_data.keys())
+
+    for i, part_name in enumerate(part_names):
+        for other_name in part_names[i + 1 :]:
+            if _part_names_conflict(part_name, other_name):
+                raise errors.PartNameConflict(
+                    part_name=part_name, conflicting_part_name=other_name
+                )
+
+
+def _part_names_conflict(a: str, b: str) -> bool:
+    """Return whether one part name is nested inside another.
+
+    Two part names conflict when one is a path prefix of the other. For
+    example, ``foo`` and ``foo/bar`` conflict, but ``foo/bar`` and
+    ``foo/baz`` do not.
+
+    :param a: First part name.
+    :param b: Second part name.
+
+    :returns: True if the part names conflict.
+    """
+    separator = "/"
+    a_parts = a.split(separator)
+    b_parts = b.split(separator)
+
+    if len(a_parts) > len(b_parts):
+        return a_parts[: len(b_parts)] == b_parts
+
+    return b_parts[: len(a_parts)] == a_parts

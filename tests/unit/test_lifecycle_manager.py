@@ -53,13 +53,11 @@ class TestLifecycleManager:
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self) -> None:
         # pylint: disable=attribute-defined-outside-init
-        yaml_data = textwrap.dedent(
-            """
+        yaml_data = textwrap.dedent("""
             parts:
               foo:
                 plugin: nil
-            """
-        )
+            """)
         self._data = yaml.safe_load(yaml_data)
         self._lcm_kwargs: dict[str, Any] = {}
         # pylint: enable=attribute-defined-outside-init
@@ -101,6 +99,49 @@ class TestLifecycleManager:
                 **self._lcm_kwargs,
             )
         assert raised.value.part_name == "trololo"
+
+    @pytest.mark.parametrize(
+        ("parts", "conflict"),
+        [
+            (
+                {"foo": {"plugin": "nil"}, "foo/bar": {"plugin": "nil"}},
+                ("foo", "foo/bar"),
+            ),
+            (
+                {"foo/bar": {"plugin": "nil"}, "foo": {"plugin": "nil"}},
+                ("foo/bar", "foo"),
+            ),
+            ({"a/b": {"plugin": "nil"}, "a/b/c": {"plugin": "nil"}}, ("a/b", "a/b/c")),
+        ],
+    )
+    def test_part_name_conflict(self, new_dir, parts, conflict):
+        data = {"parts": parts}
+        with pytest.raises(errors.PartNameConflict) as raised:
+            lifecycle_manager.LifecycleManager(
+                data,
+                application_name="test",
+                cache_dir=new_dir,
+                **self._lcm_kwargs,
+            )
+        assert raised.value.part_name == conflict[0]
+        assert raised.value.conflicting_part_name == conflict[1]
+
+    @pytest.mark.parametrize(
+        "parts",
+        [
+            {"foo/bar": {"plugin": "nil"}, "foo/baz": {"plugin": "nil"}},
+            {"foo": {"plugin": "nil"}, "bar/foo": {"plugin": "nil"}},
+            {"foo/bar": {"plugin": "nil"}},
+        ],
+    )
+    def test_part_name_no_conflict(self, new_dir, parts):
+        data = {"parts": parts}
+        lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test",
+            cache_dir=new_dir,
+            **self._lcm_kwargs,
+        )
 
     @pytest.mark.parametrize("work_dir", [".", "work_dir"])
     def test_project_info(self, new_dir, work_dir):
