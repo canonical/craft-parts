@@ -37,7 +37,7 @@ class DotnetPluginProperties(PluginProperties, frozen=True):
     dotnet_self_contained_runtime_identifier: str | None = None
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class DotPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

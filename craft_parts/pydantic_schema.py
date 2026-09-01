@@ -44,7 +44,7 @@ class Part(pydantic.BaseModel):
         source_raw_data = {
             key: val for key, val in data.items() if key.startswith("source")
         }
-        source_data: sources.SourceModel = pydantic.TypeAdapter(  # type: ignore[reportUnknownVariableType]
+        source_data: sources.SourceModel = pydantic.TypeAdapter(
             sources.SourceModel
         ).validate_python(source_raw_data)
 
@@ -70,7 +70,7 @@ class Part(pydantic.BaseModel):
 
         # This type is not actually used outside of schema generation, so it is acceptable
         # to be dynamically defined at runtime
-        PluginUnion: TypeAlias = reduce(lambda acc, ty: acc | ty, plugin_models)  # type: ignore[reportInvalidTypeForm, valid-type]  # ty: ignore[invalid-type-form]
+        PluginUnion: TypeAlias = reduce(lambda acc, ty: acc | ty, plugin_models)  # ty: ignore[invalid-type-form]
 
         plugin_model = Annotated[
             PluginUnion,  # ty: ignore[invalid-type-form]
@@ -78,8 +78,8 @@ class Part(pydantic.BaseModel):
             pydantic.ConfigDict(extra="allow"),
         ]
 
-        source_adapter = pydantic.TypeAdapter(sources.SourceModel)  # type: ignore[reportUnknownVariableType, var-annotated]
-        plugin_adapter = pydantic.TypeAdapter(plugin_model)  # type: ignore[reportUnknownVariableType]
+        source_adapter = pydantic.TypeAdapter(sources.SourceModel)
+        plugin_adapter = pydantic.TypeAdapter(plugin_model)
         source_json_schema = source_adapter.json_schema(
             by_alias=by_alias,
             ref_template=ref_template,
@@ -96,11 +96,11 @@ class Part(pydantic.BaseModel):
         source_defs = source_json_schema.pop("$defs")
         for model in source_defs.values():
             # Allow properties not prefixed with "source" in source models
-            model["patternProperties"] = {r"^(?!source-)": {}}  # type:ignore[index]
+            model["patternProperties"] = {r"^(?!source-)": {}}
         plugin_defs = plugin_json_schema.pop("$defs")
         for model in plugin_defs.values():
             # Allow extra parts properties for the plugin.
-            model["patternProperties"] = {  # type:ignore[index]
+            model["patternProperties"] = {
                 r"^source\-": {},
                 r"^override\-": {"type": "string"},
                 r"^(build|stage)\-(packages|snaps)$": {"type": "array"},

@@ -29,7 +29,7 @@ import craft_parts
 import craft_parts.packages
 import pytest
 from craft_parts.features import Features
-from xdg import BaseDirectory  # type: ignore[import]
+from xdg import BaseDirectory
 
 from . import fake_servers
 from .fake_snap_command import FakeSnapCommand
@@ -239,15 +239,11 @@ def temp_xdg(tmp_path: Path, mocker):
     )
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
-        new=[
-            BaseDirectory.xdg_config_home  # pyright: ignore[reportGeneralTypeIssues]
-        ],
+        new=[BaseDirectory.xdg_config_home],
     )
     mocker.patch(
         "xdg.BaseDirectory.xdg_data_dirs",
-        new=[
-            BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
-        ],
+        new=[BaseDirectory.xdg_data_home],
     )
     mocker.patch.dict(
         os.environ, {"XDG_CONFIG_HOME": (tmp_path / ".config").as_posix()}

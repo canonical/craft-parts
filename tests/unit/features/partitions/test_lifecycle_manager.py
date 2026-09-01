@@ -22,7 +22,7 @@ from textwrap import dedent
 from typing import Any
 
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 import yaml
 from craft_parts import errors, lifecycle_manager
 from hypothesis import HealthCheck, given, settings, strategies

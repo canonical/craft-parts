@@ -43,7 +43,7 @@ def test_filesystem_mount_item_unmarshal_not_dict():
     with pytest.raises(
         TypeError, match=r"^Filesystem input data must be a dictionary\.$"
     ):
-        FilesystemMountItem.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
+        FilesystemMountItem.unmarshal(None)  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.parametrize(
@@ -129,7 +129,7 @@ def test_filesystem_mount_marshal_unmarshal(data):
 
 def test_filesystem_mount_unmarshal_not_list():
     with pytest.raises(TypeError, match=r"^Filesystem entry must be a list\.$"):
-        FilesystemMount.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
+        FilesystemMount.unmarshal(None)  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.parametrize(

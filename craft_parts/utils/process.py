@@ -62,7 +62,7 @@ class _ProcessStream:
 
         # (Mostly) optimize away the process function if the read handle is empty
         if self.read_fd == DEVNULL:
-            self.process = self._process_nothing  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
+            self.process = self._process_nothing  # ty: ignore[invalid-assignment]
 
     @property
     def singular(self) -> bytes:

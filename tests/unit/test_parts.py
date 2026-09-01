@@ -738,7 +738,7 @@ class TestPartValidation:
 
     def test_part_validation_data_type(self, partitions):
         with pytest.raises(TypeError) as raised:
-            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
+            parts.validate_part("invalid data")  # ty: ignore[invalid-argument-type]
 
         assert str(raised.value) == "value must be a dictionary"
 
