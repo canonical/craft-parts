@@ -316,8 +316,8 @@ class TestPluginNpmPlugin:
             ),
             (
                 f'tar -xzf "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"'
-                ' -C "${CRAFT_PART_INSTALL}/"                     --no-same-owner '
-                "--strip-components=1\n"
+                ' -C "${CRAFT_PART_INSTALL}/" \\\n'
+                "    --no-same-owner --strip-components=1\n"
             ),
             (
                 'NPM_VERSION="$(npm --version)"\n'

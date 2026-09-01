@@ -334,7 +334,7 @@ class NpmPlugin(Plugin):
             cmd += [
                 dedent(
                     f"""\
-                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
+                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \\
                     --no-same-owner --strip-components=1
                 """
                 ),
