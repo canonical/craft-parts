@@ -41,12 +41,39 @@ logger = logging.getLogger(__name__)
 
 MAX_COMMIT_LENGTH = 40
 
+# Mutually exclusive git source options as declared in the JSON schema.
+_SOURCE_REFS = ("source-tag", "source-branch", "source-commit")
+
+
+def _get_json_extra_schema(type_pattern: str) -> dict[str, Any]:
+    """Get extra values for the git source JSON schema.
+
+    Declares that ``source-tag``, ``source-branch`` and ``source-commit`` are
+    mutually exclusive.
+    """
+    one_of: list[dict[str, Any]] = [
+        {
+            "required": [ref],
+            "not": {
+                "anyOf": [
+                    {"required": [other]} for other in _SOURCE_REFS if other != ref
+                ]
+            },
+        }
+        for ref in _SOURCE_REFS
+    ]
+    one_of.append({"not": {"anyOf": [{"required": [ref]} for ref in _SOURCE_REFS]}})
+
+    schema: dict[str, Any] = get_json_extra_schema(type_pattern)
+    schema["oneOf"] = one_of
+    return schema
+
 
 class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
     """Pydantic model for a git-based source."""
 
     pattern = r"(^git(\+.+:|[@:])|\.git$)"
-    model_config = get_model_config(get_json_extra_schema(r"(^git[+@:]|\.git$)"))
+    model_config = get_model_config(_get_json_extra_schema(r"(^git[+@:]|\.git$)"))
     source_type: Literal["git"] = "git"
     source: str
     source_tag: str | None = None
@@ -169,7 +196,7 @@ class GitSource(SourceHandler):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        source: str,
+        source: str | Path,
         part_src_dir: Path,
         **kwargs: Any,
     ) -> None:
@@ -291,12 +318,13 @@ class GitSource(SourceHandler):
             "advice.detachedHead=false",
             "clone",
         ]
-        if self.source_submodules is None:
-            command.append("--recursive")
-        else:
-            command.extend(
-                ["--recursive=" + submodule for submodule in self.source_submodules]
-            )
+        if not self.source_commit:
+            if self.source_submodules is None:
+                command.append("--recursive")
+            else:
+                command.extend(
+                    ["--recursive=" + submodule for submodule in self.source_submodules]
+                )
         if self.source_tag or self.source_branch:
             command.extend(
                 ["--branch", cast(str, self.source_tag or self.source_branch)]
@@ -321,6 +349,27 @@ class GitSource(SourceHandler):
                 "checkout",
                 full_commit,
             ]
+            logger.debug("Executing: %s", " ".join([str(i) for i in command]))
+            self._run(command)
+            command_prefix = [get_git_command(), "-C", str(self.part_src_dir)]
+            self._update_submodules(command_prefix)
+
+    def _update_submodules(self, command_prefix: list[str]) -> None:
+        """Update configured submodules after the repository is at the right ref."""
+        # source_submodules can either be None or [], which behave differently.
+        # submodule update doesn't have the `--recursive=` syntax that clone does,
+        # so we only run this command for the default behavior
+        # (None = all modules) or for explicitly requested modules.
+        if self.source_submodules is None or self.source_submodules:
+            command = [
+                *command_prefix,
+                "submodule",
+                "update",
+                "--init",
+                "--recursive",
+            ]
+            if self.source_submodules:
+                command.extend(self.source_submodules)
             logger.debug("Executing: %s", " ".join([str(i) for i in command]))
             self._run(command)
 
@@ -374,22 +423,7 @@ class GitSource(SourceHandler):
         command = [*command_prefix, "checkout", full_commit]
         self._run(command)
 
-        # source_submodules can either be None or [], which behave differently.
-        # submodule update doesn't have the `--recursive=` syntax that clone does,
-        # so instead we just only run this command for the default behavior
-        # (None = all modules) or for explicitly requested modules.
-        if self.source_submodules is None or self.source_submodules:
-            command = [
-                *command_prefix,
-                "submodule",
-                "update",
-                "--init",
-                "--recursive",
-            ]
-            if self.source_submodules:
-                command.extend(self.source_submodules)
-            logger.debug("Executing: %s", " ".join([str(i) for i in command]))
-            self._run(command)
+        self._update_submodules(command_prefix)
 
     def is_local(self) -> bool:
         """Verify whether the git repository is on the local filesystem."""
@@ -455,8 +489,8 @@ class GitSource(SourceHandler):
         components = version.split(".", maxsplit=2)
 
         # Ignore the type, the regex already asserts that it will be a 3-piece tuple
-        # but mypy believes this is `tuple[int, ...]`
-        return tuple(int(component) for component in components)  # type: ignore[return-value]
+        # but type checkers believe this is `tuple[int, ...]`
+        return tuple(int(component) for component in components)  # type: ignore[return-value]  # ty: ignore[invalid-return-type]
 
 
 class ShallowFetchError(Exception):

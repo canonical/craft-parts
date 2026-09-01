@@ -76,10 +76,13 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache.
 
         :param package_names: A list with the names of the packages to download.
+        :param include_recommends: Whether or not to include recommended packages.
         """
 
     @classmethod
@@ -88,8 +91,8 @@ class BaseRepository(abc.ABC):
         cls,
         package_names: list[str],
         *,
-        list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,
     ) -> list[str]:
         """Install packages on the host system.
 
@@ -105,8 +108,8 @@ class BaseRepository(abc.ABC):
         host failed :class:`BuildPackagesNotInstalled` should be raised.
 
         :param package_names: A list of package names to install.
-        :param list_only: Only list the packages that would be installed.
         :param refresh_package_cache: Refresh the cache before installing.
+        :param include_recommends: Whether or not to include recommended packages.
 
         :return: A list with the packages installed and their versions.
         """
@@ -139,18 +142,13 @@ class BaseRepository(abc.ABC):
         stage_packages_path: Path,
         base: str,
         arch: str,
-        list_only: bool = False,
     ) -> list[str]:
         """Fetch stage packages to stage_packages_path.
 
-        :param application_name: A unique identifier for the application
-            using Craft Parts.
         :param package_names: A list with the names of the packages to fetch.
-        :stage_packages_path: The path stage packages will be fetched to.
+        :param stage_packages_path: The path stage packages will be fetched to.
         :param base: The base this project will run on.
         :param arch: The architecture of the packages to fetch.
-        :param list_only: Whether to obtain a list of packages to be fetched
-            instead of actually fetching the packages.
 
         :return: The list of all packages to be fetched, including dependencies.
         """
@@ -205,7 +203,9 @@ class DummyRepository(BaseRepository):
 
     @override
     @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache."""
 
     @override
@@ -214,8 +214,8 @@ class DummyRepository(BaseRepository):
         cls,
         package_names: list[str],
         *,
-        list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,
     ) -> list[str]:
         """Install packages on the host system."""
         logger.debug("Package manager not defined, not installing any packages")
@@ -265,21 +265,21 @@ def get_pkg_name_parts(pkg_name: str) -> tuple[str, str | None]:
     return name, version
 
 
-def read_origin_stage_package(path: str) -> str | None:
+def read_origin_stage_package(path: Path) -> str | None:
     """Read origin stage package."""
     return xattrs.read_xattr(path, _STAGE_PACKAGE_KEY)
 
 
-def write_origin_stage_package(path: str, value: str) -> None:
+def write_origin_stage_package(path: Path, value: str) -> None:
     """Write origin stage package."""
     xattrs.write_xattr(path, _STAGE_PACKAGE_KEY, value)
 
 
-def mark_origin_stage_package(sources_dir: str, stage_package: str) -> None:
+def mark_origin_stage_package(sources_dir: Path, stage_package: str) -> None:
     """Mark all files in sources_dir as coming from stage_package."""
     for root, _, files in os.walk(sources_dir):
         for file_name in files:
-            file_path = os.path.join(root, file_name)  # noqa: PTH118
+            file_path = Path(root, file_name)
 
             # Mark source.
             write_origin_stage_package(file_path, stage_package)

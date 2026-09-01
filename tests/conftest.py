@@ -28,8 +28,8 @@ from unittest import mock
 import craft_parts
 import craft_parts.packages
 import pytest
-import xdg  # type: ignore[import]
 from craft_parts.features import Features
+from xdg import BaseDirectory  # type: ignore[import]
 
 from . import fake_servers
 from .fake_snap_command import FakeSnapCommand
@@ -91,6 +91,7 @@ def new_dir(monkeypatch, tmpdir):
 
 @pytest.fixture
 def new_path(monkeypatch, tmp_path):
+    """Change to a new temporary directory and returns its path."""
     monkeypatch.chdir(tmp_path)
     return tmp_path
 
@@ -181,6 +182,13 @@ def partitions():
 
 
 @pytest.fixture
+def is_deb_based(mocker):
+    mocker.patch.object(
+        craft_parts.packages.platform, "is_deb_based", autospec=True, return_value=True
+    )
+
+
+@pytest.fixture
 def enable_all_features():
     assert Features().enable_overlay is False
     assert Features().enable_partitions is False
@@ -217,28 +225,33 @@ def mock_overlay_support_prerequisites(mocker, add_overlay_feature):
 
 
 @pytest.fixture(autouse=True)
-def temp_xdg(tmpdir, mocker):
+def temp_xdg(tmp_path: Path, mocker):
     """Use a temporary locaction for XDG directories."""
 
     mocker.patch(
-        "xdg.BaseDirectory.xdg_config_home",
-        new=os.path.join(tmpdir, ".config"),  # noqa: PTH118
+        "xdg.BaseDirectory.xdg_config_home", new=(tmp_path / ".config").as_posix()
     )
-    mocker.patch("xdg.BaseDirectory.xdg_data_home", new=os.path.join(tmpdir, ".local"))  # noqa: PTH118
-    mocker.patch("xdg.BaseDirectory.xdg_cache_home", new=os.path.join(tmpdir, ".cache"))  # noqa: PTH118
+    mocker.patch(
+        "xdg.BaseDirectory.xdg_data_home", new=(tmp_path / ".local").as_posix()
+    )
+    mocker.patch(
+        "xdg.BaseDirectory.xdg_cache_home", new=(tmp_path / ".cache").as_posix()
+    )
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
         new=[
-            xdg.BaseDirectory.xdg_config_home  # pyright: ignore[reportGeneralTypeIssues]
+            BaseDirectory.xdg_config_home  # pyright: ignore[reportGeneralTypeIssues]
         ],
     )
     mocker.patch(
         "xdg.BaseDirectory.xdg_data_dirs",
         new=[
-            xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
+            BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
         ],
     )
-    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": os.path.join(tmpdir, ".config")})  # noqa: PTH118
+    mocker.patch.dict(
+        os.environ, {"XDG_CONFIG_HOME": (tmp_path / ".config").as_posix()}
+    )
 
 
 @pytest.fixture(scope="class")
@@ -269,7 +282,7 @@ def fake_snapd():
     server = FakeSnapd()
 
     snapd_fake_socket_path = str(tempfile.mkstemp()[1])
-    os.unlink(snapd_fake_socket_path)  # noqa: PTH108
+    Path(snapd_fake_socket_path).unlink()
 
     socket_path_patcher = mock.patch(
         "craft_parts.packages.snaps.get_snapd_socket_path_template"
@@ -336,16 +349,16 @@ class ChmodCall(NamedTuple):
 
 
 @pytest.fixture
-def mock_chown(mocker) -> dict[str, ChmodCall]:
+def mock_chown(mocker) -> dict[Path, ChmodCall]:
     """Mock os.chown() and keep a record of calls to it.
 
     The returned object is a dict where the keys match the ``path`` parameter of the
     os.chown() call and the values are ``ChmodCall`` tuples containing the other parameters.
     """
-    calls = {}
+    calls: dict[Path, ChmodCall] = {}
 
     def fake_chown(path, uid, gid, **kwargs):
-        calls[path] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)
+        calls[Path(path)] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)
 
     mocker.patch.object(os, "chown", side_effect=fake_chown)
 

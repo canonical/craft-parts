@@ -18,9 +18,12 @@
 
 import fileinput
 import functools
+import io
+import json
 import logging
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -29,6 +32,8 @@ from collections.abc import Callable, Sequence
 from io import StringIO
 from pathlib import Path
 from typing import Any, TypeVar
+
+import zstandard
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
@@ -306,11 +311,7 @@ def _run_dpkg_query_list_files(package_name: str) -> set[str]:
         .split()
     )
 
-    return {i for i in output if ("lib" in i and os.path.isfile(i))}  # noqa: PTH113
-
-
-def _get_dpkg_list_path(base: str) -> pathlib.Path:
-    return pathlib.Path(f"/snap/{base}/current/usr/share/snappy/dpkg.list")
+    return {i for i in output if ("lib" in i and Path(i).is_file())}
 
 
 def _get_filtered_stage_package_names(
@@ -332,42 +333,277 @@ def _get_filtered_stage_package_names(
     return filtered_packages - stage_packages
 
 
-def get_packages_in_base(*, base: str) -> list[DebPackage]:
-    """Get the list of packages for the given base."""
-    # We do not want to break what we already have.
-    if base in ("core", "core16", "core18"):
-        return [DebPackage.from_unparsed(p) for p in _DEFAULT_FILTERED_STAGE_PACKAGES]
+def _get_dpkg_list_path(base: str) -> pathlib.Path:
+    """Return a path to a core snap's dpkg.list.
 
-    base_package_list_path = _get_dpkg_list_path(base)
-    if not base_package_list_path.exists():
-        return []
+    Only core24 and lower bases have a dpkg file.
+    """
+    return pathlib.Path(f"/snap/{base}/current/usr/share/snappy/dpkg.list")
 
+
+def _get_packages_from_dpkg(dpkg_list_path: pathlib.Path) -> list[DebPackage]:
+    """Get a list of Debian packages from a dpkg list."""
+    logger.debug("Parsing dpkg list at %r.", str(dpkg_list_path))
     # Lines we care about in dpkg.list had the following format:
     # ii adduser 3.118ubuntu1 all add and rem
     package_list: list[DebPackage] = []
-    with fileinput.input(str(base_package_list_path)) as file:
+    with fileinput.input(str(dpkg_list_path)) as file:
         for line in file:
             if not str(line).startswith("ii "):
                 continue
             package = DebPackage.from_unparsed(str(line.split()[1]))
             package_list.append(package)
-
     return package_list
 
 
-def _is_list_of_slices(names: list[str]) -> bool:
-    """Whether `names` contains Chisel slices or Deb packages.
+def _get_chisel_manifest_path(base: str) -> pathlib.Path:
+    """Return a path to a core snap's chisel manifest.wall."""
+    return pathlib.Path(f"/snap/{base}/current/var/lib/chisel/manifest.wall")
 
-    This function does not "validate" the names to see if they refer to existing slices/
-    packages; it only considers the format of the names. It also assumes that the list
-    has been pre-processed and is homogeneous - that is, it does *not* contain a mixture
-    of slices and deb packages.
 
-    :param name: A list of package names.
-    :return: `True` if the list refers to Chisel slices, or `False` if it refers to Deb
-    packages (or is empty).
+def _read_chisel_manifest(manifest_path: pathlib.Path) -> list[dict[str, Any]]:
+    """Read a chisel manifest.wall, returning parsed JSON entries.
+
+    Chisel uses a zstd-compressed NDJSON manifest.wall file.
+    See https://documentation.ubuntu.com/chisel/latest/reference/manifest/ for
+    more information.
+
+    :param manifest_path: Path to the chisel manifest.
+
+    :returns: A list of manifest entries.
+
+    :raises errors.BaseManifestError: If the file cannot be decompressed or parsed.
     """
-    return any("_" in name for name in names)
+    entries: list[dict[str, Any]] = []
+    try:
+        dctx = zstandard.ZstdDecompressor()
+        with manifest_path.open("rb") as fh:
+            # stream_reader() decompresses in chunks as data is read, so we
+            # don't need to worry about the full size of the uncompressed file.
+            with dctx.stream_reader(fh) as reader:
+                for raw_line in io.TextIOWrapper(reader, encoding="utf-8"):
+                    line = raw_line.rstrip("\n")
+                    # ignore the jsonwall metadata entry
+                    if not line or line.startswith('{"jsonwall"'):
+                        continue
+                    entries.append(json.loads(line))
+    except (OSError, zstandard.ZstdError) as exc:
+        raise errors.BaseManifestError(
+            manifest_path=manifest_path,
+            reason=f"Could not decompress: {exc}",
+        ) from exc
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise errors.BaseManifestError(
+            manifest_path=manifest_path,
+            reason=f"Could not parse: {exc}",
+        ) from exc
+
+    return entries
+
+
+def get_packages_from_chisel_manifest(manifest_path: pathlib.Path) -> list[DebPackage]:
+    """Return deb packages recorded in a chisel manifest.wall file.
+
+    :param manifest_path: Path to the chisel manifest.
+
+    :returns: A list of packages recorded in the manifest.
+    """
+    logger.debug("Parsing chisel manifest at %r.", str(manifest_path))
+    packages: list[DebPackage] = []
+    for entry in _read_chisel_manifest(manifest_path):
+        if entry.get("kind") != "package":
+            continue
+        name = entry.get("name")
+        if not name or not isinstance(name, str):
+            logger.debug("Ignoring package entry with invalid name: %r", name)
+            continue
+        packages.append(DebPackage.from_unparsed(name))
+    return packages
+
+
+def get_packages_in_base(*, base: str) -> list[DebPackage]:
+    """Get the list of packages for the given base."""
+    # Core18 and lower bases could parse the dpkg list, but craft-parts
+    # uses a hard-coded list of packages for compatibility.
+    if base in ("core", "core16", "core18"):
+        return [DebPackage.from_unparsed(p) for p in _DEFAULT_FILTERED_STAGE_PACKAGES]
+
+    # core20, core22, and core24 use their dpkg lists
+    base_package_list_path = _get_dpkg_list_path(base)
+    if base_package_list_path.exists():
+        return _get_packages_from_dpkg(base_package_list_path)
+
+    # core26 and higher bases are chiselled
+    chisel_manifest_path = _get_chisel_manifest_path(base)
+    if chisel_manifest_path.exists():
+        return get_packages_from_chisel_manifest(chisel_manifest_path)
+
+    logger.debug(
+        "Skipping stage package filtering: no package manifest found for base %r.",
+        base,
+    )
+    return []
+
+
+def _parse_installed_dpkg_query_line(line: str) -> str | None:
+    """Parse one dpkg-query output line into package=version, if installed."""
+    if not line.strip():
+        return None
+
+    try:
+        pkg_name, pkg_status, pkg_version = (
+            part.strip() for part in line.split("\t", 2)
+        )
+    except ValueError:
+        return None
+    if not pkg_name or not pkg_version:
+        return None
+    if not _is_dpkg_status_installed(pkg_status):
+        return None
+
+    return f"{pkg_name}={pkg_version}"
+
+
+def _is_dpkg_status_installed(status: str) -> bool:
+    """Return true when a dpkg status string represents an installed package."""
+    fields = status.split()
+    match fields:
+        case [state, "ok", "installed"] if state in {"install", "hold"}:
+            return True
+        case _:
+            return False
+
+
+def _get_installed_packages_dpkg_query() -> list[str]:
+    """Return installed packages using dpkg-query."""
+    output = subprocess.check_output(
+        ["dpkg-query", "-W", "-f=${Package}\t${Status}\t${Version}\n"],
+        text=True,
+        stderr=subprocess.DEVNULL,
+    )
+    packages = {
+        package
+        for line in output.splitlines()
+        if (package := _parse_installed_dpkg_query_line(line)) is not None
+    }
+    return sorted(packages)
+
+
+def _get_installed_packages_dpkg_status() -> list[str]:
+    """Return installed packages by parsing /var/lib/dpkg/status."""
+    packages: set[str] = set()
+    status_path = Path("/var/lib/dpkg/status")
+
+    stanza_name: str | None = None
+    stanza_version: str | None = None
+    installed = False
+
+    with status_path.open(encoding="utf-8") as status_file:
+        for line in status_file:
+            if line.startswith("Package: "):
+                stanza_name = line.split(":", 1)[1].strip()
+                stanza_version = None
+                installed = False
+            elif line.startswith("Status: "):
+                installed = _is_dpkg_status_installed(line.split(":", 1)[1])
+            elif line.startswith("Version: "):
+                stanza_version = line.split(":", 1)[1].strip()
+            elif not line.strip():
+                if stanza_name and installed and stanza_version:
+                    packages.add(f"{stanza_name}={stanza_version}")
+                stanza_name = None
+                stanza_version = None
+                installed = False
+
+    if stanza_name and installed and stanza_version:
+        packages.add(f"{stanza_name}={stanza_version}")
+
+    return sorted(packages)
+
+
+def _dpkg_installed_version(pkg_name: str) -> str | None:
+    """Return installed version for pkg_name, or None if not installed."""
+    # dpkg-query exits non-zero if the package isn't installed
+    result = subprocess.run(
+        ["dpkg-query", "-W", "-f=${Status}\t${Version}\n", pkg_name],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+
+    line = (result.stdout or "").strip()
+    if not line:
+        return None
+
+    status, _, version = line.partition("\t")
+    if not _is_dpkg_status_installed(status):
+        return None
+    version = version.strip()
+    return version or None
+
+
+def _parse_apt_get_simulation_inst_line(line: str) -> tuple[str, str] | None:
+    """Parse an apt-get simulation Inst line into package and target version."""
+    if not line.startswith("Inst "):
+        return None
+
+    pkg_name, _, package_details = line.removeprefix("Inst ").partition(" ")
+    if not pkg_name or "(" not in package_details:
+        return None
+
+    version = package_details.split("(", 1)[1].split(")", 1)[0].split()[0]
+    if not version:
+        return None
+
+    return pkg_name, version
+
+
+def _get_apt_get_error_package(
+    package_names: list[str], err: subprocess.CalledProcessError
+) -> str:
+    """Return the package name mentioned by apt-get, if detectable."""
+    output = f"{err.stdout or ''}\n{err.stderr or ''}"
+    for package_name in package_names:
+        pkg_name, _ = get_pkg_name_parts(package_name)
+        package_pattern = rf"(?<![a-z0-9+.-]){re.escape(package_name)}(?![a-z0-9+.-])"
+        pkg_name_pattern = rf"(?<![a-z0-9+.-]){re.escape(pkg_name)}(?![a-z0-9+.-])"
+        if re.search(package_pattern, output) or re.search(pkg_name_pattern, output):
+            return pkg_name
+
+    return get_pkg_name_parts(package_names[0])[0]
+
+
+def _get_packages_marked_for_installation_apt_get(
+    package_names: list[str], *, include_recommends: bool = False
+) -> list[tuple[str, str]]:
+    """Return packages apt-get would install using simulation output."""
+    apt_command = ["apt-get", "--simulate"]
+
+    if not include_recommends:
+        apt_command.append("--no-install-recommends")
+
+    apt_command.extend(
+        [
+            "--allow-downgrades",
+            "install",
+            *package_names,
+        ]
+    )
+
+    result = subprocess.run(
+        apt_command,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    return [
+        marked_package
+        for line in result.stdout.splitlines()
+        if (marked_package := _parse_apt_get_simulation_inst_line(line))
+    ]
 
 
 class Ubuntu(BaseRepository):
@@ -435,7 +671,6 @@ class Ubuntu(BaseRepository):
             ) from call_error
 
     @classmethod
-    @_apt_cache_wrapper
     def _check_if_all_packages_installed(cls, package_names: list[str]) -> bool:
         """Check if all given packages are installed.
 
@@ -443,59 +678,41 @@ class Ubuntu(BaseRepository):
         get_pkg_name_parts().  Used as an optimization to skip installation
         and cache refresh if dependencies are already satisfied.
 
+        This check uses dpkg-query and does not resolve virtual packages. If a
+        virtual package is requested, apt-get may still make a later install
+        call that resolves to a no-op when the dependency is already satisfied.
+
         :return True if _all_ packages are installed (with correct versions).
         """
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            for package in package_names:
-                pkg_name, pkg_version = get_pkg_name_parts(package)
-                installed_version = apt_cache.get_installed_version(
-                    pkg_name, resolve_virtual_packages=True
-                )
-
-                if installed_version is None or (
-                    pkg_version is not None and installed_version != pkg_version
-                ):
-                    return False
-
+        for package in package_names:
+            pkg_name, pkg_version = get_pkg_name_parts(package)
+            installed_version = _dpkg_installed_version(pkg_name)
+            if installed_version is None:
+                return False
+            if pkg_version is not None and installed_version != pkg_version:
+                return False
         return True
 
     @classmethod
-    @_apt_cache_wrapper
     def _get_installed_package_versions(cls, package_names: Sequence[str]) -> list[str]:
         packages: list[str] = []
-
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            for package_name in package_names:
-                package_version = apt_cache.get_installed_version(
-                    package_name, resolve_virtual_packages=True
-                )
-                if package_version is None:
-                    logger.debug("Expected package %s not installed", package_name)
-                    continue
-                logger.debug(
-                    "Found installed version %s for package %s",
-                    package_version,
-                    package_name,
-                )
-                packages.append(f"{package_name}={package_version}")
-
+        for package_name in package_names:
+            package_version = _dpkg_installed_version(package_name)
+            if package_version is None:
+                logger.debug("Expected package %s not installed", package_name)
+                continue
+            logger.debug(
+                "Found installed version %s for package %s",
+                package_version,
+                package_name,
+            )
+            packages.append(f"{package_name}={package_version}")
         return packages
 
     @classmethod
-    @_apt_cache_wrapper
-    def _get_packages_marked_for_installation(
-        cls, package_names: list[str]
-    ) -> list[tuple[str, str]]:
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            try:
-                apt_cache.mark_packages(set(package_names))
-            except errors.PackageNotFound as error:
-                raise errors.BuildPackageNotFound(error.package_name) from error
-
-            return apt_cache.get_packages_marked_for_installation()
-
-    @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache area."""
         logger.debug("Downloading packages using apt: %s", " ".join(package_names))
         env = os.environ.copy()
@@ -507,15 +724,20 @@ class Ubuntu(BaseRepository):
             }
         )
 
-        apt_command = [
-            "apt-get",
-            "--no-install-recommends",
-            "-y",
-            "-oDpkg::Use-Pty=0",
-            "--allow-downgrades",
-            "--download-only",
-            "install",
-        ]
+        apt_command = ["apt-get"]
+
+        if not include_recommends:
+            apt_command.append("--no-install-recommends")
+
+        apt_command.extend(
+            [
+                "-y",
+                "-oDpkg::Use-Pty=0",
+                "--allow-downgrades",
+                "--download-only",
+                "install",
+            ]
+        )
 
         try:
             process_run(apt_command + package_names, env=env)
@@ -527,8 +749,8 @@ class Ubuntu(BaseRepository):
         cls,
         package_names: list[str],
         *,
-        list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,
     ) -> list[str]:
         """Install packages on the host system."""
         if not package_names:
@@ -544,29 +766,39 @@ class Ubuntu(BaseRepository):
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
-        # Collect the list of marked packages to later construct a manifest
-        marked_packages = cls._get_packages_marked_for_installation(package_names)
-        marked_package_names = [name for name, _ in sorted(marked_packages)]
+        # Refresh before resolving packages, because apt-get simulation depends on
+        # the current apt package index.
+        if refresh_package_cache and install_required:
+            cls.refresh_packages_list()
 
-        if not list_only:
-            if refresh_package_cache and install_required:
-                cls.refresh_packages_list()
-            if install_required:
-                cls._install_packages(package_names)
-            else:
-                logger.debug(
-                    "Requested build-packages already installed: %s", package_names
-                )
+        try:
+            marked = _get_packages_marked_for_installation_apt_get(
+                package_names, include_recommends=include_recommends
+            )
+        except subprocess.CalledProcessError as err:
+            failed_package = _get_apt_get_error_package(package_names, err)
+            raise errors.BuildPackageNotFound(failed_package) from err
+
+        marked_package_names = {name for name, _ in marked}
+
+        if install_required:
+            cls._install_packages(package_names, include_recommends=include_recommends)
+        else:
+            logger.debug(
+                "Requested build-packages already installed: %s", package_names
+            )
 
         # This result is a best effort approach for deps and virtual packages
         # as they are not part of the installation list.
-        # Tell static type checkers to ignore until we can use PEP 612 (Python 3.10)
-        return cls._get_installed_package_versions(  # type: ignore[no-any-return]
-            marked_package_names
+        return sorted(
+            cls._get_installed_package_versions(sorted(marked_package_names)),
+            key=lambda package: package.split("=", 1)[0],
         )
 
     @classmethod
-    def _install_packages(cls, package_names: list[str]) -> None:
+    def _install_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         logger.debug("Installing packages: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
@@ -579,12 +811,18 @@ class Ubuntu(BaseRepository):
 
         apt_command = [
             "apt-get",
-            "--no-install-recommends",
-            "-y",
-            "-oDpkg::Use-Pty=0",
-            "--allow-downgrades",
-            "install",
         ]
+        if not include_recommends:
+            apt_command.append("--no-install-recommends")
+
+        apt_command.extend(
+            [
+                "-y",
+                "-oDpkg::Use-Pty=0",
+                "--allow-downgrades",
+                "install",
+            ]
+        )
 
         # Set stdin to /dev/null to prevent SIGTTIN/SIGTTOU problems, see
         # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=555632
@@ -603,7 +841,6 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
-        list_only: bool = False,
         packages_filters: set[str] | None = None,
     ) -> list[str]:
         """Fetch stage packages to stage_packages_path."""
@@ -612,7 +849,8 @@ class Ubuntu(BaseRepository):
         if not package_names:
             return []
 
-        if _is_list_of_slices(package_names):
+        # Assumes that the list is all slices or all packages, but not a mix.
+        if deb_utils.has_slices(package_names):
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)
@@ -622,7 +860,6 @@ class Ubuntu(BaseRepository):
             stage_packages_path=stage_packages_path,
             base=base,
             arch=arch,
-            list_only=list_only,
             packages_filters=packages_filters,
         )
 
@@ -636,7 +873,6 @@ class Ubuntu(BaseRepository):
         stage_packages_path: pathlib.Path,
         base: str,
         arch: str,
-        list_only: bool = False,
         packages_filters: set[str] | None = None,
     ) -> list[str]:
         """Fetch .deb stage packages to stage_packages_path."""
@@ -649,8 +885,7 @@ class Ubuntu(BaseRepository):
         if packages_filters:
             filtered_names.update(packages_filters)
 
-        if not list_only:
-            stage_packages_path.mkdir(exist_ok=True)
+        stage_packages_path.mkdir(exist_ok=True)
 
         stage_cache_dir, deb_cache_dir = get_cache_dirs(cache_dir)
         deb_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -658,9 +893,10 @@ class Ubuntu(BaseRepository):
         # doesn't own
         try:
             shutil.chown(deb_cache_dir, user="_apt")
-        except (LookupError, PermissionError) as err:
+        except (LookupError, PermissionError, OSError) as err:
             # LookupError: user `_apt` not found
             # PermissionError: non root run, such as unit tests
+            # OSError: restricted filesystems can reject chown
             logger.debug(f"Cannot chown '{deb_cache_dir}' to '_apt': {err!s}")
         else:
             logger.debug(f"Set ownership of '{deb_cache_dir}' to '_apt'")
@@ -676,20 +912,12 @@ class Ubuntu(BaseRepository):
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(filtered_names)
 
-            if list_only:
-                marked_packages = apt_cache.get_packages_marked_for_installation()
-                installed = {
-                    f"{name}={version}" for name, version in sorted(marked_packages)
-                }
-            else:
-                for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                    deb_cache_dir
-                ):
-                    logger.info("Extracting stage package: %s", pkg_name)
-                    installed.add(f"{pkg_name}={pkg_version}")
-                    file_utils.link_or_copy(
-                        str(dl_path), str(stage_packages_path / dl_path.name)
-                    )
+            for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
+                deb_cache_dir
+            ):
+                logger.info("Extracting stage package: %s", pkg_name)
+                installed.add(f"{pkg_name}={pkg_version}")
+                file_utils.link_or_copy(dl_path, stage_packages_path / dl_path.name)
 
         return sorted(installed)
 
@@ -705,7 +933,8 @@ class Ubuntu(BaseRepository):
         """Unpack stage packages to install_path."""
         if stage_packages is None:
             stage_packages = []
-        if _is_list_of_slices(stage_packages):
+        # Assumes that the list is all slices or all packages, but not a mix.
+        if deb_utils.has_slices(stage_packages):
             cls._unpack_stage_slices(
                 stage_packages=stage_packages, install_path=install_path
             )
@@ -730,16 +959,17 @@ class Ubuntu(BaseRepository):
             with tempfile.TemporaryDirectory(
                 suffix="deb-extract", dir=install_path.parent
             ) as extract_dir:
+                extract_dir_path = Path(extract_dir)
                 # Extract deb package.
-                deb_utils.extract_deb(pkg_path, Path(extract_dir), logger.debug)
+                deb_utils.extract_deb(pkg_path, extract_dir_path, logger.debug)
 
                 # Mark source of files.
                 if track_stage_packages:
                     marked_name = cls._extract_deb_name_version(pkg_path)
-                    mark_origin_stage_package(extract_dir, marked_name)
+                    mark_origin_stage_package(extract_dir_path, marked_name)
 
                 # Stage files to install_dir.
-                file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
+                file_utils.link_or_copy_tree(extract_dir_path, install_path)
 
         if pkg_path:
             normalize(install_path, repository=cls)
@@ -785,20 +1015,36 @@ class Ubuntu(BaseRepository):
             return apt_cache.get_installed_version(package_name) is not None
 
     @classmethod
-    @_apt_cache_wrapper
     def get_installed_packages(cls) -> list[str]:
-        """Obtain a list of the installed packages and their versions."""
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
-            return [
-                f"{pkg_name}={pkg_version}"
-                for pkg_name, pkg_version in apt_cache.get_installed_packages().items()
-            ]
+        """Obtain a list of the installed packages and their versions.
+
+        Prefer dpkg-query because python-apt may try to create
+        /etc/apt/sources.list when it is missing, which fails in unprivileged
+        environments. Fall back to parsing /var/lib/dpkg/status when dpkg-query
+        is unavailable or fails.
+
+        :return: A list of installed packages in the form package=version.
+        """
+        try:
+            return _get_installed_packages_dpkg_query()
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+            pass
+
+        try:
+            return _get_installed_packages_dpkg_status()
+        except OSError:
+            return []
 
     @classmethod
     def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
         try:
             output = subprocess.check_output(
-                ["dpkg-deb", "--show", "--showformat=${Package}=${Version}", deb_path]
+                [
+                    "dpkg-deb",
+                    "--show",
+                    "--showformat=${binary:Package}=${Version}",
+                    deb_path,
+                ]
             )
         except subprocess.CalledProcessError as err:
             raise errors.UnpackError(str(deb_path)) from err

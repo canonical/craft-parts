@@ -198,7 +198,7 @@ class TestPartitionsSupport:
             errors.FeatureError,
             match=(
                 r"Partition '[\w-]*' is invalid.\n"
-                r"Partitions must only contain lowercase letters.*"
+                r"Partition names may contain lowercase letters.*"
             ),
         ):
             lifecycle_manager.LifecycleManager(
@@ -287,7 +287,7 @@ class TestPartitionsSupport:
         with pytest.raises(
             errors.FeatureError,
             match=(
-                r"Partition name conflicts:\n[\w\s/\-,']*\nHyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.\nThis operation cannot be executed"
+                r"Partition name conflicts:\n[\w\s/\-,']*\nPlus signs, hyphens and slashes are converted to underscores to associate partitions names with environment variables. 'foo\+bar', 'foo-bar' and 'foo/bar' would result in environment variable FOO_BAR.\nThis operation cannot be executed"
             ),
         ):
             lifecycle_manager.LifecycleManager(
@@ -415,7 +415,7 @@ class TestPluginProperties(test_lifecycle_manager.TestPluginProperties):
     """Tests for plugin properties with partitions enabled."""
 
     def _get_manager(self, new_dir, **kwargs):
-        manager_kwargs = {
+        manager_kwargs: dict[str, Any] = {
             "application_name": "test_manager",
             "cache_dir": new_dir,
             "partitions": ["default", "mypart", "yourpart", "our/special-part"],

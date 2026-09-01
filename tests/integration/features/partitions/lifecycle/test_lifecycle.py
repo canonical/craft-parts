@@ -377,3 +377,56 @@ def test_partition_symlinks_default_partition(new_dir):
         ctx.execute(actions)
 
     assert sorted(next(os.walk(Path("partitions")))[1]) == ["binaries", "docs"]
+
+
+def test_organize_from_build_with_partitions(new_dir):
+    new_dir = Path(new_dir)
+    partitions = ["default", "docs"]
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+          foo:
+            plugin: nil
+            override-build: |
+              echo "from build" > README
+              mkdir -p examples
+              echo "example" > examples/demo.txt
+            organize:
+              (build)/README: usr/share/doc/foo/README
+              (build)/examples: (docs)/usr/share/doc/foo/examples
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lifecycle = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_organize_from_build_with_partitions",
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+
+    actions = lifecycle.plan(Step.PRIME)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    build_dir = new_dir / "parts/foo/build"
+    install_dir = new_dir / "parts/foo/install"
+    docs_install_dir = new_dir / "partitions/docs/parts/foo/install"
+    prime_dir = new_dir / "prime"
+    docs_prime_dir = new_dir / "partitions/docs/prime"
+
+    assert (build_dir / "README").read_text().strip() == "from build"
+    assert (build_dir / "examples/demo.txt").read_text().strip() == "example"
+
+    assert (
+        install_dir / "usr/share/doc/foo/README"
+    ).read_text().strip() == "from build"
+    assert (
+        docs_install_dir / "usr/share/doc/foo/examples/demo.txt"
+    ).read_text().strip() == "example"
+
+    assert (prime_dir / "usr/share/doc/foo/README").read_text().strip() == "from build"
+    assert (
+        docs_prime_dir / "usr/share/doc/foo/examples/demo.txt"
+    ).read_text().strip() == "example"

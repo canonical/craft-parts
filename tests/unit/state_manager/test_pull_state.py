@@ -61,10 +61,6 @@ class TestPullState:
         state = PullState.unmarshal(state_data)
         assert state.marshal() == state_data
 
-    def test_unmarshal_invalid(self):
-        with pytest.raises(TypeError, match="^state data is not a dictionary$"):
-            PullState.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
-
 
 @pytest.mark.usefixtures("new_dir")
 class TestPullStatePersist:
@@ -75,12 +71,12 @@ class TestPullStatePersist:
             assets={"stage-packages": ["foo"]},
             part_properties=properties,
             project_options=ProjectOptions(target_arch="amd64"),
-            files={"a"},
-            directories={"b"},
+            files={Path("a")},
+            directories={Path("b")},
         )
 
         state.write(Path("state"))
-        with open("state") as f:  # noqa: PTH123
+        with Path("state").open() as f:
             content = f.read()
 
         new_state = yaml.safe_load(content)

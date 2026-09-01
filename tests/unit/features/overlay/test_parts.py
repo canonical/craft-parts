@@ -23,6 +23,7 @@ from craft_parts import errors, parts
 from craft_parts.dirs import ProjectDirs
 from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
+from craft_parts.plugins import Plugin, PluginProperties, register, unregister
 from craft_parts.steps import Step
 
 # pylint: disable=too-many-public-methods
@@ -47,8 +48,10 @@ class TestPartSpecs:
             "disable-parallel": True,
             "after": ["bar"],
             "overlay-packages": ["overlay-pkg1", "overlay-pkg2"],
+            "overlay-recommended-packages": [],
             "stage-snaps": ["stage-snap1", "stage-snap2"],
             "stage-packages": ["stage-pkg1", "stage-pkg2"],
+            "stage-slices": [],
             "build-snaps": ["build-snap1", "build-snap2"],
             "build-packages": ["build-pkg1", "build-pkg2"],
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
@@ -86,11 +89,6 @@ class TestPartSpecs:
         new_data = spec.marshal()
         assert new_data == data_copy
 
-    def test_unmarshal_not_dict(self):
-        with pytest.raises(TypeError) as raised:
-            PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues]
-        assert str(raised.value) == "part data is not a dictionary"
-
     def test_unmarshal_both_overlay_key(self):
         data = {
             "overlay-script": "overlay-script",
@@ -127,20 +125,30 @@ class TestPartSpecs:
         assert spec.stage_packages == package_list
 
     @pytest.mark.parametrize(
-        ("packages", "overlay_script", "override_script", "files", "result"),
+        (
+            "packages",
+            "rec_packages",
+            "overlay_script",
+            "override_script",
+            "files",
+            "result",
+        ),
         [
-            ([], None, None, ["*"], False),
-            (["pkg"], None, None, ["*"], True),
-            ([], "ls", None, ["*"], True),
-            ([], None, "ls", ["*"], True),
-            ([], None, None, ["-usr/share"], True),
+            ([], [], None, None, ["*"], False),
+            (["pkg"], [], None, None, ["*"], True),
+            ([], [], "ls", None, ["*"], True),
+            ([], [], None, "ls", ["*"], True),
+            ([], [], None, None, ["-usr/share"], True),
+            ([], ["pkg"], None, None, ["*"], True),
+            (["pkg1"], ["pkg2"], None, None, ["*"], True),
         ],
     )
     def test_spec_has_overlay(
-        self, packages, overlay_script, override_script, files, result
+        self, packages, rec_packages, overlay_script, override_script, files, result
     ):
         data = {
             "overlay-packages": packages,
+            "overlay-recommended-packages": rec_packages,
             "overlay-script": overlay_script,
             "override-overlay": override_script,
             "overlay": files,
@@ -427,12 +435,6 @@ class TestPartUnmarshal:
             "- Extra inputs are not permitted in field 'b'"
         )
 
-    def test_part_spec_not_dict(self):
-        with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", False)  # type: ignore[reportGeneralTypeIssues]
-        assert raised.value.part_name == "foo"
-        assert raised.value.message == "part data is not a dictionary"
-
     def test_part_unmarshal_type_error(self):
         with pytest.raises(errors.PartSpecificationError) as raised:
             Part("foo", {"plugin": []})
@@ -555,7 +557,7 @@ class TestPartValidation:
 
     def test_part_validation_data_type(self):
         with pytest.raises(TypeError) as raised:
-            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]
+            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
 
         assert str(raised.value) == "value must be a dictionary"
 
@@ -592,3 +594,86 @@ class TestPartValidation:
         error = r"source\s+Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
             parts.validate_part(data)
+
+
+class TestPluginOverlay:
+    """Tests for plugin overlay integration with parts."""
+
+    def test_part_has_overlay_from_plugin(self, new_dir):
+        """A part using a plugin with uses_overlay=True has overlay."""
+
+        class _Props(PluginProperties, frozen=True):
+            pass
+
+        class _OverlayPlugin(Plugin):
+            properties_class = _Props
+            uses_overlay = True
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+        register({"test-overlay-plugin": _OverlayPlugin})
+        try:
+            p = Part(
+                "mypart",
+                {"plugin": "test-overlay-plugin", "source": "."},
+                project_dirs=ProjectDirs(work_dir=new_dir),
+            )
+            assert p.has_overlay is True
+        finally:
+            unregister("test-overlay-plugin")
+
+    def test_part_has_overlay_false_from_plugin(self, new_dir):
+        """A part using a plugin with uses_overlay=False does not get overlay from plugin."""
+        p = Part(
+            "mypart",
+            {"plugin": "nil", "source": "."},
+            project_dirs=ProjectDirs(work_dir=new_dir),
+        )
+        assert p.has_overlay is False
+
+    def test_overlay_script_with_overlay_plugin_raises(self, new_dir):
+        """overlay-script cannot be used with a plugin that declares overlay commands."""
+
+        class _Props(PluginProperties, frozen=True):
+            pass
+
+        class _OverlayPlugin(Plugin):
+            properties_class = _Props
+            uses_overlay = True
+
+            def get_build_snaps(self):
+                return set()
+
+            def get_build_packages(self):
+                return set()
+
+            def get_build_environment(self):
+                return {}
+
+            def get_build_commands(self):
+                return []
+
+        register({"test-overlay-plugin": _OverlayPlugin})
+        try:
+            with pytest.raises(errors.PartSpecificationError, match="overlay-script"):
+                Part(
+                    "mypart",
+                    {
+                        "plugin": "test-overlay-plugin",
+                        "source": ".",
+                        "overlay-script": "echo hello",
+                    },
+                    project_dirs=ProjectDirs(work_dir=new_dir),
+                )
+        finally:
+            unregister("test-overlay-plugin")

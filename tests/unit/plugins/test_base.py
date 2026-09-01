@@ -69,6 +69,21 @@ def test_plugin(new_dir):
     assert plugin.get_build_commands() == ["hello", "world"]
 
 
+def test_plugin_overlay_defaults(new_dir):
+    """Base Plugin overlay methods return empty defaults."""
+    part = Part("p1", {})
+    project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=project_info, part=part)
+
+    props = FooPluginProperties.unmarshal({"foo-name": "world"})
+    plugin = FooPlugin(properties=props, part_info=part_info)
+
+    assert plugin.uses_overlay is False
+    assert plugin.get_overlay_packages() == set()
+    assert plugin.get_overlay_recommended_packages() == set()
+    assert plugin.get_overlay_chroot_commands() == []
+
+
 def test_abstract_methods(new_dir):
     class FaultyPlugin(Plugin):
         """A plugin that doesn't implement abstract methods."""
@@ -84,7 +99,7 @@ def test_abstract_methods(new_dir):
     )
 
     with pytest.raises(TypeError, match=expected):
-        FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
+        FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
 
 
 class FooPythonPlugin(BasePythonPlugin):
@@ -210,7 +225,7 @@ def test_python_get_handle_symlinks_commands(
         template.format(install_dir=new_dir / "parts" / "p1" / "install")
         for template in expected_template
     ]
-    python_plugin._should_remove_symlinks = lambda: should_remove_symlinks  # type: ignore[method-assign]
+    python_plugin._should_remove_symlinks = lambda: should_remove_symlinks  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
 
     assert python_plugin._get_handle_symlinks_commands() == expected
 

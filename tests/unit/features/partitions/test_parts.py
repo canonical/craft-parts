@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from textwrap import dedent, indent
 
 import pytest
@@ -56,12 +57,9 @@ class TestPartData(test_parts.TestPartData):
         pytest_check.equal(p.prime_dir, new_dir / "prime")
         pytest_check.equal(
             p.part_install_dirs,
-            {
-                **get_partition_dir_map(
-                    base_dir=new_dir, partitions=partitions, suffix="parts/foo/install"
-                ),
-                "build": new_dir / "parts/foo/build",
-            },
+            get_partition_dir_map(
+                base_dir=new_dir, partitions=partitions, suffix="parts/foo/install"
+            ),
         )
 
     def test_part_work_dir(self, new_dir, partitions):
@@ -91,22 +89,18 @@ class TestPartData(test_parts.TestPartData):
         pytest_check.equal(p.prime_dir, new_dir / work_dir / "prime")
         pytest_check.equal(
             p.part_install_dirs,
-            {
-                **get_partition_dir_map(
-                    base_dir=new_dir / work_dir,
-                    partitions=partitions,
-                    suffix="parts/foo/install",
-                ),
-                "build": new_dir / work_dir / "parts/foo/build",
-            },
+            get_partition_dir_map(
+                base_dir=new_dir / work_dir,
+                partitions=partitions,
+                suffix="parts/foo/install",
+            ),
         )
 
     def test_part_install_dirs(self, new_dir):
         p = Part("foo", {"organize": {"foo": "bar"}}, partitions=["mypart", "yourpart"])
         assert p.part_install_dirs == {
-            "mypart": new_dir / "parts/foo/install",  # aliased default part
-            "yourpart": new_dir / "partitions/yourpart/parts/foo/install",
-            "build": new_dir / "parts/foo/build",
+            "mypart": Path(new_dir / "parts/foo/install"),  # aliased default part
+            "yourpart": Path(new_dir / "partitions/yourpart/parts/foo/install"),
         }
 
 
@@ -389,6 +383,29 @@ class TestPartPartitionUsage:
               parts.part-a.prime
                 unknown partition 'baz' in '(baz)'
                 no path specified after partition in '(baz)'
+            Valid partitions: {", ".join(partition_list)}"""
+        )
+
+    def test_part_build_partition_usage_is_invalid(self, partition_list):
+        """Raise an error if the build pseudo-partition is used as a destination."""
+        part_data = {
+            "organize": {"README": "(build)/README"},
+            "stage": ["(build)/README"],
+            "prime": ["(build)/README"],
+        }
+
+        with pytest.raises(errors.PartitionUsageError) as raised:
+            Part("part-a", part_data, partitions=partition_list)
+
+        assert raised.value.brief == "Invalid usage of partitions"
+        assert raised.value.details == dedent(
+            f"""\
+              parts.part-a.organize
+                cannot organize files into the build directory
+              parts.part-a.stage
+                (build) cannot be used in 'stage'
+              parts.part-a.prime
+                (build) cannot be used in 'prime'
             Valid partitions: {", ".join(partition_list)}"""
         )
 

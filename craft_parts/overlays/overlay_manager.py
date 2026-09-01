@@ -186,34 +186,42 @@ class OverlayManager:
 
         mount_dir = self._project_info.overlay_mount_dir
         # Ensure we always run refresh_packages_list by resetting the cache
-        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]
+        packages.Repository.refresh_packages_list.cache_clear()  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         chroot.chroot(
             mount_dir,
             _defer_evaluation(packages.Repository.refresh_packages_list),
             use_host_sources=self._use_host_sources,
         )
 
-    def download_packages(self, package_names: list[str]) -> None:
+    def download_packages(
+        self, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download packages and populate the overlay package cache.
 
         :param package_names: The list of packages to download.
+        :param include_recommends: Whether or not to include recommended packages.
         """
         self.run(
             _defer_evaluation(packages.Repository.download_packages),
             package_names,
             use_host_sources=self._use_host_sources,
+            include_recommends=include_recommends,
         )
 
-    def install_packages(self, package_names: list[str]) -> None:
+    def install_packages(
+        self, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Install packages on the overlay area using chroot.
 
         :param package_names: The list of packages to install.
+        :param include_recommends: Whether or not to include recommended packages.
         """
         self.run(
             _defer_evaluation(packages.Repository.install_packages),
             package_names,
             refresh_package_cache=False,
             use_host_sources=self._use_host_sources,
+            include_recommends=include_recommends,
         )
 
     def run(self, target: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
@@ -268,12 +276,17 @@ class LayerMount:
         logger.debug("---- Exit layer mount context ----")
         return False
 
-    def install_packages(self, package_names: list[str]) -> None:
+    def install_packages(
+        self, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Install the specified packages on the local system.
 
         :param package_names: The list of packages to install.
+        :param include_recommends: Whether or not to include recommended packages.
         """
-        self._overlay_manager.install_packages(package_names)
+        self._overlay_manager.install_packages(
+            package_names, include_recommends=include_recommends
+        )
 
 
 class PackageCacheMount:
@@ -304,12 +317,17 @@ class PackageCacheMount:
         """Update the list of available packages in the overlay system."""
         self._overlay_manager.refresh_packages_list()
 
-    def download_packages(self, package_names: list[str]) -> None:
+    def download_packages(
+        self, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local system.
 
         :param package_names: The list of packages to download.
+        :param include_recommends: Whether or not to include recommended packages.
         """
-        self._overlay_manager.download_packages(package_names)
+        self._overlay_manager.download_packages(
+            package_names, include_recommends=include_recommends
+        )
 
 
 class ChrootMount(LayerMount):
