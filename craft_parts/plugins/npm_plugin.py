@@ -61,7 +61,7 @@ class NpmPluginProperties(PluginProperties, frozen=True):
     # part properties required by the plugin
     npm_include_node: bool = False
     npm_node_version: str | None = None
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
     build_attributes: list[str] = []
 
     @model_validator(mode="after")

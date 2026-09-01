@@ -33,7 +33,7 @@ class CMakePluginProperties(PluginProperties, frozen=True):
     cmake_generator: str = "Unix Makefiles"
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class CMakePlugin(Plugin):

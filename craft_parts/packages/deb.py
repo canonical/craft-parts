@@ -53,7 +53,7 @@ except ImportError as import_error:
     logger.debug(
         "AppCache cannot be imported due to: %r: %s", import_error.name, import_error
     )
-    _APT_CACHE_AVAILABLE = False  # type: ignore[reportConstantRedefinition] # not actually a redef
+    _APT_CACHE_AVAILABLE = False
 else:
     _APT_CACHE_AVAILABLE = True
 
@@ -613,9 +613,7 @@ class Ubuntu(BaseRepository):
     @_apt_cache_wrapper
     def configure(cls, application_package_name: str) -> None:
         """Set up apt options and directories."""
-        AptCache.configure_apt(  # pyright: ignore[reportPossiblyUnboundVariable]
-            application_package_name
-        )
+        AptCache.configure_apt(application_package_name)
 
     @classmethod
     def get_package_libraries(cls, package_name: str) -> set[str]:
@@ -651,7 +649,7 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     @functools.lru_cache(maxsize=1)
-    def refresh_packages_list(  # pyright: ignore[reportIncompatibleMethodOverride]
+    def refresh_packages_list(
         cls,
     ) -> None:
         """Refresh the list of packages available in the repository."""
@@ -854,7 +852,7 @@ class Ubuntu(BaseRepository):
             return package_names
 
         # Have static type checkers ignore until we can use PEP 612 (Python 3.10)
-        return cls._fetch_stage_debs(  # type: ignore[no-any-return]
+        return cls._fetch_stage_debs(
             cache_dir=cache_dir,
             package_names=package_names,
             stage_packages_path=stage_packages_path,
@@ -906,9 +904,7 @@ class Ubuntu(BaseRepository):
         # Update the package cache
         cls.refresh_packages_list()
 
-        with AptCache(  # pyright: ignore[reportPossiblyUnboundVariable]
-            stage_cache=stage_cache_dir, stage_cache_arch=arch
-        ) as apt_cache:
+        with AptCache(stage_cache=stage_cache_dir, stage_cache_arch=arch) as apt_cache:
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(filtered_names)
 
@@ -1011,7 +1007,7 @@ class Ubuntu(BaseRepository):
     @_apt_cache_wrapper
     def is_package_installed(cls, package_name: str) -> bool:
         """Inform if a package is installed on the host system."""
-        with AptCache() as apt_cache:  # pyright: ignore[reportPossiblyUnboundVariable]
+        with AptCache() as apt_cache:
             return apt_cache.get_installed_version(package_name) is not None
 
     @classmethod

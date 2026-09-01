@@ -28,7 +28,7 @@ from .base import (
 )
 
 
-class SevenzipSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+class SevenzipSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic for a 7zip file source."""
 
     pattern = r"\.7z$"

@@ -69,7 +69,7 @@ def _get_json_extra_schema(type_pattern: str) -> dict[str, Any]:
     return schema
 
 
-class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
+class GitSourceModel(BaseSourceModel, frozen=True):
     """Pydantic model for a git-based source."""
 
     pattern = r"(^git(\+.+:|[@:])|\.git$)"
@@ -490,7 +490,7 @@ class GitSource(SourceHandler):
 
         # Ignore the type, the regex already asserts that it will be a 3-piece tuple
         # but type checkers believe this is `tuple[int, ...]`
-        return tuple(int(component) for component in components)  # type: ignore[return-value]  # ty: ignore[invalid-return-type]
+        return tuple(int(component) for component in components)  # ty: ignore[invalid-return-type]
 
 
 class ShallowFetchError(Exception):

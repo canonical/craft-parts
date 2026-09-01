@@ -36,7 +36,7 @@ class QmakePluginProperties(PluginProperties, frozen=True):
     qmake_major_version: int = 5
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class QmakePlugin(Plugin):
