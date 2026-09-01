@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
 from re import escape
-from typing import Literal
+from typing import Any, Literal
 
 import pytest
 import requests
@@ -112,7 +112,7 @@ class TestFileSourceHandler:
 
     def set_source(self, cache_dir, **kwargs) -> None:
         """Set the source."""
-        source_kwargs = {
+        source_kwargs: dict[str, Any] = {
             "source": "source",
             "part_src_dir": Path("parts/foo/src"),
             "project_dirs": self._dirs,
@@ -310,8 +310,8 @@ class TestFileSourceHandler:
         )
         with pytest.raises(TypeError, match=expected):
             FaultyFileSource(  # type: ignore[reportGeneralTypeIssues]
-                source=None,  # type: ignore[reportGeneralTypeIssues]
-                part_src_dir=None,  # type: ignore[reportGeneralTypeIssues]
+                source=None,  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
+                part_src_dir=None,  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
                 cache_dir=Path(),
                 project_dirs=self._dirs,
             )

@@ -309,7 +309,7 @@ class TestStepHandlerBuiltins:
 
     def test_run_builtin_invalid(self, new_dir):
         sh = _step_handler_for_step(
-            999,  # type: ignore[reportGeneralTypeIssues]
+            999,  # type: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-argument-type]
             cache_dir=new_dir,
             part_info=self._part_info,
             part=self._part,

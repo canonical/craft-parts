@@ -999,7 +999,7 @@ class TestProjectVarInfo:
         expected_error = "Project variable info must be a dictionary."
 
         with pytest.raises(TypeError, match=expected_error):
-            ProjectVarInfo.unmarshal("invalid")  # pyright: ignore[reportArgumentType]
+            ProjectVarInfo.unmarshal("invalid")  # pyright: ignore[reportArgumentType]  # ty: ignore[invalid-argument-type]
 
     @pytest.mark.parametrize(
         ("attr", "expected"),
