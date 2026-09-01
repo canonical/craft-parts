@@ -43,28 +43,19 @@ During the build step, the plugin performs the following actions:
 Examples
 --------
 
-Copy a local directory as-is
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The following part copies all files and directories from ``./assets`` into the
-part's install directory while preserving the source directory structure:
+The following example declares a part using the Dump plugin with the directory
+containing the project file as its source. The source directory structure is
+preserved in the part's install directory.
 
 .. code-block:: yaml
 
   parts:
     assets:
       plugin: dump
-      source: ./assets
+      source: .
 
-For example, a source file at ``./assets/images/logo.png`` is copied to
-``images/logo.png`` in the part's install directory.
-
-Copy files to specific locations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Use the ``organize`` key when files from the source tree must be copied to
-specific locations in the final payload. In this example, the part copies a
-service file and a configuration file from the local ``files`` directory:
+The following example declares a part that uses ``organize`` to place selected
+source files at specific locations in the part's install directory.
 
 .. code-block:: yaml
 
@@ -75,39 +66,3 @@ service file and a configuration file from the local ``files`` directory:
       organize:
         my-app.service: usr/lib/systemd/system/my-app.service
         my-app.conf: etc/my-app/my-app.conf
-
-Copy directories with ``organize``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When organizing a directory, the destination controls where the directory
-contents are placed. The following part copies the contents of ``scripts`` to
-``usr/bin`` and the contents of ``templates`` to ``usr/share/my-app/templates``:
-
-.. code-block:: yaml
-
-  parts:
-    resources:
-      plugin: dump
-      source: ./resources
-      organize:
-        scripts/*: usr/bin/
-        templates/*: usr/share/my-app/templates/
-
-Copy files into a charm payload
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Projects that build charms can also use the Dump plugin to copy local charm
-files into the payload. This example copies hook files, library files, and charm
-metadata from the ``charm`` directory:
-
-.. code-block:: yaml
-
-  parts:
-    charm-files:
-      plugin: dump
-      source: ./charm
-      organize:
-        hooks/*: hooks/
-        lib/*: lib/
-        metadata.yaml: metadata.yaml
-        actions.yaml: actions.yaml
