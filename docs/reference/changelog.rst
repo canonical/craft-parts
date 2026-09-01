@@ -64,15 +64,11 @@ Bug fixes:
 
 - Skip organization when the resolved destination path and the source path
   are the same.
-
 - Refresh the APT cache before marking packages for installation, ensuring
   the correct package versions are resolved.
-
 - Use fork context for chroot operations to fix execution on Python 3.14.
-
 - Check out the commit before updating submodules, preventing errors when
   the submodule state does not match the checked-out commit.
-
 - Preserve package architecture information in primed stage packages.
 
 For a complete list of commits, check out the `2.36.0`_ release on GitHub.
