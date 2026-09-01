@@ -64,16 +64,16 @@ class Part(pydantic.BaseModel):
         """Create the JSON schema for a Part."""
         registered_plugins = plugins.get_registered_plugins()
         plugin_models = [
-            cast(TypeAlias, plugin.properties_class)
+            cast(TypeAlias, plugin.properties_class)  # ty: ignore[invalid-type-form]
             for plugin in registered_plugins.values()
         ]
 
         # This type is not actually used outside of schema generation, so it is acceptable
         # to be dynamically defined at runtime
-        PluginUnion: TypeAlias = reduce(lambda acc, ty: acc | ty, plugin_models)  # type: ignore[reportInvalidTypeForm, valid-type]
+        PluginUnion: TypeAlias = reduce(lambda acc, ty: acc | ty, plugin_models)  # type: ignore[reportInvalidTypeForm, valid-type]  # ty: ignore[invalid-type-form]
 
         plugin_model = Annotated[
-            PluginUnion,
+            PluginUnion,  # ty: ignore[invalid-type-form]
             pydantic.Discriminator("plugin"),
             pydantic.ConfigDict(extra="allow"),
         ]

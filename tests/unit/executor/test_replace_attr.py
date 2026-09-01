@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Any
+
 import pytest
 from craft_parts.executor import environment
 
@@ -162,7 +164,7 @@ def test_dict_with_string_replacements(subject, expected):
 
 
 def test_string_replacement_with_complex_data():
-    subject = {
+    subject: dict[str, Any] = {
         "filesets": {
             "files": [
                 "somefile",
@@ -173,7 +175,7 @@ def test_string_replacement_with_complex_data():
         "configflags": ["--with-python", "--with-swig $CRAFT_STAGE/swig"],
     }
 
-    expected = {
+    expected: dict[str, Any] = {
         "filesets": {
             "files": [
                 "somefile",

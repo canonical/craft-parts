@@ -415,7 +415,7 @@ class TestPluginProperties(test_lifecycle_manager.TestPluginProperties):
     """Tests for plugin properties with partitions enabled."""
 
     def _get_manager(self, new_dir, **kwargs):
-        manager_kwargs = {
+        manager_kwargs: dict[str, Any] = {
             "application_name": "test_manager",
             "cache_dir": new_dir,
             "partitions": ["default", "mypart", "yourpart", "our/special-part"],
