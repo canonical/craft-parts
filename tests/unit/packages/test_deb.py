@@ -1196,8 +1196,7 @@ def test_get_apt_get_error_package_does_not_match_package_name_substring(
     )
 
     assert (
-        _get_apt_get_error_package(["dbus", reported_package], err)
-        == reported_package
+        _get_apt_get_error_package(["dbus", reported_package], err) == reported_package
     )
 
 
