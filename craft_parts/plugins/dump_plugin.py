@@ -21,7 +21,7 @@ This plugin just dumps the content from a specified part source.
 
 from typing import Literal
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 from .properties import PluginProperties
@@ -31,7 +31,7 @@ class DumpPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the dump plugin."""
 
     plugin: Literal["dump"] = "dump"
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class DumpPlugin(Plugin):

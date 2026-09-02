@@ -15,10 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Experiments with pydantic schemas."""
 
-from typing import Annotated, Any, TypeAlias
+from functools import reduce
+from typing import Annotated, Any, Literal, TypeAlias, cast
 
 import pydantic
-from overrides import override
+from pydantic.json_schema import (
+    DEFAULT_REF_TEMPLATE,
+    GenerateJsonSchema,
+    JsonSchemaMode,
+)
+from typing_extensions import override
 
 from craft_parts import plugins, sources
 from craft_parts.plugins.nil_plugin import NilPluginProperties
@@ -48,30 +54,32 @@ class Part(pydantic.BaseModel):
     @override
     def model_json_schema(
         cls,
-        by_alias: bool = True,  # noqa: FBT001, FBT002
-        ref_template: str = pydantic.json_schema.DEFAULT_REF_TEMPLATE,
-        schema_generator: type[
-            pydantic.json_schema.GenerateJsonSchema
-        ] = pydantic.json_schema.GenerateJsonSchema,
-        mode: pydantic.json_schema.JsonSchemaMode = "validation",
+        by_alias: bool = True,
+        ref_template: str = DEFAULT_REF_TEMPLATE,
+        schema_generator: type[GenerateJsonSchema] = GenerateJsonSchema,
+        mode: JsonSchemaMode = "validation",
+        *,
+        union_format: Literal["any_of", "primitive_type_array"] = "any_of",
     ) -> dict[str, Any]:
         """Create the JSON schema for a Part."""
         registered_plugins = plugins.get_registered_plugins()
         plugin_models = [
-            plugin.properties_class for plugin in registered_plugins.values()
+            cast(TypeAlias, plugin.properties_class)  # ty: ignore[invalid-type-form]
+            for plugin in registered_plugins.values()
         ]
-        PluginUnion: TypeAlias = plugin_models[0]  # type: ignore[valid-type]
-        for model in plugin_models[1:]:
-            PluginUnion |= model  # noqa: N806
+
+        # This type is not actually used outside of schema generation, so it is acceptable
+        # to be dynamically defined at runtime
+        PluginUnion: TypeAlias = reduce(lambda acc, ty: acc | ty, plugin_models)  # ty: ignore[invalid-type-form]
 
         plugin_model = Annotated[
-            PluginUnion,  # type: ignore[valid-type]
+            PluginUnion,  # ty: ignore[invalid-type-form]
             pydantic.Discriminator("plugin"),
             pydantic.ConfigDict(extra="allow"),
         ]
 
-        source_adapter: pydantic.TypeAdapter = pydantic.TypeAdapter(sources.SourceModel)
-        plugin_adapter: pydantic.TypeAdapter = pydantic.TypeAdapter(plugin_model)
+        source_adapter = pydantic.TypeAdapter(sources.SourceModel)
+        plugin_adapter = pydantic.TypeAdapter(plugin_model)
         source_json_schema = source_adapter.json_schema(
             by_alias=by_alias,
             ref_template=ref_template,
@@ -88,12 +96,11 @@ class Part(pydantic.BaseModel):
         source_defs = source_json_schema.pop("$defs")
         for model in source_defs.values():
             # Allow properties not prefixed with "source" in source models
-            model["patternProperties"] = {r"^(?!source-)": {}}  # type:ignore[index]
+            model["patternProperties"] = {r"^(?!source-)": {}}
         plugin_defs = plugin_json_schema.pop("$defs")
         for model in plugin_defs.values():
             # Allow extra parts properties for the plugin.
-            # TODO: These should get their own models.
-            model["patternProperties"] = {  # type:ignore[index]
+            model["patternProperties"] = {
                 r"^source\-": {},
                 r"^override\-": {"type": "string"},
                 r"^(build|stage)\-(packages|snaps)$": {"type": "array"},
@@ -117,12 +124,12 @@ class PartsFile(pydantic.BaseModel):
     @override
     def model_json_schema(
         cls,
-        by_alias: bool = True,  # noqa: FBT001, FBT002
-        ref_template: str = pydantic.json_schema.DEFAULT_REF_TEMPLATE,
-        schema_generator: type[
-            pydantic.json_schema.GenerateJsonSchema
-        ] = pydantic.json_schema.GenerateJsonSchema,
-        mode: pydantic.json_schema.JsonSchemaMode = "validation",
+        by_alias: bool = True,
+        ref_template: str = DEFAULT_REF_TEMPLATE,
+        schema_generator: type[GenerateJsonSchema] = GenerateJsonSchema,
+        mode: JsonSchemaMode = "validation",
+        *,
+        union_format: Literal["any_of", "primitive_type_array"] = "any_of",
     ) -> dict[str, Any]:
         """Create the JSON schema for a file with Parts."""
         schema = super().model_json_schema(

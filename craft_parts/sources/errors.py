@@ -17,6 +17,7 @@
 """Source handler error definitions."""
 
 from collections.abc import Sequence
+from pathlib import Path
 
 from craft_parts import errors
 from craft_parts.utils import formatting_utils
@@ -26,7 +27,7 @@ class SourceError(errors.PartsError):
     """Base class for source handler errors."""
 
 
-class InvalidSourceType(SourceError):
+class InvalidSourceType(SourceError):  # noqa: N818
     """Failed to determine a source type.
 
     :param source: The source defined for the part.
@@ -44,7 +45,7 @@ class InvalidSourceType(SourceError):
         super().__init__(brief=f"Failed to pull source: {message}")
 
 
-class InvalidSourceOption(SourceError):
+class InvalidSourceOption(SourceError):  # noqa: N818
     """A source option is not allowed for the given source type.
 
     :param source_type: The part's source type.
@@ -63,8 +64,7 @@ class InvalidSourceOption(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-# TODO: Merge this with InvalidSourceOption above
-class InvalidSourceOptions(SourceError):
+class InvalidSourceOptions(SourceError):  # noqa: N818
     """A source option is not allowed for the given source type.
 
     :param source_type: The part's source type.
@@ -84,7 +84,7 @@ class InvalidSourceOptions(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class IncompatibleSourceOptions(SourceError):
+class IncompatibleSourceOptions(SourceError):  # noqa: N818
     """Source specified options that cannot be used at the same time.
 
     :param source_type: The part's source type.
@@ -104,22 +104,43 @@ class IncompatibleSourceOptions(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class ChecksumMismatch(SourceError):
+class ChecksumMismatch(SourceError):  # noqa: N818
     """A checksum doesn't match the expected value.
 
     :param expected: The expected checksum.
     :param obtained: The actual checksum.
+    :param part_name: The name of the part being pulled.
+    :param source: The source being pulled.
     """
 
-    def __init__(self, *, expected: str, obtained: str) -> None:
+    def __init__(
+        self,
+        *,
+        expected: str,
+        obtained: str,
+        part_name: str | None = None,
+        source: str | None = None,
+    ) -> None:
         self.expected = expected
         self.obtained = obtained
-        brief = f"Expected digest {expected}, obtained {obtained}."
+        self.part_name = part_name
+        self.source = source
 
-        super().__init__(brief=brief)
+        if part_name:
+            subject = f" for part {part_name!r}"
+        elif source:
+            subject = f" for {source!r}"
+        else:
+            subject = ""
+
+        brief = f"Failed to pull source: checksum mismatch{subject}."
+        details = f"Expected digest {expected}, obtained {obtained}."
+        resolution = "Make sure the source-checksum matches the downloaded source."
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
 
 
-class SourceUpdateUnsupported(SourceError):
+class SourceUpdateUnsupported(SourceError):  # noqa: N818
     """The source handler doesn't support updating.
 
     :param name: The source type.
@@ -167,7 +188,7 @@ class HttpRequestError(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class SourceNotFound(SourceError):
+class SourceNotFound(SourceError):  # noqa: N818
     """Failed to retrieve a source.
 
     :param source: The source defined for the part.
@@ -181,7 +202,7 @@ class SourceNotFound(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidSnapPackage(SourceError):
+class InvalidSnapPackage(SourceError):  # noqa: N818
     """A snap package is invalid.
 
     :param snap_file: The snap file name.
@@ -195,7 +216,7 @@ class InvalidSnapPackage(SourceError):
         super().__init__(brief=brief, resolution=resolution)
 
 
-class InvalidRpmPackage(SourceError):
+class InvalidRpmPackage(SourceError):  # noqa: N818
     """An rpm package is invalid.
 
     :param rpm_file: The filename.
@@ -217,7 +238,11 @@ class PullError(SourceError):
     """
 
     def __init__(
-        self, *, command: Sequence, exit_code: int, resolution: str | None = None
+        self,
+        *,
+        command: Sequence[str | Path],
+        exit_code: int,
+        resolution: str | None = None,
     ) -> None:
         self.command = command
         self.exit_code = exit_code

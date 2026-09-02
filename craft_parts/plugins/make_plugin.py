@@ -18,7 +18,7 @@
 
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 from .properties import PluginProperties
@@ -32,7 +32,7 @@ class MakePluginProperties(PluginProperties, frozen=True):
     make_parameters: list[str] = []
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MakePlugin(Plugin):
@@ -42,13 +42,13 @@ class MakePlugin(Plugin):
     build.
 
     This plugin always runs 'make' followed by 'make install', except when
-    the 'artifacts' keyword is used.
+    the 'artifacts' key is used.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
 
         - make-parameters
           (list of strings)
@@ -56,6 +56,7 @@ class MakePlugin(Plugin):
     """
 
     properties_class = MakePluginProperties
+    default_parameters: list[str] = []
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -73,7 +74,11 @@ class MakePlugin(Plugin):
         return {}
 
     def _get_make_command(self, target: str = "") -> str:
-        cmd = ["make", f'-j"{self._part_info.parallel_build_count}"']
+        cmd = [
+            "make",
+            *self.default_parameters,
+            f'-j"{self._part_info.parallel_build_count}"',
+        ]
 
         if target:
             cmd.append(target)
@@ -88,6 +93,8 @@ class MakePlugin(Plugin):
         """Return a list of commands to run during the build step."""
         return [
             self._get_make_command(),
-            f'{self._get_make_command(target="install")} '
-            f'DESTDIR="{self._part_info.part_install_dir}"',
+            (
+                f"{self._get_make_command(target='install')} "
+                f'DESTDIR="{self._part_info.part_install_dir}"'
+            ),
         ]

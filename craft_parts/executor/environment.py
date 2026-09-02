@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2020-2023 Canonical Ltd.
+# Copyright 2020-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,18 +16,26 @@
 
 """Helpers to handle part environment setting."""
 
+from __future__ import annotations
+
 import io
 import logging
-from collections.abc import Iterable
-from typing import Any, cast
+from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING, Any, overload
 
 from craft_parts import errors
 from craft_parts.features import Features
-from craft_parts.infos import ProjectInfo, StepInfo
-from craft_parts.parts import Part
-from craft_parts.plugins import Plugin
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
+from craft_parts.utils.partition_utils import DEFAULT_PARTITION, is_default_partition
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from craft_parts.infos import ProjectInfo, StepInfo
+    from craft_parts.parts import Part
+    from craft_parts.plugins import Plugin
+
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +106,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
             _get_step_overlay_environment_for_partitions(part, step_info.partitions)
         )
 
-    bin_paths = []
+    bin_paths: list[str] = []
     for path in paths:
         bin_paths.extend(os_utils.get_bin_paths(root=path, existing_only=True))
 
@@ -108,7 +116,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
             paths=bin_paths, prepend="", separator=":"
         )
 
-    include_paths = []
+    include_paths: list[str] = []
     for path in paths:
         include_paths.extend(
             os_utils.get_include_paths(root=path, arch_triplet=step_info.arch_triplet)
@@ -116,22 +124,22 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
 
     if include_paths:
         for envvar in ["CPPFLAGS", "CFLAGS", "CXXFLAGS"]:
-            part_environment[envvar] = _combine_paths(
+            part_environment[envvar] = f'${{{envvar}:+"${envvar} "}}' + _combine_paths(
                 paths=include_paths, prepend="-isystem ", separator=" "
             )
 
-    library_paths = []
+    library_paths: list[str] = []
     for path in paths:
         library_paths.extend(
             os_utils.get_library_paths(root=path, arch_triplet=step_info.arch_triplet)
         )
 
     if library_paths:
-        part_environment["LDFLAGS"] = _combine_paths(
+        part_environment["LDFLAGS"] = '${LDFLAGS:+"$LDFLAGS "}' + _combine_paths(
             paths=library_paths, prepend="-L", separator=" "
         )
 
-    pkg_config_paths = []
+    pkg_config_paths: list[str] = []
     for path in paths:
         pkg_config_paths.extend(
             os_utils.get_pkg_config_paths(
@@ -140,8 +148,9 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
         )
 
     if pkg_config_paths:
-        part_environment["PKG_CONFIG_PATH"] = _combine_paths(
-            pkg_config_paths, prepend="", separator=":"
+        part_environment["PKG_CONFIG_PATH"] = (
+            '${PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}'
+            + _combine_paths(pkg_config_paths, prepend="", separator=":")
         )
 
     return part_environment
@@ -150,7 +159,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
 def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
     """Add project and part information variables to the environment.
 
-    :param step_info: Information about the current step.
+    :param info: Information about the project.
 
     :return: A dictionary containing environment variables and values.
     """
@@ -165,6 +174,7 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
         "CRAFT_ARCH_TRIPLET_BUILD_FOR": info.arch_triplet_build_for,
         "CRAFT_PARALLEL_BUILD_COUNT": str(info.parallel_build_count),
         "CRAFT_PROJECT_DIR": str(info.project_dir),
+        "DEBIAN_FRONTEND": "noninteractive",
     }
 
     if Features().enable_overlay:
@@ -189,7 +199,7 @@ def _translate_partition_env(partition: str) -> str:
 
     :returns: The translated name
     """
-    return partition.upper().translate({ord("-"): "_", ord("/"): "_"})
+    return partition.upper().translate({ord("+"): "_", ord("-"): "_", ord("/"): "_"})
 
 
 def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
@@ -209,6 +219,15 @@ def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
         raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
     for partition in info.partitions:
+        # CRAFT_DEFAULT_* vars for the default partition
+        if info.is_default_partition(partition):
+            formatted_default = _translate_partition_env(DEFAULT_PARTITION)
+            environment[f"CRAFT_{formatted_default}_STAGE"] = str(
+                info.get_stage_dir(partition=partition)
+            )
+            environment[f"CRAFT_{formatted_default}_PRIME"] = str(
+                info.get_prime_dir(partition=partition)
+            )
         formatted_partition = _translate_partition_env(partition)
 
         environment[f"CRAFT_{formatted_partition}_STAGE"] = str(
@@ -240,6 +259,12 @@ def _get_step_overlay_environment_for_partitions(
         raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
     for partition in partitions:
+        # CRAFT_DEFAULT_* var for the default partition
+        if is_default_partition(partitions, partition):
+            environment[
+                f"CRAFT_{_translate_partition_env(DEFAULT_PARTITION)}_OVERLAY"
+            ] = str(part.part_layer_dirs[partition])
+
         formatted_partition = _translate_partition_env(partition)
 
         environment[f"CRAFT_{formatted_partition}_OVERLAY"] = str(
@@ -319,9 +344,19 @@ def expand_environment(
             data[key] = _replace_attr(value, replacements)
 
 
+@overload
 def _replace_attr(
-    attr: list[str] | dict[str, str] | str, replacements: dict[str, str]
-) -> list[str] | dict[str, str] | str:
+    attr: dict[str, str], replacements: dict[str, str]
+) -> dict[str, str]: ...
+@overload
+def _replace_attr(attr: list[str], replacements: dict[str, str]) -> list[str]: ...
+@overload
+def _replace_attr(attr: str, replacements: dict[str, str]) -> str: ...
+@overload
+def _replace_attr(attr: int, replacements: dict[str, str]) -> int: ...
+def _replace_attr(
+    attr: list[str] | dict[str, str] | str | int, replacements: dict[str, str]
+) -> list[str] | dict[str, str] | str | int:
     """Recurse through a complex data structure and replace values.
 
     The first matching replacement in the replacement map is used. For example,
@@ -333,26 +368,22 @@ def _replace_attr(
 
     :returns: The data structure with replaced values.
     """
-    if isinstance(attr, str):
-        for key, value in replacements.items():
-            if key in attr:
-                _warn_if_deprecated_key(key)
-                attr = attr.replace(key, str(value))
-        return attr
-
-    if isinstance(attr, list | tuple):
-        return [cast(str, _replace_attr(i, replacements)) for i in attr]
-
-    if isinstance(attr, dict):
-        result: dict[str, str] = {}
-        for _key, _value in attr.items():
-            # Run replacements on both the key and value
-            key = cast(str, _replace_attr(_key, replacements))
-            value = cast(str, _replace_attr(_value, replacements))
-            result[key] = value
-        return result
-
-    return attr
+    match attr:
+        case Mapping():
+            return {
+                _replace_attr(key, replacements): _replace_attr(value, replacements)
+                for key, value in attr.items()
+            }
+        case str():
+            for key, value in replacements.items():
+                if key in attr:
+                    _warn_if_deprecated_key(key)
+                    attr = attr.replace(key, str(value))
+            return attr
+        case Sequence():
+            return [_replace_attr(i, replacements) for i in attr]
+        case _:
+            return attr
 
 
 def _warn_if_deprecated_key(key: str) -> None:

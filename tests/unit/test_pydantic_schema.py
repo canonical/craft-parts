@@ -22,6 +22,7 @@ import pydantic
 import pytest
 from craft_parts import pydantic_schema
 from craft_parts.plugins import plugins
+from craft_parts.sources import errors as source_errors
 
 VALID_PLUGIN_DATAS = [
     *(
@@ -90,6 +91,50 @@ INVALID_PART_DATAS = [
     ),
 ]
 
+INCOMPATIBLE_PART_DATAS = [
+    pytest.param(
+        {
+            "plugin": "nil",
+            "source-type": "git",
+            "source": "https://example.com/repo.git",
+            "source-branch": "main",
+            "source-tag": "v1.0.0",
+        },
+        id="git-branch-and-tag",
+    ),
+    pytest.param(
+        {
+            "plugin": "nil",
+            "source-type": "git",
+            "source": "https://example.com/repo.git",
+            "source-branch": "main",
+            "source-commit": "abcdef1234567890abcdef1234567890abcdef12",
+        },
+        id="git-branch-and-commit",
+    ),
+    pytest.param(
+        {
+            "plugin": "nil",
+            "source-type": "git",
+            "source": "https://example.com/repo.git",
+            "source-tag": "v1.0.0",
+            "source-commit": "abcdef1234567890abcdef1234567890abcdef12",
+        },
+        id="git-tag-and-commit",
+    ),
+    pytest.param(
+        {
+            "plugin": "nil",
+            "source-type": "git",
+            "source": "https://example.com/repo.git",
+            "source-branch": "main",
+            "source-tag": "v1.0.0",
+            "source-commit": "abcdef1234567890abcdef1234567890abcdef12",
+        },
+        id="git-branch-tag-and-commit",
+    ),
+]
+
 
 @pytest.fixture(scope="module")
 def part_schema():
@@ -126,9 +171,23 @@ def test_part_schema_implicit_source_type(validator, plugin_data, source_data):
 
 @pytest.mark.parametrize("part_data", INVALID_PART_DATAS)
 def test_invalid_part_data(validator, part_data):
-
     with pytest.raises(jsonschema.ValidationError):
         validator.validate(part_data)
 
+    # Some invalid schema cases are caught earlier by the Pydantic model
+    # validator, which raises IncompatibleSourceOptions rather than
+    # ValidationError. Treat either as a rejected part.
     with pytest.raises(pydantic.ValidationError):
+        pydantic_schema.Part.model_validate(part_data)
+
+
+@pytest.mark.parametrize("part_data", INCOMPATIBLE_PART_DATAS)
+def test_incompatible_part_data(validator, part_data):
+    with pytest.raises(jsonschema.ValidationError):
+        validator.validate(part_data)
+
+    # Some invalid schema cases are caught earlier by the Pydantic model
+    # validator, which raises IncompatibleSourceOptions rather than
+    # ValidationError. Treat either as a rejected part.
+    with pytest.raises(source_errors.IncompatibleSourceOptions):
         pydantic_schema.Part.model_validate(part_data)

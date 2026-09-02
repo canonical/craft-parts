@@ -19,21 +19,22 @@
 from __future__ import annotations
 
 import abc
-import pathlib
 import textwrap
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from overrides import override
+from typing_extensions import override
 
-from craft_parts.actions import ActionProperties
-
-from .properties import PluginProperties
 from .validator import PluginEnvironmentValidator
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
+    import pathlib
+
     from craft_parts import infos
+    from craft_parts.actions import ActionProperties
+
+    from .properties import PluginProperties
 
 
 class Plugin(abc.ABC):
@@ -51,6 +52,9 @@ class Plugin(abc.ABC):
 
     supports_strict_mode = False
     """Plugins that can run in 'strict' mode must set this classvar to True."""
+
+    uses_overlay = False
+    """Plugins that participate in the overlay step must set this to True."""
 
     def __init__(
         self, *, properties: PluginProperties, part_info: infos.PartInfo
@@ -90,6 +94,41 @@ class Plugin(abc.ABC):
         :param action_properties: The properties to store.
         """
         self._action_properties = deepcopy(action_properties)
+
+    @classmethod
+    def supported_build_attributes(cls) -> set[str]:
+        """Return the build attributes that this plugin supports.
+
+        By default, a plugin supports no build attributes at all. Subclasses must
+        override this to declare support for specific attributes.
+        """
+        return set()
+
+    def get_overlay_packages(self) -> set[str]:
+        """Return a set of packages to install in the overlay.
+
+        Plugins that set ``uses_overlay = True`` can override this method to
+        declare packages that should be installed into the overlay filesystem.
+        """
+        return set()
+
+    def get_overlay_recommended_packages(self) -> set[str]:
+        """Return a set of packages to install in the overlay with recommended packages.
+
+        Plugins that set ``uses_overlay = True`` can override this method to
+        declare packages that should be installed into the overlay filesystem with their
+        recommended packages.
+        """
+        return set()
+
+    def get_overlay_chroot_commands(self) -> list[str]:
+        """Return commands to run inside the overlay chroot.
+
+        Plugins that set ``uses_overlay = True`` can override this method to
+        declare commands that run inside the overlay chroot during the overlay
+        step.
+        """
+        return []
 
 
 class BasePythonPlugin(Plugin):

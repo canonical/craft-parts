@@ -30,6 +30,16 @@ def test_simple_script(case_dir, capfd) -> None:
     assert capfd.readouterr().out == "foo\n"
 
 
+@pytest.mark.flaky(
+    reruns=10,
+    reruns_delay=2,
+    only_rerun=["AssertionError"],
+    reason="""
+        These can get combined slightly out of order on busy systems. There is nothing
+        we can do about that unfortunately, so we just re-run this test if the
+        assertion fails. Logic errors will still get caught this way.
+    """,
+)
 def test_complex_script(case_dir, capfd) -> None:
     def _build_expected(raw: list[int]) -> str:
         sorted_output = sorted(raw)

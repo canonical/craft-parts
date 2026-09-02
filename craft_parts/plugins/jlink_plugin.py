@@ -16,9 +16,10 @@
 
 """The JLink plugin."""
 
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
-from overrides import override
+from pydantic import model_validator
+from typing_extensions import Self, override
 
 from .base import Plugin
 from .properties import PluginProperties
@@ -30,6 +31,34 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["jlink"] = "jlink"
     jlink_jars: list[str] = []
+    jlink_extra_modules: list[str] = []
+    jlink_modules: list[str] = []
+    jlink_multi_release: int | str = "base"
+
+    def _get_jlink_attributes(self, attribute_dict: dict[str, Any]) -> dict[str, Any]:
+        return {
+            k: v
+            for k, v in attribute_dict.items()
+            if k.startswith("jlink") and k != "jlink_modules"
+        }
+
+    @model_validator(mode="after")
+    def jlink_modules_exclusive(self) -> Self:
+        """Option jlink_modules is exclusive with other options.
+
+        This check ensures that the user does not set jlink_modules
+        together with other options.
+        """
+        if self.jlink_modules:
+            instance_dict = self._get_jlink_attributes(self.model_dump())
+            class_dict = self._get_jlink_attributes(
+                JLinkPluginProperties().model_dump()
+            )
+            if class_dict != instance_dict:
+                raise ValueError(
+                    "Option jlink_modules is exclusive with all other options."
+                )
+        return self
 
 
 class JLinkPluginEnvironmentValidator(PluginEnvironmentValidator):
@@ -70,6 +99,58 @@ class JLinkPlugin(Plugin):
 
         return 'PROCESS_JARS=$(find ${CRAFT_STAGE} -type f -name "*.jar")'
 
+    def _get_deps_commands(self) -> list[str]:
+        """Return commands to generate a list of dependencies."""
+        options = cast(JLinkPluginProperties, self._options)
+
+        if options.jlink_modules:
+            modules = ",".join(options.jlink_modules)
+            return [f"deps={modules}"]
+
+        return [
+            self._get_multi_release_command(),
+            self._get_find_jars_commands(),
+            # create temp folder
+            # extract jar files into temp folder - spring boot fat jar
+            # contains dependent jars inside
+            """
+                mkdir -p "${CRAFT_PART_BUILD}/tmp" && \
+                (cd "${CRAFT_PART_BUILD}/tmp" && \
+                    for jar in ${PROCESS_JARS}; do jar xvf "${jar}"; done;)
+            """,
+            # create classpath - add all dependent jars and all staged jars
+            "CPATH=.",
+            """\
+                for file in $(find "${CRAFT_PART_BUILD}/tmp" -type f -name "*.jar"); do
+                    CPATH="$CPATH:${file}"
+                done
+                for file in $(find "${CRAFT_STAGE}" -type f -name "*.jar"); do
+                    CPATH="$CPATH:${file}"
+                done
+            """,
+            """\
+                if [ "x${PROCESS_JARS}" != "x" ]; then
+                    deps=$(${JDEPS} --print-module-deps -q --recursive \
+                        --ignore-missing-deps \
+                        --multi-release ${MULTI_RELEASE} \
+                        --class-path=${CPATH} \
+                        ${PROCESS_JARS})
+                else
+                    deps=java.base
+                fi
+            """,
+        ]
+
+    def _get_multi_release_command(self) -> str:
+        """Return jdeps multi-release setting."""
+        options = cast(JLinkPluginProperties, self._options)
+        return f"MULTI_RELEASE={options.jlink_multi_release}"
+
+    def _get_extra_module_list(self) -> str:
+        """Return additional modules."""
+        options = cast(JLinkPluginProperties, self._options)
+        return ",".join([x.strip() for x in options.jlink_extra_modules])
+
     @override
     def get_build_packages(self) -> set[str]:
         """Return a set of required packages to install in the build environment."""
@@ -88,10 +169,8 @@ class JLinkPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
-        commands = []
-
-        # Set JAVA_HOME to be used in jlink commands
-        commands.append(
+        commands = [
+            # Set JAVA_HOME to be used in jlink commands
             """
                 if [ -z "${JAVA_HOME+x}" ]; then
                     JAVA_HOME=$(dirname $(dirname $(readlink -f $(which jlink))))
@@ -102,51 +181,17 @@ class JLinkPlugin(Plugin):
                 fi
                 JLINK=${JAVA_HOME}/bin/jlink
                 JDEPS=${JAVA_HOME}/bin/jdeps
-            """
-        )
-
-        # extract jlink version and use it to define the destination
-        # and multi-release jar version for the dependency enumeration
-        commands.append("JLINK_VERSION=$(${JLINK} --version)")
-        commands.append(
-            "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_ARCH_BUILD_FOR}"
-        )
-        commands.append("MULTI_RELEASE=${JLINK_VERSION%%.*}")
-
-        commands.append(self._get_find_jars_commands())
-
-        # create temp folder
-        commands.append("mkdir -p ${CRAFT_PART_BUILD}/tmp")
-        # extract jar files into temp folder - spring boot fat jar
-        # contains dependent jars inside
-        commands.append(
-            "(cd ${CRAFT_PART_BUILD}/tmp && for jar in ${PROCESS_JARS}; do jar xvf ${jar}; done;)"
-        )
-        # create classpath - add all dependent jars and all staged jars
-        commands.append("CPATH=.")
-        commands.append(
-            """
-                for file in $(find "${CRAFT_PART_BUILD}/tmp" -type f -name "*.jar"); do
-                    CPATH="$CPATH:${file}"
-                done
-                for file in $(find "${CRAFT_STAGE}" -type f -name "*.jar"); do
-                    CPATH="$CPATH:${file}"
-                done
-            """
-        )
-        commands.append(
-            """if [ "x${PROCESS_JARS}" != "x" ]; then
-                deps=$(${JDEPS} --print-module-deps -q --recursive \
-                    --ignore-missing-deps \
-                    --multi-release ${MULTI_RELEASE} \
-                    --class-path=${CPATH} \
-                    ${PROCESS_JARS})
-                else
-                    deps=java.base
-                fi
-            """
-        )
-        commands.append("INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}")
+            """,
+            # extract jlink version and use it to define the destination
+            # and multi-release jar version for the dependency enumeration
+            "JLINK_VERSION=$(${JLINK} --version)",
+            "DEST=usr/lib/jvm/java-${JLINK_VERSION%%.*}-openjdk-${CRAFT_ARCH_BUILD_FOR}",
+            "INSTALL_ROOT=${CRAFT_PART_INSTALL}/${DEST}",
+            *self._get_deps_commands(),
+        ]
+        extra_modules = self._get_extra_module_list()
+        if len(extra_modules) > 0:
+            commands.append(f"deps=${{deps}},{extra_modules}")
 
         commands.append(
             "rm -rf ${INSTALL_ROOT} && ${JLINK} --no-header-files --no-man-pages --strip-debug --add-modules ${deps} --output ${INSTALL_ROOT}"

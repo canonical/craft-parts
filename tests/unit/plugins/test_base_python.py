@@ -19,13 +19,14 @@ from typing import Literal
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
-from craft_parts.plugins.base import BasePythonPlugin, PluginProperties
-from overrides import override
+from craft_parts.plugins.base import BasePythonPlugin
+from craft_parts.plugins.properties import PluginProperties
+from typing_extensions import override
 
 
 class FakePythonPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["fakepy"] = "fakepy"
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class FakePythonPlugin(BasePythonPlugin):

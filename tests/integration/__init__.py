@@ -23,4 +23,3 @@ def clear_function_cache_after_run():
     yield
     deb.Ubuntu.refresh_packages_list.cache_clear()
     deb._run_dpkg_query_list_files.cache_clear()
-    deb._run_dpkg_query_search.cache_clear()

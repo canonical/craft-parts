@@ -17,12 +17,12 @@
 """Handle the execution of built-in or user specified step commands."""
 
 import logging
-import os
 from collections.abc import Callable
 from pathlib import Path
 
 from craft_parts import overlays
 from craft_parts.permissions import Permissions, filter_permissions
+from craft_parts.state_manager.stage_state import StageState
 from craft_parts.state_manager.states import MigrationState, StepState
 from craft_parts.utils import file_utils
 
@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 def migrate_files(  # noqa: PLR0913
     *,
-    files: set[str],
-    dirs: set[str],
+    files: set[Path],
+    dirs: set[Path],
     srcdir: Path,
     destdir: Path,
     missing_ok: bool = False,
@@ -40,7 +40,7 @@ def migrate_files(  # noqa: PLR0913
     oci_translation: bool = False,
     fixup_func: Callable[..., None] = lambda *_args: None,
     permissions: list[Permissions] | None = None,
-) -> tuple[set[str], set[str]]:
+) -> tuple[set[Path], set[Path]]:
     """Copy or link files from a directory to another.
 
     Files and directories are migrated from one step to the next during
@@ -60,8 +60,8 @@ def migrate_files(  # noqa: PLR0913
 
     :returns: A tuple containing sets of migrated files and directories.
     """
-    migrated_files: set[str] = set()
-    migrated_dirs: set[str] = set()
+    migrated_files: set[Path] = set()
+    migrated_dirs: set[Path] = set()
     permissions = permissions or []
 
     for dirname in sorted(dirs):
@@ -75,7 +75,7 @@ def migrate_files(  # noqa: PLR0913
             dst = overlays.oci_whiteout(dst)
 
         file_utils.create_similar_directory(
-            str(src), str(dst), filter_permissions(dirname, permissions)
+            src, dst, filter_permissions(dirname, permissions)
         )
         migrated_dirs.add(dirname)
 
@@ -83,11 +83,11 @@ def migrate_files(  # noqa: PLR0913
         # directory marker file in destination and add it to the list of migrated
         # files so it can be removed when cleaning.
         if oci_translation and _is_opaque_dir(src):
-            oci_opaque_marker = overlays.oci_opaque_dir(Path(dirname))
-            oci_dst = Path(destdir, oci_opaque_marker)
-            logger.debug("create OCI opaque dir marker '%s'", str(oci_dst))
+            oci_opaque_marker = overlays.oci_opaque_dir(dirname)
+            oci_dst = destdir / oci_opaque_marker
+            logger.debug("create OCI opaque dir marker '%s'", oci_dst)
             oci_dst.touch()
-            migrated_files.add(str(oci_opaque_marker))
+            migrated_files.add(oci_opaque_marker)
 
     for filename in sorted(files):
         src = srcdir / filename
@@ -114,20 +114,20 @@ def migrate_files(  # noqa: PLR0913
         # in destination and add it to the list of migrated files so it can be removed
         # when cleaning.
         if oci_translation and _is_whiteout_file(src):
-            oci_whiteout = overlays.oci_whiteout(Path(filename))
-            oci_dst = Path(destdir, oci_whiteout)
-            logger.debug("create OCI whiteout file '%s'", str(oci_dst))
+            oci_whiteout = overlays.oci_whiteout(filename)
+            oci_dst = destdir / oci_whiteout
+            logger.debug("create OCI whiteout file '%s'", oci_dst)
             oci_dst.touch()
-            migrated_files.add(str(oci_whiteout))
+            migrated_files.add(oci_whiteout)
         else:
             file_utils.link_or_copy(
-                str(src),
-                str(dst),
+                src,
+                dst,
                 follow_symlinks=follow_symlinks,
                 permissions=filter_permissions(filename, permissions),
             )
-            fixup_func(str(dst))
-            migrated_files.add(str(filename))
+            fixup_func(dst)
+            migrated_files.add(filename)
 
     return migrated_files, migrated_dirs
 
@@ -146,6 +146,7 @@ def clean_shared_area(
     shared_dir: Path,
     part_states: dict[str, StepState],
     overlay_migration_state: MigrationState | None,
+    partition: str | None,
 ) -> None:
     """Clean files added by a part to a shared directory.
 
@@ -160,8 +161,48 @@ def clean_shared_area(
         return
 
     state = part_states[part_name]
-    files = state.files
-    directories = state.directories
+    files: set[Path] = set()
+    directories: set[Path] = set()
+
+    partition_contents = state.contents(partition=partition)
+
+    if partition_contents:
+        files, directories = partition_contents
+
+    # We want to make sure we don't remove a file or directory that's
+    # being used by another part. So we'll examine the state for all parts
+    # in the project and leave any files or directories found to be in
+    # common.
+    for other_name, other_state in part_states.items():
+        other_partition_contents = other_state.contents(partition=partition)
+
+        if other_state and other_name != part_name and other_partition_contents:
+            other_files, other_directories = other_partition_contents
+            files -= other_files
+            directories -= other_directories
+
+    # If overlay has been migrated, also take overlay files into account
+    if overlay_migration_state:
+        overlay_contents = overlay_migration_state.contents(partition=partition)
+        if overlay_migration_state and overlay_contents:
+            overlay_files, overlay_directories = overlay_contents
+            files -= overlay_files
+            directories -= overlay_directories
+
+    # Finally, clean the files and directories that are specific to this
+    # part.
+    _clean_migrated_files(files, directories, shared_dir)
+
+
+def clean_backstage(
+    *, part_name: str, shared_dir: Path, part_states: dict[str, StageState]
+) -> None:
+    """Clean files added by a part to the backstage directory."""
+    if part_name not in part_states:
+        return
+
+    files = part_states[part_name].backstage_files
+    directories = part_states[part_name].backstage_directories
 
     # We want to make sure we don't remove a file or directory that's
     # being used by another part. So we'll examine the state for all parts
@@ -169,16 +210,9 @@ def clean_shared_area(
     # common.
     for other_name, other_state in part_states.items():
         if other_state and other_name != part_name:
-            files -= other_state.files
-            directories -= other_state.directories
+            files -= other_state.backstage_files
+            directories -= other_state.backstage_directories
 
-    # If overlay has been migrated, also take overlay files into account
-    if overlay_migration_state:
-        files -= overlay_migration_state.files
-        directories -= overlay_migration_state.directories
-
-    # Finally, clean the files and directories that are specific to this
-    # part.
     _clean_migrated_files(files, directories, shared_dir)
 
 
@@ -187,6 +221,7 @@ def clean_shared_overlay(
     shared_dir: Path,
     part_states: dict[str, StepState],
     overlay_migration_state: MigrationState | None,
+    partition: str | None,
 ) -> None:
     """Remove migrated overlay files from a shared directory.
 
@@ -199,19 +234,30 @@ def clean_shared_overlay(
     if not overlay_migration_state:
         return
 
-    files = overlay_migration_state.files
-    directories = overlay_migration_state.directories
+    files: set[Path] = set()
+    directories: set[Path] = set()
 
-    # Don't remove entries that also belong to a part.
+    # This overlay migration state is coming from a partition, so content
+    # is recorded in top-level files/directories keys, not in partition_contents key
+    overlay_contents = overlay_migration_state.contents(partition=None)
+
+    if overlay_contents:
+        files, directories = overlay_contents
+
+    # Don't remove entries that also belong to a part in this partition
     for other_state in part_states.values():
-        if other_state:
-            files -= other_state.files
-            directories -= other_state.directories
+        if not other_state:
+            continue
+        other_contents = other_state.contents(partition=partition)
+        if other_contents:
+            other_part_files, other_part_directories = other_contents
+            files -= other_part_files
+            directories -= other_part_directories
 
     _clean_migrated_files(files, directories, shared_dir)
 
 
-def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> None:
+def _clean_migrated_files(files: set[Path], dirs: set[Path], directory: Path) -> None:
     """Remove files and directories migrated from part install to a common directory.
 
     :param files: A set of files to remove.
@@ -220,7 +266,7 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
     """
     for each_file in files:
         try:
-            Path(directory, each_file).unlink()
+            (directory / each_file).unlink()
         except FileNotFoundError:  # noqa: PERF203
             logger.warning(
                 "Attempted to remove file %r, but it didn't exist. Skipping...",
@@ -232,21 +278,20 @@ def _clean_migrated_files(files: set[str], dirs: set[str], directory: Path) -> N
     # we'll sort them in reverse here to get subdirectories before parents.
 
     for each_dir in sorted(dirs, reverse=True):
-        migrated_directory = os.path.join(directory, each_dir)
+        migrated_directory = directory / each_dir
         try:
-            if not os.listdir(migrated_directory):
-                os.rmdir(migrated_directory)
+            if not list(migrated_directory.iterdir()):
+                migrated_directory.rmdir()
         except FileNotFoundError:
             logger.warning(
-                "Attempted to remove directory '%s', but it didn't exist. "
-                "Skipping...",
+                "Attempted to remove directory '%s', but it didn't exist. Skipping...",
                 each_dir,
             )
 
 
 def filter_dangling_whiteouts(
-    files: set[str], dirs: set[str], *, base_dir: Path | None
-) -> set[str]:
+    files: set[Path], dirs: set[Path], *, base_dir: Path | None
+) -> set[Path]:
     """Remove dangling whiteout file and directory names.
 
     Names corresponding to dangling files and directories (i.e. without a
@@ -261,25 +306,48 @@ def filter_dangling_whiteouts(
     if not base_dir:
         return set()
 
-    whiteouts: set[str] = set()
+    whiteouts: set[Path] = set()
 
     # Remove whiteout files if no backing file exists in the base dir.
     for file in list(files):
-        if overlays.is_oci_whiteout_file(Path(file)):
-            backing_file = base_dir / overlays.oci_whited_out_file(Path(file))
+        if overlays.is_oci_whiteout_file(file):
+            backing_file = base_dir / overlays.oci_whited_out_file(file)
             if not backing_file.exists():
-                logger.debug("filter whiteout file '%s'", file)
                 files.remove(file)
                 whiteouts.add(file)
 
     # Do the same for opaque directory markers
     for directory in list(dirs):
-        opaque_marker = str(overlays.oci_opaque_dir(Path(directory)))
+        opaque_marker = overlays.oci_opaque_dir(directory)
         if opaque_marker in files:
             backing_file = base_dir / directory
             if not backing_file.exists():
-                logger.debug("filter whiteout file '%s'", opaque_marker)
                 files.remove(opaque_marker)
                 whiteouts.add(opaque_marker)
 
     return whiteouts
+
+
+def filter_all_whiteouts(
+    files: set[Path],
+) -> set[Path]:
+    """List and filter all whiteout files.
+
+    Found whiteout files are to be removed from the provided sets of files.
+
+    :param files: The set of files to be verified.
+    :return: The set of filtered out whiteout files.
+    """
+    whiteouts: set[Path] = set()
+
+    for file in list(files):
+        if overlays.is_oci_whiteout(file):
+            files.remove(file)
+            whiteouts.add(file)
+
+    return whiteouts
+
+
+def already_distributed(item: Path, sub_path: Path) -> bool:
+    """Check if a file/dir is or is under a subpath already distributed to another partition."""
+    return item.is_relative_to(sub_path) and item != sub_path

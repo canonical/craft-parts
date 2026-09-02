@@ -18,10 +18,9 @@
 
 import logging
 import os
-import os.path
 import shutil
-from collections.abc import Callable, Sequence
-from glob import iglob
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
 
@@ -29,22 +28,40 @@ from typing_extensions import Protocol
 
 from craft_parts import callbacks, errors, overlays, packages, plugins, sources
 from craft_parts.actions import Action, ActionType
+from craft_parts.filesystem_mounts import FilesystemMount
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
-from craft_parts.parts import Part, get_parts_with_overlay, has_overlay_visibility
-from craft_parts.permissions import Permissions
+from craft_parts.parts import (
+    Part,
+    get_parts_with_overlay,
+    has_overlay_visibility,
+)
 from craft_parts.plugins import Plugin
-from craft_parts.state_manager import MigrationState, StepState, states
+from craft_parts.state_manager import (
+    MigrationContents,
+    MigrationState,
+    StepState,
+    states,
+)
+from craft_parts.state_manager.stage_state import StageState
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
+from craft_parts.utils.partition_utils import BUILD_PARTITION, DEFAULT_PARTITION
 
 from . import filesets, migration
 from .environment import generate_step_environment
+from .errors import EnvironmentChangedError
 from .organize import organize_files
-from .step_handler import StepContents, StepHandler, Stream
+from .step_handler import (
+    StagePartitionContents,
+    StepContents,
+    StepHandler,
+    StepPartitionContents,
+    Stream,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,34 +89,126 @@ class _UpdateHandler(Protocol):
     ) -> None: ...
 
 
+# map the source path to the destination path in the partition
+_MigratedContents = dict[str, Path]
+
+
 class _Squasher:
     """A helper to squash layers and migrate layered content."""
 
-    def __init__(self) -> None:
-        self.migrated_files: set[str] = set()
-        self.migrated_dirs: set[str] = set()
+    def __init__(
+        self,
+        partition: str | None,
+        default_partition: str | None,
+        filesystem_mount: FilesystemMount | None = None,
+    ) -> None:
+        self.migrated_files: dict[str | None, _MigratedContents] = {partition: {}}
+        self.migrated_directories: dict[str | None, _MigratedContents] = {partition: {}}
+        self._src_partition = partition
+        self._default_partition = default_partition
+        self._distributed_paths: set[Path] = set()
+        if filesystem_mount:
+            self._filesystem_mount = filesystem_mount
 
     def migrate(
         self,
-        refdir: Path,
+        srcdir: Path,
+        destdirs: Mapping[str | None, Path],
+    ) -> None:
+        """Migrate layered content from a partition to destination directories.
+
+        If the source partition is the default one, content can be distributed to other
+        partitions using the provided filesystem mounts.
+        """
+        if (
+            self._src_partition is not None
+            and self._src_partition == self._default_partition
+        ):
+            # Distribute content into partitions according to the filesystem mounts
+            for entry in reversed(self._filesystem_mount):
+                # Only migrate content from the subdirectory indicated by the filesystem mounts
+                # entry
+                sub_path = Path(entry.mount.lstrip("/"))
+                dst_partition = entry.device
+                logger.debug(
+                    "distribute content to %s, under %s", dst_partition, sub_path
+                )
+
+                # Migrate to the destination partition indicated by the filesystem mounts entry
+                self._migrate(
+                    srcdir=srcdir,
+                    destdir=destdirs[dst_partition],
+                    sub_path=sub_path,
+                    dst_partition=dst_partition,
+                )
+                # If the sub path was really a sub path, record it.
+                if sub_path != Path():
+                    self._distributed_paths.add(sub_path)
+        else:
+            # Ignore the filesystem mounts and migrate from/to the same partition
+            self._migrate(
+                srcdir=srcdir,
+                destdir=destdirs[self._src_partition],
+                sub_path=Path(),
+                dst_partition=self._src_partition,
+            )
+
+    def _migrate(
+        self,
         srcdir: Path,
         destdir: Path,
-        permissions: list[Permissions] | None = None,
+        sub_path: Path,
+        dst_partition: str | None,
     ) -> None:
-        visible_files, visible_dirs = overlays.visible_in_layer(refdir, destdir)
+        """Actually migrate content from a source to a destination.
+
+        Associate the lists of migrated content to the partition in a map to
+        later store it in the proper state.
+        """
+        visible_files, visible_dirs = overlays.visible_in_layer(
+            srcdir / sub_path,
+            destdir,
+        )
+
+        logger.debug("excluding content distributed to other partitions")
+        files = self._filter_already_distributed(visible_files)
+        dirs = self._filter_already_distributed(visible_dirs)
+
         layer_files, layer_dirs = migration.migrate_files(
-            files=visible_files,
-            dirs=visible_dirs,
-            srcdir=srcdir,
+            files=files,
+            dirs=dirs,
+            srcdir=srcdir / sub_path,
             destdir=destdir,
             oci_translation=True,
-            permissions=permissions,
         )
-        self.migrated_files |= layer_files
-        self.migrated_dirs |= layer_dirs
+        if dst_partition not in self.migrated_files:
+            self.migrated_files[dst_partition] = {}
 
-    def get_state(self) -> MigrationState:
-        return MigrationState(files=self.migrated_files, directories=self.migrated_dirs)
+        for f in layer_files:
+            src_path = str(sub_path / f)
+            self.migrated_files[dst_partition][src_path] = f
+
+        if dst_partition not in self.migrated_directories:
+            self.migrated_directories[dst_partition] = {}
+
+        for f in layer_dirs:
+            src_path = str(sub_path / f)
+            self.migrated_directories[dst_partition][src_path] = f
+
+    def _filter_already_distributed(self, visible_contents: set[Path]) -> set[Path]:
+        """Filter files in paths already distributed to other partitions."""
+        if not self._distributed_paths:
+            return visible_contents
+        contents: set[Path] = set()
+        for content in visible_contents:
+            is_distributed = any(
+                migration.already_distributed(Path(content), distributed_path)
+                for distributed_path in self._distributed_paths
+            )
+
+            if not is_distributed:
+                contents.add(content)
+        return contents
 
 
 class PartHandler:
@@ -120,6 +229,7 @@ class PartHandler:
         overlay_manager: OverlayManager,
         ignore_patterns: list[str] | None = None,
         base_layer_hash: LayerHash | None = None,
+        build_environment: Iterable[str] | None = None,
     ) -> None:
         self._part = part
         self._part_info = part_info
@@ -127,7 +237,7 @@ class PartHandler:
         self._track_stage_packages = track_stage_packages
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
-        self._app_environment: dict[str, str] = {}
+        self._build_environment = build_environment
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -223,7 +333,6 @@ class PartHandler:
 
         fetched_packages = self._fetch_stage_packages(step_info=step_info)
         fetched_snaps = self._fetch_stage_snaps()
-        self._fetch_overlay_packages()
 
         self._run_step(
             step_info=step_info,
@@ -257,25 +366,50 @@ class PartHandler:
         :return: The overlay step state.
         """
         self._make_dirs()
+        self._fetch_overlay_packages()
 
         if self._part.has_overlay:
-            # install overlay packages
-            overlay_packages = self._part.spec.overlay_packages
-            if overlay_packages:
+            # install overlay packages (from spec and plugin)
+            overlay_packages = self._merged_overlay_packages()
+            overlay_recommended_packages = self._merged_overlay_recommended_packages()
+            if overlay_packages or overlay_recommended_packages:
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
                 ) as ctx:
-                    ctx.install_packages(overlay_packages)
+                    # include-recommends should be processed first, packages in recommends
+                    # chain will be skipped if any already installed via overlay-packages
+                    if overlay_recommended_packages:
+                        ctx.install_packages(
+                            overlay_recommended_packages, include_recommends=True
+                        )
+                    if overlay_packages:
+                        ctx.install_packages(overlay_packages)
 
-            # execute overlay script
-            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                contents = self._run_step(
-                    step_info=step_info,
-                    scriptlet_name="overlay-script",
-                    work_dir=self._part.part_layer_dir,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
+            if self._part.spec.override_overlay or self._plugin.uses_overlay:
+                # Run in chroot: either override-overlay scriptlet or
+                # plugin builtin (via _builtin_overlay)
+                with overlays.ChrootMount(
+                    self._overlay_manager,
+                    top_part=self._part,
+                ) as cm:
+                    contents = cm(
+                        self._run_step,
+                        step_info=step_info,
+                        scriptlet_name="override-overlay",
+                        work_dir="/",
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
+            else:
+                # execute overlay script on host
+                with overlays.LayerMount(self._overlay_manager, top_part=self._part):
+                    contents = self._run_step(
+                        step_info=step_info,
+                        scriptlet_name="overlay-script",
+                        work_dir=self._part.part_layer_dir,
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
 
             # apply overlay filter
             overlay_fileset = filesets.Fileset(
@@ -284,21 +418,33 @@ class PartHandler:
             destdir = self._part.part_layer_dir
             files, dirs = filesets.migratable_filesets(
                 overlay_fileset,
-                str(destdir),
-                "default" if self._part_info.partitions else None,
+                destdir,
+                self._part_info.default_partition,
+                self._part_info.default_partition,
             )
             _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
         else:
             contents = StepContents()
 
+        partitions_contents: dict[str, MigrationContents] = {
+            p: MigrationContents(files=c.files, directories=c.dirs)
+            for p, c in contents.partitions_contents.items()
+            if not self._part_info.is_default_partition(p)
+        }
+
         layer_hash = self._compute_layer_hash(all_parts=False)
         layer_hash.save(self._part)
+
+        default_contents = contents.partitions_contents.get(
+            self._part_info.default_partition, StepPartitionContents()
+        )
 
         return states.OverlayState(
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            files=contents.files,
-            directories=contents.dirs,
+            partitions_contents=partitions_contents,
+            files=default_contents.files,
+            directories=default_contents.dirs,
         )
 
     def _run_build(
@@ -324,20 +470,20 @@ class PartHandler:
 
             # Copy source from the part source dir to the part build dir
             shutil.copytree(
-                self._part.part_src_dir, self._part.part_build_dir, symlinks=True
+                self._part.part_src_dir,
+                self._part.part_build_dir,
+                symlinks=True,
+                copy_function=file_utils.copy,
             )
 
         # Perform the build step
-        if has_overlay_visibility(self._part, part_list=self._part_list):
-            with overlays.LayerMount(self._overlay_manager, top_part=self._part):
-                self._run_step(
-                    step_info=step_info,
-                    scriptlet_name="override-build",
-                    work_dir=self._part.part_build_dir,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
-        else:
+        needs_overlay = (
+            has_overlay_visibility(self._part, part_list=self._part_list)
+            or self._part.organizes_to_overlay
+        )
+        with _conditional_layer_mount(
+            self._overlay_manager, top_part=self._part, condition=needs_overlay
+        ):
             self._run_step(
                 step_info=step_info,
                 scriptlet_name="override-build",
@@ -346,27 +492,36 @@ class PartHandler:
                 stderr=stderr,
             )
 
-        # Organize the installed files as requested. We do this in the build step for
-        # two reasons:
-        #
-        #   1. So cleaning and re-running the stage step works even if `organize` is
-        #      used
-        #   2. So collision detection takes organization into account, i.e. we can use
-        #      organization to get around file collisions between parts when staging.
-        #
-        # If `update` is true, we give permission to overwrite files that already exist.
-        # Typically we do NOT want this, so that parts don't accidentally clobber e.g.
-        # files brought in from stage-packages, but in the case of updating build, we
-        # want the part to have the ability to organize over the files it organized last
-        # time around. We can be confident that this won't overwrite anything else,
-        # because to do so would require changing the `organize` keyword, which will
-        # make the build step dirty and require a clean instead of an update.
-        organize_files(
-            part_name=self._part.name,
-            file_map=self._part.spec.organize_files,
-            install_dir_map=self._part.part_install_dirs,
-            overwrite=update,
-        )
+            logger.debug("Run pre-organize callbacks")
+            callbacks.run_step(step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE)
+
+            # Organize the installed files as requested. We do this in the build step for
+            # two reasons:
+            #
+            #   1. So cleaning and re-running the stage step works even if `organize` is
+            #      used
+            #   2. So collision detection takes organization into account, i.e. we can use
+            #      organization to get around file collisions between parts when staging.
+            #
+            # If `update` is true, we give permission to overwrite files that already exist.
+            # Typically we do NOT want this, so that parts don't accidentally clobber e.g.
+            # files brought in from stage-packages, but in the case of updating build, we
+            # want the part to have the ability to organize over the files it organized last
+            # time around. We can be confident that this won't overwrite anything else,
+            # because to do so would require changing the `organize` key, which will
+            # make the build step dirty and require a clean instead of an update.
+            organize_install_dirs = {
+                **self._part.part_install_dirs,
+                BUILD_PARTITION: self._part.part_build_dir,
+            }
+
+            organize_files(
+                part_name=self._part.name,
+                file_map=self._part.spec.organize_files,
+                install_dir_map=organize_install_dirs,
+                overwrite=update,
+                default_partition=step_info.default_partition,
+            )
 
         assets = {
             "build-packages": self.build_packages,
@@ -402,6 +557,8 @@ class PartHandler:
         """
         self._make_dirs()
 
+        self._migrate_overlay_files_to_stage()
+
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
@@ -410,20 +567,36 @@ class PartHandler:
             stderr=stderr,
         )
 
-        self._migrate_overlay_files_to_stage()
-
         # Overlay integrity is checked based by the hash of its last (topmost) layer,
         # so we compute it for all parts. The overlay hash is added to the stage state
         # to ensure proper stage step invalidation of parts that declare overlay
         # parameters if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
+        migration_partitions_contents: dict[str, MigrationContents] = {
+            p: MigrationContents(files=c.files, directories=c.dirs)
+            for p, c in contents.partitions_contents.items()
+            if not self._part_info.is_default_partition(p)
+        }
+
+        default_partition = self._part_info.default_partition or DEFAULT_PARTITION
+        default_contents = cast(
+            StagePartitionContents,
+            contents.partitions_contents.get(
+                default_partition, StagePartitionContents()
+            ),
+        )
+
         return states.StageState(
+            partition=default_partition,
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            files=contents.files,
-            directories=contents.dirs,
+            partitions_contents=migration_partitions_contents,
+            files=contents.partitions_contents[default_partition].files,
+            directories=contents.partitions_contents[default_partition].dirs,
             overlay_hash=overlay_hash.hex(),
+            backstage_files=default_contents.backstage_files,
+            backstage_directories=default_contents.backstage_dirs,
         )
 
     def _run_prime(
@@ -441,6 +614,8 @@ class PartHandler:
         """
         self._make_dirs()
 
+        self._migrate_overlay_files_to_prime()
+
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
@@ -449,8 +624,9 @@ class PartHandler:
             stderr=stderr,
         )
 
-        self._migrate_overlay_files_to_prime()
+        default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
+        primed_stage_packages: set[str]
         if (
             self._part.spec.stage_packages
             and self._track_stage_packages
@@ -458,16 +634,25 @@ class PartHandler:
         ):
             prime_dirs = list(self._part.prime_dirs.values())
             primed_stage_packages = _get_primed_stage_packages(
-                contents.files, prime_dirs=prime_dirs
+                contents.partitions_contents[default_partition].files,
+                prime_dirs=prime_dirs,
             )
         else:
             primed_stage_packages = set()
 
+        non_default_partitions_contents: dict[str, MigrationContents] = {
+            p: MigrationContents(files=c.files, directories=c.dirs)
+            for p, c in contents.partitions_contents.items()
+            if not self._part_info.is_default_partition(p)
+        }
+
         return states.PrimeState(
+            partition=default_partition,
             part_properties=self._part_properties,
             project_options=step_info.project_options,
-            files=contents.files,
-            directories=contents.dirs,
+            partitions_contents=non_default_partitions_contents,
+            files=contents.partitions_contents[default_partition].files,
+            directories=contents.partitions_contents[default_partition].dirs,
             primed_stage_packages=primed_stage_packages,
         )
 
@@ -494,6 +679,9 @@ class PartHandler:
         )
 
         if step_info.step == Step.BUILD:
+            # Prepend environment set by the application.
+            step_env = self._prepend_build_environment(step_env)
+
             # Validate build environment. Unlike the pre-validation we did in
             # the execution prologue, we don't assume that a different part
             # can add elements to the build environment. All part dependencies
@@ -524,7 +712,7 @@ class PartHandler:
                 step=step_info.step,
                 work_dir=work_dir,
             )
-            return StepContents()
+            return StepContents(stage=step_info.step == Step.STAGE)
 
         return step_handler.run_builtin()
 
@@ -711,6 +899,11 @@ class PartHandler:
         Files and directories are migrated from overlay to stage based on a
         list of visible overlay entries, converting overlayfs whiteout files
         and opaque dirs to OCI.
+
+        Files and directories can be migrated from the default partition to
+        any other partition. In the state stored in the workdir files/dirs
+        moved between partitions are tracked in the destination, with a path
+        relative to the destination.
         """
         parts_with_overlay = get_parts_with_overlay(part_list=self._part_list)
         if self._part not in parts_with_overlay:
@@ -718,43 +911,53 @@ class PartHandler:
 
         logger.debug("staging overlay files")
 
+        consolidated_states: dict[str | None, MigrationState] = {}
+
         # process parts in each partition
-        for partition in self._part_info.partitions or (None,):
+        for src_partition in self._part_info.partitions or (None,):
             stage_overlay_state_path = states.get_overlay_migration_state_path(
-                self._part.overlay_dirs[partition], Step.STAGE
+                self._part.overlay_dirs[src_partition], Step.STAGE
             )
 
             # Overlay data is migrated to stage only when the first part declaring overlay
             # parameters is migrated.
             if stage_overlay_state_path.exists():
                 logger.debug(
-                    "stage overlay migration state exists, not migrating overlay data"
+                    f"stage overlay migration state exists, not migrating overlay data for partition {src_partition}"
                 )
                 continue
 
+            squasher = _Squasher(
+                partition=src_partition,
+                default_partition=self._part_info.default_partition,
+                filesystem_mount=self._part_info.default_filesystem_mount,
+            )
             # Process layers from top to bottom (reversed)
-            squasher = _Squasher()
             for part in reversed(parts_with_overlay):
                 logger.debug(
                     "migrate %s partition part %r layer to stage",
-                    partition,
+                    src_partition,
                     part.name,
                 )
                 squasher.migrate(
-                    refdir=part.part_layer_dirs[partition],
-                    srcdir=part.part_layer_dirs[partition],
-                    destdir=part.stage_dirs[partition],
+                    srcdir=part.part_layer_dirs[src_partition],
+                    destdirs=part.stage_dirs,
                 )
 
-            state = squasher.get_state()
-            state.write(stage_overlay_state_path)
+            _consolidate_states(
+                consolidated_states=consolidated_states,
+                migrated_files=squasher.migrated_files,
+                migrated_directories=squasher.migrated_directories,
+            )
+
+        # Write consolidated states once
+        self._write_overlay_migration_states(consolidated_states, Step.STAGE)
 
     def _migrate_overlay_files_to_prime(self) -> None:
         """Prime overlay files and create state.
 
-        Files and directories are migrated from stage to prime based on a list
-        of visible overlay entries, including OCI-compatible whiteout files and
-        opaque directories.
+        Files and directories are migrated from stage to prime, including
+        OCI-compatible whiteout files and opaque directories.
         """
         parts_with_overlay = get_parts_with_overlay(part_list=self._part_list)
         if self._part not in parts_with_overlay:
@@ -762,7 +965,9 @@ class PartHandler:
 
         logger.debug("priming overlay files")
 
-        # Process parts in each partition.
+        migration_states: dict[str | None, MigrationState] = {}
+
+        # Process each partition.
         for partition in self._part_info.partitions or (None,):
             prime_overlay_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dirs[partition], Step.PRIME
@@ -772,48 +977,92 @@ class PartHandler:
             # parameters is migrated.
             if prime_overlay_state_path.exists():
                 logger.debug(
-                    "prime overlay migration state exists, not migrating overlay data"
+                    f"prime overlay migration state exists, not migrating overlay data for partition {partition}"
                 )
                 continue
 
-            # Process layers from top to bottom (reversed)
-            squasher = _Squasher()
-            for part in reversed(parts_with_overlay):
+            # Read the STAGE overlay migration state to know what was migrated from the overlay
+            stage_overlay_migration_state = states.load_overlay_migration_state(
+                self._part.overlay_dirs[partition], Step.STAGE
+            )
+            if not stage_overlay_migration_state:
                 logger.debug(
-                    "migrate %s partition part %r layer to prime",
-                    partition,
-                    part.name,
+                    f"stage overlay migration state does not exist, so no overlay content was migrated to stage for partition {partition}, so no overlay content to prime."
                 )
-                squasher.migrate(
-                    refdir=part.part_layer_dirs[partition],
-                    srcdir=part.stage_dirs[partition],
-                    destdir=part.prime_dirs[partition],
-                    permissions=part.spec.permissions,
-                )
+                continue
 
-            self._clean_dangling_whiteouts(
-                self._part_info.prime_dirs[partition],
-                squasher.migrated_files,
-                squasher.migrated_dirs,
+            migrated_files, migrated_dirs = migration.migrate_files(
+                files=stage_overlay_migration_state.files,
+                dirs=stage_overlay_migration_state.directories,
+                srcdir=self._part.dirs.get_stage_dir(partition),
+                destdir=self._part.dirs.get_prime_dir(partition),
+                permissions=self._part.spec.permissions,
             )
 
-            state = squasher.get_state()
-            state.write(prime_overlay_state_path)
+            if self._part_info.is_default_partition(partition):
+                # The default partition is the only one that will be applied on top
+                # of the base layer, so clean dangling whiteouts
+                self._clean_dangling_whiteouts(
+                    self._part_info.prime_dirs[partition],
+                    migrated_files,
+                    migrated_dirs,
+                )
+            else:
+                # Other partitions are not applied on a base layer, clean all whiteouts
+                self._clean_all_whiteouts(
+                    self._part_info.prime_dirs[partition],
+                    migrated_files,
+                )
+
+            migration_states[partition] = MigrationState(
+                files=migrated_files, directories=migrated_dirs
+            )
+
+        self._write_overlay_migration_states(migration_states, Step.PRIME)
+
+    def _write_overlay_migration_states(
+        self, consolidated_states: dict[str | None, MigrationState], step: Step
+    ) -> None:
+        """Write an overlay migration state for each partition with overlay content.
+
+        Do not overwrite an existing migration state file.
+        """
+        for partition in self._part_info.partitions or (None,):
+            step_overlay_state_path = states.get_overlay_migration_state_path(
+                self._part.overlay_dirs[partition],
+                step,
+            )
+            if step_overlay_state_path.exists():
+                logger.debug(
+                    "%s overlay migration state exists, not overwriting migrated overlay data",
+                    step.name,
+                )
+                continue
+            state = consolidated_states.get(partition)
+            if state:
+                state.write(step_overlay_state_path)
 
     def _clean_dangling_whiteouts(
-        self, prime_dir: Path, migrated_files: set[str], migrated_dirs: set[str]
+        self, prime_dir: Path, migrated_files: set[Path], migrated_dirs: set[Path]
     ) -> None:
         """Clean up dangling whiteout files with no backing files to white out."""
         dangling_whiteouts = migration.filter_dangling_whiteouts(
             migrated_files, migrated_dirs, base_dir=self._overlay_manager.base_layer_dir
         )
-        for whiteout in dangling_whiteouts:
+        self._clean_whiteouts(prime_dir, dangling_whiteouts)
+
+    def _clean_all_whiteouts(self, prime_dir: Path, migrated_files: set[Path]) -> None:
+        """Clean up all whiteout files."""
+        all_whiteouts = migration.filter_all_whiteouts(migrated_files)
+        self._clean_whiteouts(prime_dir, all_whiteouts)
+
+    def _clean_whiteouts(self, prime_dir: Path, whiteouts: set[Path]) -> None:
+        """Clean up whiteout files."""
+        for whiteout in whiteouts:
             primed_whiteout = prime_dir / whiteout
             try:
                 primed_whiteout.unlink()
-                logger.debug("unlinked '%s'", str(primed_whiteout))
             except OSError as err:
-                # XXX: fuse-overlayfs creates a .wh..opq file in part layer dir?
                 logger.debug("error unlinking '%s': %s", str(primed_whiteout), err)
 
     def clean_step(self, step: Step) -> None:
@@ -857,12 +1106,19 @@ class PartHandler:
         for partition in self._part_info.partitions or (None,):
             _remove(self._part.part_layer_dirs[partition])
         _remove(self._part.part_state_dir / "layer_hash")
+        # Clean the package cache if the part was below it and if the
+        # cache was not directly on top of the base layer.
+        part_level = self._part_list.index(self._part)
+        if part_level < self._overlay_manager.cache_level:
+            _remove(self._part.dirs.overlay_packages_dir)
 
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
         _remove(self._part.part_build_dir)
         for install_dir in self._part.part_install_dirs.values():
             _remove(install_dir)
+
+        _remove(self._part.part_export_dir)
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
@@ -871,6 +1127,14 @@ class PartHandler:
             stage_dir,
         ) in self._part.stage_dirs.items():  # iterate over partitions
             self._clean_shared(Step.STAGE, partition=partition, shared_dir=stage_dir)
+
+        migration.clean_backstage(
+            part_name=self._part.name,
+            shared_dir=self._part.backstage_dir,
+            part_states=cast(
+                dict[str, StageState], _load_part_states(Step.STAGE, self._part_list)
+            ),
+        )
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
@@ -888,7 +1152,9 @@ class PartHandler:
         :param step: The step corresponding to the shared directory.
         :param shared_dir: The shared directory to clean.
         """
-        logger.debug(f"clean shared dir: {shared_dir} for step: {step}")
+        logger.debug(
+            f"clean shared dir: {shared_dir} for step: {step} for partition {partition}"
+        )
         part_states = _load_part_states(step, self._part_list)
         overlay_migration_state = states.load_overlay_migration_state(
             self._part.overlay_dirs[partition], step
@@ -899,6 +1165,7 @@ class PartHandler:
             shared_dir=shared_dir,
             part_states=part_states,
             overlay_migration_state=overlay_migration_state,
+            partition=partition,
         )
 
         parts_with_overlay_in_step = _parts_with_overlay_in_step(
@@ -911,6 +1178,7 @@ class PartHandler:
                 shared_dir=shared_dir,
                 part_states=part_states,
                 overlay_migration_state=overlay_migration_state,
+                partition=partition,
             )
             overlay_migration_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dirs[partition], step
@@ -920,10 +1188,82 @@ class PartHandler:
             )
             overlay_migration_state_path.unlink()
 
+    def _symlink_alias_to_default(self) -> None:
+        """Create directory and symlinks for the alias of the default partition.
+
+        These symlinks are never consumed by craft-parts. They are created to help
+        users debugging a build.
+        """
+        if not self._part_info.is_default_partition_aliased:
+            return
+        default_partition = self._part_info.default_partition
+        logger.debug("Create symlinks for %s", default_partition)
+        self._part_info.alias_partition_dir.mkdir(parents=True, exist_ok=True)
+
+        for src, dst in [
+            (self._part_info.parts_dir, self._part_info.parts_alias_symlink),
+            (self._part_info.stage_dir, self._part_info.stage_alias_symlink),
+            (self._part_info.prime_dir, self._part_info.prime_alias_symlink),
+            (self._part_info.overlay_dir, self._part_info.overlay_alias_symlink),
+        ]:
+            if dst.exists():
+                if not dst.is_symlink():
+                    # Between two runs of the lifecycle, the default partition alias name
+                    # can be changed to a previously concrete partition by the user.
+                    raise EnvironmentChangedError(
+                        f"cannot create symlinks {dst}, a concrete directory already exists."
+                    )
+                # The symlink already exists
+                continue
+            dst.symlink_to(src, target_is_directory=True)
+
+    def _create_usrmerge_scaffolding(self) -> None:
+        disabled_attr = "disable-usrmerge" in self._part_info.build_attributes
+
+        if disabled_attr:
+            # Explicitly disabled
+            return
+
+        plugin = self._part_info.plugin_name
+        usrmerged_by_default = self._part_info.usrmerged_by_default
+        # Currently parts using the 'dump' or 'nil' plugin are special cases that do
+        # *not* get usrmerged by default.
+        usrmerged_by_default = usrmerged_by_default and plugin not in ("dump", "nil")
+
+        enabled_attr = "enable-usrmerge" in self._part_info.build_attributes
+
+        usrmerged = usrmerged_by_default or enabled_attr
+        if not usrmerged:
+            # usrmerged not enabled by default, nor for the individual
+            return
+
+        root_dir = self._part.part_install_dir
+        merge_to_usr = ("bin", "lib", "lib64", "sbin")
+
+        for dir_name in merge_to_usr:
+            usr_dir = Path("usr") / dir_name
+            (root_dir / usr_dir).mkdir(exist_ok=True, parents=True)
+
+            symlink_path = root_dir / dir_name
+
+            if (
+                symlink_path.exists()
+                and symlink_path.is_symlink()
+                and symlink_path.readlink() == usr_dir
+            ):
+                # Link already exists
+                continue
+
+            logger.debug(
+                f"creating symlink for usrmerge fix: {symlink_path} -> {usr_dir}"
+            )
+            symlink_path.symlink_to(usr_dir, target_is_directory=True)
+
     def _make_dirs(self) -> None:
         dirs = [
             self._part.part_src_dir,
             self._part.part_build_dir,
+            self._part.part_export_dir,
             *self._part.part_install_dirs.values(),
             self._part.part_layer_dir,
             *self._part.part_layer_dirs.values(),
@@ -931,16 +1271,22 @@ class PartHandler:
             self._part.part_run_dir,
             *self._part.stage_dirs.values(),
             *self._part.prime_dirs.values(),
+            *self._part.overlay_dirs.values(),
         ]
         for dir_name in dirs:
-            os.makedirs(dir_name, exist_ok=True)
+            dir_name.mkdir(parents=True, exist_ok=True)
+
+        self._symlink_alias_to_default()
+        self._create_usrmerge_scaffolding()
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> list[str] | None:
         """Download stage packages to the part's package directory.
 
         :raises StagePackageNotFound: If a package is not available for download.
         """
-        stage_packages = self._part.spec.stage_packages
+        # 'stage-packages' and 'stage-slices' are mutually exclusive, so at most one
+        # of these is populated.
+        stage_packages = self._part.spec.stage_packages or self._part.spec.stage_slices
         if not stage_packages:
             return None
 
@@ -967,24 +1313,48 @@ class PartHandler:
             return None
 
         packages.snaps.download_snaps(
-            snaps_list=stage_snaps, directory=str(self._part.part_snaps_dir)
+            snaps_list=stage_snaps, directory=self._part.part_snaps_dir
         )
 
         return stage_snaps
+
+    def _merged_overlay_packages(self) -> list[str]:
+        """Return overlay packages from both the part spec and the plugin."""
+        spec_packages = list(self._part.spec.overlay_packages)
+        plugin_packages = sorted(self._plugin.get_overlay_packages())
+        return spec_packages + [p for p in plugin_packages if p not in spec_packages]
+
+    def _merged_overlay_recommended_packages(self) -> list[str]:
+        """Return overlay recommended packages from both the part spec and the plugin."""
+        spec_packages = list(self._part.spec.overlay_recommended_packages)
+        plugin_packages = sorted(self._plugin.get_overlay_recommended_packages())
+        return spec_packages + [p for p in plugin_packages if p not in spec_packages]
 
     def _fetch_overlay_packages(self) -> None:
         """Download overlay packages to the local package cache.
 
         :raises OverlayPackageNotFound: If a package is not available for download.
         """
-        overlay_packages = self._part.spec.overlay_packages
-        if not overlay_packages:
+        overlay_packages = self._merged_overlay_packages()
+        overlay_recommended_packages = self._merged_overlay_recommended_packages()
+        if not (overlay_packages or overlay_recommended_packages):
             return
 
         try:
+            # Parts declaring overlay packages are ordered to be processed after
+            # parts organizing to the overlay. The latter should prepare the
+            # environment for the package manager.
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
-                ctx.download_packages(overlay_packages)
+                ctx.refresh_packages_list()
+                # include-recommends should be processed first, packages in recommends
+                # chain will be skipped if any already installed via overlay-packages
+                if overlay_recommended_packages:
+                    ctx.download_packages(
+                        overlay_recommended_packages, include_recommends=True
+                    )
+                if overlay_packages:
+                    ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
@@ -1017,7 +1387,7 @@ class PartHandler:
 
         logger.debug("Unpacking stage-snaps to %s", install_dir)
 
-        snap_files = iglob(os.path.join(snaps_dir, "*.snap"))
+        snap_files = snaps_dir.glob("*.snap")
         snap_sources = (
             sources.SnapSource(
                 source=s,
@@ -1030,6 +1400,24 @@ class PartHandler:
 
         for snap_source in snap_sources:
             snap_source.provision(install_dir, keep=True)
+
+    def _prepend_build_environment(self, content: str) -> str:
+        if not self._build_environment:
+            return content
+
+        current_dir = Path.cwd()
+        try:
+            # Set the current working directory to the build directory. Build
+            # environment generators may produce different results depending
+            # on the current path.
+            os.chdir(self._part.part_build_dir)
+            env_list = ["# Build environment from application"]
+            env_list.extend([f"export {x}" for x in self._build_environment])
+            env_list.extend(["", content])
+        finally:
+            os.chdir(current_dir)
+
+        return "\n".join(env_list)
 
 
 def _remove(filename: Path) -> None:
@@ -1046,7 +1434,7 @@ def _remove(filename: Path) -> None:
 
 
 def _apply_file_filter(
-    *, filter_files: set[str], filter_dirs: set[str], destdir: Path
+    *, filter_files: set[Path], filter_dirs: set[Path], destdir: Path
 ) -> None:
     """Remove files and directories from the filesystem.
 
@@ -1060,7 +1448,7 @@ def _apply_file_filter(
         for file_name in files:
             path = Path(root, file_name)
             relpath = path.relative_to(destdir)
-            if str(relpath) not in filter_files and not overlays.is_whiteout_file(path):
+            if relpath not in filter_files and not overlays.is_whiteout_file(path):
                 logger.debug("delete file: %s", relpath)
                 path.unlink()
 
@@ -1068,10 +1456,10 @@ def _apply_file_filter(
             path = Path(root, directory)
             relpath = path.relative_to(destdir)
             if path.is_symlink():
-                if str(relpath) not in filter_files:
+                if relpath not in filter_files:
                     logger.debug("delete symlink: %s", relpath)
                     path.unlink()
-            elif str(relpath) not in filter_dirs:
+            elif relpath not in filter_dirs:
                 logger.debug("delete dir: %s", relpath)
                 # Don't descend into this directory-- we'll just delete it
                 # entirely.
@@ -1137,6 +1525,17 @@ def _get_build_snaps(*, part: Part, plugin: Plugin) -> list[str]:
         logger.debug("part build snaps: %s", build_snaps)
         all_snaps.extend(build_snaps)
 
+    if part.spec.source:
+        source_handler = sources.get_source_handler(
+            part.part_cache_dir, part, project_dirs=part.dirs
+        )
+
+        if source_handler is not None:
+            source_build_snaps = source_handler.get_pull_snaps()
+            if source_build_snaps:
+                logger.debug("source build snaps: %s", source_build_snaps)
+                all_snaps.extend(source_build_snaps)
+
     plugin_build_snaps = plugin.get_build_snaps()
     if plugin_build_snaps:
         logger.debug("plugin build snaps: %s", plugin_build_snaps)
@@ -1183,7 +1582,7 @@ def _parts_with_overlay_in_step(step: Step, *, part_list: list[Part]) -> list[Pa
 
 
 def _get_primed_stage_packages(
-    snap_files: set[str], *, prime_dirs: list[Path]
+    snap_files: set[Path], *, prime_dirs: list[Path]
 ) -> set[str]:
     primed_stage_packages: set[str] = set()
     for _snap_file in snap_files:
@@ -1191,7 +1590,38 @@ def _get_primed_stage_packages(
             snap_file = prime_dir / _snap_file
             if not snap_file.exists():
                 continue
-            stage_package = read_origin_stage_package(str(snap_file))
+            stage_package = read_origin_stage_package(snap_file)
             if stage_package:
                 primed_stage_packages.add(stage_package)
     return primed_stage_packages
+
+
+def _consolidate_states(
+    consolidated_states: dict[str | None, MigrationState],
+    migrated_files: dict[str | None, _MigratedContents],
+    migrated_directories: dict[str | None, _MigratedContents],
+) -> None:
+    """Consolidate migrated files into MigrationStates."""
+    for partition, files in migrated_files.items():
+        dst_files = set(files.values())
+        if not consolidated_states.get(partition):
+            consolidated_states[partition] = MigrationState(partition=partition)
+        consolidated_states[partition].add(files=dst_files)
+
+    for partition, directories in migrated_directories.items():
+        dst_dirs = set(directories.values())
+        if not consolidated_states.get(partition):
+            consolidated_states[partition] = MigrationState(partition=partition)
+        consolidated_states[partition].add(directories=dst_dirs)
+
+
+@contextmanager
+def _conditional_layer_mount(
+    overlay_manager: OverlayManager, *, top_part: Part, condition: bool
+) -> Iterator[None]:
+    """Conditionally execute the enclosed code block with the overlay mounted."""
+    if condition:
+        with overlays.LayerMount(overlay_manager, top_part=top_part):
+            yield
+    else:
+        yield

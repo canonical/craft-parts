@@ -109,7 +109,7 @@ def test_sequencer_run_step(step, state_class, new_dir):
         "source": "src",
         "make-parameters": ["-Dfoo=bar"],
     }
-    assert state.project_options == {
+    assert state.project_options.model_dump() == {
         "application_name": "test",
         "arch_triplet": "aarch64-linux-gnu",
         "target_arch": "arm64",
@@ -124,7 +124,7 @@ def test_sequencer_run_step_invalid(new_dir):
 
     seq = Sequencer(part_list=[p1], project_info=info)
     with pytest.raises(RuntimeError) as raised:
-        seq._run_step(p1, 999)  # type: ignore[reportGeneralTypeIssues]
+        seq._run_step(p1, 999)  # ty: ignore[invalid-argument-type]
     assert str(raised.value) == "invalid step 999"
 
 
@@ -163,7 +163,7 @@ def test_sequencer_rerun_step(mocker, step, state_class, new_dir):
     # check if states were updated
     props = PartSpec.unmarshal({"stage": ["pkg"]})
     assert state.part_properties == props.marshal()
-    assert state.project_options == {
+    assert state.project_options.model_dump() == {
         "application_name": "test",
         "arch_triplet": "aarch64-linux-gnu",
         "target_arch": "arm64",

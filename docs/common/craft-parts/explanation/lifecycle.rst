@@ -1,11 +1,9 @@
 .. _lifecycle:
 
-*****************
 Lifecycle details
-*****************
+=================
 
-Each part is built in :ref:`five separate steps <craft_parts_steps>`, each with
-its own input and output locations:
+Each part is built in five separate steps, each with its own input and output locations:
 
 #. ``PULL`` — The source and external dependencies (such as package
    dependencies) for the part are retrieved from their stated location and
@@ -42,7 +40,7 @@ the general rules for combining parts are:
 .. _part_processing_order:
 
 Part processing order
-=====================
+~~~~~~~~~~~~~~~~~~~~~
 
 The processing of various parts is ordered based on dependencies. Circular
 dependencies are not permitted between parts. The ordering rules are as follows:
@@ -67,9 +65,9 @@ alphabetically at each stage (even though C is listed before B):
     B:
       plugin: nil
 
-.. details:: craft_parts output
+Result:
 
-  .. code-block:: text
+.. code-block:: text
 
     Execute: Pull A
     Execute: Pull B
@@ -102,9 +100,9 @@ parts being reordered within a step:
     B:
       plugin: nil
 
-.. details:: craft_parts output
+Result:
 
-  .. code-block:: text
+.. code-block:: text
     :emphasize-lines: 7-8
 
     Execute: Pull C
@@ -135,4 +133,4 @@ Further Information
 Further information can be found in the `Snapcraft parts lifecycle documentation
 <snapcraft-parts-lifecycle_>`_.
 
-.. _snapcraft-parts-lifecycle: https://snapcraft.io/docs/parts-lifecycle
+.. _snapcraft-parts-lifecycle: https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/

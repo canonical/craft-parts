@@ -33,7 +33,7 @@ class PythonPluginProperties(PluginProperties, frozen=True):
     python_packages: list[str] = ["pip", "setuptools", "wheel"]
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class PythonPlugin(BasePythonPlugin):
@@ -43,7 +43,7 @@ class PythonPlugin(BasePythonPlugin):
     _options: PythonPluginProperties
 
     def _get_package_install_commands(self) -> list[str]:
-        commands = []
+        commands: list[str] = []
 
         pip = self._get_pip()
 

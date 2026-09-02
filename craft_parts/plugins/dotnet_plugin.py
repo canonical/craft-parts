@@ -19,7 +19,7 @@
 import logging
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from . import validator
 from .base import Plugin
@@ -37,7 +37,7 @@ class DotnetPluginProperties(PluginProperties, frozen=True):
     dotnet_self_contained_runtime_identifier: str | None = None
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class DotPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -70,8 +70,8 @@ class DotnetPlugin(Plugin):
     or to have it installed or built in a different part. In this case, the
     name of the part supplying the dotnet compiler must be "dotnet".
 
-    The dotnet plugin uses the common plugin keywords as well as those for "sources".
-    Additionally, the following plugin-specific keywords can be used:
+    The dotnet plugin uses the common plugin keys as well as those for "sources".
+    Additionally, the following plugin-specific keys can be used:
 
     - ``dotnet-build-configuration``
       (string)

@@ -1,7 +1,7 @@
 .. _reference:
 
 Reference
-*********
+=========
 
 .. toctree::
    :maxdepth: 1
@@ -15,9 +15,3 @@ Reference
    plugins
    reference
    changelog
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`

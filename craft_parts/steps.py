@@ -17,8 +17,12 @@
 """Definitions and helpers to handle lifecycle steps."""
 
 import enum
+from typing import TYPE_CHECKING
 
 from craft_parts.features import Features
+
+if TYPE_CHECKING:
+    from craft_parts.parts import Part
 
 
 @enum.unique
@@ -50,7 +54,7 @@ class Step(enum.IntEnum):
 
         :returns: The list of previous steps.
         """
-        steps = []
+        steps: list[Step] = []
 
         if self >= Step.OVERLAY:
             steps.append(Step.PULL)
@@ -68,7 +72,7 @@ class Step(enum.IntEnum):
 
         :returns: The list of next steps.
         """
-        steps = []
+        steps: list[Step] = []
 
         if self == Step.PULL and Features().enable_overlay:
             steps.append(Step.OVERLAY)
@@ -82,7 +86,12 @@ class Step(enum.IntEnum):
         return steps
 
 
-def dependency_prerequisite_step(step: Step) -> Step | None:
+def dependency_prerequisite_step(
+    step: Step,
+    *,
+    part: "Part | None" = None,
+    dependency: "Part | None" = None,
+) -> Step | None:
     """Obtain the step a given step may depend on.
 
     :returns: The prerequisite step.
@@ -90,6 +99,14 @@ def dependency_prerequisite_step(step: Step) -> Step | None:
     #  With V2 plugins we don't need to repull if dependency is restaged
     if step <= Step.OVERLAY:
         return None
+
+    # Organize-to-overlay parts run their overlay-producing build step
+    # before other parts. See [ST-158].
+    if step == Step.BUILD and part and dependency and part.organizes_to_overlay:
+        if dependency.organizes_to_overlay:
+            return Step.BUILD
+        if dependency.has_overlay:
+            return Step.OVERLAY
 
     if step <= Step.STAGE:
         return Step.STAGE

@@ -16,18 +16,22 @@
 
 """Unit tests for the lifecycle manager."""
 
+from __future__ import annotations
+
 import sys
 import textwrap
+import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import ANY, call
 
 import craft_parts
-import craft_parts.utils.partition_utils
 import pytest
 import yaml
 from craft_parts import errors, lifecycle_manager
+from craft_parts.packages import platform
 from craft_parts.plugins import nil_plugin
+from craft_parts.plugins.make_plugin import MakePluginProperties
 from craft_parts.state_manager import states
 
 from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
@@ -36,7 +40,7 @@ from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
 @pytest.fixture
 def mock_available_plugins(monkeypatch):
     available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
-    monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
+    monkeypatch.setattr(craft_parts.plugins.plugins, "_plugins", available)
 
 
 def create_data(part_name: str, plugin_name: str) -> dict[str, Any]:
@@ -142,6 +146,65 @@ class TestLifecycleManager:
         assert info.base_layer_dir == base_layer_dir
         assert info.base_layer_hash == base_layer_hash
 
+    @pytest.mark.parametrize("stage_packages_slice_support", [True, False])
+    def test_project_info_stage_packages_slice_support(
+        self, new_dir, stage_packages_slice_support
+    ):
+        lf = lifecycle_manager.LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            stage_packages_slice_support=stage_packages_slice_support,
+            **self._lcm_kwargs,
+        )
+        info = lf.project_info
+
+        assert info.stage_packages_slice_support == stage_packages_slice_support
+
+    def test_project_info_stage_packages_slice_support_default(self, new_dir):
+        lf = lifecycle_manager.LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            **self._lcm_kwargs,
+        )
+        info = lf.project_info
+
+        assert info.stage_packages_slice_support is True
+
+    def test_lifecycle_manager_stage_packages_slices_allowed(self, new_dir, mocker):
+        """Allow slices inside 'stage-packages'."""
+        mocker.patch.object(platform, "is_deb_based", autospec=True, return_value=True)
+        data = {"parts": {"foo": {"plugin": "nil", "stage-packages": ["pkg1_bin"]}}}
+
+        lf = lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            stage_packages_slice_support=True,
+            **self._lcm_kwargs,
+        )
+
+        assert lf._part_list[0].spec.stage_packages == ["pkg1_bin"]
+
+    def test_lifecycle_manager_stage_packages_slices_not_allowed(self, new_dir, mocker):
+        """Error when slices are used in stage-packages but aren't allowed."""
+        mocker.patch.object(platform, "is_deb_based", autospec=True, return_value=True)
+        data = {
+            "parts": {"test-part": {"plugin": "nil", "stage-packages": ["pkg1_bin"]}}
+        }
+
+        with pytest.raises(errors.PartSpecificationError) as raised:
+            lifecycle_manager.LifecycleManager(
+                data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                stage_packages_slice_support=False,
+                **self._lcm_kwargs,
+            )
+
+        assert raised.value.part_name == "test-part"
+
     def test_part_initialization(self, new_dir, mocker):
         mock_seq = mocker.patch("craft_parts.sequencer.Sequencer")
 
@@ -150,6 +213,7 @@ class TestLifecycleManager:
             application_name="test_manager",
             cache_dir=new_dir,
             ignore_local_sources=["foo.*"],
+            ignore_outdated=["bar.*"],
             **self._lcm_kwargs,
         )
 
@@ -163,7 +227,7 @@ class TestLifecycleManager:
         mock_seq.assert_called_once_with(
             part_list=lf._part_list,
             project_info=lf.project_info,
-            ignore_outdated=["foo.*"],
+            ignore_outdated=["bar.*", "foo.*"],
             base_layer_hash=None,
         )
 
@@ -175,6 +239,7 @@ class TestLifecycleManager:
             application_name="test_manager",
             cache_dir=new_dir,
             ignore_local_sources=["ign1", "ign2"],
+            ignore_outdated=["ign3"],
             custom="foo",
             **self._lcm_kwargs,
         )
@@ -183,7 +248,7 @@ class TestLifecycleManager:
             call(
                 part_list=[ANY],
                 project_info=ANY,
-                ignore_outdated=["ign1", "ign2"],
+                ignore_outdated=["ign3", "ign1", "ign2"],
                 base_layer_hash=None,
             )
         ]
@@ -199,6 +264,7 @@ class TestLifecycleManager:
             extra_build_packages=["pkg1", "pkg2"],
             extra_build_snaps=["snap1", "snap2"],
             ignore_local_sources=["ign1", "ign2"],
+            ignore_outdated=["ign3"],
             custom="foo",
             **self._lcm_kwargs,
         )
@@ -213,6 +279,36 @@ class TestLifecycleManager:
                 track_stage_packages=False,
                 base_layer_dir=None,
                 base_layer_hash=None,
+                use_host_sources=False,
+                build_environment=None,
+            )
+        ]
+
+    def test_executor_creation_stage_slices_triggers_chisel(self, new_dir, mocker):
+        """A part using stage-slices should add chisel as a build snap."""
+        mock_executor = mocker.patch("craft_parts.executor.Executor")
+
+        data = {"parts": {"foo": {"plugin": "nil", "stage-slices": ["pkg1_bin"]}}}
+
+        lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            **self._lcm_kwargs,
+        )
+
+        assert mock_executor.mock_calls == [
+            call(
+                part_list=[ANY],
+                project_info=ANY,
+                ignore_patterns=None,
+                extra_build_packages=None,
+                extra_build_snaps=["chisel@latest/stable"],
+                track_stage_packages=False,
+                base_layer_dir=None,
+                base_layer_hash=None,
+                use_host_sources=False,
+                build_environment=None,
             )
         ]
 
@@ -288,6 +384,48 @@ class TestLifecycleManager:
             )
         assert "p1" in str(exc.value)
 
+    def test_get_prime_state_timestamp(self, new_dir, mock_available_plugins):
+        data = {
+            "parts": {
+                "foo": {"plugin": "strict"},
+                "bar": {"plugin": "strict"},
+            },
+        }
+        lf = lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            strict_mode=True,
+            **self._lcm_kwargs,
+        )
+
+        state = states.PrimeState()
+        state.write(Path(new_dir, "parts/foo/state/prime"))
+        time.sleep(0.5)
+        state.write(Path(new_dir, "parts/bar/state/prime"))
+        expected_time = Path("parts/bar/state/prime").stat().st_mtime_ns
+
+        actual_time = lf.get_prime_state_timestamp()
+        assert actual_time == expected_time
+
+    def test_get_prime_state_timestamp_no_files(self, new_dir, mock_available_plugins):
+        data = {
+            "parts": {
+                "foo": {"plugin": "strict"},
+                "bar": {"plugin": "strict"},
+            },
+        }
+        lf = lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            strict_mode=True,
+            **self._lcm_kwargs,
+        )
+
+        actual_time = lf.get_prime_state_timestamp()
+        assert actual_time is None
+
 
 class TestOverlayDisabled:
     """Overlays only supported in linux and must run as root."""
@@ -339,7 +477,7 @@ class TestPluginProperties:
     """Verify if plugin properties are correctly handled."""
 
     def _get_manager(self, new_dir, **kwargs):
-        manager_kwargs = {
+        manager_kwargs: dict[str, Any] = {
             "application_name": "test_manager",
             "cache_dir": new_dir,
         }
@@ -364,7 +502,9 @@ class TestPluginProperties:
 
         assert len(lf._part_list) == 1
         part = lf._part_list[0]
-        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
+        assert cast(MakePluginProperties, part.plugin_properties).make_parameters == [
+            "-DTEST_PARAMETER"
+        ]
 
     def test_fallback_plugin_name(self, new_dir, mocker):
         mocker.patch("craft_parts.sequencer.Sequencer")
@@ -383,7 +523,9 @@ class TestPluginProperties:
 
         assert len(lf._part_list) == 1
         part = lf._part_list[0]
-        assert part.plugin_properties.make_parameters == ["-DTEST_PARAMETER"]
+        assert cast(MakePluginProperties, part.plugin_properties).make_parameters == [
+            "-DTEST_PARAMETER"
+        ]
 
     def test_invalid_plugin_name(self, new_dir):
         with pytest.raises(errors.InvalidPlugin) as raised:
@@ -416,3 +558,14 @@ class TestPluginProperties:
                 },
             )
         assert raised.value.part_name == "bar"
+
+    def test_unsupported_build_attributes(self, new_dir):
+        with pytest.raises(errors.UnsupportedBuildAttributesError):
+            self._get_manager(
+                new_dir,
+                all_parts={
+                    "parts": {
+                        "bar": {"plugin": "nil", "build-attributes": ["self-contained"]}
+                    }
+                },
+            )

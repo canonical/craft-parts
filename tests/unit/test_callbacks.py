@@ -52,6 +52,12 @@ def _callback_filter_1(info: ProjectInfo) -> list[str]:
     return ["a", "b", "c"]
 
 
+def _callback_5(info: StepInfo) -> bool:
+    greet = info.greet
+    print(f"{greet} callback 5")
+    return False
+
+
 def _callback_filter_2(info: ProjectInfo) -> Generator[str, None, None]:
     greet = info.greet
     print(f"{greet} filter 2")
@@ -102,6 +108,36 @@ class TestCallbackRegistration:
 
         # But we can register a different one
         callbacks.register_post_step(_callback_2)
+
+    def test_register_step(self):
+        callbacks.register_step(
+            _callback_1, step_list=[Step.BUILD], hook_point=callbacks.HookPoint.PRE_STEP
+        )
+
+        # A callback function shouldn't be registered again
+        with pytest.raises(errors.CallbackRegistrationError) as raised:
+            callbacks.register_step(
+                _callback_1,
+                step_list=[Step.BUILD],
+                hook_point=callbacks.HookPoint.PRE_STEP,
+            )
+        assert raised.value.message == (
+            "callback function '_callback_1' is already registered."
+        )
+
+        # But we can register a different one
+        callbacks.register_step(
+            _callback_2,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_STEP,
+        )
+
+        # And also register the same callback in a different hook point
+        callbacks.register_step(
+            _callback_1,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.POST_STEP,
+        )
 
     def test_register_prologue(self):
         callbacks.register_prologue(_callback_3)
@@ -216,6 +252,12 @@ class TestCallbackExecution:
 
     def test_run_pre_step(self, capfd):
         callbacks.register_pre_step(_callback_1)
+        callbacks.register_post_step(_callback_5)
+        callbacks.register_step(
+            _callback_5,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_ORGANIZE,
+        )
         callbacks.register_pre_step(_callback_2)
         callbacks.run_pre_step(self._step_info)
         out, err = capfd.readouterr()
@@ -224,8 +266,32 @@ class TestCallbackExecution:
 
     def test_run_post_step(self, capfd):
         callbacks.register_post_step(_callback_1)
+        callbacks.register_pre_step(_callback_5)
+        callbacks.register_step(
+            _callback_5,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_ORGANIZE,
+        )
         callbacks.register_post_step(_callback_2)
         callbacks.run_post_step(self._step_info)
+        out, err = capfd.readouterr()
+        assert not err
+        assert out == "hello callback 1\nhello callback 2\n"
+
+    def test_run_step(self, capfd):
+        callbacks.register_step(
+            _callback_1,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_ORGANIZE,
+        )
+        callbacks.register_pre_step(_callback_5)
+        callbacks.register_post_step(_callback_5)
+        callbacks.register_step(
+            _callback_2,
+            step_list=[Step.BUILD],
+            hook_point=callbacks.HookPoint.PRE_ORGANIZE,
+        )
+        callbacks.run_step(self._step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE)
         out, err = capfd.readouterr()
         assert not err
         assert out == "hello callback 1\nhello callback 2\n"

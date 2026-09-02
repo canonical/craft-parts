@@ -26,7 +26,11 @@ def setup():
 
 
 @pytest.fixture(
-    params=[["default"], ["default", "mypart", "yourpart", "our/special-part"]]
+    params=[
+        ["default"],
+        ["default", "mypart", "yourpart", "our/special-part"],
+        ["mypart", "yourpart", "our/special-part"],
+    ]
 )
 def partitions(request, setup):
     """Parametrized fixture to get various partition names.

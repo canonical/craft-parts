@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2024 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,9 +16,13 @@
 
 """Definitions and helpers for the action executor."""
 
+import itertools
 import logging
 import shutil
+from collections.abc import Iterable, Iterator
 from pathlib import Path
+
+from typing_extensions import Self
 
 from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
@@ -51,9 +55,12 @@ class Executor:
     :param extra_build_packages: Additional packages to install on the host system.
     :param extra_build_snaps: Additional snaps to install on the host system.
     :param ignore_patterns: File patterns to ignore when pulling local sources.
+    :param use_host_sources: Whether overlay steps should also include the repository
+      sources defined on the host.
+    :param build_environment: The environment variables to be set during build.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         part_list: list[Part],
@@ -64,6 +71,8 @@ class Executor:
         ignore_patterns: list[str] | None = None,
         base_layer_dir: Path | None = None,
         base_layer_hash: LayerHash | None = None,
+        use_host_sources: bool = False,
+        build_environment: Iterable[str] | None = None,
     ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -73,11 +82,27 @@ class Executor:
         self._base_layer_hash = base_layer_hash
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
+        self._use_host_sources = use_host_sources
+        self._build_environment = build_environment
+
+        # The cache layer level is set to the first part that doesn't organize
+        # to the overlay coming after a part that organizes to the overlay.
+        cache_level = 0
+        organized_to_overlay = False
+
+        for level, part in enumerate(self._part_list):
+            if part.organizes_to_overlay:
+                organized_to_overlay = True
+            elif organized_to_overlay:
+                cache_level = level
+                break
 
         self._overlay_manager = OverlayManager(
             project_info=self._project_info,
             part_list=self._part_list,
             base_layer_dir=base_layer_dir,
+            cache_level=cache_level,
+            use_host_sources=use_host_sources,
         )
 
     def prologue(self) -> None:
@@ -90,9 +115,16 @@ class Executor:
 
         self._verify_plugin_environment()
 
-        # update the overlay environment package list to allow installation of
-        # overlay packages.
-        if any(p.spec.overlay_packages for p in self._part_list):
+        # Update the overlay environment package list to allow installation of
+        # overlay packages if the cache level is the first layer after the base,
+        # to keep compatibility with existing behavior.
+        if (
+            any(
+                p.spec.overlay_packages or p.spec.overlay_recommended_packages
+                for p in self._part_list
+            )
+            and self._overlay_manager.cache_level == 0
+        ):
             logger.info("Updating base overlay system")
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 callbacks.run_configure_overlay(
@@ -135,7 +167,7 @@ class Executor:
         for act in actions:
             self._run_action(act, stdout=stdout, stderr=stderr)
 
-    def clean(self, initial_step: Step, *, part_names: list[str] | None = None) -> None:
+    def clean(self, initial_step: Step, *, part_names: list[str] | None = None) -> None:  # noqa: PLR0912
         """Clean the given parts, or all parts if none is specified.
 
         :param initial_step: The step to clean. More steps may be cleaned
@@ -160,14 +192,29 @@ class Executor:
             for prime_dir in self._project_info.prime_dirs.values():
                 if prime_dir.exists():
                     shutil.rmtree(prime_dir)
+            # remove default partition alias symlink
+            prime_alias_symlink = self._project_info.prime_alias_symlink
+            if prime_alias_symlink:
+                prime_alias_symlink.unlink(missing_ok=True)
 
             if initial_step <= Step.STAGE:
                 for stage_dir in self._project_info.stage_dirs.values():
                     if stage_dir.exists():
                         shutil.rmtree(stage_dir)
+                if self._project_info.backstage_dir.exists():
+                    shutil.rmtree(self._project_info.backstage_dir)
+                # remove default partition alias symlink
+                stage_alias_symlink = self._project_info.stage_alias_symlink
+                if stage_alias_symlink:
+                    stage_alias_symlink.unlink(missing_ok=True)
 
-            if initial_step <= Step.PULL and self._project_info.parts_dir.exists():
-                shutil.rmtree(self._project_info.parts_dir)
+            if initial_step <= Step.PULL:
+                if self._project_info.parts_dir.exists():
+                    shutil.rmtree(self._project_info.parts_dir)
+                # remove default partition alias symlink
+                parts_alias_symlink = self._project_info.parts_alias_symlink
+                if parts_alias_symlink:
+                    parts_alias_symlink.unlink(missing_ok=True)
 
             if (
                 initial_step <= Step.BUILD
@@ -175,6 +222,11 @@ class Executor:
                 and self._project_info.partition_dir.exists()
             ):
                 shutil.rmtree(self._project_info.partition_dir)
+
+            if initial_step <= Step.OVERLAY:
+                for overlay in self._project_info.dirs.overlay_dirs.values():
+                    if overlay.exists():
+                        shutil.rmtree(overlay)
 
     def _run_action(
         self,
@@ -195,11 +247,9 @@ class Executor:
             logger.debug("Skip execution of %s (because %s)", action, action.reason)
             # update project variables if action is skipped
             if action.project_vars:
-                for var, pvar in action.project_vars.items():
-                    if pvar.updated:
-                        self._project_info.set_project_var(
-                            var, pvar.value, raw_write=True, part_name=action.part_name
-                        )
+                self._project_info.project_vars.update_from(
+                    action.project_vars, action.part_name
+                )
             return
 
         if action.step == Step.STAGE:
@@ -218,6 +268,12 @@ class Executor:
         if part.name in self._handler:
             return self._handler[part.name]
 
+        build_environment = self._build_environment
+        if isinstance(self._build_environment, Iterator):
+            # Give a new generator instance to each part
+            build_environment, next_gen = itertools.tee(self._build_environment, 2)
+            self._build_environment = next_gen
+
         handler = PartHandler(
             part,
             part_info=PartInfo(self._project_info, part),
@@ -226,6 +282,7 @@ class Executor:
             overlay_manager=self._overlay_manager,
             ignore_patterns=self._ignore_patterns,
             base_layer_hash=self._base_layer_hash,
+            build_environment=build_environment,
         )
         self._handler[part.name] = handler
 
@@ -235,23 +292,17 @@ class Executor:
         for part in self._part_list:
             self._create_part_handler(part)
 
-        build_packages = set()
+        build_packages: set[str] = set(self._extra_build_packages or ())
         for handler in self._handler.values():
             build_packages.update(handler.build_packages)
-
-        if self._extra_build_packages:
-            build_packages.update(self._extra_build_packages)
 
         logger.info("Installing build-packages")
         packages.Repository.install_packages(sorted(build_packages))
 
     def _install_build_snaps(self) -> None:
-        build_snaps = set()
+        build_snaps: set[str] = set(self._extra_build_snaps or ())
         for handler in self._handler.values():
             build_snaps.update(handler.build_snaps)
-
-        if self._extra_build_snaps:
-            build_snaps.update(self._extra_build_snaps)
 
         if not build_snaps:
             return
@@ -300,7 +351,7 @@ class ExecutionContext:
     ) -> None:
         self._executor = executor
 
-    def __enter__(self) -> "ExecutionContext":
+    def __enter__(self) -> Self:
         self._executor.prologue()
         return self
 

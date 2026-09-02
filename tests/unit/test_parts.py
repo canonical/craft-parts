@@ -14,14 +14,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
+from pathlib import Path
 
 import pydantic
 import pytest
-from craft_parts import errors, parts
+from craft_parts import errors, packages, parts
 from craft_parts.dirs import ProjectDirs
-from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
 from craft_parts.steps import Step
 
@@ -48,6 +50,7 @@ class TestPartSpecs:
             "after": ["bar"],
             "stage-snaps": ["stage-snap1", "stage-snap2"],
             "stage-packages": ["stage-pkg1", "stage-pkg2"],
+            "stage-slices": [],
             "build-snaps": ["build-snap1", "build-snap2"],
             "build-packages": ["build-pkg1", "build-pkg2"],
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
@@ -69,39 +72,137 @@ class TestPartSpecs:
         # Overlay defaults
         data_copy["overlay"] = ["*"]
         data_copy["overlay-packages"] = []
+        data_copy["overlay-recommended-packages"] = []
         data_copy["overlay-script"] = None
-
+        data_copy["override-overlay"] = None
         spec = PartSpec.unmarshal(data)
         assert spec.marshal() == data_copy
 
-    def test_unmarshal_not_dict(self, partitions):
-        with pytest.raises(TypeError) as raised:
-            PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-        assert str(raised.value) == "part data is not a dictionary"
+    @pytest.mark.parametrize(
+        ("stage_packages", "stage_packages_slice_support", "expectation"),
+        [
+            pytest.param(["pkg1"], True, nullcontext(), id="debs-only-supported"),
+            pytest.param(["pkg1"], False, nullcontext(), id="debs-only-unsupported"),
+            pytest.param(["pkg1_bin"], True, nullcontext(), id="slice-only-supported"),
+            pytest.param(
+                ["pkg1_bin"],
+                False,
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match=re.escape(
+                        "Chisel slices cannot be declared in 'stage-packages'. "
+                        "Use the 'stage-slices' key instead."
+                    ),
+                ),
+                id="slice-only-unsupported",
+            ),
+            pytest.param(
+                ["pkg1", "pkg2_bin"],
+                True,
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match="cannot mix packages and slices in 'stage-packages'",
+                ),
+                id="packages-and-slices-supported",
+            ),
+            pytest.param(
+                ["pkg1", "pkg2_bin"],
+                False,
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match="cannot mix packages and slices in 'stage-packages'",
+                ),
+                id="packages-and-slices-unsupported",
+            ),
+        ],
+    )
+    @pytest.mark.usefixtures("is_deb_based")
+    def test_unmarshal_stage_packages(
+        self, stage_packages, stage_packages_slice_support, expectation
+    ):
+        with expectation:
+            spec = PartSpec.unmarshal(
+                {"stage-packages": stage_packages},
+                stage_packages_slice_support=stage_packages_slice_support,
+            )
+            assert spec.stage_packages == stage_packages
 
-    def test_unmarshal_mix_packages_slices(self, mocker):
-        """
-        Test that mixing packages and chisel slices raises validation errors
-        in Debian-based systems (and only in them).
-        """
-        is_deb_mock = mocker.patch.object(platform, "is_deb_based", autospec=True)
+    def test_unmarshal_stage_packages_non_deb_system(self, mocker):
+        """Non-deb systems shouldn't validate Chisel slice syntax."""
+        mocker.patch.object(
+            packages.platform, "is_deb_based", autospec=True, return_value=False
+        )
+        stage_packages = ["pkg1", "pkg2_bin"]
 
-        package_list = ["pkg1_bin", "pkg2_bin", "pkg3"]
-        data = {
-            "stage-packages": package_list,
-        }
+        spec = PartSpec.unmarshal(
+            {"stage-packages": stage_packages}, stage_packages_slice_support=False
+        )
+        assert spec.stage_packages == stage_packages
 
-        # On Debian-based systems, mixing names with and without underscores means
-        # mixing .deb packages and chisel slices, which is not allowed.
-        is_deb_mock.return_value = True
-        with pytest.raises(pydantic.ValidationError):
+    @pytest.mark.parametrize(
+        ("stage_slices", "stage_packages_slice_support", "expectation"),
+        [
+            pytest.param(
+                ["ca-certificates_data", "bash_bins"],
+                True,
+                nullcontext(),
+                id="valid-slices",
+            ),
+            pytest.param(
+                ["pkg1_bin"],
+                False,
+                nullcontext(),
+                id="valid-slice-unaffected-by-stage-packages-slice-support",
+            ),
+            pytest.param(
+                ["ca-certificates_data", "bash"],
+                True,
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match="invalid Chisel slice",
+                ),
+                id="invalid-slice",
+            ),
+        ],
+    )
+    @pytest.mark.usefixtures("is_deb_based")
+    def test_unmarshal_stage_slices(
+        self, stage_slices, stage_packages_slice_support, expectation
+    ):
+        data = {"stage-slices": stage_slices}
+
+        with expectation:
+            spec = PartSpec.unmarshal(
+                data, stage_packages_slice_support=stage_packages_slice_support
+            )
+            assert spec.stage_slices == stage_slices
+
+    @pytest.mark.parametrize(
+        ("stage_packages", "stage_slices", "expectation"),
+        [
+            pytest.param([], [], nullcontext(), id="neither"),
+            pytest.param(["pkg1"], [], nullcontext(), id="only-stage-packages"),
+            pytest.param([], ["pkg1_bin"], nullcontext(), id="only-stage-slices"),
+            pytest.param(
+                ["pkg1"],
+                ["pkg1_bin"],
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match="'stage-packages' and 'stage-slices' cannot be used together",
+                ),
+                id="both",
+            ),
+        ],
+    )
+    @pytest.mark.usefixtures("is_deb_based")
+    def test_unmarshal_stage_packages_stage_slices(
+        self, stage_packages, stage_slices, expectation
+    ):
+        """stage-packages and stage-slices are mutually exclusive."""
+        data = {"stage-packages": stage_packages, "stage-slices": stage_slices}
+
+        with expectation:
             PartSpec.unmarshal(data)
-
-        # On non-Debian-based systems, mixing is allowed because we can't know the
-        # semantics (and chisel is not supported).
-        is_deb_mock.return_value = False
-        spec = PartSpec.unmarshal(data)
-        assert spec.stage_packages == package_list
 
     @pytest.mark.parametrize(
         ("key", "value"),
@@ -153,6 +254,7 @@ class TestPartData:
         assert p.part_run_dir == new_dir / "parts/foo/run"
         assert p.part_layer_dir == new_dir / "parts/foo/layer"
         assert p.part_cache_dir == new_dir / "parts/foo/cache"
+        assert p.backstage_dir == new_dir / "backstage"
         assert p.stage_dir == new_dir / "stage"
         assert p.prime_dir == new_dir / "prime"
 
@@ -174,6 +276,7 @@ class TestPartData:
         assert p.part_snaps_dir == new_dir / "foobar/parts/foo/stage_snaps"
         assert p.part_run_dir == new_dir / "foobar/parts/foo/run"
         assert p.part_layer_dir == new_dir / "foobar/parts/foo/layer"
+        assert p.backstage_dir == new_dir / "foobar/backstage"
         assert p.stage_dir == new_dir / "foobar/stage"
         assert p.prime_dir == new_dir / "foobar/prime"
 
@@ -337,11 +440,29 @@ class TestPartData:
         assert p.has_overlay is False
 
     @pytest.mark.parametrize(
+        ("organize", "result"),
+        [
+            ({}, False),
+            ({"this": "that"}, False),
+        ],
+    )
+    def test_part_organizes_to_overlay(self, partitions, organize, result):
+        p = Part("foo", {"organize": organize}, partitions=partitions)
+        assert p.organizes_to_overlay == result
+
+    def test_part_install_dirs(self, new_dir):
+        p = Part("foo", {"organize": {"foo": "bar"}})
+        assert p.part_install_dirs == {
+            None: Path(new_dir / "parts/foo/install"),
+        }
+
+    @pytest.mark.parametrize(
         ("tc_spec", "tc_result"),
         [
             ({}, False),
             ({"stage-packages": ["base-files_base", "hello_bins"]}, True),
             ({"stage-packages": ["bash", "python3"]}, False),
+            ({"stage-slices": ["base-files_base", "hello_bins"]}, True),
         ],
     )
     def test_part_has_slices(self, partitions, tc_spec, tc_result):
@@ -359,6 +480,20 @@ class TestPartData:
         ],
     )
     def test_part_has_chisel_as_build_snap(self, partitions, tc_spec, tc_result):
+        p = Part("foo", tc_spec, partitions=partitions)
+        assert p.spec.has_chisel_as_build_snap == tc_result
+
+    @pytest.mark.parametrize(
+        ("tc_spec", "tc_result"),
+        [
+            ({"build-snaps": ["chisel@latest/candidate"]}, True),
+            ({"build-snaps": ["chisel@stable"]}, True),
+            ({"build-snaps": ["chiselhelper@stable"]}, False),
+        ],
+    )
+    def test_part_has_chisel_as_build_snap_new_separator(
+        self, partitions, tc_spec, tc_result
+    ):
         p = Part("foo", tc_spec, partitions=partitions)
         assert p.spec.has_chisel_as_build_snap == tc_result
 
@@ -402,6 +537,84 @@ class TestPartOrdering:
         with pytest.raises(errors.PartDependencyCycle):
             parts.sort_parts([p1, p2, p3])
 
+    @pytest.mark.parametrize(
+        ("parts_data", "expected_cycle"),
+        [
+            pytest.param(
+                [
+                    ("part-one", {"after": ["part-two"]}),
+                    ("part-two", {"after": ["part-one"]}),
+                ],
+                "part-one -> part-two -> part-one",
+                id="two_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-a", {"after": ["part-b"]}),
+                    ("part-b", {"after": ["part-c"]}),
+                    ("part-c", {"after": ["part-a"]}),
+                ],
+                "part-a -> part-b -> part-c -> part-a",
+                id="three_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-w", {"after": ["part-x"]}),
+                    ("part-x", {"after": ["part-y"]}),
+                    ("part-y", {"after": ["part-z"]}),
+                    ("part-z", {"after": ["part-w"]}),
+                ],
+                "part-w -> part-x -> part-y -> part-z -> part-w",
+                id="four_parts",
+            ),
+            pytest.param(
+                [
+                    ("part-a", {"after": ["part-c"]}),
+                    ("part-b", {"after": ["part-a"]}),
+                    ("part-c", {"after": ["part-b"]}),
+                ],
+                "part-a -> part-c -> part-b -> part-a",
+                id="non_alphabetical_chain",
+            ),
+        ],
+    )
+    def test_sort_parts_cycle_detailed(self, partitions, parts_data, expected_cycle):
+        """Test circular dependency detection with various cycle configurations."""
+        part_list = [
+            Part(name, spec, partitions=partitions) for name, spec in parts_data
+        ]
+
+        expected = f"Part processing order: {expected_cycle}"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts(part_list)
+
+    def test_sort_parts_cycle_with_independent_part(self, partitions):
+        """Test that error message only shows parts in the cycle, not independent parts."""
+        # Create a cycle between part-a, part-b, and part-c
+        p1 = Part("part-a", {"after": ["part-b"]}, partitions=partitions)
+        p2 = Part("part-b", {"after": ["part-c"]}, partitions=partitions)
+        p3 = Part("part-c", {"after": ["part-a"]}, partitions=partitions)
+        # Add an independent part that should not appear in the error
+        p4 = Part("independent-part", {}, partitions=partitions)
+
+        # The actual dependency chain: part-a -> part-b -> part-c -> part-a (showing the cycle)
+        expected = "Part processing order: part-a -> part-b -> part-c -> part-a"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts([p1, p2, p3, p4])
+
+    def test_sort_parts_cycle_self_dependency(self, partitions):
+        """Test circular dependency where a part depends on itself."""
+        p1 = Part("self-dep", {"after": ["self-dep"]}, partitions=partitions)
+
+        expected = "Part processing order: self-dep -> self-dep"
+        with pytest.raises(errors.PartDependencyCycle, match=re.escape(expected)):
+            parts.sort_parts([p1])
+
+    def test_sort_parts_empty_list(self, partitions):
+        """Test that sorting an empty list returns an empty list."""
+        result = parts.sort_parts([])
+        assert result == []
+
 
 class TestPartUnmarshal:
     """Verify data unmarshaling on part creation."""
@@ -420,12 +633,6 @@ class TestPartUnmarshal:
             "- Extra inputs are not permitted in field 'a'\n"
             "- Extra inputs are not permitted in field 'b'"
         )
-
-    def test_part_spec_not_dict(self, partitions):
-        with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", False, partitions=partitions)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-        assert raised.value.part_name == "foo"
-        assert raised.value.message == "part data is not a dictionary"
 
     def test_part_unmarshal_type_error(self, partitions):
         with pytest.raises(errors.PartSpecificationError) as raised:
@@ -531,7 +738,7 @@ class TestPartValidation:
 
     def test_part_validation_data_type(self, partitions):
         with pytest.raises(TypeError) as raised:
-            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]
+            parts.validate_part("invalid data")  # ty: ignore[invalid-argument-type]
 
         assert str(raised.value) == "value must be a dictionary"
 
@@ -572,3 +779,9 @@ class TestPartValidation:
     def test_part_coerces_numbers(self, partitions):
         data = {"plugin": "nil", "build-environment": [{"CGO_ENABLED": 0}]}
         parts.validate_part(data)
+
+    def test_part_validate_build_attributes(self, partitions):
+        data = {"plugin": "nil", "build-attributes": ["self-contained"]}
+
+        with pytest.raises(errors.UnsupportedBuildAttributesError):
+            parts.validate_part(data)

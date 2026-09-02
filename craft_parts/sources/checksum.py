@@ -23,7 +23,7 @@ from craft_parts.utils import file_utils
 from . import errors
 
 
-def split_checksum(source_checksum: str) -> tuple:
+def split_checksum(source_checksum: str) -> tuple[str, str]:
     """Split the given source checksum into algorithm and hash.
 
     :param source_checksum: Source checksum in algorithm/hash format.
@@ -40,12 +40,20 @@ def split_checksum(source_checksum: str) -> tuple:
     return (algorithm, digest)
 
 
-def verify_checksum(source_checksum: str, checkfile: Path) -> tuple:
+def verify_checksum(
+    source_checksum: str,
+    checkfile: Path,
+    *,
+    part_name: str | None = None,
+    source: str | None = None,
+) -> tuple[str, str]:
     """Verify that checkfile corresponds to the given source checksum.
 
     :param source_checksum: Source checksum in algorithm/hash format.
     :param checkfile: The file to calculate the sum for with the algorithm
         defined in source_checksum.
+    :param part_name: The name of the part being pulled, used for error reporting.
+    :param source: The source being pulled, used for error reporting.
 
     :return: A tuple consisting of the algorithm and the hash.
 
@@ -57,6 +65,11 @@ def verify_checksum(source_checksum: str, checkfile: Path) -> tuple:
 
     calculated_digest = file_utils.calculate_hash(checkfile, algorithm=algorithm)
     if digest != calculated_digest:
-        raise errors.ChecksumMismatch(expected=digest, obtained=calculated_digest)
+        raise errors.ChecksumMismatch(
+            expected=digest,
+            obtained=calculated_digest,
+            part_name=part_name,
+            source=source,
+        )
 
     return (algorithm, digest)

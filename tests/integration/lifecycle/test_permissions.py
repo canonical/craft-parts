@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import stat
 import textwrap
 from pathlib import Path
@@ -56,7 +55,7 @@ def test_part_permissions(new_dir, mock_chown):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    assert stat.S_IMODE(os.stat(Path("prime/1.txt")).st_mode) == 0o222
-    chown_call = mock_chown[str(Path("prime/bar/2.txt").resolve())]
+    assert stat.S_IMODE(Path("prime/1.txt").stat().st_mode) == 0o222
+    chown_call = mock_chown[Path("prime/bar/2.txt").resolve()]
     assert chown_call.owner == 1111
     assert chown_call.group == 2222

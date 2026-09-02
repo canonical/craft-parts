@@ -1,0 +1,14 @@
+name: TICS
+on:
+  push:
+    branches:
+      - "main"
+      # For troubleshooting
+      - "work/tiobe**"
+
+jobs:
+  TICS:
+    uses: canonical/starflow/.github/workflows/tics.yaml@main
+    with:
+      project: "craft-parts"
+    secrets: inherit

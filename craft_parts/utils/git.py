@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Helpers to use git."""
+
 import shutil
 from functools import cache
 

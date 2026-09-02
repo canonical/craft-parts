@@ -74,7 +74,9 @@ def directories(new_dir, partitions):
 # pylint: disable=line-too-long
 
 
-def test_generate_step_environment_build(new_dir, partitions):
+def test_generate_step_environment_build(
+    host_arch: str, host_triplet: str, new_dir, partitions
+):
     p1 = Part(
         "p1",
         {"build-environment": [{"PART_ENVVAR": "from_part"}]},
@@ -106,12 +108,13 @@ def test_generate_step_environment_build(new_dir, partitions):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
+        export DEBIAN_FRONTEND="noninteractive"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
@@ -124,11 +127,11 @@ def test_generate_step_environment_build(new_dir, partitions):
         export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
         export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
         export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
-        export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
+        export CPPFLAGS="${{CPPFLAGS:+"$CPPFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export CFLAGS="${{CFLAGS:+"$CFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export CXXFLAGS="${{CXXFLAGS:+"$CXXFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export LDFLAGS="${{LDFLAGS:+"$LDFLAGS "}}-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
+        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}}{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         ## User environment
         export PART_ENVVAR="from_part"
@@ -136,7 +139,9 @@ def test_generate_step_environment_build(new_dir, partitions):
     )
 
 
-def test_generate_step_environment_no_project_name(new_dir, partitions):
+def test_generate_step_environment_no_project_name(
+    host_arch: str, host_triplet: str, new_dir, partitions
+):
     p1 = Part(
         "p1",
         {"build-environment": [{"PART_ENVVAR": "from_part"}]},
@@ -163,12 +168,13 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
+        export DEBIAN_FRONTEND="noninteractive"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
@@ -180,11 +186,11 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
         export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
         export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
         export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
-        export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
+        export CPPFLAGS="${{CPPFLAGS:+"$CPPFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export CFLAGS="${{CFLAGS:+"$CFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export CXXFLAGS="${{CXXFLAGS:+"$CXXFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export LDFLAGS="${{LDFLAGS:+"$LDFLAGS "}}-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
+        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}}{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         export PLUGIN_ENVVAR="from_plugin"
         ## User environment
@@ -194,7 +200,9 @@ def test_generate_step_environment_no_project_name(new_dir, partitions):
 
 
 @pytest.mark.parametrize("step", set(Step) - {Step.BUILD})
-def test_generate_step_environment_no_build(new_dir, partitions, step):
+def test_generate_step_environment_no_build(
+    host_arch: str, host_triplet: str, new_dir, partitions, step
+):
     p1 = Part(
         "p1",
         {"build-environment": [{"PART_ENVVAR": "from_part"}]},
@@ -222,12 +230,13 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
+        export DEBIAN_FRONTEND="noninteractive"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
@@ -240,11 +249,11 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
         export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
         export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
         export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
-        export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
+        export CPPFLAGS="${{CPPFLAGS:+"$CPPFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export CFLAGS="${{CFLAGS:+"$CFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export CXXFLAGS="${{CXXFLAGS:+"$CXXFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export LDFLAGS="${{LDFLAGS:+"$LDFLAGS "}}-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
+        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}}{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         ## User environment
         export PART_ENVVAR="from_part"
@@ -252,7 +261,9 @@ def test_generate_step_environment_no_build(new_dir, partitions, step):
     )
 
 
-def test_generate_step_environment_no_user_env(new_dir, partitions):
+def test_generate_step_environment_no_user_env(
+    host_arch: str, host_triplet: str, new_dir, partitions
+):
     p1 = Part("p1", {})
     info = ProjectInfo(
         arch="arm64",
@@ -277,12 +288,13 @@ def test_generate_step_environment_no_user_env(new_dir, partitions):
         ## Part environment
         export CRAFT_ARCH_TRIPLET="aarch64-linux-gnu"
         export CRAFT_TARGET_ARCH="arm64"
-        export CRAFT_ARCH_BUILD_ON="amd64"
+        export CRAFT_ARCH_BUILD_ON="{host_arch}"
         export CRAFT_ARCH_BUILD_FOR="arm64"
-        export CRAFT_ARCH_TRIPLET_BUILD_ON="x86_64-linux-gnu"
+        export CRAFT_ARCH_TRIPLET_BUILD_ON="{host_triplet}"
         export CRAFT_ARCH_TRIPLET_BUILD_FOR="aarch64-linux-gnu"
         export CRAFT_PARALLEL_BUILD_COUNT="1"
         export CRAFT_PROJECT_DIR="{new_dir}"
+        export DEBIAN_FRONTEND="noninteractive"
         export CRAFT_OVERLAY="{new_dir}/overlay/overlay"
         export CRAFT_STAGE="{new_dir}/stage"
         export CRAFT_PRIME="{new_dir}/prime"
@@ -295,11 +307,11 @@ def test_generate_step_environment_no_user_env(new_dir, partitions):
         export CRAFT_PART_BUILD_WORK="{new_dir}/parts/p1/build"
         export CRAFT_PART_INSTALL="{new_dir}/parts/p1/install"
         export PATH="{new_dir}/parts/p1/install/usr/sbin:{new_dir}/parts/p1/install/usr/bin:{new_dir}/parts/p1/install/sbin:{new_dir}/parts/p1/install/bin:$PATH"
-        export CPPFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export CFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export CXXFLAGS="-isystem {new_dir}/parts/p1/install/usr/include"
-        export LDFLAGS="-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
-        export PKG_CONFIG_PATH="{new_dir}/stage/usr/share/pkgconfig"
+        export CPPFLAGS="${{CPPFLAGS:+"$CPPFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export CFLAGS="${{CFLAGS:+"$CFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export CXXFLAGS="${{CXXFLAGS:+"$CXXFLAGS "}}-isystem {new_dir}/parts/p1/install/usr/include"
+        export LDFLAGS="${{LDFLAGS:+"$LDFLAGS "}}-L{new_dir}/stage/lib -L{new_dir}/stage/usr/lib -L{new_dir}/stage/lib/aarch64-linux-gnu"
+        export PKG_CONFIG_PATH="${{PKG_CONFIG_PATH:+"$PKG_CONFIG_PATH:"}}{new_dir}/stage/usr/share/pkgconfig"
         ## Plugin environment
         ## User environment
         """

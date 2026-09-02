@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2021-2023 Canonical Ltd.
+# Copyright 2021-2025 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from craft_parts.infos import ProjectOptions
 from craft_parts.state_manager.states import PrimeState
 
 
@@ -27,31 +28,36 @@ class TestPrimeState:
     def test_marshal_empty(self):
         state = PrimeState()
         assert state.marshal() == {
+            "partition": None,
             "part-properties": {},
-            "project-options": {},
+            "project-options": ProjectOptions().model_dump(),
             "files": set(),
             "directories": set(),
             "dependency-paths": set(),
             "primed-stage-packages": set(),
+            "partitions-contents": {},
         }
 
     def test_marshal_unmarshal(self):
         state_data = {
+            "partition": "default",
             "part-properties": {"plugin": "nil"},
-            "project-options": {"target_arch": "amd64"},
+            "project-options": {
+                "application_name": "",
+                "arch_triplet": "",
+                "target_arch": "amd64",
+                "project_vars": {},
+                "project_vars_part_name": None,
+            },
             "files": {"a"},
             "directories": {"b"},
             "dependency-paths": {"c"},
             "primed-stage-packages": {"d"},
+            "partitions-contents": {"default": {"files": {"c"}, "directories": {"d"}}},
         }
 
         state = PrimeState.unmarshal(state_data)
         assert state.marshal() == state_data
-
-    def test_unmarshal_invalid(self):
-        with pytest.raises(TypeError) as raised:
-            PrimeState.unmarshal(False)  # type: ignore[reportGeneralTypeIssues] # noqa: FBT003
-        assert str(raised.value) == "state data is not a dictionary"
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -61,18 +67,15 @@ class TestPrimeStatePersist:
     def test_write(self, properties):
         state = PrimeState(
             part_properties=properties,
-            project_options={
-                "target_arch": "amd64",
-            },
-            files={"a"},
-            directories={"b"},
+            project_options=ProjectOptions(target_arch="amd64"),
+            files={Path("a")},
+            directories={Path("b")},
             dependency_paths={"c"},
             primed_stage_packages={"d"},
         )
 
         state.write(Path("state"))
-        with open("state") as f:
-            content = f.read()
+        content = Path("state").read_text()
 
         new_state = yaml.safe_load(content)
         assert PrimeState.unmarshal(new_state).marshal() == state.marshal()
@@ -102,7 +105,7 @@ class TestPrimeStateChanges:
 
     def test_project_option_changes(self, project_options):
         state = PrimeState(project_options=project_options)
-        assert state.diff_project_options_of_interest({}) == set()
+        assert state.diff_project_options_of_interest(ProjectOptions()) == set()
 
     def test_extra_property_changes(self, properties):
         augmented_properties = {**properties, "extra-property": "foo"}

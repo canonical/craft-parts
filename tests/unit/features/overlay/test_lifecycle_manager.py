@@ -31,7 +31,7 @@ from tests.unit.common_plugins import NonStrictTestPlugin, StrictTestPlugin
 @pytest.fixture
 def mock_available_plugins(monkeypatch):
     available = {"strict": StrictTestPlugin, "nonstrict": NonStrictTestPlugin}
-    monkeypatch.setattr(craft_parts.plugins.plugins, "_PLUGINS", available)
+    monkeypatch.setattr(craft_parts.plugins.plugins, "_plugins", available)
 
 
 class TestLifecycleManager(test_lifecycle_manager.TestLifecycleManager):

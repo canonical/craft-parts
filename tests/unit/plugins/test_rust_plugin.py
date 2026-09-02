@@ -56,9 +56,7 @@ def mock_validator(monkeypatch):
     ],
 )
 def test_validate_rust_channel(rust_channel):
-    RustPluginProperties.validate_rust_channel(
-        rust_channel
-    )  # pyright: ignore[reportCallIssue]
+    RustPluginProperties.validate_rust_channel(rust_channel)
 
 
 def test_get_build_snaps(fake_process: pytest_subprocess.FakeProcess, part_info):
@@ -82,11 +80,22 @@ def test_get_build_packages(part_info):
     }
 
 
-def test_get_build_environment(part_info):
+@pytest.mark.parametrize(
+    "cargo_registry", [False, True], ids=["without_registry", "with_registry"]
+)
+def test_get_build_environment(part_info, *, cargo_registry: bool):
+    expected_env = {"PATH": "${HOME}/.cargo/bin:${PATH}"}
+
+    if cargo_registry:
+        (part_info.project_info.dirs.backstage_dir / "cargo-registry").mkdir(
+            parents=True
+        )
+        expected_env["CARGO_HOME"] = str(part_info.work_dir / "cargo")
+
     properties = RustPlugin.properties_class.unmarshal({"source": "."})
     plugin = RustPlugin(properties=properties, part_info=part_info)
 
-    assert plugin.get_build_environment() == {"PATH": "${HOME}/.cargo/bin:${PATH}"}
+    assert plugin.get_build_environment() == expected_env
 
 
 def test_get_build_commands_default(part_info):

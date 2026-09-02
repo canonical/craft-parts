@@ -62,7 +62,7 @@ class _ProcessStream:
 
         # (Mostly) optimize away the process function if the read handle is empty
         if self.read_fd == DEVNULL:
-            self.process = self._process_nothing  # type: ignore[method-assign]
+            self.process = self._process_nothing  # ty: ignore[invalid-assignment]
 
     @property
     def singular(self) -> bytes:
@@ -199,7 +199,7 @@ def _select_stream(stream: Stream, default_stream: TextIO) -> Generator[int]:
     closing it afterwards.
     """
     if stream == DEVNULL:
-        with open(os.devnull, "wb") as s:
+        with Path(os.devnull).open("wb") as s:
             yield s.fileno()
     elif isinstance(stream, int):
         yield stream

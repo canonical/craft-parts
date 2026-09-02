@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import subprocess
 import sys
 import textwrap
@@ -26,7 +25,9 @@ import craft_parts.plugins.plugins
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
-from overrides import override
+from typing_extensions import override
+
+pytestmark = [pytest.mark.python]
 
 
 def setup_function():
@@ -64,11 +65,16 @@ def test_uv_plugin(new_dir, partitions, uv_parts_simple):
     with lf.action_executor() as ctx:
         ctx.execute(actions)
 
-    primed_script = Path(lf.project_info.prime_dir, "bin", "mytestuv")
+    prime_dir = Path(lf.project_info.prime_dir)
+    primed_script = prime_dir / "bin" / "mytestuv"
     assert primed_script.exists()
 
     output = subprocess.getoutput(str(primed_script))
     assert output == "it works with uv too!"
+
+    pycache = list(prime_dir.glob("lib/python*/site-packages/__pycache__"))
+    assert pycache != []
+    assert all(path.is_dir() for path in pycache)
 
 
 def test_uv_plugin_symlink(new_dir, partitions, uv_parts_simple):
@@ -89,8 +95,8 @@ def test_uv_plugin_symlink(new_dir, partitions, uv_parts_simple):
 
     # In regular Ubuntu this would be /usr/bin/python3.* but in GH this can be
     # something like /opt/hostedtoolcache/Python/3.9.16/x64/bin/python3.9
-    assert os.path.isabs(python_link)
-    assert os.path.basename(python_link).startswith("python3")
+    assert python_link.is_absolute()
+    assert python_link.name.startswith("python3")
 
 
 def test_uv_plugin_override_get_system_interpreter(
@@ -123,7 +129,10 @@ def test_uv_plugin_override_get_system_interpreter(
 
 @pytest.mark.parametrize("remove_symlinks", [(True), (False)])
 def test_uv_plugin_no_system_interpreter(
-    new_dir, partitions, uv_parts_simple, remove_symlinks: bool  # noqa: FBT001
+    new_dir,
+    partitions,
+    uv_parts_simple,
+    remove_symlinks: bool,
 ):
     """Check that the build fails if a payload interpreter is needed but not found."""
 

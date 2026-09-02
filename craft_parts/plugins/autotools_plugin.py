@@ -18,7 +18,7 @@
 
 from typing import Literal, cast
 
-from overrides import override
+from typing_extensions import override
 
 from .base import Plugin
 from .properties import PluginProperties
@@ -31,9 +31,10 @@ class AutotoolsPluginProperties(PluginProperties, frozen=True):
 
     autotools_configure_parameters: list[str] = []
     autotools_bootstrap_parameters: list[str] = []
+    disable_parallel: bool = False
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class AutotoolsPlugin(Plugin):
@@ -46,11 +47,11 @@ class AutotoolsPlugin(Plugin):
     cannot be found, it will first try to run 'autogen.sh' or 'bootstrap'
     to generate one.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    In addition, this plugin uses the following plugin-specific keywords:
+    In addition, this plugin uses the following plugin-specific keys:
 
         - autotools-bootstrap-parameters
           (list of strings)
@@ -65,6 +66,7 @@ class AutotoolsPlugin(Plugin):
     """
 
     properties_class = AutotoolsPluginProperties
+    default_configure_parameters: list[str] = []
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -83,7 +85,11 @@ class AutotoolsPlugin(Plugin):
 
     def _get_configure_command(self) -> str:
         options = cast(AutotoolsPluginProperties, self._options)
-        cmd = ["./configure", *options.autotools_configure_parameters]
+        cmd = [
+            "./configure",
+            *self.default_configure_parameters,
+            *options.autotools_configure_parameters,
+        ]
         return " ".join(cmd)
 
     def _get_bootstrap_command(self) -> str:
@@ -101,11 +107,16 @@ class AutotoolsPlugin(Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
+        options = cast(AutotoolsPluginProperties, self._options)
         return [
             "[ ! -f ./configure ] && [ -f ./autogen.sh ] && env NOCONFIGURE=1 ./autogen.sh",
             f"[ ! -f ./configure ] && [ -f ./bootstrap ] && {self._get_bootstrap_command()}",
             "[ ! -f ./configure ] && autoreconf --install",
             self._get_configure_command(),
-            f"make -j{self._part_info.parallel_build_count}",
+            (
+                "make"
+                if options.disable_parallel
+                else f"make -j{self._part_info.parallel_build_count}"
+            ),
             f'make install DESTDIR="{self._part_info.part_install_dir}"',
         ]
