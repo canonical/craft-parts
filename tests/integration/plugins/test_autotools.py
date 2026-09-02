@@ -26,6 +26,12 @@ from craft_parts import LifecycleManager, Step
 pytestmark = [pytest.mark.plugin]
 
 
+@pytest.mark.flaky(
+    reruns=3,
+    only_rerun="HttpError",
+    reason="Occasional 502s from Launchpad.",
+    reruns_delay=60,  # Give it a minute before retrying.
+)
 def test_autotools_plugin(new_dir, partitions):
     parts_yaml = textwrap.dedent(
         """
