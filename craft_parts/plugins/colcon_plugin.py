@@ -35,7 +35,7 @@ class ColconPluginProperties(PluginProperties, frozen=True):
     colcon_packages_ignore: list[str] = []
 
     # part properties required by the plugin
-    source: str  # type: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class ColconPlugin(Plugin):

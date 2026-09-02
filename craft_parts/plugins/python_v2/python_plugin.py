@@ -35,7 +35,7 @@ class PythonPluginProperties(PluginProperties, frozen=True):
     python_packages: list[str] = []
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class PythonPlugin(Plugin):

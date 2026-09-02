@@ -33,7 +33,7 @@ from .base import (
 )
 
 
-class TarSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+class TarSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic model for a tar file source."""
 
     pattern = r"\.(tar(\.[a-z0-9]+)?|tgz)$"

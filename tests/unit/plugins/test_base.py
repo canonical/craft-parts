@@ -99,7 +99,7 @@ def test_abstract_methods(new_dir):
     )
 
     with pytest.raises(TypeError, match=expected):
-        FaultyPlugin(properties=None, part_info=part_info)  # type: ignore[reportGeneralTypeIssues]
+        FaultyPlugin(properties=None, part_info=part_info)  # ty: ignore[invalid-argument-type]
 
 
 class FooPythonPlugin(BasePythonPlugin):
@@ -225,7 +225,7 @@ def test_python_get_handle_symlinks_commands(
         template.format(install_dir=new_dir / "parts" / "p1" / "install")
         for template in expected_template
     ]
-    python_plugin._should_remove_symlinks = lambda: should_remove_symlinks  # type: ignore[method-assign]
+    python_plugin._should_remove_symlinks = lambda: should_remove_symlinks  # ty: ignore[invalid-assignment]
 
     assert python_plugin._get_handle_symlinks_commands() == expected
 
