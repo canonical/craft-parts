@@ -13,6 +13,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from textwrap import dedent
 
+import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.python_v2.python_plugin import PythonPlugin
 
@@ -48,13 +49,22 @@ def test_get_build_commands(new_dir):
     assert commands[-1].startswith("# Add a sitecustomize")
 
 
-def test_get_build_commands_quotes_package_arguments(new_dir):
+@pytest.mark.parametrize(
+    "package",
+    [
+        "gunicorn~=26.0",
+        "gunicorn>=26.0",
+        "gunicorn<27.0",
+        "gunicorn!=26.0",
+    ],
+)
+def test_get_build_commands_quotes_package_arguments(new_dir, package):
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part_info = PartInfo(project_info=info, part=Part("p1", {}))
     properties = PythonPlugin.properties_class.unmarshal(
         {
             "source": ".",
-            "python-packages": ["gunicorn~=26.0"],
+            "python-packages": [package],
         }
     )
 
@@ -62,7 +72,7 @@ def test_get_build_commands_quotes_package_arguments(new_dir):
 
     commands = python_plugin.get_build_commands()
 
-    assert "PACKAGES=('gunicorn~=26.0')" in commands
+    assert f"PACKAGES=('{package}')" in commands
     assert 'pip install "${REQUIREMENTS[@]}" "${PACKAGES[@]}"' in commands
 
 
