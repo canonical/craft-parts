@@ -18,7 +18,7 @@ Changelog
   Documentation:
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
-  
+
 Unreleased
 ----------
 
@@ -26,7 +26,7 @@ Bug fixes:
 
 - Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS
   certificates.
-  
+
 
 .. _release-2.36.0:
 
