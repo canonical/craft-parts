@@ -174,7 +174,7 @@ details.
 Dependencies
 ------------
 
-If ``cargo`` and ``rustc`` are already available in the build environment, this plugin
+If Cargo and the Rust compiler are already available in the build environment, this plugin
 uses them directly. Otherwise, it uses ``rustup`` to install or select a Rust toolchain.
 
 To provide Rust through another part instead of ``rustup``, define a part named
