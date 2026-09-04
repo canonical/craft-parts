@@ -61,7 +61,7 @@ class NpmPluginProperties(PluginProperties, frozen=True):
     # part properties required by the plugin
     npm_include_node: bool = False
     npm_node_version: str | None = None
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
     build_attributes: list[str] = []
 
     @model_validator(mode="after")
@@ -334,7 +334,7 @@ class NpmPlugin(Plugin):
             cmd += [
                 dedent(
                     f"""\
-                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
+                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \\
                     --no-same-owner --strip-components=1
                 """
                 ),

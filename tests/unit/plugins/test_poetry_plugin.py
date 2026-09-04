@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pytest
-import pytest_check  # type: ignore[import-untyped]
+import pytest_check
 from craft_parts import Part, PartInfo, ProjectInfo
 from craft_parts.plugins.poetry_plugin import PoetryPlugin
 from pydantic import ValidationError
