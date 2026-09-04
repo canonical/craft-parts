@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from subprocess import run
 
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
@@ -150,7 +149,7 @@ def test_build_environment_user_tls_settings_override_plugin_defaults(
         part=part, plugin=plugin, step_info=step_info
     )
 
-    exports = [line for line in build_environment.splitlines() if line.startswith(f'export {env_var}=')]
+    exports = [line for line in build_environment.splitlines() if line.startswith(f"export {env_var}=")]
     assert exports == [
         f'export {env_var}="true"',
         f'export {env_var}="false"',

@@ -19,8 +19,7 @@ import os
 import pytest
 from craft_parts import errors
 from craft_parts.executor import environment
-from craft_parts.infos import PartInfo, ProjectInfo
-from craft_parts.infos import StepInfo
+from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.npm_plugin import NpmPlugin
 from craft_parts.steps import Step

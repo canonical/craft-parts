@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from subprocess import run
 
 import pytest
 import pytest_check
@@ -150,7 +149,7 @@ def test_build_environment_user_ca_bundle_overrides_plugin_default(new_dir):
     exports = [
         line
         for line in build_environment.splitlines()
-        if line.startswith('export REQUESTS_CA_BUNDLE=')
+        if line.startswith("export REQUESTS_CA_BUNDLE=")
     ]
     assert exports == [
         'export REQUESTS_CA_BUNDLE="/etc/ssl/certs/ca-certificates.crt"',
