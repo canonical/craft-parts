@@ -28,12 +28,12 @@ It can be one of "stable", "beta", "nightly" or a version number. If you want to
 specific nightly version, use this format: ``"nightly-YYYY-MM-DD"``. If you don't want
 this plugin to install Rust toolchain for you, you can put ``"none"`` for this option.
 
-If this option is left unset, the plugin uses ``rustup`` and defaults to the ``stable``
-channel. However, if a system ``cargo`` and ``rustc`` are already available in the build
+If this key is left unset, the plugin uses ``rustup`` and defaults to the ``stable``
+channel. However, if Cargo and the Rust compiler are already available in the build
 environment, the plugin uses those directly and skips the ``rustup`` toolchain selection.
 
-When this option is set to a channel or version, ``rustup`` must also be available in the
-build environment so that the plugin can install or select the requested toolchain.
+If this key is set to a channel or version, ``rustup`` must also be available in the
+build environment so the plugin can install or select the requested toolchain.
 
 
 .. _rust-features:
