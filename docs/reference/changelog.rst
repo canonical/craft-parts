@@ -27,6 +27,9 @@ New features:
 
 - Verify conflicts between namespaced part names during parts validation.
 
+- Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS
+  certificates.
+
 
 .. _release-2.36.0:
 
