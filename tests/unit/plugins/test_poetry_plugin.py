@@ -13,10 +13,15 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from subprocess import run
+
 import pytest
 import pytest_check
 from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts.executor import environment
+from craft_parts.infos import StepInfo
 from craft_parts.plugins.poetry_plugin import PoetryPlugin
+from craft_parts.steps import Step
 from pydantic import ValidationError
 from pytest_mock import MockFixture
 
@@ -127,21 +132,30 @@ def test_get_build_environment_uses_system_ca_bundle(plugin):
     assert env["REQUESTS_CA_BUNDLE"] == "/etc/ssl/certs/ca-certificates.crt"
 
 
-def test_get_build_environment_respects_user_ca_bundle(plugin, monkeypatch, new_dir):
-    """When the user already set the variable, the plugin must not override it.
-
-    The actual user-provided value will come from the build environment, so it
-    should not appear in the plugin's returned dictionary.
-    """
-    monkeypatch.setenv("REQUESTS_CA_BUNDLE", "/custom/certs.pem")
+def test_build_environment_user_ca_bundle_overrides_plugin_default(new_dir):
+    """User-defined build-environment values must win in the final build env."""
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
-    part_info = PartInfo(project_info=info, part=Part("p1", {}))
-    properties = PoetryPlugin.properties_class.unmarshal({"source": "."})
-    poetry_plugin = PoetryPlugin(part_info=part_info, properties=properties)
+    part = Part("p1", {"build-environment": [{"REQUESTS_CA_BUNDLE": "/custom/certs.pem"}]})
+    part_info = PartInfo(project_info=info, part=part)
+    step_info = StepInfo(part_info=part_info, step=Step.BUILD)
+    plugin = PoetryPlugin(
+        part_info=part_info,
+        properties=PoetryPlugin.properties_class.unmarshal({"source": "."}),
+    )
 
-    env = poetry_plugin.get_build_environment()
+    build_environment = environment.generate_step_environment(
+        part=part, plugin=plugin, step_info=step_info
+    )
 
-    assert "REQUESTS_CA_BUNDLE" not in env
+    exports = [
+        line
+        for line in build_environment.splitlines()
+        if line.startswith('export REQUESTS_CA_BUNDLE=')
+    ]
+    assert exports == [
+        'export REQUESTS_CA_BUNDLE="/etc/ssl/certs/ca-certificates.crt"',
+        'export REQUESTS_CA_BUNDLE="/custom/certs.pem"',
+    ]
 
 
 def test_call_should_remove_symlinks(plugin, new_dir, mocker):

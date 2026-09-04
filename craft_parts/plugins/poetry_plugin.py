@@ -16,7 +16,6 @@
 
 """The poetry plugin."""
 
-import os
 import pathlib
 import shlex
 import subprocess
@@ -165,11 +164,9 @@ class PoetryPlugin(BasePythonPlugin):
         """Return a dictionary with the environment to use in the build step."""
         env = super().get_build_environment()
         # Poetry's HTTPS requests go through Python's requests/urllib3/certifi,
-        # which uses a bundled CA bundle by default. Point it at the OS CA bundle
-        # so the native system certificate store is used, unless the user already
-        # configured a custom bundle.
-        if "REQUESTS_CA_BUNDLE" not in os.environ:
-            env["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
+        # which uses a bundled CA bundle by default. Point it at the OS CA bundle.
+        # User build-environment entries are applied later and can still override this.
+        env["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
         return env
 
     @override

@@ -283,11 +283,8 @@ class NpmPlugin(Plugin):
         # set the Node environment to production mode
         base_env = {
             "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
         }
-        # Prefer the native OS TLS certificate store over Node's bundled certs,
-        # but respect any user-provided value.
-        if "NODE_USE_SYSTEM_CA" not in os.environ:
-            base_env["NODE_USE_SYSTEM_CA"] = "1"
         if cast(NpmPluginProperties, self._options).npm_include_node:
             base_env["PATH"] = "${CRAFT_PART_INSTALL}/bin:${PATH}"
 

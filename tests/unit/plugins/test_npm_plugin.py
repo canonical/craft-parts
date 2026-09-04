@@ -18,9 +18,12 @@ import os
 
 import pytest
 from craft_parts import errors
+from craft_parts.executor import environment
 from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.infos import StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.npm_plugin import NpmPlugin
+from craft_parts.steps import Step
 from pydantic import ValidationError
 
 # pylint: disable=too-many-public-methods
@@ -242,17 +245,33 @@ class TestPluginNpmPlugin:
             "NODE_USE_SYSTEM_CA": "1",
         }
 
-    def test_get_build_environment_respects_user_tls_settings(
-        self, part_info, new_dir, monkeypatch
+    def test_build_environment_user_tls_settings_override_plugin_default(
+        self, new_dir
     ):
-        """When the user already set the variable, the plugin must not override it."""
-        monkeypatch.setenv("NODE_USE_SYSTEM_CA", "0")
-        properties = NpmPlugin.properties_class.unmarshal({"source": "."})
-        plugin = NpmPlugin(properties=properties, part_info=part_info)
+        """User-defined build-environment values must win in the final build env."""
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part = Part("my-part", {"build-environment": [{"NODE_USE_SYSTEM_CA": "0"}]})
+        part_info = PartInfo(project_info=info, part=part)
+        step_info = StepInfo(part_info=part_info, step=Step.BUILD)
+        plugin = NpmPlugin(
+            properties=NpmPlugin.properties_class.unmarshal({"source": "."}),
+            part_info=part_info,
+        )
 
-        env = plugin.get_build_environment()
+        build_environment = environment.generate_step_environment(
+            part=part, plugin=plugin, step_info=step_info
+        )
 
-        assert "NODE_USE_SYSTEM_CA" not in env
+        exports = [
+            line
+            for line in build_environment.splitlines()
+            if line.startswith("export NODE_USE_SYSTEM_CA=")
+        ]
+
+        assert exports == [
+            'export NODE_USE_SYSTEM_CA="1"',
+            'export NODE_USE_SYSTEM_CA="0"',
+        ]
 
     def test_get_build_commands(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
