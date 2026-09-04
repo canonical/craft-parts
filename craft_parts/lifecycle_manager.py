@@ -20,7 +20,7 @@ import os
 import re
 import sys
 from collections.abc import Iterable, Sequence
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, cast
 
 from pydantic import ValidationError
@@ -439,7 +439,8 @@ def _validate_part_names(parts_data: dict[str, Any]) -> None:
             if _part_names_conflict(part_name, other_name):
                 nested, parent = (
                     (part_name, other_name)
-                    if len(part_name.split("/")) > len(other_name.split("/"))
+                    if len(PurePosixPath(part_name).parts)
+                    > len(PurePosixPath(other_name).parts)
                     else (other_name, part_name)
                 )
                 raise errors.PartNameConflict(
@@ -459,11 +460,7 @@ def _part_names_conflict(a: str, b: str) -> bool:
 
     :returns: True if the part names conflict.
     """
-    separator = "/"
-    a_parts = a.split(separator)
-    b_parts = b.split(separator)
+    a_path = PurePosixPath(a)
+    b_path = PurePosixPath(b)
 
-    if len(a_parts) > len(b_parts):
-        return a_parts[: len(b_parts)] == b_parts
-
-    return b_parts[: len(a_parts)] == a_parts
+    return a_path.is_relative_to(b_path) or b_path.is_relative_to(a_path)
