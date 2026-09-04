@@ -81,3 +81,22 @@ def test_plugin_build_errors(new_dir, partitions):
             Check the build output and verify the project can work with the 'go' plugin."""
     )
     assert raised.value.doc_slug == "/reference/plugins/"
+
+
+def test_nested_part_name_errors(new_dir):
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+          foo/bar:
+            plugin: nil
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    with pytest.raises(errors.PartNameConflict) as raised:
+        LifecycleManager(parts, application_name="test", cache_dir=new_dir)
+
+    assert raised.value.part_name == "foo/bar"
+    assert raised.value.conflicting_part_name == "foo"

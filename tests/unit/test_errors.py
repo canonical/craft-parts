@@ -89,6 +89,18 @@ def test_invalid_part_name():
     assert err.resolution == "Review the parts definition and make sure it's correct."
 
 
+def test_part_name_conflict():
+    err = errors.PartNameConflict(part_name="foo/bar", conflicting_part_name="foo")
+    assert err.part_name == "foo/bar"
+    assert err.conflicting_part_name == "foo"
+    assert err.brief == "Part 'foo/bar' conflicts with 'foo'."
+    assert err.details is None
+    assert (
+        err.resolution
+        == "Review the parts definition and make sure part names do not conflict."
+    )
+
+
 def test_invalid_architecture():
     err = errors.InvalidArchitecture("m68k")
     assert err.arch_name == "m68k"

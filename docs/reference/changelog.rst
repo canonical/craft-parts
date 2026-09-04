@@ -19,6 +19,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+Unreleased
+----------
+
+New features:
+
+- Verify conflicts between namespaced part names during parts validation.
+
+
 .. _release-2.36.0:
 
 2.36.0 (2026-08-31)
