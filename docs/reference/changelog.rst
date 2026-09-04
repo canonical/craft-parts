@@ -19,10 +19,13 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
 Unreleased
 ----------
 
-Bug fixes:
+New features:
+
+- Verify conflicts between namespaced part names during parts validation.
 
 - Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS
   certificates.
