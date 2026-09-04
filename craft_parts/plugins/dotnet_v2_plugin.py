@@ -86,7 +86,7 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
     dotnet_publish_properties: dict[str, str] = {}
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
     @pydantic.field_validator("dotnet_version")
     @classmethod
@@ -142,8 +142,8 @@ class DotnetV2PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 class DotnetV2Plugin(Plugin):
     """A plugin for .NET projects.
 
-    The .NET plugin uses the common plugin keywords as well as those for "sources".
-    Additionally, the following plugin-specific keywords can be used:
+    The .NET plugin uses the common plugin keys as well as those for "sources".
+    Additionally, the following plugin-specific keys can be used:
 
     Global Flags:
 

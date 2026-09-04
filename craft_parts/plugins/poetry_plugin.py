@@ -54,7 +54,7 @@ class PoetryPluginProperties(PluginProperties, frozen=True):
     )
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class PoetryPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

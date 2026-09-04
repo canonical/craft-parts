@@ -303,7 +303,7 @@ class TestPluginNpmPlugin:
                 "npm-node-version": version,
             }
         )
-        NpmPlugin._fetch_node_release_index = lambda: [
+        NpmPlugin._fetch_node_release_index = lambda: [  # ty: ignore[invalid-assignment]
             {
                 "version": "v99.99.99",
                 "date": "3304-12-31",
@@ -335,8 +335,8 @@ class TestPluginNpmPlugin:
             ),
             (
                 f'tar -xzf "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"'
-                ' -C "${CRAFT_PART_INSTALL}/"                     --no-same-owner '
-                "--strip-components=1\n"
+                ' -C "${CRAFT_PART_INSTALL}/" \\\n'
+                "    --no-same-owner --strip-components=1\n"
             ),
             (
                 'NPM_VERSION="$(npm --version)"\n'
@@ -440,4 +440,4 @@ class TestPluginNpmPlugin:
         part = Part("my-part", spec, plugin_properties=properties)
 
         assert part.spec.build_attributes == ["self-contained"]
-        assert part.plugin_properties.build_attributes == ["self-contained"]  # type: ignore[reportAttributeAccessIssue]
+        assert part.plugin_properties.build_attributes == ["self-contained"]  # ty: ignore[unresolved-attribute]

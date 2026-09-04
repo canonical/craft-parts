@@ -61,7 +61,7 @@ class NpmPluginProperties(PluginProperties, frozen=True):
     # part properties required by the plugin
     npm_include_node: bool = False
     npm_node_version: str | None = None
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
     build_attributes: list[str] = []
 
     @model_validator(mode="after")
@@ -115,11 +115,11 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 class NpmPlugin(Plugin):
     """A plugin for npm projects.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
         - npm-include-node
           (bool; default: False)
           If true, download and include the node binary and its dependencies.
@@ -338,7 +338,7 @@ class NpmPlugin(Plugin):
             cmd += [
                 dedent(
                     f"""\
-                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
+                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \\
                     --no-same-owner --strip-components=1
                 """
                 ),
