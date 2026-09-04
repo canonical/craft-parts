@@ -178,8 +178,8 @@ If ``cargo`` and ``rustc`` are already available in the build environment, this 
 uses them directly. Otherwise, it uses ``rustup`` to install or select a Rust toolchain.
 
 To provide Rust through another part instead of ``rustup``, define a part named
-``rust-deps`` that provides both ``cargo`` and ``rustc`` and declare it in
-``after`` for the part using the toolchain. For example:
+``rust-deps``, list ``cargo`` and ``rustc`` with the ``stage-packages`` key, and declare it in
+the ``after`` key of the part using the toolchain. For example:
 
 .. code-block:: yaml
 
