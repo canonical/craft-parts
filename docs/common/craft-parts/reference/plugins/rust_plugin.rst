@@ -197,7 +197,7 @@ the ``after`` key of the part using the toolchain. For example:
           - rust-deps
 
 When ``after`` includes ``rust-deps``, or when ``rust-channel`` is set to ``"none"``,
-the plugin validates that ``cargo`` and ``rustc`` are available and does not use
+the plugin validates that Cargo and the Rust compiler are available and does not use
 ``rustup``. Do not combine ``after: [rust-deps]`` with a non-``none`` ``rust-channel``
 value.
 
