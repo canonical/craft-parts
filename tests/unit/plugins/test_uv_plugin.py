@@ -132,9 +132,7 @@ def test_get_build_environment_uses_native_tls(plugin):
     "env_var",
     ["UV_SYSTEM_CERTS", "UV_NATIVE_TLS"],
 )
-def test_build_environment_user_tls_settings_override_plugin_defaults(
-    new_dir, env_var
-):
+def test_build_environment_user_tls_settings_override_plugin_defaults(new_dir, env_var):
     """User-defined build-environment values must win in the final build env."""
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
     part = Part("p1", {"build-environment": [{env_var: "false"}]})
@@ -149,7 +147,11 @@ def test_build_environment_user_tls_settings_override_plugin_defaults(
         part=part, plugin=plugin, step_info=step_info
     )
 
-    exports = [line for line in build_environment.splitlines() if line.startswith(f"export {env_var}=")]
+    exports = [
+        line
+        for line in build_environment.splitlines()
+        if line.startswith(f"export {env_var}=")
+    ]
     assert exports == [
         f'export {env_var}="true"',
         f'export {env_var}="false"',

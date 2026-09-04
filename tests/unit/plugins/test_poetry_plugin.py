@@ -134,7 +134,9 @@ def test_get_build_environment_uses_system_ca_bundle(plugin):
 def test_build_environment_user_ca_bundle_overrides_plugin_default(new_dir):
     """User-defined build-environment values must win in the final build env."""
     info = ProjectInfo(application_name="test", cache_dir=new_dir)
-    part = Part("p1", {"build-environment": [{"REQUESTS_CA_BUNDLE": "/custom/certs.pem"}]})
+    part = Part(
+        "p1", {"build-environment": [{"REQUESTS_CA_BUNDLE": "/custom/certs.pem"}]}
+    )
     part_info = PartInfo(project_info=info, part=part)
     step_info = StepInfo(part_info=part_info, step=Step.BUILD)
     plugin = PoetryPlugin(

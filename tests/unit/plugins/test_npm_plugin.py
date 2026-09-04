@@ -244,9 +244,7 @@ class TestPluginNpmPlugin:
             "NODE_USE_SYSTEM_CA": "1",
         }
 
-    def test_build_environment_user_tls_settings_override_plugin_default(
-        self, new_dir
-    ):
+    def test_build_environment_user_tls_settings_override_plugin_default(self, new_dir):
         """User-defined build-environment values must win in the final build env."""
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part = Part("my-part", {"build-environment": [{"NODE_USE_SYSTEM_CA": "0"}]})
