@@ -12,6 +12,7 @@ boolean
 Bundler
 Canonical('s)?
 Charmcraft
+chroot
 cjk
 CMake
 colcon

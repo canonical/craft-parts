@@ -766,3 +766,43 @@ def test_link_or_copy_samefile_symlink(tmp_path: Path) -> None:
     assert source.read_text() == "test data"
     assert destination.exists()
     assert destination.is_symlink()
+
+
+def test_non_blocking_rw_fifo_round_trip(tmp_path: Path) -> None:
+    """A value written to the FIFO can be read back."""
+    fifo = file_utils.NonBlockingRWFifo(str(tmp_path / "fifo"))
+    try:
+        fifo.write("hello")
+        assert fifo.read() == "hello"
+    finally:
+        fifo.close()
+
+
+def test_non_blocking_rw_fifo_read_empty(tmp_path: Path) -> None:
+    """Reading an empty FIFO returns an empty string without raising."""
+    fifo = file_utils.NonBlockingRWFifo(str(tmp_path / "fifo"))
+    try:
+        assert fifo.read() == ""
+    finally:
+        fifo.close()
+
+
+def test_non_blocking_rw_fifo_large_data(tmp_path: Path) -> None:
+    """Data larger than the read buffer is fully read back."""
+    fifo = file_utils.NonBlockingRWFifo(str(tmp_path / "fifo"))
+    try:
+        data = "x" * 5000
+        fifo.write(data)
+        assert fifo.read() == data
+    finally:
+        fifo.close()
+
+
+def test_non_blocking_rw_fifo_path(tmp_path: Path) -> None:
+    """The path property returns the FIFO path."""
+    path = str(tmp_path / "fifo")
+    fifo = file_utils.NonBlockingRWFifo(path)
+    try:
+        assert fifo.path == path
+    finally:
+        fifo.close()
