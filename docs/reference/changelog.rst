@@ -106,6 +106,8 @@ Bug fixes:
 - Set ``DEBIAN_FRONTEND=noninteractive`` in the global execution environment,
   so all steps run non-interactively by default.
 - Add git source mutual exclusivity to JSON schema.
+- The ``qmake`` plugin recognizes ``source-subdir`` if the part declares it,
+  keeping compatibility in cases where ``qmake-project-file`` was also set.
 - Normalize leading slashes in migration paths, fixing application of permissions
   and ownership in files specified with absolute paths.
 
