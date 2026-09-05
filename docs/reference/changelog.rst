@@ -30,6 +30,10 @@ New features:
 - Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS
   certificates.
 
+- Craft Parts now always ignores Ubuntu's phased updates when installing
+  build packages or fetching stage packages, so the latest available version
+  of each package is used.
+
 
 .. _release-2.36.0:
 
@@ -53,10 +57,6 @@ New features:
   otherwise pull in large test-only dependencies. Users can opt back in by
   passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
 
-- Craft Parts now always ignores Ubuntu's phased updates when installing
-  build packages or fetching stage packages, so the latest available version
-  of each package is used.
-  
 - Add a ``stage-slices`` key to declare Chisel slices separately from the
   ``stage-packages`` key.
 
