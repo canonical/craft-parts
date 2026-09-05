@@ -95,6 +95,10 @@ class AptCache(ContextDecorator):
 
     # pylint: disable=attribute-defined-outside-init
     def __enter__(self) -> Self:
+        # Always ignore Ubuntu's phased updates so the latest available
+        # package version is installed.
+        apt_pkg.config.set("APT::Get::Always-Include-Phased-Updates", "true")
+
         if self.stage_cache is not None:
             self.progress = LogProgress()
             self._populate_stage_cache_dir()
