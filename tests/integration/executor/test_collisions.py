@@ -325,6 +325,7 @@ class TestCollisions:
         with lf.action_executor() as ctx:
             ctx.execute(actions)
 
+    @pytest.mark.requires_root
     @pytest.mark.usefixtures(
         "mock_overlay_support_prerequisites", "add_overlay_feature"
     )
@@ -348,6 +349,7 @@ class TestCollisions:
         with pytest.raises(OverlayStageConflict, match=expected_message):
             self._run_lifecycle(parts_yaml, new_dir, partitions)
 
+    @pytest.mark.requires_root
     @pytest.mark.usefixtures(
         "mock_overlay_support_prerequisites", "add_overlay_feature"
     )

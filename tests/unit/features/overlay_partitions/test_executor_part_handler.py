@@ -576,6 +576,7 @@ def create_overlay_whiteout(name: Path) -> None:
     os.mknod(name, stat.S_IFCHR, os.makedev(0, 0))
 
 
+@pytest.mark.requires_root
 @pytest.mark.usefixtures("new_dir")
 class TestOverlayMigrationFilesystems:
     """Overlay migration to stage and prime test cases with a non-default filesystems."""
