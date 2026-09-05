@@ -680,7 +680,7 @@ class PartSpec(BaseModel):
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("part data is not a dictionary")
 
         return PartSpec.model_validate(
@@ -824,7 +824,7 @@ class Part:
         stage_packages_slice_support: bool = True,
     ) -> None:
         self._partitions = partitions
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise errors.PartSpecificationError(
                 part_name=name, message="part data is not a dictionary"
             )
@@ -1453,7 +1453,7 @@ def part_has_chisel_as_build_snap(data: dict[str, Any]) -> bool:
 
 
 def _get_part_spec(data: dict[str, Any]) -> PartSpec:
-    if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+    if not isinstance(data, dict):
         raise TypeError("value must be a dictionary")
 
     # copy the original data, we'll modify it

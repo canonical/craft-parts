@@ -48,7 +48,7 @@ class RustPluginProperties(PluginProperties, frozen=True):
     rust_ignore_toolchain_file: bool = False
     rust_cargo_parameters: list[str] = []
     rust_inherit_ldflags: bool = False
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
     after: UniqueList[str] | None = None
 
     @pydantic.field_validator("rust_channel")

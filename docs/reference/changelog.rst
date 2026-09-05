@@ -19,10 +19,22 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-.. _release-2.36.0:
 
 Unreleased
 ----------
+
+New features:
+
+- Verify conflicts between namespaced part names during parts validation.
+
+- Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS
+  certificates.
+
+
+.. _release-2.36.0:
+
+2.36.0 (2026-08-31)
+-------------------
 
 New features:
 
@@ -67,7 +79,13 @@ Bug fixes:
   used.
 
 - Skip organization when the resolved destination path and the source path
-  are the same, preventing self-copy and delete.
+  are the same.
+- Refresh the APT cache before marking packages for installation, ensuring
+  the correct package versions are resolved.
+- Use fork context for chroot operations to fix execution on Python 3.14.
+- Check out the commit before updating submodules, preventing errors when
+  the submodule state does not match the checked-out commit.
+- Preserve package architecture information in primed stage packages.
 
 For a complete list of commits, check out the `2.36.0`_ release on GitHub.
 

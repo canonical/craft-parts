@@ -1,5 +1,8 @@
 .. _craft_parts_rust_plugin:
 
+.. meta::
+    :description: Reference for the Rust plugin, including its configuration keys, Rust toolchain behavior, and example part definitions in YAML.
+
 Rust plugin
 =============
 
@@ -17,13 +20,20 @@ rust-channel
 
 **Type:** string
 
-**Default:** stable
+**Default:** unset
 
 Used to select which `Rust channel or
 version <https://rust-lang.github.io/rustup/concepts/channels.html#channels>`_ to use.
 It can be one of "stable", "beta", "nightly" or a version number. If you want to use a
 specific nightly version, use this format: ``"nightly-YYYY-MM-DD"``. If you don't want
 this plugin to install Rust toolchain for you, you can put ``"none"`` for this option.
+
+If this key is left unset, the plugin uses ``rustup`` and defaults to the ``stable``
+channel. However, if Cargo and the Rust compiler are already available in the build
+environment, the plugin uses those directly and skips the ``rustup`` toolchain selection.
+
+If this key is set to a channel or version, ``rustup`` must also be available in the
+build environment so the plugin can install or select the requested toolchain.
 
 
 .. _rust-features:
@@ -164,9 +174,32 @@ details.
 Dependencies
 ------------
 
-By default this plugin uses Rust toolchain binaries from the Rust upstream. If this is
-not desired, you can set ``rust-deps: ["rustc", "cargo"]`` and ``rust-channel: "none"``
-in the part definition to override the default behaviour.
+If Cargo and the Rust compiler are already available in the build environment, this plugin
+uses them directly. Otherwise, it uses ``rustup`` to install or select a Rust toolchain.
+
+To provide Rust through another part instead of ``rustup``, define a part named
+``rust-deps``, list ``cargo`` and ``rustc`` with the ``stage-packages`` key, and declare it in
+the ``after`` key of the part using the toolchain. For example:
+
+.. code-block:: yaml
+
+    parts:
+      rust-deps:
+        plugin: nil
+        stage-packages:
+          - cargo
+          - rustc
+
+      my-app:
+        plugin: rust
+        source: .
+        after:
+          - rust-deps
+
+When ``after`` includes ``rust-deps``, or when ``rust-channel`` is set to ``"none"``,
+the plugin validates that Cargo and the Rust compiler are available and does not use
+``rustup``. Do not combine ``after: [rust-deps]`` when ``rust-channel`` is set to anything
+but ``"none"``.
 
 
 .. _perf-tuning:

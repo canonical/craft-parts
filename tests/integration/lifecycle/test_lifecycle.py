@@ -19,7 +19,7 @@ from pathlib import Path
 
 import craft_parts
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 import yaml
 from craft_parts import Action, ActionProperties, ActionType, Features, Step
 

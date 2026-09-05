@@ -126,7 +126,7 @@ class ProjectVar(pydantic.BaseModel):
         :raise TypeError: If data is not a dict.
         :raise pydantic.ValidationError: If the data fails validation.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("Project variable must be a dictionary.")
 
         return cls.model_validate(data)
@@ -180,7 +180,7 @@ class ProjectVarInfo(pydantic.RootModel[dict[str, "ProjectVar | ProjectVarInfo"]
         :raise TypeError: If data is not a dict.
         :raise pydantic.ValidationError: If the data fails validation.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("Project variable info must be a dictionary.")
 
         return cls.model_validate(data)
