@@ -16,6 +16,10 @@
 
 from tests.integration.executor.test_overlay_diagnostics import TestOverlayDiagnostics
 
+TestOverlayDiagnostics.__test__ = False
+
 
 class TestOverlayDiagnosticsWithPartitions(TestOverlayDiagnostics):
     """Run overlay diagnostics with partitions enabled."""
+
+    __test__ = True

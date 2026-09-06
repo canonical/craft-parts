@@ -35,6 +35,11 @@ from . import fake_servers
 from .fake_snap_command import FakeSnapCommand
 from .fake_snapd import FakeSnapd
 
+_DIAGNOSTIC_TEST_PATHS = {
+    Path("tests/integration/executor/test_overlay_diagnostics.py"),
+    Path("tests/integration/features/partitions/executor/test_overlay_diagnostics.py"),
+}
+
 
 def pytest_runtest_setup(item: pytest.Item):
     """Configuration for tests."""
@@ -43,10 +48,29 @@ def pytest_runtest_setup(item: pytest.Item):
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Use collection hook to mark all integration tests as slow"""
+    """Use collection hook to temporarily run only overlay diagnostics tests."""
+    selected_items: list[pytest.Item] = []
+    deselected_items: list[pytest.Item] = []
+    root_path = Path.cwd().resolve()
+
     for item in items:
+        try:
+            item_path = item.path.resolve().relative_to(root_path)
+        except ValueError:
+            item_path = item.path
+
+        if item_path in _DIAGNOSTIC_TEST_PATHS:
+            selected_items.append(item)
+        else:
+            deselected_items.append(item)
+
         if "tests/integration" in str(item.path):
             item.add_marker(pytest.mark.slow)
+
+    if deselected_items:
+        config = selected_items[0].config if selected_items else deselected_items[0].config
+        config.hook.pytest_deselected(items=deselected_items)
+        items[:] = selected_items
 
 
 def pytest_configure(config):

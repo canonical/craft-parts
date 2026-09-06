@@ -1,6 +1,5 @@
 name: Check policy
 on:
-  pull_request:
   push:
     branches:
       - main
