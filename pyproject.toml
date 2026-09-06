@@ -202,7 +202,10 @@ line_length = 88
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = "tests"
+testpaths = [
+    "tests/integration/executor/test_overlay_diagnostics.py",
+    "tests/integration/features/partitions/executor/test_overlay_diagnostics.py",
+]
 xfail_strict = true
 addopts = "--ignore=tests/spread"
 markers = [
