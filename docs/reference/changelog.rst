@@ -30,6 +30,10 @@ New features:
 - Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS
   certificates.
 
+- Craft Parts now always ignores Ubuntu's phased updates when installing
+  build packages or fetching stage packages, so the latest available version
+  of each package is used.
+
 
 .. _release-2.36.0:
 
