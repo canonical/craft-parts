@@ -233,3 +233,31 @@ def test_invalid_parameters():
     assert len(err) == 1
     assert err[0]["loc"] == ("fpc-invalid",)
     assert err[0]["type"] == "extra_forbidden"
+
+
+def test_get_build_commands_with_dependencies(new_dir):
+    """Search paths exported by fpc-use parts in `after` are passed to the compiler."""
+    part_info = PartInfo(
+        project_info=ProjectInfo(application_name="test", cache_dir=new_dir),
+        part=Part("my-part", {"after": ["greetlib", "not-fpc-use"]}),
+    )
+    export_dir = part_info.backstage_dir / "fpc-use" / "greetlib"
+    export_dir.mkdir(parents=True)
+    (export_dir / "unit-paths").write_text("units\nlib/*\n")
+    (export_dir / "include-paths").write_text("include\n")
+
+    properties = FpcPlugin.properties_class.unmarshal(
+        {"source": ".", "fpc-programs": ["src/hello.pas"], "fpc-unit-paths": ["own"]}
+    )
+    plugin = FpcPlugin(properties=properties, part_info=part_info)
+    unit_dir = part_info.part_build_subdir / ".parts" / "units"
+    bin_dir = part_info.part_install_dir / "bin"
+    source = export_dir / "source"
+
+    assert plugin.get_build_commands() == [
+        f"mkdir -p {unit_dir} {bin_dir}",
+        (
+            f"fpc -Fuown -Fu{source}/units -Fu'{source}/lib/*' "
+            f"-Fi{source}/include -FU{unit_dir} -FE{bin_dir} src/hello.pas"
+        ),
+    ]

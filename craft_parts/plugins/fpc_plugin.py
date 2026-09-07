@@ -28,6 +28,7 @@ from craft_parts.constraints import UniqueList
 
 from . import validator
 from .base import Plugin
+from .fpc_use_plugin import FPC_USE_DIR
 from .properties import PluginProperties
 
 _VERSION_PATTERN = re.compile(r"^\d+\.\d+")
@@ -126,6 +127,25 @@ class FpcPlugin(Plugin):
         """Return a dictionary with the environment to use in the build step."""
         return {}
 
+    def _get_dependency_flags(self) -> list[str]:
+        """Return the search paths exported by fpc-use parts this part depends on."""
+        use_dir = self._part_info.backstage_dir / FPC_USE_DIR
+        flags: list[str] = []
+        for dependency in self._part_info.part_dependencies:
+            export_dir = use_dir / dependency
+            if not export_dir.is_dir():
+                continue
+            source = export_dir / "source"
+            flags.extend(
+                f"-Fu{shlex.quote(str(source / path))}"
+                for path in (export_dir / "unit-paths").read_text().splitlines()
+            )
+            flags.extend(
+                f"-Fi{shlex.quote(str(source / path))}"
+                for path in (export_dir / "include-paths").read_text().splitlines()
+            )
+        return flags
+
     @override
     def get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step."""
@@ -140,6 +160,7 @@ class FpcPlugin(Plugin):
                 "fpc",
                 *(f"-Fu{shlex.quote(path)}" for path in options.fpc_unit_paths),
                 *(f"-Fi{shlex.quote(path)}" for path in options.fpc_include_paths),
+                *self._get_dependency_flags(),
                 f"-FU{shlex.quote(str(unit_dir))}",
                 f"-FE{shlex.quote(str(bin_dir))}",
                 *options.fpc_parameters,

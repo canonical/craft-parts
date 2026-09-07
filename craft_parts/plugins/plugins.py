@@ -31,6 +31,7 @@ from .cmake_plugin import CMakePlugin
 from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
 from .fpc_plugin import FpcPlugin
+from .fpc_use_plugin import FpcUsePlugin
 from .go_plugin import GoPlugin
 from .go_use_plugin import GoUsePlugin
 from .gradle_plugin import GradlePlugin
@@ -82,6 +83,7 @@ class PluginGroup(enum.Enum):
         "cmake": CMakePlugin,
         "dotnet": DotnetPlugin,
         "fpc": FpcPlugin,
+        "fpc-use": FpcUsePlugin,
         "go": GoPlugin,
         "go-use": GoUsePlugin,
         "gradle": GradlePlugin,
