@@ -43,11 +43,11 @@ def check_for_stage_collisions(
 
     :raises PartConflictError: If conflicts are found.
     """
-    if partitions is None and part_list:
-        partitions = [part_list[0].default_partition]
-
-    for partition in normalize_partition_names(partitions):
-        _check_for_stage_collisions_per_partition(part_list, partition)
+    normalized = normalize_partition_names(partitions)
+    for partition in normalized:
+        _check_for_stage_collisions_per_partition(
+            part_list, partition, report_partition=len(normalized) > 1
+        )
 
 
 @dataclass
@@ -164,6 +164,8 @@ def _get_candidates_from_overlay(
 def _check_for_stage_collisions_per_partition(
     part_list: list[Part],
     partition: str | None,
+    *,
+    report_partition: bool = False,
 ) -> None:
     """Verify whether parts have conflicting files for a stage directory in a partition.
 
@@ -171,6 +173,7 @@ def _check_for_stage_collisions_per_partition(
 
     :param part_list: The list of parts to check.
     :param partition: The name of the partition containing the stage directory to check.
+    :param report_partition: Whether to mention the partition name in error messages.
 
     :raises PartConflictError: If conflicts between build content are found.
     :raises OverlayStageConflict: If conflicts between build and overlay content are
@@ -224,13 +227,13 @@ def _check_for_stage_collisions_per_partition(
                         part_name=candidate.part_name,
                         overlay_part_name=other_candidate.part_name,
                         conflicting_files=conflict_files,
-                        partition=partition,
+                        partition=partition if report_partition else None,
                     )
                 raise errors.PartFilesConflict(
                     part_name=candidate.part_name,
                     other_part_name=other_candidate.part_name,
                     conflicting_files=conflict_files,
-                    partition=partition,
+                    partition=partition if report_partition else None,
                 )
 
         # And add our candidate to the list.
