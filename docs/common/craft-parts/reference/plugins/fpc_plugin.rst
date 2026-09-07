@@ -8,7 +8,8 @@ fpc plugin
 
 The fpc plugin builds programs with the `Free Pascal`_ compiler. It compiles each
 listed program together with the units it uses, and installs the resulting executables
-in ``$CRAFT_PART_INSTALL/bin``.
+in ``$CRAFT_PART_INSTALL/bin``. Units provided by other parts can be shared with the
+:ref:`fpc-use plugin <craft_parts_fpc_use_plugin>`.
 
 
 Keys
@@ -93,8 +94,10 @@ During the build step the plugin performs the following actions:
 #. Create the directory for compiled units, ``.parts/units`` in the build directory,
    and the ``bin`` directory in the install directory.
 #. Call ``fpc`` once for each entry in ``fpc-programs``, passing the entries in
-   ``fpc-unit-paths`` and ``fpc-include-paths``, the two directories above through
-   ``-FU`` and ``-FE``, and finally the entries in ``fpc-parameters``.
+   ``fpc-unit-paths`` and ``fpc-include-paths``, the search paths exported by the
+   :ref:`fpc-use <craft_parts_fpc_use_plugin>` parts listed in ``after``, the two
+   directories above through ``-FU`` and ``-FE``, and finally the entries in
+   ``fpc-parameters``.
 
 
 Example

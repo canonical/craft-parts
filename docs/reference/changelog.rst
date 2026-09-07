@@ -27,6 +27,9 @@ New features:
 
 - Add the ``fpc`` plugin, which builds programs with the Free Pascal compiler.
 
+- Add the ``fpc-use`` plugin, which exports Free Pascal units to parts using
+  the ``fpc`` plugin.
+
 - Verify conflicts between namespaced part names during parts validation.
 
 - Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS
