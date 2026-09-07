@@ -35,7 +35,7 @@ class SConsPluginProperties(PluginProperties, frozen=True):
     scons_parameters: list[str] = []
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class SConsPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

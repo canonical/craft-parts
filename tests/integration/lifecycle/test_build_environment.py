@@ -16,6 +16,7 @@
 
 import textwrap
 from collections.abc import Generator
+from typing import Any
 
 import craft_parts
 import yaml
@@ -43,7 +44,7 @@ basic_parts_yaml = textwrap.dedent(
 def test_build_environment(new_dir, capfd):
     parts = yaml.safe_load(basic_parts_yaml)
 
-    lf_kwargs = {
+    lf_kwargs: dict[str, Any] = {
         "application_name": "test_demo",
         "cache_dir": new_dir,
         "build_environment": ["FOO=hello"],
@@ -64,7 +65,7 @@ def test_build_environment_generator(new_dir, capfd):
 
     parts = yaml.safe_load(basic_parts_yaml)
 
-    lf_kwargs = {
+    lf_kwargs: dict[str, Any] = {
         "application_name": "test_demo",
         "cache_dir": new_dir,
         "build_environment": test_gen(),

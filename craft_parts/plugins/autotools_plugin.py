@@ -34,7 +34,7 @@ class AutotoolsPluginProperties(PluginProperties, frozen=True):
     disable_parallel: bool = False
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class AutotoolsPlugin(Plugin):

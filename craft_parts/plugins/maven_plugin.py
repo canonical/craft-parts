@@ -39,7 +39,7 @@ class MavenPluginProperties(PluginProperties, frozen=True):
     maven_use_wrapper: bool = False
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

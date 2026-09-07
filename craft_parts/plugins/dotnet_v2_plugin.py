@@ -86,7 +86,7 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
     dotnet_publish_properties: dict[str, str] = {}
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
     @pydantic.field_validator("dotnet_version")
     @classmethod

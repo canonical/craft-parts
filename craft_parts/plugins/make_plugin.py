@@ -32,7 +32,7 @@ class MakePluginProperties(PluginProperties, frozen=True):
     make_parameters: list[str] = []
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MakePlugin(Plugin):

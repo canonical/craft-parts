@@ -57,7 +57,7 @@ def check_for_stage_collisions(
             "Partitions feature is enabled but no partitions specified."
         )
 
-    for partition in partitions or [None]:  # type: ignore[list-item]
+    for partition in partitions or [None]:
         _check_for_stage_collisions_per_partition(part_list, partition)
 
 

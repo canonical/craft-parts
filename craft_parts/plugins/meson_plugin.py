@@ -37,7 +37,7 @@ class MesonPluginProperties(PluginProperties, frozen=True):
     meson_parameters: list[str] = []
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MesonPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

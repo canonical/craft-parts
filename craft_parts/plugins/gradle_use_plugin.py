@@ -48,7 +48,7 @@ class GradleUsePluginProperties(PluginProperties, frozen=True):
     gradle_use_daemon: bool = False
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class GradleUsePlugin(GradlePlugin):
@@ -71,7 +71,7 @@ class GradleUsePlugin(GradlePlugin):
       Whether to use the Gradle daemon during the build.
     """
 
-    properties_class = GradleUsePluginProperties  # type: ignore[assignment]
+    properties_class = GradleUsePluginProperties
 
     @property
     def _publish_maven_repo(self) -> Path:
