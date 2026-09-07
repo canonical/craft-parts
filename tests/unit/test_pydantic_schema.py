@@ -24,7 +24,7 @@ from craft_parts import pydantic_schema
 from craft_parts.plugins import plugins
 from craft_parts.sources import errors as source_errors
 
-# these need a plugin-specific key to validate, so they get an explicit entry below
+# These need a plugin-specific key to validate, so they get an explicit entry below.
 PLUGINS_WITH_REQUIRED_KEYS = {"fpc"}
 
 VALID_PLUGIN_DATAS = [
