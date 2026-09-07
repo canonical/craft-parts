@@ -32,7 +32,7 @@ qmake-project-file
 The qmake project file to use. This is usually only needed if qmake can not determine
 what project file to use on its own.
 If ``source-subdir`` is set and the value already starts with that prefix, the path is
-resolved relative to the source directory; otherwise it is resolved relative to the
+resolved relative to the source directory. Otherwise it is resolved relative to the
 source subdirectory.
 
 

@@ -128,9 +128,13 @@ class QmakePlugin(Plugin):
         # to the source subdirectory.
         if options.qmake_project_file:
             project_file = Path(options.qmake_project_file)
-            source_subdir = self._part_info.part_src_subdir.relative_to(
-                self._part_info.part_src_dir
-            )
+            try:
+                source_subdir = self._part_info.part_src_subdir.relative_to(
+                    self._part_info.part_src_dir
+                )
+            except ValueError:
+                source_subdir = Path()
+
             if (
                 source_subdir != Path()
                 and project_file.parts[: len(source_subdir.parts)]
