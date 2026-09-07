@@ -19,7 +19,7 @@
 from collections.abc import Sequence
 from pathlib import Path
 
-from craft_parts.errors import PartitionNotFound, PartitionUsageError
+from craft_parts.errors import PartitionNotFound
 from craft_parts.utils import partition_utils
 
 
@@ -73,7 +73,7 @@ class ProjectDirs:
         )
 
     def _validate_requested_partition(
-        self, dir_name: str, partition: str | None = None
+        self, partition: str | None = None
     ) -> None:
         """Ensure the requested partition is valid."""
         if partition is None:
@@ -83,13 +83,13 @@ class ProjectDirs:
 
     def get_stage_dir(self, partition: str | None = None) -> Path:
         """Get the stage directory for the given partition."""
-        self._validate_requested_partition("stage_dir", partition)
+        self._validate_requested_partition(partition)
         partition = partition or self._partitions[0]
         return self.stage_dirs[partition]
 
     def get_prime_dir(self, partition: str | None = None) -> Path:
         """Get the prime directory for the given partition."""
-        self._validate_requested_partition("prime_dir", partition)
+        self._validate_requested_partition(partition)
         partition = partition or self._partitions[0]
         return self.prime_dirs[partition]
 

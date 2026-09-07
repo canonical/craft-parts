@@ -178,7 +178,7 @@ class TestPartCompat:
 
     def test_part_install_dirs_keys_are_str(self):
         part = Part("p1", {"plugin": "nil"}, partitions=None)
-        assert all(isinstance(k, str) for k in part.part_install_dirs.keys())
+        assert all(isinstance(k, str) for k in part.part_install_dirs)
 
     def test_part_stage_dirs_default_only(self):
         part = Part("p1", {"plugin": "nil"}, partitions=None)
@@ -204,4 +204,4 @@ class TestGetPartitionDirMapCompat:
 
     def test_return_type_keys_are_str(self, new_dir):
         result = get_partition_dir_map(base_dir=new_dir, partitions=None)
-        assert all(isinstance(k, str) for k in result.keys())
+        assert all(isinstance(k, str) for k in result)

@@ -35,7 +35,10 @@ from craft_parts.overlays import LayerHash
 from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
-from craft_parts.utils.partition_utils import normalize_partition_names, validate_partition_names
+from craft_parts.utils.partition_utils import (
+    normalize_partition_names,
+    validate_partition_names,
+)
 
 
 class LifecycleManager:
