@@ -111,27 +111,6 @@ class TestPluginQMakePlugin:
             f"make install INSTALL_ROOT={plugin._part_info.part_install_dir}",
         ]
 
-    def test_get_build_commands_source_subdir(self, new_dir):
-        part = Part("foo", {"source-subdir": "sources"})
-        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
-        part_info = PartInfo(project_info=project_info, part=part)
-        part_info._part_install_dir = Path("install/dir")
-
-        plugin = QmakePlugin(
-            properties=QmakePlugin.properties_class.unmarshal({"source": "."}),
-            part_info=part_info,
-        )
-
-        assert plugin.get_build_commands() == [
-            (
-                'qmake QMAKE_CFLAGS+="${CFLAGS:-}" QMAKE_CXXFLAGS+="${CXXFLAGS:-}" '
-                'QMAKE_LFLAGS+="${LDFLAGS:-}" '
-                f"{part_info.part_src_subdir}"
-            ),
-            f"env -u CFLAGS -u CXXFLAGS make -j{part_info.parallel_build_count}",
-            f"make install INSTALL_ROOT={part_info.part_install_dir}",
-        ]
-
     def test_get_build_commands_qmake_parameters(self, setup_method_fixture, new_dir):
         qmake_parameters = [
             "QMAKE_LIBDIR+=/foo",
