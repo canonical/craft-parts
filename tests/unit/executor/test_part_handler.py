@@ -22,7 +22,7 @@ from typing import Any, cast
 from unittest.mock import call
 
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 from craft_parts import ProjectDirs, errors, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler

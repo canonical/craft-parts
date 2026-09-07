@@ -214,14 +214,14 @@ class TestFixShebang:
 
     def test_fix_shebang(self):
         for _, data in self.scenarios:
-            path = data["file_path"]
+            path = Path(data["file_path"])
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(data["content"])
+            path.write_text(str(data["content"]))
 
         normalize(Path("root"), repository=DummyRepository)
 
         for _, data in self.scenarios:
-            with data["file_path"].open() as fd:
+            with Path(data["file_path"]).open() as fd:
                 assert fd.read() == data["expected"]
 
 

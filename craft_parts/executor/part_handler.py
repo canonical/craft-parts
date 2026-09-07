@@ -470,7 +470,10 @@ class PartHandler:
 
             # Copy source from the part source dir to the part build dir
             shutil.copytree(
-                self._part.part_src_dir, self._part.part_build_dir, symlinks=True
+                self._part.part_src_dir,
+                self._part.part_build_dir,
+                symlinks=True,
+                copy_function=file_utils.copy,
             )
 
         # Perform the build step
@@ -505,7 +508,7 @@ class PartHandler:
             # files brought in from stage-packages, but in the case of updating build, we
             # want the part to have the ability to organize over the files it organized last
             # time around. We can be confident that this won't overwrite anything else,
-            # because to do so would require changing the `organize` keyword, which will
+            # because to do so would require changing the `organize` key, which will
             # make the build step dirty and require a clean instead of an update.
             organize_install_dirs = {
                 **self._part.part_install_dirs,

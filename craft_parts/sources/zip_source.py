@@ -28,7 +28,7 @@ from .base import (
 )
 
 
-class ZipSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+class ZipSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic model for a zip file source."""
 
     pattern = r"\.zip$"

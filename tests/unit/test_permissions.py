@@ -83,6 +83,15 @@ def test_applies_to():
     assert not perm.applies_to("etc/file.bin")
 
 
+def test_applies_to_with_leading_slash():
+    """Patterns with a leading slash still match relative migration paths."""
+    perm = Permissions(path="/var/lib/zincsearch", owner=1111, group=2222, mode="755")
+
+    assert perm.applies_to("var/lib/zincsearch")
+    assert not perm.applies_to("var/lib/other")
+    assert not perm.applies_to("var/lib")
+
+
 def test_filter_permissions():
     p1 = Permissions()
     p2 = Permissions(path="etc/*")

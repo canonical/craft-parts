@@ -22,7 +22,7 @@ from textwrap import dedent
 from typing import Any
 
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 import yaml
 from craft_parts import errors, lifecycle_manager
 from hypothesis import HealthCheck, given, settings, strategies
@@ -415,7 +415,7 @@ class TestPluginProperties(test_lifecycle_manager.TestPluginProperties):
     """Tests for plugin properties with partitions enabled."""
 
     def _get_manager(self, new_dir, **kwargs):
-        manager_kwargs = {
+        manager_kwargs: dict[str, Any] = {
             "application_name": "test_manager",
             "cache_dir": new_dir,
             "partitions": ["default", "mypart", "yourpart", "our/special-part"],
