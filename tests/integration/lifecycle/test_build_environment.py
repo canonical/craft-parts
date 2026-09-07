@@ -93,7 +93,7 @@ def test_build_environment_change_dirty(new_dir):
         )
     )
 
-    lf_kwargs = {
+    lf_kwargs: dict[str, Any] = {
         "application_name": "test_demo",
         "cache_dir": new_dir,
     }
