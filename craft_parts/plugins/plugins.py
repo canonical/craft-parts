@@ -30,6 +30,7 @@ from .cargo_use_plugin import CargoUsePlugin
 from .cmake_plugin import CMakePlugin
 from .dotnet_plugin import DotnetPlugin
 from .dump_plugin import DumpPlugin
+from .fpc_plugin import FpcPlugin
 from .go_plugin import GoPlugin
 from .go_use_plugin import GoUsePlugin
 from .gradle_plugin import GradlePlugin
@@ -80,6 +81,7 @@ class PluginGroup(enum.Enum):
         "cargo-use": CargoUsePlugin,
         "cmake": CMakePlugin,
         "dotnet": DotnetPlugin,
+        "fpc": FpcPlugin,
         "go": GoPlugin,
         "go-use": GoUsePlugin,
         "gradle": GradlePlugin,
