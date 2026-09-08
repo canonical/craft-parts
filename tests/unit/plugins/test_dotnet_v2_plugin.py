@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import re
 
 import pytest
 from craft_parts import errors
@@ -74,12 +74,12 @@ def test_parameter_valid_dotnet_version(part_info, dotnet_version):
     ],
 )
 def test_parameter_invalid_dotnet_version(dotnet_version):
-    with pytest.raises(ValidationError) as raised:
+    with pytest.raises(
+        ValidationError, match=re.escape(f"Invalid dotnet-version '{dotnet_version}'")
+    ):
         DotnetV2Plugin.properties_class.unmarshal(
             {"source": ".", "dotnet-version": dotnet_version}
         )
-
-    assert raised
 
 
 @pytest.mark.parametrize(
@@ -108,12 +108,10 @@ def test_parameter_valid_dotnet_verbosity(part_info, dotnet_verbosity):
 
 @pytest.mark.parametrize("dotnet_verbosity", ["quietly", "invalid", "blah"])
 def test_parameter_invalid_dotnet_verbosity(dotnet_verbosity):
-    with pytest.raises(ValidationError) as raised:
+    with pytest.raises(ValidationError):
         DotnetV2Plugin.properties_class.unmarshal(
             {"source": ".", "dotnet-verbosity": dotnet_verbosity}
         )
-
-    assert raised
 
 
 def test_validate_environment(dependency_fixture, part_info):
