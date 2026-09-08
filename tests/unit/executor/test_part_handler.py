@@ -1352,7 +1352,7 @@ class TestDirs:
 
         for i, p in enumerate(partitions or (None,)):
             partition_dir = Path()
-            if p and p != "default":
+            if p is not None and p != "default":
                 partition_dir = Path("partitions", p)
 
             for d in ["parts", "overlay", "prime", "stage"]:
