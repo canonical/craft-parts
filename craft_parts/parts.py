@@ -1119,7 +1119,8 @@ class Part:
 
         if warning_list:
             warnings.warn(
-                errors.PartitionUsageWarning(partition_warnings=warning_list), stacklevel=1
+                errors.PartitionUsageWarning(partition_warnings=warning_list),
+                stacklevel=1,
             )
 
         if error_list:
