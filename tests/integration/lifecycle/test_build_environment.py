@@ -16,10 +16,11 @@
 
 import textwrap
 from collections.abc import Generator
+from typing import Any
 
 import craft_parts
 import yaml
-from craft_parts import Step
+from craft_parts import Action, ActionType, Step
 
 basic_parts_yaml = textwrap.dedent(
     """\
@@ -43,7 +44,7 @@ basic_parts_yaml = textwrap.dedent(
 def test_build_environment(new_dir, capfd):
     parts = yaml.safe_load(basic_parts_yaml)
 
-    lf_kwargs = {
+    lf_kwargs: dict[str, Any] = {
         "application_name": "test_demo",
         "cache_dir": new_dir,
         "build_environment": ["FOO=hello"],
@@ -64,7 +65,7 @@ def test_build_environment_generator(new_dir, capfd):
 
     parts = yaml.safe_load(basic_parts_yaml)
 
-    lf_kwargs = {
+    lf_kwargs: dict[str, Any] = {
         "application_name": "test_demo",
         "cache_dir": new_dir,
         "build_environment": test_gen(),
@@ -77,3 +78,49 @@ def test_build_environment_generator(new_dir, capfd):
 
     captured = capfd.readouterr()
     assert captured.out == "hello there\nhello elsewhere\n"
+
+
+def test_build_environment_change_dirty(new_dir):
+    parts = yaml.safe_load(
+        textwrap.dedent(
+            """\
+            parts:
+              foo:
+                plugin: nil
+                build-environment:
+                  - FOO: one
+            """
+        )
+    )
+
+    lf_kwargs: dict[str, Any] = {
+        "application_name": "test_demo",
+        "cache_dir": new_dir,
+    }
+
+    lf = craft_parts.LifecycleManager(parts, **lf_kwargs)
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    lf = craft_parts.LifecycleManager(parts, **lf_kwargs)
+    assert lf.plan(Step.PRIME) == [
+        Action("foo", Step.PULL, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.BUILD, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.STAGE, action_type=ActionType.SKIP, reason="already ran"),
+        Action("foo", Step.PRIME, action_type=ActionType.SKIP, reason="already ran"),
+    ]
+
+    parts["parts"]["foo"]["build-environment"][0]["FOO"] = "two"
+    lf = craft_parts.LifecycleManager(parts, **lf_kwargs)
+    assert lf.plan(Step.PRIME) == [
+        Action("foo", Step.PULL, ActionType.SKIP, reason="already ran"),
+        Action(
+            "foo",
+            Step.BUILD,
+            ActionType.RERUN,
+            reason="'build-environment' property changed",
+        ),
+        Action("foo", Step.STAGE),
+        Action("foo", Step.PRIME),
+    ]

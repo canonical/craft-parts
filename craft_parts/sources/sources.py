@@ -73,7 +73,7 @@ code for that part, and how to unpack it if necessary.
     behavior).
 
 Note that plugins might well define their own semantics for the 'source'
-keywords, because they handle specific build systems, and many languages
+keys, because they handle specific build systems, and many languages
 have their own built-in packaging systems (think CPAN, PyPI, NPM). In those
 cases you want to refer to the documentation for the specific plugin.
 """
@@ -181,6 +181,8 @@ def get_source_handler(
             project_dirs=project_dirs,
             ignore_patterns=ignore_patterns,
         )
+        # Keep the constructor signature stable for custom source handlers.
+        source_handler.set_part_name(part.name)
 
     return source_handler
 

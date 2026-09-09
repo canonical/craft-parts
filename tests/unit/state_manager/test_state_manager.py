@@ -61,13 +61,13 @@ class TestStateWrapper:
         stw = state_manager._StateWrapper(state=state, serial=500)
 
         with pytest.raises(dataclasses.FrozenInstanceError):
-            stw.state = states.PullState()  # type: ignore[reportGeneralTypeIssues]
+            stw.state = states.PullState()  # ty: ignore[invalid-assignment]
 
         with pytest.raises(dataclasses.FrozenInstanceError):
-            stw.serial = 5  # type: ignore[reportGeneralTypeIssues]
+            stw.serial = 5  # ty: ignore[invalid-assignment]
 
         with pytest.raises(dataclasses.FrozenInstanceError):
-            stw.step_updated = True  # type: ignore[reportGeneralTypeIssues]
+            stw.step_updated = True  # ty: ignore[invalid-assignment]
 
 
 class TestStateDB:

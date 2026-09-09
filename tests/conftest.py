@@ -28,8 +28,8 @@ from unittest import mock
 import craft_parts
 import craft_parts.packages
 import pytest
-import xdg  # type: ignore[import]
 from craft_parts.features import Features
+from xdg import BaseDirectory
 
 from . import fake_servers
 from .fake_snap_command import FakeSnapCommand
@@ -239,15 +239,11 @@ def temp_xdg(tmp_path: Path, mocker):
     )
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
-        new=[
-            xdg.BaseDirectory.xdg_config_home  # pyright: ignore[reportGeneralTypeIssues]
-        ],
+        new=[BaseDirectory.xdg_config_home],
     )
     mocker.patch(
         "xdg.BaseDirectory.xdg_data_dirs",
-        new=[
-            xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
-        ],
+        new=[BaseDirectory.xdg_data_home],
     )
     mocker.patch.dict(
         os.environ, {"XDG_CONFIG_HOME": (tmp_path / ".config").as_posix()}
@@ -349,13 +345,13 @@ class ChmodCall(NamedTuple):
 
 
 @pytest.fixture
-def mock_chown(mocker) -> dict[str, ChmodCall]:
+def mock_chown(mocker) -> dict[Path, ChmodCall]:
     """Mock os.chown() and keep a record of calls to it.
 
     The returned object is a dict where the keys match the ``path`` parameter of the
     os.chown() call and the values are ``ChmodCall`` tuples containing the other parameters.
     """
-    calls = {}
+    calls: dict[Path, ChmodCall] = {}
 
     def fake_chown(path, uid, gid, **kwargs):
         calls[Path(path)] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)

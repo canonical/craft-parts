@@ -70,14 +70,19 @@ class PackagesNotFound(PackagesError):  # noqa: N818
 class PackageFetchError(PackagesError):
     """Failed to fetch package from remote repository.
 
-    :param message: The error message.
+    :param url: The package URL, if known.
+    :param details: Additional error details from the underlying exception.
     """
 
-    def __init__(self, message: str) -> None:
-        self.message = message
-        brief = f"Failed to fetch package: {message}."
+    def __init__(self, url: str | None, details: str | None = None) -> None:
+        self.url = url
+        brief = (
+            f"Failed to fetch package from {url}."
+            if url
+            else "Failed to fetch package."
+        )
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, details=details)
 
 
 class PackageListRefreshError(PackagesError):
@@ -174,6 +179,24 @@ class UnpackError(PackagesError):
         brief = f"Error unpacking {package!r}"
 
         super().__init__(brief=brief)
+
+
+class DebPackageInvalidFormatError(PackagesError):
+    """The given package specification is not formatted correctly.
+
+    :param package: The package specification string.
+    """
+
+    def __init__(self, package: str) -> None:
+        self.package = package
+        brief = f"Invalid package specification: {package!r}."
+        resolution = (
+            "Ensure the package name, architecture, and version do not "
+            "contain leading, trailing, or surrounding whitespace, and "
+            "that no more than one of '@' or '=' is used."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
 
 
 class SnapInvalidFormat(PackagesError):  # noqa: N818

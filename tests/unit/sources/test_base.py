@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
 from re import escape
-from typing import Literal
+from typing import Any, Literal
 
 import pytest
 import requests
@@ -77,7 +77,7 @@ class TestSourceHandler:
             "abstract methods? '?pull'?$"
         )
         with pytest.raises(TypeError, match=expected):
-            FaultySource(  # type: ignore[reportGeneralTypeIssues]
+            FaultySource(
                 source=".",
                 part_src_dir=Path(),
                 cache_dir=Path(),
@@ -112,7 +112,7 @@ class TestFileSourceHandler:
 
     def set_source(self, cache_dir, **kwargs) -> None:
         """Set the source."""
-        source_kwargs = {
+        source_kwargs: dict[str, Any] = {
             "source": "source",
             "part_src_dir": Path("parts/foo/src"),
             "project_dirs": self._dirs,
@@ -169,8 +169,11 @@ class TestFileSourceHandler:
 
     def test_pull_file_checksum_error(self, new_dir):
         self.set_source(
-            cache_dir=new_dir, source="src/my_file", source_checksum="md5/12345"
+            cache_dir=new_dir,
+            source="src/my_file",
+            source_checksum="md5/12345",
         )
+        self.source.set_part_name("foo")
         Path("src").mkdir()
         Path("src/my_file").write_text("content")
         Path("parts/foo/src").mkdir(parents=True)
@@ -179,6 +182,10 @@ class TestFileSourceHandler:
             self.source.pull()
         assert raised.value.expected == "12345"
         assert raised.value.obtained == "9a0364b9e99bb480dd25e1f0284c8555"
+        assert (
+            raised.value.brief
+            == "Failed to pull source: checksum mismatch for part 'foo'."
+        )
 
     def test_pull_url(self, requests_mock, new_dir):
         self.source.source = "http://test.com/some_file"
@@ -302,9 +309,9 @@ class TestFileSourceHandler:
             r"implementation for)? abstract methods? '?provision'?$"
         )
         with pytest.raises(TypeError, match=expected):
-            FaultyFileSource(  # type: ignore[reportGeneralTypeIssues]
-                source=None,  # type: ignore[reportGeneralTypeIssues]
-                part_src_dir=None,  # type: ignore[reportGeneralTypeIssues]
+            FaultyFileSource(
+                source=None,  # ty: ignore[invalid-argument-type]
+                part_src_dir=None,  # ty: ignore[invalid-argument-type]
                 cache_dir=Path(),
                 project_dirs=self._dirs,
             )

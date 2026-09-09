@@ -35,7 +35,7 @@ class PythonPluginProperties(PluginProperties, frozen=True):
     python_packages: list[str] = []
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class PythonPlugin(Plugin):
@@ -93,23 +93,23 @@ class PythonPlugin(Plugin):
 
         # First the requirements
         requirements = " ".join(
-            f"-r {req}" for req in self._options.python_requirements
+            f"-r {shlex.quote(req)}" for req in self._options.python_requirements
         )
-        pip_lines.append(f'REQUIREMENTS="{requirements}"')
+        pip_lines.append(f"REQUIREMENTS=({requirements})")
 
         # Then any extra packages
         packages = " ".join(shlex.quote(pkg) for pkg in self._options.python_packages)
-        pip_lines.append(f'PACKAGES="{packages}"')
+        pip_lines.append(f"PACKAGES=({packages})")
 
         # Then finally the project in the source itself, if it exists
         project = dedent("""\
           if [ -f setup.py -o -f pyproject.toml ]; then
-            PACKAGES="${PACKAGES} ."
+            PACKAGES+=(".")
           fi
         """)
         pip_lines.append(project)
 
-        pip_lines.append("pip install ${REQUIREMENTS} ${PACKAGES}")
+        pip_lines.append('pip install "${REQUIREMENTS[@]}" "${PACKAGES[@]}"')
 
         # Add a sitecustomize so that the bundled Python interpreter (if any) will
         # pick up the packages installed by pip here

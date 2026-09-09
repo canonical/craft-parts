@@ -37,7 +37,7 @@ class MesonPluginProperties(PluginProperties, frozen=True):
     meson_parameters: list[str] = []
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MesonPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -73,8 +73,8 @@ class MesonPlugin(Plugin):
     or ``build-snaps``, or to have it installed or built in a different part.
     In this case, the name of the part supplying meson must be "meson".
 
-    The meson plugin uses the common plugin keywords as well as those for "sources".
-    Additionally, the following plugin-specific keywords can be used:
+    The meson plugin uses the common plugin keys as well as those for "sources".
+    Additionally, the following plugin-specific keys can be used:
 
     - ``meson-parameters``
       (list of strings)
