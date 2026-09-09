@@ -380,6 +380,18 @@ class PartSpec(BaseModel):
     Build packages must be listed by their name on the host system.
     """
 
+    build_slices: list[ChiselSliceStr] = Field(
+        default=[],
+        description="The Chisel slices to make available during the build.",
+        examples=["[python3.12_standard, gcc-12_bins]"],
+    )
+    """The Chisel slices to make available during the build step.
+    The slices from all parts are collected and cut into a single directory that
+    becomes the system root of the build step. Since slices and Debian packages
+    cannot be safely mixed in a single filesystem, ``build-slices`` is mutually
+    exclusive with ``build-packages`` and ``build-snaps`` in the same part.
+    """
+
     build_environment: list[dict[str, str]] = Field(
         default=[],
         description="The environment variables to define for the build step, as key-value pairs.",
@@ -621,6 +633,23 @@ class PartSpec(BaseModel):
         if self.override_overlay is not None and self.overlay_script is not None:
             raise ValueError(
                 "override-overlay and overlay-script cannot both be defined"
+            )
+        return self
+
+    @field_validator("build_slices")
+    @classmethod
+    def validate_build_slices_feature(cls, item: _T_validate) -> _T_validate:
+        """Check if build-slices is specified when the feature is disabled."""
+        if item and not Features().enable_build_slices:
+            raise ValueError("'build-slices' are not supported")
+        return item
+
+    @model_validator(mode="after")
+    def validate_build_slices_mutually_exclusive(self) -> Self:
+        """Check that build-slices is not mixed with build-packages/build-snaps."""
+        if self.build_slices and (self.build_packages or self.build_snaps):
+            raise ValueError(
+                "'build-slices' cannot be used with 'build-packages' or 'build-snaps'"
             )
         return self
 
