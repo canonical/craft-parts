@@ -64,7 +64,7 @@ APT_PACKAGES += mmdebstrap
 endif
 
 # Dependencies for sources
-ifeq ($(wildcard /usr/share/doc/p7zip-full/copyright),)
+ifeq ($(wildcard /usr/share/doc/p7zip-*/copyright),)
 APT_PACKAGES += p7zip-full
 endif
 ifeq ($(wildcard /usr/share/doc/curl/copyright),)
@@ -208,12 +208,15 @@ endif
 ifeq ($(wildcard /usr/share/doc/bison/copyright),)
 APT_PACKAGES += bison
 endif
-# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
-# 22.04 -> 25.10 (and possibly 26.04).
+# DotNet:
 # On focal, we'll get the snap instead.
+# On Jammy -> Oracular, use dotnet 8
+# On Plucky+, use dotnet 10
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
-ifneq ($(UBUNTU_CODENAME),focal)
+ifneq ($(filter $(UBUNTU_CODENAME),jammy kinetic lunar mantic noble oracular),)
 APT_PACKAGES += dotnet-sdk-8.0
+else ifneq ($(filter $(UBUNTU_CODENAME),plucky questing resolute stonking),)
+APT_PACKAGES += dotnet-sdk-10.0
 endif
 endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)
@@ -331,12 +334,136 @@ endif
 _gh-runner-clean:
 # Prepare and fix issues on Github-hosted runners.
 ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
-	# Delete the (huge) Android SDK in the background.
+	# Android SDK
 	nohup sudo rm -rf /usr/local/lib/android/ > /dev/null &
+
+	# Browsers & WebDrivers (Chrome, Edge, Firefox, Chromium, Selenium, and drivers)
+	sudo $(APT) purge 'google-chrome*' 'microsoft-edge*' 'firefox*' || true
+	nohup sudo rm -rf \
+		/usr/local/share/chrome_driver \
+		/usr/local/share/chromedriver* \
+		/usr/local/share/chromium \
+		/usr/local/share/edge_driver \
+		/usr/local/share/gecko_driver \
+		/usr/share/java/selenium* \
+		/opt/google \
+		/opt/microsoft/msedge \
+		/usr/bin/google-chrome* \
+		/usr/bin/chromedriver \
+		/usr/bin/chromium* \
+		/usr/bin/msedgedriver \
+		/usr/bin/geckodriver \
+		> /dev/null &
+
+	# Languages, Compilers, SDKs & Tool Cache
+	sudo $(APT) purge \
+		'ghc-*' \
+		'cabal-install-*' \
+		'php*' \
+		'powershell*' \
+		'mono*' \
+		'nuget*' \
+		'pipx*' \
+		'gfortran*' \
+		'dotnet*9*' \
+		'aspnetcore*9*' \
+		'r-base*' \
+		'r-cran*' \
+		'r-doc*' \
+		|| true
+	nohup sudo rm -rf \
+		/opt/ghc \
+		/usr/local/.ghcup \
+		/root/.ghcup \
+		/usr/share/swift \
+		/usr/local/bin/swift* \
+		/usr/local/julia* \
+		/usr/local/bin/julia \
+		/usr/share/miniconda \
+		/opt/pypy* \
+		/home/linuxbrew/.linuxbrew \
+		/usr/local/share/boost \
+		/usr/local/share/vcpkg \
+		/usr/local/bin/vcpkg \
+		/usr/local/share/powershell \
+		/opt/microsoft/powershell \
+		/usr/bin/pwsh \
+		/usr/lib/mono \
+		/usr/share/mono \
+		/usr/share/kotlinc \
+		/usr/share/sbt \
+		/usr/local/bin/lein \
+		/opt/pipx \
+		/opt/pipx_bin \
+		/usr/share/dotnet/sdk/9* \
+		/usr/share/dotnet/shared/Microsoft.NETCore.App/9* \
+		/usr/share/dotnet/shared/Microsoft.AspNetCore.App/9* \
+		/usr/share/dotnet/packs/*9* \
+		/opt/hostedtoolcache/CodeQL \
+		> /dev/null &
+
+	# Cloud, Infrastructure & Automation Tools (Terraform, Packer, AWS, GCP, Azure, K8s)
+	sudo $(APT) purge 'google-cloud-cli*' 'azure-cli*' || true
+	nohup sudo rm -rf \
+		/usr/local/bin/terraform \
+		/usr/local/bin/packer \
+		/usr/local/aws-cli \
+		/usr/local/aws-sam-cli \
+		/usr/local/bin/aws \
+		/opt/google-cloud-sdk \
+		/usr/lib/google-cloud-sdk \
+		/usr/share/google-cloud-sdk \
+		/usr/local/bin/kubectl \
+		/usr/local/bin/helm \
+		/usr/local/bin/minikube \
+		/usr/local/bin/kind \
+		/usr/local/bin/bicep \
+		/usr/local/bin/aliyun \
+		/usr/local/bin/heroku \
+		/usr/local/bin/pulumi \
+		/usr/local/bin/oc \
+		/usr/local/bin/oras \
+		> /dev/null &
+
+	# Databases & Web Servers (MySQL, PostgreSQL, MSSQL, SqlPackage, Apache, Nginx)
+	sudo $(APT) purge \
+		'mysql*' \
+		'postgresql*' \
+		'mssql-tools*' \
+		'sqlpackage*' \
+		'apache2*' \
+		'nginx*' \
+		|| true
+	nohup sudo rm -rf \
+		/var/lib/mysql \
+		/var/lib/postgresql \
+		/etc/mysql \
+		/etc/postgresql \
+		/var/log/nginx \
+		/var/log/apache2 \
+		/etc/nginx \
+		/etc/apache2 \
+		/opt/mssql* \
+		/opt/microsoft/sqlpackage \
+		/usr/local/sqlpackage \
+		> /dev/null &
+
+	# Docker & Containerd (services, packages, container storage, image cache)
+	sudo systemctl stop docker.service containerd.service 2>/dev/null || true
+	sudo $(APT) purge 'docker*' 'containerd*' 'moby*' || true
+	nohup sudo rm -rf \
+		/var/lib/docker \
+		/var/lib/containerd \
+		/etc/docker \
+		/usr/libexec/docker \
+		/usr/bin/docker-credential-ecr-login \
+		> /dev/null &
+
 	# Remove the github-installed cmake 4 because it breaks the cmake tests.
 	# See: https://github.com/actions/runner-images/issues/13023
 	nohup sudo rm -rf /usr/local/bin/cmake /usr/local/bin/cmake-gui /usr/local/bin/ccmake /usr/local/bin/ctest /usr/local/bin/cpack > /dev/null &
 	nohup sudo rm -rf /usr/local/share/cmake-4* > /dev/null &
+
 	# Remove Github-installed JDK 25 that's not in the repos.
 	# https://github.com/actions/runner-images/issues/13138
 	sudo $(APT) purge temurin-*-jdk || true
@@ -344,4 +471,8 @@ ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
 	# Delete the adoptium repository:
 	# https://github.com/actions/runner-images/blob/6fd5896f04e572647774996a7b292b854e6e8bc0/images/ubuntu/scripts/build/install-java-tools.sh#L67
 	sudo rm -f /etc/apt/sources.list.d/adoptium.list
+
+	# Clean up orphaned packages and apt cache
+	sudo $(APT) autoremove --purge || true
+	sudo $(APT) clean || true
 endif
