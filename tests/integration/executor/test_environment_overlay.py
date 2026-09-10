@@ -107,6 +107,9 @@ def test_step_callback(new_dir, mocker, capfd, step):
             CRAFT_ARCH_TRIPLET=aarch64-linux-gnu
             CRAFT_ARCH_TRIPLET_BUILD_FOR=aarch64-linux-gnu
             CRAFT_ARCH_TRIPLET_BUILD_ON=aarch64-linux-gnu
+            CRAFT_DEFAULT_OVERLAY={new_dir}/parts/foo/layer
+            CRAFT_DEFAULT_PRIME={new_dir}/prime
+            CRAFT_DEFAULT_STAGE={new_dir}/stage
             CRAFT_OVERLAY={new_dir}/overlay/overlay
             CRAFT_PARALLEL_BUILD_COUNT=1
             CRAFT_PART_BUILD={new_dir}/parts/foo/build
@@ -154,6 +157,9 @@ def test_prologue_callback(new_dir, capfd, mocker):
             CRAFT_ARCH_TRIPLET=aarch64-linux-gnu
             CRAFT_ARCH_TRIPLET_BUILD_FOR=aarch64-linux-gnu
             CRAFT_ARCH_TRIPLET_BUILD_ON=aarch64-linux-gnu
+            CRAFT_DEFAULT_OVERLAY={new_dir}/parts/foo/layer
+            CRAFT_DEFAULT_PRIME={new_dir}/prime
+            CRAFT_DEFAULT_STAGE={new_dir}/stage
             CRAFT_OVERLAY={new_dir}/overlay/overlay
             CRAFT_PARALLEL_BUILD_COUNT=1
             CRAFT_PART_BUILD={new_dir}/parts/foo/build

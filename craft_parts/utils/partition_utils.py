@@ -20,7 +20,7 @@ import re
 from collections.abc import Sequence
 from pathlib import Path
 
-from craft_parts import errors, features
+from craft_parts import errors
 
 # Allow alphanumeric characters, plus sign, hyphens and slashes, not starting or
 # ending with a plus sign, hyphen or a slash.
@@ -40,14 +40,20 @@ OVERLAY_PARTITION = "overlay"  # Pseudo-partition targeting the overlay
 BUILD_PARTITION = "build"  # Pseudo-partition pointing to the part build directory
 
 
-def validate_partition_names(partitions: Sequence[str] | None) -> None:
-    """Validate the partition feature set.
+def normalize_partition_names(partitions: Sequence[str] | None) -> list[str]:
+    """Return the canonical partition list for a project."""
+    if not partitions:
+        return [DEFAULT_PARTITION]
 
-    If the partition feature is enabled, then:
-      - each partition name must contain only lowercase alphanumeric characters
-        hyphens and slashes, but not begin or end with a hyphen or a slash
-      - partitions are unique
-      - only the first partition can be named "default"
+    return list(partitions)
+
+
+def validate_partition_names(partitions: Sequence[str] | None) -> None:
+    """Validate partition names.
+
+    Each partition name must contain only lowercase alphanumeric characters,
+    hyphens and slashes, but not begin or end with a hyphen or a slash.
+    Partitions must be unique. Only the first partition can be named "default".
 
     Namespaced partitions can also be validated in addition to regular (or
     'non-namespaced') partitions. The format is `<namespace>/<partition>`.
@@ -57,19 +63,9 @@ def validate_partition_names(partitions: Sequence[str] | None) -> None:
 
     :param partitions: Partition data to verify.
 
-    :raises ValueError: If the partitions are not valid or the feature is not enabled.
+    :raises ValueError: If the partitions are not valid.
     """
-    if not features.Features().enable_partitions:
-        if partitions:
-            raise errors.FeatureError(
-                "Partitions are defined but partition feature is not enabled."
-            )
-        return
-
-    if not partitions:
-        raise errors.FeatureError(
-            "Partition feature is enabled but no partitions are defined."
-        )
+    partitions = normalize_partition_names(partitions)
 
     if len(partitions) != len(set(partitions)):
         raise errors.FeatureError("Partitions must be unique.")
@@ -224,13 +220,13 @@ def _namespace_conflicts(a: str, b: str) -> bool:
 
 def get_partition_dir_map(
     base_dir: Path, partitions: Sequence[str] | None, suffix: str = ""
-) -> dict[str | None, Path]:
+) -> dict[str, Path]:
     """Return a mapping of partition directories.
 
     The default partition maps to directories in the base_dir.
     All other partitions map to directories in `partitions/<partition-name>`.
 
-    If no partitions are provided, return a mapping of `None` to `base_dir/suffix`.
+    If no partitions are provided, the default partition maps to `base_dir/suffix`.
 
     :param base_dir: Base directory.
     :param partitions: An iterable of partition names.
@@ -239,25 +235,17 @@ def get_partition_dir_map(
 
     :returns: A mapping of partition names to paths.
     """
-    if partitions:
-        return {
-            partitions[0]: base_dir / suffix,
-            **{
-                partition: base_dir / "partitions" / partition / suffix
-                for partition in partitions[1:]
-            },
-        }
-
-    return {None: base_dir / suffix}
+    partitions = normalize_partition_names(partitions)
+    return {
+        partitions[0]: base_dir / suffix,
+        **{
+            partition: base_dir / "partitions" / partition / suffix
+            for partition in partitions[1:]
+        },
+    }
 
 
 def is_default_partition(partitions: list[str] | None, partition: str | None) -> bool:
     """Check if given partition is the default one in the given partition list."""
-    if partition == DEFAULT_PARTITION:
-        return True
-    if partitions is None and partition is None:
-        return True
-    if partitions is not None:
-        return partition == partitions[0]
-
-    return False
+    partitions = normalize_partition_names(partitions)
+    return partition in (None, DEFAULT_PARTITION, partitions[0])

@@ -22,27 +22,10 @@ from craft_parts.utils import partition_utils
 
 
 @pytest.mark.parametrize("partitions", [None, []])
-def test_validate_partitions_success_feature_disabled(partitions):
+def test_validate_partitions_success_default_only(partitions):
     partition_utils.validate_partition_names(partitions)
 
 
-@pytest.mark.parametrize(
-    ("partitions", "message"),
-    [
-        (
-            ["anything"],
-            "Partitions are defined but partition feature is not enabled.",
-        ),
-    ],
-)
-def test_validate_partitions_failure_feature_disabled(partitions, message):
-    with pytest.raises(errors.FeatureError) as exc_info:
-        partition_utils.validate_partition_names(partitions)
-
-    assert exc_info.value.message == message
-
-
-@pytest.mark.usefixtures("enable_partitions_feature")
 @pytest.mark.parametrize(
     "partitions",
     [
@@ -63,16 +46,14 @@ def test_validate_partitions_failure_feature_disabled(partitions, message):
         ["test/foo-bar-baz", "test/foo-bar"],
     ],
 )
-def test_validate_partitions_success_feature_enabled(partitions):
+def test_validate_partitions_success(partitions):
     """Test validation of partition names."""
     partition_utils.validate_partition_names(partitions)
 
 
-@pytest.mark.usefixtures("enable_partitions_feature")
 @pytest.mark.parametrize(
     ("partitions", "message"),
     [
-        ([], "Partition feature is enabled but no partitions are defined."),
         (["default", "default"], "Partitions must be unique."),
         (["default", "test/foo", "test/foo"], "Partitions must be unique."),
         (["default", "!!!"], "Partition '!!!' is invalid."),
@@ -128,7 +109,7 @@ def test_validate_partitions_success_feature_enabled(partitions):
         ),
     ],
 )
-def test_validate_partitions_failure_feature_enabled(partitions, message):
+def test_validate_partitions_failure(partitions, message):
     with pytest.raises(errors.FeatureError) as exc_info:
         partition_utils.validate_partition_names(partitions)
 
@@ -166,10 +147,9 @@ def test_get_partitions_dir_map_no_partitions(new_dir, suffix):
         base_dir=new_dir, partitions=None, suffix=suffix
     )
 
-    assert dir_map == {None: Path(new_dir) / suffix}
+    assert dir_map == {"default": Path(new_dir) / suffix}
 
 
-@pytest.mark.usefixtures("enable_partitions_feature")
 def test_validate_partitions_failure_build_is_reserved():
     with pytest.raises(errors.FeatureError) as exc_info:
         partition_utils.validate_partition_names(["default", "build"])
