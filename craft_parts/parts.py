@@ -641,7 +641,7 @@ class PartSpec(BaseModel):
     def validate_build_slices_feature(cls, item: _T_validate) -> _T_validate:
         """Check if build-slices is specified when the feature is disabled."""
         if item and not Features().enable_build_slices:
-            raise ValueError("'build-slices' are not supported")
+            raise ValueError("The 'build-slices' key is not supported")
         return item
 
     @model_validator(mode="after")
