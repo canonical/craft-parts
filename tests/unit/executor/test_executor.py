@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import shutil
 from pathlib import Path
 
 import pytest
@@ -211,6 +211,62 @@ class TestPackages:
         e.prologue()
 
         install.assert_not_called()
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices(self, mocker, new_dir, partitions):
+        mocked_cut = mocker.patch("craft_parts.packages.chisel.cut_slices")
+
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+        p2 = Part(
+            "bar",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg1_slice2"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+
+        e = Executor(project_info=info, part_list=[p1, p2])
+        e.prologue()
+
+        expected_slices = ["pkg1_slice1", "pkg1_slice2", "pkg2_slice1"]
+        slices_dir = info.dirs.build_slices_dir
+        mocked_cut.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_rerun(self, mocker, new_dir, partitions):
+        mocked_cut = mocker.patch("craft_parts.packages.chisel.cut_slices")
+
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+        slices_dir.mkdir(parents=True, exist_ok=False)
+
+        rmtree = mocker.spy(shutil, "rmtree")
+
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+
+        rmtree.assert_called_once_with(slices_dir)
+
+        expected_slices = ["pkg1_slice1", "pkg2_slice1"]
+        mocked_cut.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
 
 
 class TestExecutionContext:

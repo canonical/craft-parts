@@ -21,6 +21,7 @@ import sys
 import tempfile
 import threading
 import types
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, NamedTuple
 from unittest import mock
@@ -178,7 +179,11 @@ def enable_overlay_and_partitions_features():
 def enable_build_slices():
     current = dataclasses.asdict(Features())
     Features.reset()
-    Features(enable_build_slices=True)
+
+    copied = deepcopy(current)
+    copied["enable_build_slices"] = True
+    Features(**copied)
+
     yield
     Features.reset()
     Features(**current)
@@ -202,8 +207,9 @@ def is_deb_based(mocker):
 def enable_all_features():
     assert Features().enable_overlay is False
     assert Features().enable_partitions is False
+    assert Features().enable_build_slices is False
     Features.reset()
-    Features(enable_overlay=True, enable_partitions=True)
+    Features(enable_overlay=True, enable_partitions=True, enable_build_slices=True)
 
     yield
 
