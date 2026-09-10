@@ -803,7 +803,7 @@ class TestPartValidation:
         data = {"plugin": "nil", "build-slices": ["python3.12_standard"]}
 
         with pytest.raises(
-            pydantic.ValidationError, match="'build-slices' are not supported"
+            pydantic.ValidationError, match="The 'build-slices' key is not supported"
         ):
             parts.validate_part(data)
 
