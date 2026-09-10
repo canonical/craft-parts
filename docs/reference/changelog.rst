@@ -123,6 +123,11 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.35.1`_ release on GitHub.
 
+Documentation:
+
+- Group the plugins in the reference by the language or technology they
+  support.
+
 .. _release-2.34.1:
 
 2.34.1 (2026-07-09)
