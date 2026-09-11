@@ -17,6 +17,7 @@ import string
 from pathlib import Path
 
 import pytest
+from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
 from hypothesis import given, strategies
 
@@ -61,7 +62,7 @@ def test_dirs_work_dir_resolving(partitions):
     partitions=strategies.lists(
         strategies.text(
             strategies.sampled_from(string.ascii_lowercase), min_size=1
-        ).filter(lambda x: x not in ("default", "overlay")),
+        ).filter(lambda x: x not in ("default", "overlay", "build")),
         min_size=1,
         unique=True,
     )
@@ -80,7 +81,7 @@ def test_get_stage_dir_with_partitions(partitions):
     partitions=strategies.lists(
         strategies.text(
             strategies.sampled_from(string.ascii_lowercase), min_size=1
-        ).filter(lambda x: x not in ("default", "overlay")),
+        ).filter(lambda x: x not in ("default", "overlay", "build")),
         min_size=1,
         unique=True,
     )
@@ -92,6 +93,38 @@ def test_get_prime_dir_with_partitions(partitions):
         assert dirs.get_prime_dir(partition=partition) == dirs.prime_dirs[partition]
     assert dirs.get_prime_dir(partition="default") == dirs.prime_dir
     assert dirs.get_prime_dir(partition="default") == dirs.prime_dirs["default"]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_stage_dir_without_requested_partition_with_partitions():
+    dirs = ProjectDirs(partitions=["default", "kernel"])
+
+    with pytest.raises(errors.PartitionUsageError) as raised:
+        dirs.get_stage_dir()
+
+    assert raised.value.brief == "Invalid usage of partitions"
+    assert raised.value.details == (
+        "  stage_dir\n"
+        "    Partitions are enabled, you must specify which partition's "
+        "'stage_dir' you want.\n"
+        "Valid partitions: default, kernel"
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_prime_dir_without_requested_partition_with_partitions():
+    dirs = ProjectDirs(partitions=["default", "kernel"])
+
+    with pytest.raises(errors.PartitionUsageError) as raised:
+        dirs.get_prime_dir()
+
+    assert raised.value.brief == "Invalid usage of partitions"
+    assert raised.value.details == (
+        "  prime_dir\n"
+        "    Partitions are enabled, you must specify which partition's "
+        "'prime_dir' you want.\n"
+        "Valid partitions: default, kernel"
+    )
 
 
 def test_get_stage_dir_without_partitions():
