@@ -28,6 +28,7 @@ from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
+from craft_parts.packages import chisel
 from craft_parts.parts import Part, sort_parts
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -112,6 +113,7 @@ class Executor:
         """
         self._install_build_packages()
         self._install_build_snaps()
+        self._cut_build_slices()
 
         self._verify_plugin_environment()
 
@@ -319,6 +321,26 @@ class Executor:
         else:
             logger.info("Installing build-snaps")
             packages.snaps.install_snaps(build_snaps)
+
+    def _cut_build_slices(self) -> None:
+        build_slices: set[str] = set()
+        for part in self._part_list:
+            build_slices.update(part.spec.build_slices)
+
+        if not build_slices:
+            return
+
+        slices_dir = self._project_info.dirs.build_slices_dir
+        logger.info("Cutting build-slices")
+
+        if slices_dir.exists():
+            # Problem: we can't cut "over" an existing filesystem and the executor doesn't
+            # know which slices were cut in a previous run, so we need to remove the
+            # existing slices directory and cut the slices again.
+            shutil.rmtree(slices_dir)
+
+        slices_dir.mkdir(parents=True, exist_ok=True)
+        chisel.cut_slices(slices=sorted(build_slices), target_dir=slices_dir)
 
     def _verify_plugin_environment(self) -> None:
         for part in self._part_list:
