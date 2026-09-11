@@ -248,6 +248,12 @@ endif
 ifeq ($(wildcard /usr/share/doc/socat/copyright),)
 APT_PACKAGES += socat
 endif
+# fp-compiler is not available in apt on s390x.
+ifneq ($(shell dpkg --print-architecture 2>/dev/null),s390x)
+ifeq ($(wildcard /usr/share/doc/fp-compiler/copyright),)
+APT_PACKAGES += fp-compiler
+endif
+endif
 endif
 
 .PHONY: install-chisel
