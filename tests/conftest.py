@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import dataclasses
 import http.server
 import os
 import pathlib
@@ -172,6 +172,16 @@ def enable_overlay_and_partitions_features():
     yield
 
     Features.reset()
+
+
+@pytest.fixture
+def enable_build_slices():
+    current = dataclasses.asdict(Features())
+    Features.reset()
+    Features(enable_build_slices=True)
+    yield
+    Features.reset()
+    Features(**current)
 
 
 @pytest.fixture
