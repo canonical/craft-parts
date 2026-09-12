@@ -305,6 +305,59 @@ class TestCollisions:
                 "    file"
             )
 
+    def test_usrmerged_part_stages_with_base_files_symlinks(
+        self, new_dir, partitions, mocker
+    ):
+        """Minimal reproducer for the npm/base-files usrmerge collision bug."""
+        mocker.patch("craft_parts.lifecycle_manager.packages.Repository.configure")
+        mocker.patch(
+            "craft_parts.executor.part_handler.packages.Repository.get_installed_packages",
+            return_value=[],
+        )
+        mocker.patch(
+            "craft_parts.executor.part_handler.packages.snaps.get_installed_snaps",
+            return_value=[],
+        )
+
+        parts_yaml = textwrap.dedent(
+            """\
+            parts:
+              base-files-part:
+                plugin: nil
+                override-build: |
+                  mkdir -p "${CRAFT_PART_INSTALL}/usr/bin" "${CRAFT_PART_INSTALL}/usr/lib"
+                  ln -s usr/bin "${CRAFT_PART_INSTALL}/bin"
+                  ln -s usr/lib "${CRAFT_PART_INSTALL}/lib"
+
+              app-part:
+                plugin: nil
+                build-attributes: [enable-usrmerge]
+                override-build: |
+                  mkdir -p "${CRAFT_PART_INSTALL}/bin" "${CRAFT_PART_INSTALL}/lib"
+                  touch "${CRAFT_PART_INSTALL}/bin/www"
+                  touch "${CRAFT_PART_INSTALL}/lib/app.js"
+            """
+        )
+
+        lf = LifecycleManager(
+            yaml.safe_load(parts_yaml),
+            application_name="test_usrmerge_base_files_collisions",
+            cache_dir=new_dir,
+            work_dir=new_dir,
+            partitions=partitions,
+        )
+
+        with lf.action_executor() as aex:
+            aex.execute(lf.plan(Step.STAGE))
+
+        stage_dir = lf.project_info.stage_dir
+        assert (stage_dir / "bin").is_symlink()
+        assert (stage_dir / "bin").readlink() == Path("usr/bin")
+        assert (stage_dir / "lib").is_symlink()
+        assert (stage_dir / "lib").readlink() == Path("usr/lib")
+        assert (stage_dir / "usr/bin/www").is_file()
+        assert (stage_dir / "usr/lib/app.js").is_file()
+
     @staticmethod
     def _run_lifecycle(parts_yaml, new_dir, partitions):
         """Create and run a lifecycle with overlay and optionally partitions."""
