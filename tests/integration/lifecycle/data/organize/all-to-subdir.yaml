@@ -1,0 +1,31 @@
+# Organize pattern from the craft-parts dotnet v2 plugin documentation.
+# The plugin guide recommends isolating the self-provisioned .NET SDK under a
+# single prefix so that downstream parts can set PATH without side effects.
+#
+# Source: https://github.com/canonical/craft-parts/blob/main/docs/common/craft-parts/reference/plugins/dotnet_v2_plugin.rst
+
+description: >
+  Move every installed file into a dedicated subdirectory using the wildcard
+  '*' source pattern, keeping the SDK isolated from the main application files.
+
+parts:
+  dotnet-sdk:
+    plugin: dump
+    source: src
+    organize:
+      '*': dotnet-sdk/
+
+setup_files:
+  - src/dotnet
+  - src/libhostfxr.so
+  - src/libclrjit.so
+
+expected_prime_present:
+  - dotnet-sdk/dotnet
+  - dotnet-sdk/libhostfxr.so
+  - dotnet-sdk/libclrjit.so
+
+expected_prime_absent:
+  - dotnet
+  - libhostfxr.so
+  - libclrjit.so
