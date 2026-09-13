@@ -235,9 +235,9 @@ Examples
 Plugin-provided .NET SDK
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following example uses the .NET (v2) plugin to build an application with .NET 8
-using the debug configuration, generating assets that are self-contained. Since the
-``dotnet-version`` key is set, the plugin provisions the .NET SDK by itself.
+The following example uses the plugin to build an app with .NET 8 using the debug
+configuration, generating assets that are self-contained. Since the ``dotnet-version``
+key is set, the plugin provisions the .NET SDK by itself.
 
 
 .. code-block:: yaml
@@ -251,7 +251,7 @@ using the debug configuration, generating assets that are self-contained. Since 
         dotnet-configuration: "Debug"
         dotnet-self-contained: true
 
-This is the simplest way to build a .NET application using the .NET (v2) plugin.
+This is the simplest way to build a .NET application using the .NET plugin.
 
 .. _user-provided-sdk-example:
 
