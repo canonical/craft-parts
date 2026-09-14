@@ -18,6 +18,7 @@
 
 import abc
 import logging
+import os
 import shutil
 import subprocess
 import urllib.parse
