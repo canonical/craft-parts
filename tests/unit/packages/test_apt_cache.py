@@ -386,8 +386,7 @@ class TestMockedApt:
 
         assert raised.value.brief == "Cannot prepare the package cache."
         assert raised.value.details == (
-            f"Failed to prepare the APT cache at {stage_cache}: "
-            "Permission denied."
+            f"Failed to prepare the APT cache at {stage_cache}: Permission denied."
         )
         assert "sudo" in raised.value.resolution
 
@@ -407,8 +406,7 @@ class TestMockedApt:
 
         assert raised.value.brief == "Cannot prepare the package cache."
         assert raised.value.details == (
-            f"Failed to prepare the package cache at {stage_cache}: "
-            "Permission denied."
+            f"Failed to prepare the APT cache at {stage_cache}: Permission denied."
         )
         assert "sudo" in raised.value.resolution
 
