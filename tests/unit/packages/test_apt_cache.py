@@ -388,6 +388,7 @@ class TestMockedApt:
         assert raised.value.details == (
             f"Failed to prepare the APT cache at {stage_cache}: Permission denied."
         )
+        assert raised.value.resolution is not None
         assert "sudo" in raised.value.resolution
 
     def test_stage_cache_setup_error_when_cache_cannot_be_copied(self, tmpdir, mocker):
@@ -408,6 +409,7 @@ class TestMockedApt:
         assert raised.value.details == (
             f"Failed to prepare the APT cache at {stage_cache}: Permission denied."
         )
+        assert raised.value.resolution is not None
         assert "sudo" in raised.value.resolution
 
     def test_host_cache_setup(self, mocker):
