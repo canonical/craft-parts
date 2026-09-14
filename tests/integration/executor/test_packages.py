@@ -51,12 +51,12 @@ def test_cut_build_slices(new_homedir_path, partitions):
     # Cut a different set of build-slices and check that bash is no longer there
     second_part = Part(
         "foo",
-        {"plugin": "nil", "build-slices": ["jq_bins", "base-files_bin"]},
+        {"plugin": "nil", "build-slices": ["hello_bins", "base-files_bin"]},
         partitions=partitions,
     )
     e = Executor(project_info=info, part_list=[second_part])
     e.prologue()
 
     assert not bash.is_file()
-    jq = slices_dir / "usr/bin/jq"
-    assert jq.is_file()
+    hello = slices_dir / "usr/bin/hello"
+    assert hello.is_file()
