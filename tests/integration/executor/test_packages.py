@@ -58,5 +58,5 @@ def test_cut_build_slices(new_homedir_path, partitions):
     e.prologue()
 
     assert not bash.is_file()
-    curl = slices_dir / "bin/curl"
+    curl = slices_dir / "usr/bin/curl"
     assert curl.is_file()
