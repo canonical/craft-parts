@@ -27,7 +27,7 @@ def test_cut_build_slices(new_homedir_path, partitions):
 
     first_part = Part(
         "foo",
-        {"plugin": "nil", "build-slices": ["bash_bins"]},
+        {"plugin": "nil", "build-slices": ["bash_bins", "base-files_bin"]},
         partitions=partitions,
     )
 
@@ -41,19 +41,22 @@ def test_cut_build_slices(new_homedir_path, partitions):
     e = Executor(project_info=info, part_list=[first_part])
     e.prologue()
 
+    # Note: the addition of "base-files_bin" guarantees the usrmerged structure, so
+    # these expected paths should work regardless of Ubuntu base (usrmerge behavior
+    # changed in 24.04).
     assert slices_dir.exists()
-    bash = slices_dir / "usr/bin/bash"
+    bash = slices_dir / "bin/bash"
     assert bash.is_file()
 
     # Cut a different set of build-slices and check that bash is no longer there
     second_part = Part(
         "foo",
-        {"plugin": "nil", "build-slices": ["curl_bins"]},
+        {"plugin": "nil", "build-slices": ["curl_bins", "base-files_bin"]},
         partitions=partitions,
     )
     e = Executor(project_info=info, part_list=[second_part])
     e.prologue()
 
     assert not bash.is_file()
-    curl = slices_dir / "usr/bin/curl"
+    curl = slices_dir / "bin/curl"
     assert curl.is_file()
