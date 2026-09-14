@@ -18,6 +18,8 @@
 
 from dataclasses import dataclass
 
+from . import errors
+
 
 @dataclass
 class DebPackage:
@@ -31,9 +33,10 @@ class DebPackage:
     def from_unparsed(cls, package: str) -> "DebPackage":
         """Parse package supported in yaml.
 
-        Package Format: <package-name>[:<arch>][=<version>]
+        Package Format: <package-name>[:<arch>][=<version>] or
+                        <package-name>[:<arch>]@<version>
 
-        Examples: "foo", "foo:i386", "foo=1.5", "foo:i386=1.5"
+        Examples: "foo", "foo:i386", "foo=1.5", "foo:i386=1.5", "foo@1.5"
 
         :param package: Package to parse.
 
@@ -43,10 +46,26 @@ class DebPackage:
         parsed_arch: str | None = None
         parsed_version: str | None = None
 
-        if "=" in parsed_name:
-            parsed_name, parsed_version = parsed_name.split("=")
+        if "@" in parsed_name and "=" in parsed_name:
+            raise errors.DebPackageInvalidFormatError(package)
+        if "@" in parsed_name:
+            parsed_name, parsed_version = parsed_name.split("@", 1)
+        elif "=" in parsed_name:
+            parsed_name, parsed_version = parsed_name.split("=", 1)
 
         if ":" in parsed_name:
             parsed_name, parsed_arch = parsed_name.split(":")
+
+        # Reject empty parts, e.g. "foo:arch=" or "foo@"
+        # (omitted values should be None, not empty strings)
+        if "" in (parsed_name, parsed_arch, parsed_version):
+            raise errors.DebPackageInvalidFormatError(package)
+
+        # Reject padding around any part, e.g. "foo @ 1.5" or "foo: arch".
+        if any(
+            part is not None and part != part.strip()
+            for part in (parsed_name, parsed_arch, parsed_version)
+        ):
+            raise errors.DebPackageInvalidFormatError(package)
 
         return DebPackage(name=parsed_name, arch=parsed_arch, version=parsed_version)

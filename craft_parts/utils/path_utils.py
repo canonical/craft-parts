@@ -57,10 +57,15 @@ def get_partition_and_path(
 
     :returns: A tuple of (partition, filepath)
     """
-    if not Features().enable_partitions:
-        return PartitionPathPair(None, path)
-
     str_path = str(path)
+
+    if not Features().enable_partitions:
+        if _has_partition(str_path):
+            partition, inner_path = _split_partition_and_inner_path(str_path)
+            partition_name = partition.strip("()")
+            if partition_name == partition_utils.BUILD_PARTITION:
+                return PartitionPathPair(partition_name, type(path)(inner_path))
+        return PartitionPathPair(None, path)
 
     if _has_partition(str_path):
         partition, inner_path = _split_partition_and_inner_path(str_path)

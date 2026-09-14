@@ -66,9 +66,36 @@ def test_checksum_mismatch():
     err = errors.ChecksumMismatch(expected="1234", obtained="5678")
     assert err.expected == "1234"
     assert err.obtained == "5678"
-    assert err.brief == "Expected digest 1234, obtained 5678."
-    assert err.details is None
-    assert err.resolution is None
+    assert err.part_name is None
+    assert err.source is None
+    assert err.brief == "Failed to pull source: checksum mismatch."
+    assert err.details == "Expected digest 1234, obtained 5678."
+    assert (
+        err.resolution == "Make sure the source-checksum matches the downloaded source."
+    )
+
+
+def test_checksum_mismatch_with_part_name():
+    err = errors.ChecksumMismatch(
+        expected="1234",
+        obtained="5678",
+        part_name="foo",
+        source="http://test.com/some_file",
+    )
+    assert err.part_name == "foo"
+    assert err.source == "http://test.com/some_file"
+    assert err.brief == "Failed to pull source: checksum mismatch for part 'foo'."
+    assert err.details == "Expected digest 1234, obtained 5678."
+
+
+def test_checksum_mismatch_with_source_only():
+    err = errors.ChecksumMismatch(
+        expected="1234", obtained="5678", source="http://test.com/some_file"
+    )
+    assert err.part_name is None
+    assert err.brief == (
+        "Failed to pull source: checksum mismatch for 'http://test.com/some_file'."
+    )
 
 
 def test_source_update_unsupported():

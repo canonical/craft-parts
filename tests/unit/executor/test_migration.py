@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
+import os
 import stat
 from pathlib import Path
 
@@ -390,6 +392,77 @@ class TestFileMigration:
         assert new_mode == stat.S_IMODE(Path(stage_dir, "foo").stat().st_mode)
         assert new_mode == stat.S_IMODE(Path(stage_dir, "foo/bar").stat().st_mode)
 
+    def test_migrate_files_preserves_ownership(self, mock_chown, mocker, partitions):
+        install_dir = Path("install")
+        stage_dir = Path("stage")
+
+        Path(install_dir, "foo").mkdir(parents=True)
+        stage_dir.mkdir()
+
+        Path(install_dir, "foo", "bar").write_text("installed")
+
+        # Force the file to be copied so the implicit chown in copy() runs.
+        mocker.patch.object(
+            os, "link", side_effect=OSError(errno.EXDEV, "cross-device link")
+        )
+
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]),
+            install_dir,
+            default_partition="default",
+            partition="default" if partitions else None,
+        )
+        migration.migrate_files(
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
+            follow_symlinks=False,
+        )
+
+        for source, destination in [
+            (install_dir / "foo", stage_dir / "foo"),
+            (install_dir / "foo" / "bar", stage_dir / "foo" / "bar"),
+        ]:
+            source_stat = source.stat()
+            call = mock_chown[destination]
+            assert call.owner == source_stat.st_uid
+            assert call.group == source_stat.st_gid
+
+    def test_migrate_files_ownership_permission_error(self, mocker, partitions):
+        install_dir = Path("install")
+        stage_dir = Path("stage")
+
+        Path(install_dir, "foo").mkdir(parents=True)
+        stage_dir.mkdir()
+
+        Path(install_dir, "foo", "bar").write_text("installed")
+
+        # Force a copy path so the implicit chown in copy() is exercised.
+        mocker.patch.object(
+            os, "link", side_effect=OSError(errno.EXDEV, "cross-device link")
+        )
+        mocker.patch.object(os, "chown", side_effect=PermissionError)
+
+        files, dirs = filesets.migratable_filesets(
+            Fileset(["*"]),
+            install_dir,
+            default_partition="default",
+            partition="default" if partitions else None,
+        )
+
+        # Should not raise, ownership errors are logged and ignored.
+        migration.migrate_files(
+            files=files,
+            dirs=dirs,
+            srcdir=install_dir,
+            destdir=stage_dir,
+            follow_symlinks=False,
+        )
+
+        assert (stage_dir / "foo").is_dir()
+        assert (stage_dir / "foo" / "bar").read_text() == "installed"
+
     def test_migration_with_permissions(self, mock_chown):
         source = Path("source")
         source.mkdir()
@@ -439,6 +512,38 @@ class TestFileMigration:
             call = mock_chown[Path(p)]
             assert call.owner == 1111
             assert call.group == 2222
+
+    def test_migration_with_leading_slash_permissions(self, mock_chown):
+        source = Path("source")
+        source.mkdir()
+
+        (source / "var").mkdir()
+        (source / "var/lib").mkdir()
+        (source / "var/lib/zincsearch").mkdir()
+        (source / "var/lib/zincsearch/data.txt").touch()
+
+        target = Path("target")
+        target.mkdir()
+
+        permissions = [
+            Permissions(
+                path="/var/lib/zincsearch", owner=584792, group=584792, mode="755"
+            )
+        ]
+
+        migration.migrate_files(
+            files={Path("var/lib/zincsearch/data.txt")},
+            dirs={Path("var/lib"), Path("var/lib/zincsearch")},
+            srcdir=source,
+            destdir=target,
+            permissions=permissions,
+        )
+
+        assert stat.S_IMODE((target / "var/lib/zincsearch").stat().st_mode) == 0o755
+
+        call = mock_chown[Path("target/var/lib/zincsearch")]
+        assert call.owner == 584792
+        assert call.group == 584792
 
     @pytest.mark.parametrize(
         ("filters", "filemap"),

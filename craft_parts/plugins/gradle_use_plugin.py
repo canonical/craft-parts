@@ -48,17 +48,17 @@ class GradleUsePluginProperties(PluginProperties, frozen=True):
     gradle_use_daemon: bool = False
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class GradleUsePlugin(GradlePlugin):
     """A plugin to publish Gradle artifacts to a local Maven repository.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
 
     - gradle-init-script:
       (string)
@@ -71,7 +71,7 @@ class GradleUsePlugin(GradlePlugin):
       Whether to use the Gradle daemon during the build.
     """
 
-    properties_class = GradleUsePluginProperties  # type: ignore[assignment]
+    properties_class = GradleUsePluginProperties
 
     @property
     def _publish_maven_repo(self) -> Path:

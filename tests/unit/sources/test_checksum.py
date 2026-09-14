@@ -75,8 +75,33 @@ def test_verify_checksum_digest_error():
     Path("checkfile").write_text("content")
     expected_digest = "digest"
     actual_digest = "9a0364b9e99bb480dd25e1f0284c8555"
-    with pytest.raises(
-        errors.ChecksumMismatch,
-        match=rf"^Expected digest {expected_digest}, obtained {actual_digest}\.$",
-    ):
+    with pytest.raises(errors.ChecksumMismatch) as raised:
         checksum.verify_checksum("md5/digest", Path("checkfile"))
+    assert raised.value.expected == expected_digest
+    assert raised.value.obtained == actual_digest
+    assert raised.value.brief == "Failed to pull source: checksum mismatch."
+    assert raised.value.details == (
+        f"Expected digest {expected_digest}, obtained {actual_digest}."
+    )
+    assert raised.value.resolution == (
+        "Make sure the source-checksum matches the downloaded source."
+    )
+
+
+@pytest.mark.usefixtures("new_dir")
+def test_verify_checksum_digest_error_with_context():
+    Path("checkfile").write_text("content")
+    expected_digest = "digest"
+    actual_digest = "9a0364b9e99bb480dd25e1f0284c8555"
+    with pytest.raises(errors.ChecksumMismatch) as raised:
+        checksum.verify_checksum(
+            "md5/digest",
+            Path("checkfile"),
+            part_name="foo",
+            source="http://test.com/some_file",
+        )
+    err = raised.value
+    assert err.brief == "Failed to pull source: checksum mismatch for part 'foo'."
+    assert err.details == (
+        f"Expected digest {expected_digest}, obtained {actual_digest}."
+    )

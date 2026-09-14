@@ -106,7 +106,9 @@ class YUMRepository(BaseRepository):
         return False
 
     @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache area.
 
         XXX: method left out of YUMRepository's MVP; nothing will be
@@ -119,8 +121,8 @@ class YUMRepository(BaseRepository):
         cls,
         package_names: list[str],
         *,
-        list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,  # noqa: ARG003
     ) -> list[str]:
         """Install packages on the host system."""
         if not package_names:
@@ -133,13 +135,12 @@ class YUMRepository(BaseRepository):
         if not cls._check_if_all_packages_installed(package_names):
             install_required = True
 
-        if not list_only:
-            if refresh_package_cache and install_required:
-                cls.refresh_packages_list()
-            if install_required:
-                cls._install_packages(package_names)
-            else:
-                logger.debug("Requested packages already installed: %s", package_names)
+        if refresh_package_cache and install_required:
+            cls.refresh_packages_list()
+        if install_required:
+            cls._install_packages(package_names)
+        else:
+            logger.debug("Requested packages already installed: %s", package_names)
 
         return []
 

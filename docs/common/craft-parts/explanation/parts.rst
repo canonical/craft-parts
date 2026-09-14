@@ -112,9 +112,8 @@ This key can also be used to replace or extend the build process provided by a p
 
 When a plugin is used, it exposes additional properties that can be used to define
 behaviour that is specific to the type of project that the plugin supports. For example,
-the :py:mod:`CMake plugin <craft_parts.plugins.cmake_plugin>` provides the
-``cmake-parameters`` and ``cmake-generator`` properties that can be used to configure
-how CMake is used in the build process.
+the CMake plugin provides the ``cmake-parameters`` and ``cmake-generator`` properties
+that can be used to configure how CMake is used in the build process.
 
 .. ifconfig:: project in ("Snapcraft",)
 

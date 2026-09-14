@@ -18,9 +18,11 @@ import os
 
 import pytest
 from craft_parts import errors
-from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.executor import environment
+from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.npm_plugin import NpmPlugin
+from craft_parts.steps import Step
 from pydantic import ValidationError
 
 # pylint: disable=too-many-public-methods
@@ -207,7 +209,10 @@ class TestPluginNpmPlugin:
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
-        assert plugin.get_build_environment() == {"NODE_ENV": "production"}
+        assert plugin.get_build_environment() == {
+            "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
+        }
 
     def test_get_build_environment_include_node_false(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal(
@@ -218,7 +223,10 @@ class TestPluginNpmPlugin:
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
-        assert plugin.get_build_environment() == {"NODE_ENV": "production"}
+        assert plugin.get_build_environment() == {
+            "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
+        }
 
     def test_get_build_environment_include_node_true(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal(
@@ -233,20 +241,49 @@ class TestPluginNpmPlugin:
         assert plugin.get_build_environment() == {
             "PATH": "${CRAFT_PART_INSTALL}/bin:${PATH}",
             "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
         }
+
+    def test_build_environment_user_tls_settings_override_plugin_default(self, new_dir):
+        """User-defined build-environment values must win in the final build env."""
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part = Part("my-part", {"build-environment": [{"NODE_USE_SYSTEM_CA": "0"}]})
+        part_info = PartInfo(project_info=info, part=part)
+        step_info = StepInfo(part_info=part_info, step=Step.BUILD)
+        plugin = NpmPlugin(
+            properties=NpmPlugin.properties_class.unmarshal({"source": "."}),
+            part_info=part_info,
+        )
+
+        build_environment = environment.generate_step_environment(
+            part=part, plugin=plugin, step_info=step_info
+        )
+
+        exports = [
+            line
+            for line in build_environment.splitlines()
+            if line.startswith("export NODE_USE_SYSTEM_CA=")
+        ]
+
+        assert exports == [
+            'export NODE_USE_SYSTEM_CA="1"',
+            'export NODE_USE_SYSTEM_CA="0"',
+        ]
 
     def test_get_build_commands(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_commands() == [
-            'NPM_VERSION="$(npm --version)"\n'
-            "# use the new-style install command if npm >= 10.0.0\n"
-            "if ((${NPM_VERSION%%.*}>=10)); then\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
-            "else\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
-            "fi\n",
+            (
+                'NPM_VERSION="$(npm --version)"\n'
+                "# use the new-style install command if npm >= 10.0.0\n"
+                "if ((${NPM_VERSION%%.*}>=10)); then\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
+                "else\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
+                "fi\n"
+            ),
         ]
 
     def test_get_build_commands_false(self, part_info, new_dir):
@@ -256,13 +293,15 @@ class TestPluginNpmPlugin:
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
         assert plugin.get_build_commands() == [
-            'NPM_VERSION="$(npm --version)"\n'
-            "# use the new-style install command if npm >= 10.0.0\n"
-            "if ((${NPM_VERSION%%.*}>=10)); then\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
-            "else\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
-            "fi\n",
+            (
+                'NPM_VERSION="$(npm --version)"\n'
+                "# use the new-style install command if npm >= 10.0.0\n"
+                "if ((${NPM_VERSION%%.*}>=10)); then\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
+                "else\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
+                "fi\n"
+            ),
         ]
 
     @pytest.mark.parametrize(
@@ -280,7 +319,7 @@ class TestPluginNpmPlugin:
                 "npm-node-version": version,
             }
         )
-        NpmPlugin._fetch_node_release_index = lambda: [
+        NpmPlugin._fetch_node_release_index = lambda: [  # ty: ignore[invalid-assignment]
             {
                 "version": "v99.99.99",
                 "date": "3304-12-31",
@@ -301,23 +340,29 @@ class TestPluginNpmPlugin:
         assert plugin.get_pull_commands() == []
 
         assert plugin.get_build_commands() == [
-            f'if [ ! -f "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz" ]; then\n'
-            f'    mkdir -p "{part_info.part_cache_dir}"\n'
-            f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/SHASUMS256.txt" -o "{part_info.part_cache_dir}"/SHASUMS256.txt\n'
-            f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/node-v20.13.1-linux-x64.tar.gz" -o "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"\n'
-            "fi\n"
-            f'pushd "{part_info.part_cache_dir}"\n'
-            "sha256sum --ignore-missing --strict -c SHASUMS256.txt\npopd\n",
-            f'tar -xzf "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"'
-            ' -C "${CRAFT_PART_INSTALL}/"                     --no-same-owner '
-            "--strip-components=1\n",
-            'NPM_VERSION="$(npm --version)"\n'
-            "# use the new-style install command if npm >= 10.0.0\n"
-            "if ((${NPM_VERSION%%.*}>=10)); then\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
-            "else\n"
-            '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
-            "fi\n",
+            (
+                f'if [ ! -f "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz" ]; then\n'
+                f'    mkdir -p "{part_info.part_cache_dir}"\n'
+                f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/SHASUMS256.txt" -o "{part_info.part_cache_dir}"/SHASUMS256.txt\n'
+                f'    curl --retry 5 -s "https://nodejs.org/dist/v20.13.1/node-v20.13.1-linux-x64.tar.gz" -o "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"\n'
+                "fi\n"
+                f'pushd "{part_info.part_cache_dir}"\n'
+                "sha256sum --ignore-missing --strict -c SHASUMS256.txt\npopd\n"
+            ),
+            (
+                f'tar -xzf "{part_info.part_cache_dir}/node-v20.13.1-linux-x64.tar.gz"'
+                ' -C "${CRAFT_PART_INSTALL}/" \\\n'
+                "    --no-same-owner --strip-components=1\n"
+            ),
+            (
+                'NPM_VERSION="$(npm --version)"\n'
+                "# use the new-style install command if npm >= 10.0.0\n"
+                "if ((${NPM_VERSION%%.*}>=10)); then\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" --install-links "${PWD}"\n'
+                "else\n"
+                '    npm install -g --prefix "${CRAFT_PART_INSTALL}" "$(npm pack . | tail -1)"\n'
+                "fi\n"
+            ),
         ]
 
     def test_get_build_commands_include_node_true_no_node_version(
@@ -411,4 +456,4 @@ class TestPluginNpmPlugin:
         part = Part("my-part", spec, plugin_properties=properties)
 
         assert part.spec.build_attributes == ["self-contained"]
-        assert part.plugin_properties.build_attributes == ["self-contained"]  # type: ignore[reportAttributeAccessIssue]
+        assert part.plugin_properties.build_attributes == ["self-contained"]  # ty: ignore[unresolved-attribute]

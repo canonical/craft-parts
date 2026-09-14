@@ -66,8 +66,21 @@ def chroot(
     # result here makes the typehint effectively true, since we don't attempt to access the first
     # field of the tuple unless the second field is None.
     parent_conn: Connection[Any, tuple[_T, str | None]]
-    parent_conn, child_conn = multiprocessing.Pipe()
-    child = multiprocessing.Process(
+    # The chroot runner depends on the child process inheriting the parent's
+    # state (current working directory, environment, and any monkeypatched
+    # functions used by the tests). Python 3.14 changed the default Linux
+    # multiprocessing start method from "fork" to "forkserver", so make the
+    # dependency explicit by always requesting the fork context here.
+    try:
+        ctx = multiprocessing.get_context("fork")
+    except ValueError as exc:
+        raise errors.OverlayChrootExecutionError(
+            "multiprocessing start method 'fork' is required for chroot "
+            "execution but is not available on this platform"
+        ) from exc
+
+    parent_conn, child_conn = ctx.Pipe()
+    child = ctx.Process(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
     )
     logger.debug("[pid=%d] set up chroot", os.getpid())
@@ -102,7 +115,7 @@ def _runner(
         res = target(*args, **kwargs)
     except Exception as exc:  # noqa: BLE001
         # Just send None for data since it won't be accessed anyways
-        conn.send((None, str(exc)))  # type: ignore[arg-type]
+        conn.send((None, str(exc)))  # ty: ignore[invalid-argument-type]
         return
 
     conn.send((res, None))

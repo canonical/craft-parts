@@ -23,11 +23,9 @@ import pydantic
 from typing_extensions import Self
 
 
-# We set `frozen=True` here so that pyright knows to treat variable types as covariant
+# We set `frozen=True` here so type checkers know to treat variable types as covariant
 # rather than invariant, improving the readability of child classes.
-# As a side effect, we have to tell mypy not to warn about setting this config item
-# twice.
-class PluginProperties(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
+class PluginProperties(pydantic.BaseModel, frozen=True):
     """Options specific to a plugin.
 
     PluginProperties should be subclassed into plugin-specific property

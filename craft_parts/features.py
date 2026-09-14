@@ -31,14 +31,16 @@ class Features(metaclass=Singleton):
 
     :cvar enable_overlay: Enables the overlay step.
     :cvar enable_partitions: Enables the usage of partitions.
+    :cvar enable_build_slices: Enables cutting Chisel slices into a build root.
     """
 
     enable_overlay: bool = False
     enable_partitions: bool = False
+    enable_build_slices: bool = False
 
     @classmethod
     def reset(cls) -> None:
         """Delete stored class instance."""
         logger.warning("deleting current features configuration")
         with contextlib.suppress(KeyError):
-            del cls._instances[cls]  # pyright: ignore[reportPrivateUsage]
+            del cls._instances[cls]

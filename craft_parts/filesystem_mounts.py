@@ -73,7 +73,7 @@ class FilesystemMountItem(BaseModel):
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("Filesystem input data must be a dictionary.")
 
         return cls.model_validate(data)
@@ -102,7 +102,7 @@ class FilesystemMount(
 ):
     """FilesystemMount defines the order in which devices should be mounted."""
 
-    def __iter__(self) -> Iterator[FilesystemMountItem]:  # type: ignore[override]
+    def __iter__(self) -> Iterator[FilesystemMountItem]:  # ty: ignore[invalid-method-override]
         return iter(self.root)
 
     def __reversed__(self) -> Iterator[FilesystemMountItem]:
@@ -162,7 +162,7 @@ class FilesystemMount(
         :raise TypeError: If data is not a list.
         :raise pydantic.ValidationError: If the data fails validation.
         """
-        if not isinstance(data, list):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, list):
             raise TypeError("Filesystem entry must be a list.")
 
         return cls.model_validate(
@@ -181,7 +181,7 @@ class FilesystemMount(
 class FilesystemMounts(RootModel[SingleEntryDict[Literal["default"], FilesystemMount]]):
     """FilesystemMounts defines list of FilesystemMount."""
 
-    def __iter__(self) -> Iterator[Literal["default"]]:  # type: ignore[override]
+    def __iter__(self) -> Iterator[Literal["default"]]:  # ty: ignore[invalid-method-override]
         return iter(self.root)
 
     def __getitem__(self, item: Literal["default"]) -> FilesystemMount | None:
@@ -210,7 +210,7 @@ class FilesystemMounts(RootModel[SingleEntryDict[Literal["default"], FilesystemM
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("filesystems is not a dictionary")
 
         return cls.model_validate(data)
@@ -221,7 +221,7 @@ class FilesystemMounts(RootModel[SingleEntryDict[Literal["default"], FilesystemM
         :return: The newly created dictionary.
 
         """
-        return self.model_dump(by_alias=True)  # type: ignore[no-any-return]
+        return self.model_dump(by_alias=True)
 
 
 def validate_filesystem_mount(data: list[dict[str, Any]]) -> None:

@@ -18,7 +18,7 @@ from pathlib import Path
 from textwrap import dedent, indent
 
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 from craft_parts import ProjectDirs, errors
 from craft_parts.parts import Part
 from craft_parts.utils.partition_utils import get_partition_dir_map
@@ -383,6 +383,29 @@ class TestPartPartitionUsage:
               parts.part-a.prime
                 unknown partition 'baz' in '(baz)'
                 no path specified after partition in '(baz)'
+            Valid partitions: {", ".join(partition_list)}"""
+        )
+
+    def test_part_build_partition_usage_is_invalid(self, partition_list):
+        """Raise an error if the build pseudo-partition is used as a destination."""
+        part_data = {
+            "organize": {"README": "(build)/README"},
+            "stage": ["(build)/README"],
+            "prime": ["(build)/README"],
+        }
+
+        with pytest.raises(errors.PartitionUsageError) as raised:
+            Part("part-a", part_data, partitions=partition_list)
+
+        assert raised.value.brief == "Invalid usage of partitions"
+        assert raised.value.details == dedent(
+            f"""\
+              parts.part-a.organize
+                cannot organize files into the build directory
+              parts.part-a.stage
+                (build) cannot be used in 'stage'
+              parts.part-a.prime
+                (build) cannot be used in 'prime'
             Valid partitions: {", ".join(partition_list)}"""
         )
 

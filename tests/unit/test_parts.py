@@ -15,15 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
 
 import pydantic
 import pytest
-from craft_parts import errors, parts
+from craft_parts import errors, packages, parts
 from craft_parts.dirs import ProjectDirs
-from craft_parts.packages import platform
 from craft_parts.parts import Part, PartSpec
 from craft_parts.steps import Step
 
@@ -50,8 +50,10 @@ class TestPartSpecs:
             "after": ["bar"],
             "stage-snaps": ["stage-snap1", "stage-snap2"],
             "stage-packages": ["stage-pkg1", "stage-pkg2"],
+            "stage-slices": [],
             "build-snaps": ["build-snap1", "build-snap2"],
             "build-packages": ["build-pkg1", "build-pkg2"],
+            "build-slices": [],
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
             "build-attributes": ["attr1", "attr2"],
             "organize": {"src1": "dest1", "src2": "dest2"},
@@ -71,38 +73,137 @@ class TestPartSpecs:
         # Overlay defaults
         data_copy["overlay"] = ["*"]
         data_copy["overlay-packages"] = []
+        data_copy["overlay-recommended-packages"] = []
         data_copy["overlay-script"] = None
         data_copy["override-overlay"] = None
         spec = PartSpec.unmarshal(data)
         assert spec.marshal() == data_copy
 
-    def test_unmarshal_not_dict(self, partitions):
-        with pytest.raises(TypeError, match="^part data is not a dictionary$"):
-            PartSpec.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
+    @pytest.mark.parametrize(
+        ("stage_packages", "stage_packages_slice_support", "expectation"),
+        [
+            pytest.param(["pkg1"], True, nullcontext(), id="debs-only-supported"),
+            pytest.param(["pkg1"], False, nullcontext(), id="debs-only-unsupported"),
+            pytest.param(["pkg1_bin"], True, nullcontext(), id="slice-only-supported"),
+            pytest.param(
+                ["pkg1_bin"],
+                False,
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match=re.escape(
+                        "Chisel slices cannot be declared in 'stage-packages'. "
+                        "Use the 'stage-slices' key instead."
+                    ),
+                ),
+                id="slice-only-unsupported",
+            ),
+            pytest.param(
+                ["pkg1", "pkg2_bin"],
+                True,
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match="cannot mix packages and slices in 'stage-packages'",
+                ),
+                id="packages-and-slices-supported",
+            ),
+            pytest.param(
+                ["pkg1", "pkg2_bin"],
+                False,
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match="cannot mix packages and slices in 'stage-packages'",
+                ),
+                id="packages-and-slices-unsupported",
+            ),
+        ],
+    )
+    @pytest.mark.usefixtures("is_deb_based")
+    def test_unmarshal_stage_packages(
+        self, stage_packages, stage_packages_slice_support, expectation
+    ):
+        with expectation:
+            spec = PartSpec.unmarshal(
+                {"stage-packages": stage_packages},
+                stage_packages_slice_support=stage_packages_slice_support,
+            )
+            assert spec.stage_packages == stage_packages
 
-    def test_unmarshal_mix_packages_slices(self, mocker):
-        """
-        Test that mixing packages and chisel slices raises validation errors
-        in Debian-based systems (and only in them).
-        """
-        is_deb_mock = mocker.patch.object(platform, "is_deb_based", autospec=True)
+    def test_unmarshal_stage_packages_non_deb_system(self, mocker):
+        """Non-deb systems shouldn't validate Chisel slice syntax."""
+        mocker.patch.object(
+            packages.platform, "is_deb_based", autospec=True, return_value=False
+        )
+        stage_packages = ["pkg1", "pkg2_bin"]
 
-        package_list = ["pkg1_bin", "pkg2_bin", "pkg3"]
-        data = {
-            "stage-packages": package_list,
-        }
+        spec = PartSpec.unmarshal(
+            {"stage-packages": stage_packages}, stage_packages_slice_support=False
+        )
+        assert spec.stage_packages == stage_packages
 
-        # On Debian-based systems, mixing names with and without underscores means
-        # mixing .deb packages and chisel slices, which is not allowed.
-        is_deb_mock.return_value = True
-        with pytest.raises(pydantic.ValidationError):
+    @pytest.mark.parametrize(
+        ("stage_slices", "stage_packages_slice_support", "expectation"),
+        [
+            pytest.param(
+                ["ca-certificates_data", "bash_bins"],
+                True,
+                nullcontext(),
+                id="valid-slices",
+            ),
+            pytest.param(
+                ["pkg1_bin"],
+                False,
+                nullcontext(),
+                id="valid-slice-unaffected-by-stage-packages-slice-support",
+            ),
+            pytest.param(
+                ["ca-certificates_data", "bash"],
+                True,
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match="invalid Chisel slice",
+                ),
+                id="invalid-slice",
+            ),
+        ],
+    )
+    @pytest.mark.usefixtures("is_deb_based")
+    def test_unmarshal_stage_slices(
+        self, stage_slices, stage_packages_slice_support, expectation
+    ):
+        data = {"stage-slices": stage_slices}
+
+        with expectation:
+            spec = PartSpec.unmarshal(
+                data, stage_packages_slice_support=stage_packages_slice_support
+            )
+            assert spec.stage_slices == stage_slices
+
+    @pytest.mark.parametrize(
+        ("stage_packages", "stage_slices", "expectation"),
+        [
+            pytest.param([], [], nullcontext(), id="neither"),
+            pytest.param(["pkg1"], [], nullcontext(), id="only-stage-packages"),
+            pytest.param([], ["pkg1_bin"], nullcontext(), id="only-stage-slices"),
+            pytest.param(
+                ["pkg1"],
+                ["pkg1_bin"],
+                pytest.raises(
+                    pydantic.ValidationError,
+                    match="'stage-packages' and 'stage-slices' cannot be used together",
+                ),
+                id="both",
+            ),
+        ],
+    )
+    @pytest.mark.usefixtures("is_deb_based")
+    def test_unmarshal_stage_packages_stage_slices(
+        self, stage_packages, stage_slices, expectation
+    ):
+        """stage-packages and stage-slices are mutually exclusive."""
+        data = {"stage-packages": stage_packages, "stage-slices": stage_slices}
+
+        with expectation:
             PartSpec.unmarshal(data)
-
-        # On non-Debian-based systems, mixing is allowed because we can't know the
-        # semantics (and chisel is not supported).
-        is_deb_mock.return_value = False
-        spec = PartSpec.unmarshal(data)
-        assert spec.stage_packages == package_list
 
     @pytest.mark.parametrize(
         ("key", "value"),
@@ -117,6 +218,18 @@ class TestPartSpecs:
         error = r"overlays not supported"
         with pytest.raises(pydantic.ValidationError, match=error):
             PartSpec.unmarshal(data)
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_marshal_unmarshal_build_slices(self, partitions):
+        data = {
+            "plugin": "nil",
+            "build-slices": ["pkg1_slice1", "pkg2_slices2"],
+        }
+
+        data_copy = deepcopy(data)
+
+        spec = PartSpec.unmarshal(data)
+        assert spec.marshal()["build-slices"] == data_copy["build-slices"]
 
 
 class TestPartPartitionUsage:
@@ -362,6 +475,7 @@ class TestPartData:
             ({}, False),
             ({"stage-packages": ["base-files_base", "hello_bins"]}, True),
             ({"stage-packages": ["bash", "python3"]}, False),
+            ({"stage-slices": ["base-files_base", "hello_bins"]}, True),
         ],
     )
     def test_part_has_slices(self, partitions, tc_spec, tc_result):
@@ -379,6 +493,20 @@ class TestPartData:
         ],
     )
     def test_part_has_chisel_as_build_snap(self, partitions, tc_spec, tc_result):
+        p = Part("foo", tc_spec, partitions=partitions)
+        assert p.spec.has_chisel_as_build_snap == tc_result
+
+    @pytest.mark.parametrize(
+        ("tc_spec", "tc_result"),
+        [
+            ({"build-snaps": ["chisel@latest/candidate"]}, True),
+            ({"build-snaps": ["chisel@stable"]}, True),
+            ({"build-snaps": ["chiselhelper@stable"]}, False),
+        ],
+    )
+    def test_part_has_chisel_as_build_snap_new_separator(
+        self, partitions, tc_spec, tc_result
+    ):
         p = Part("foo", tc_spec, partitions=partitions)
         assert p.spec.has_chisel_as_build_snap == tc_result
 
@@ -519,12 +647,6 @@ class TestPartUnmarshal:
             "- Extra inputs are not permitted in field 'b'"
         )
 
-    def test_part_spec_not_dict(self, partitions):
-        with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", None, partitions=partitions)  # type: ignore[reportGeneralTypeIssues]
-        assert raised.value.part_name == "foo"
-        assert raised.value.message == "part data is not a dictionary"
-
     def test_part_unmarshal_type_error(self, partitions):
         with pytest.raises(errors.PartSpecificationError) as raised:
             Part("foo", {"plugin": []}, partitions=partitions)
@@ -629,7 +751,7 @@ class TestPartValidation:
 
     def test_part_validation_data_type(self, partitions):
         with pytest.raises(TypeError) as raised:
-            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]
+            parts.validate_part("invalid data")  # ty: ignore[invalid-argument-type]
 
         assert str(raised.value) == "value must be a dictionary"
 
@@ -675,4 +797,33 @@ class TestPartValidation:
         data = {"plugin": "nil", "build-attributes": ["self-contained"]}
 
         with pytest.raises(errors.UnsupportedBuildAttributesError):
+            parts.validate_part(data)
+
+    def test_part_validate_build_slices_feature(self, partitions):
+        data = {"plugin": "nil", "build-slices": ["python3.12_standard"]}
+
+        with pytest.raises(
+            pydantic.ValidationError, match="The 'build-slices' key is not supported"
+        ):
+            parts.validate_part(data)
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_part_validate_build_slices_feature_enabled(self, partitions):
+        data = {"plugin": "nil", "build-slices": ["python3.12_standard"]}
+
+        # Should not raise an error when the feature is enabled
+        parts.validate_part(data)
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    @pytest.mark.parametrize("build_param", ["build-packages", "build-snaps"])
+    def test_part_validate_build_slices_other_types(self, partitions, build_param):
+        data = {
+            "plugin": "nil",
+            "build-slices": ["python3.12_standard"],
+            build_param: ["package1"],
+        }
+
+        # Should raise an error from conflicting package types
+        msg = "'build-slices' cannot be used with 'build-packages' or 'build-snaps'"
+        with pytest.raises(pydantic.ValidationError, match=re.escape(msg)):
             parts.validate_part(data)

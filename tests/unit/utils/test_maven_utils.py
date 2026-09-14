@@ -837,7 +837,7 @@ def test_maven_plugin_set_remaining_plugins() -> None:
 
     # Force remaining_plugins to be a list to keep its ordered property
     # This keeps the test reproducible
-    MavenPlugin._set_remaining_plugins(remaining_plugins, project, {})  # type: ignore[reportArgumentType, arg-type]
+    MavenPlugin._set_remaining_plugins(remaining_plugins, project, {})  # ty: ignore[invalid-argument-type]
 
     assert (
         etree.tostring(project, pretty_print=True).decode(errors="replace") == expected

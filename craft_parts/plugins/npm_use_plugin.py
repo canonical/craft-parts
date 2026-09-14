@@ -28,7 +28,7 @@ from .npm_plugin import NpmPlugin
 class NpmUsePlugin(NpmPlugin):
     """A plugin to pack npm packages to a local shared cache.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
     """

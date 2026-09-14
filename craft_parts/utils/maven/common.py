@@ -51,7 +51,7 @@ Namespaces = dict[str | None, str]
 # Created so these lint silencers don't need to be repeated every single time.
 # lxml's `Element` is actually a free-form function that returns the private
 # `_Element` class, so for typing's sake, a "private" type needs to be referenced.
-Element = etree._Element  # type: ignore[reportPrivateUsage] # noqa: SLF001
+Element = etree._Element  # noqa: SLF001
 
 _XML_PARSER = etree.XMLParser(
     # Attempt to recover if an error is encountered
