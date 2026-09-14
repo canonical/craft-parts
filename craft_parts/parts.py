@@ -801,9 +801,9 @@ def _get_build_partition_usage_error(fileset_name: str, partition: str) -> str |
         return None
 
     if fileset_name == "organize":
-        return "    cannot organize files into the build directory"
+        return "cannot organize files into the build directory"
 
-    return f"    ({partition}) cannot be used in {fileset_name!r}"
+    return f"({partition}) cannot be used in {fileset_name!r}"
 
 
 def _get_missing_partition_inner_path_error(
@@ -817,7 +817,7 @@ def _get_missing_partition_inner_path_error(
     if inner_path:
         return None
 
-    return f"    no path specified after partition in {filepath!r}"
+    return f"no path specified after partition in {filepath!r}"
 
 
 # pylint: disable=too-many-public-methods
@@ -1130,8 +1130,8 @@ class Part:
         if not self._partitions:
             return
 
-        error_list: list[str] = []
-        warning_list: list[str] = []
+        error_list: list[errors.PartitionErrorInfo] = []
+        warning_list: list[errors.PartitionWarningInfo] = []
 
         for fileset_name, fileset, require_inner_path in [
             # organize source entries do not use partitions and
@@ -1148,18 +1148,19 @@ class Part:
 
         if warning_list:
             warnings.warn(
-                errors.PartitionUsageWarning(warning_list=warning_list), stacklevel=1
+                errors.PartitionUsageWarning(partition_warnings=warning_list),
+                stacklevel=1,
             )
 
         if error_list:
             raise errors.PartitionUsageError(
-                error_list=error_list,
+                partition_errors=error_list,
                 partitions=self._partitions,
             )
 
     def _check_partitions_in_filepaths(
         self, fileset_name: str, fileset: Iterable[str], *, require_inner_path: bool
-    ) -> tuple[list[str], list[str]]:
+    ) -> tuple[list[errors.PartitionWarningInfo], list[errors.PartitionErrorInfo]]:
         """Check if partitions are properly used in a fileset.
 
         If a filepath begins with a parentheses, then the text inside the parentheses
@@ -1185,11 +1186,11 @@ class Part:
             - A list of warnings of possible misuses of partitions in the fileset
             - A list of invalid uses of partitions in the fileset
         """
-        error_list: list[str] = []
-        warning_list: list[str] = []
+        error_messages: list[str] = []
+        warning_messages: list[str] = []
 
         if not self._partitions:
-            return warning_list, error_list
+            return [], []
 
         partition_pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
         possible_partition_pattern = re.compile("^-?(?P<possible_partition>[a-z]+)/?")
@@ -1201,34 +1202,49 @@ class Part:
                 if build_error := _get_build_partition_usage_error(
                     fileset_name, str(partition)
                 ):
-                    error_list.append(build_error)
+                    error_messages.append(build_error)
                 elif str(partition) == OVERLAY_PARTITION and Features().enable_overlay:
                     # If overlays are enabled we can organize to (overlay)
                     pass
                 elif str(partition) not in self._partitions:
-                    error_list.append(
-                        f"    unknown partition {partition!r} in {filepath!r}"
+                    error_messages.append(
+                        f"unknown partition {partition!r} in {filepath!r}"
                     )
             else:
                 match = re.match(possible_partition_pattern, filepath)
                 if match:
                     partition = match.group("possible_partition")
                     if partition in self._partitions:
-                        warning_list.append(
-                            f"    misused partition {partition!r} in {filepath!r}"
+                        warning_messages.append(
+                            f"misused partition {partition!r} in {filepath!r}"
                         )
 
             if path_error := _get_missing_partition_inner_path_error(
                 filepath, self.default_partition, require_inner_path=require_inner_path
             ):
-                error_list.append(path_error)
+                error_messages.append(path_error)
 
-        if error_list:
-            error_list.insert(0, f"  parts.{self.name}.{fileset_name}")
-        if warning_list:
-            warning_list.insert(0, f"  parts.{self.name}.{fileset_name}")
+        result_warnings: list[errors.PartitionWarningInfo] = []
+        result_errors: list[errors.PartitionErrorInfo] = []
 
-        return warning_list, error_list
+        if warning_messages:
+            result_warnings.append(
+                {
+                    "part_name": self.name,
+                    "attribute": fileset_name,
+                    "messages": warning_messages,
+                }
+            )
+        if error_messages:
+            result_errors.append(
+                {
+                    "part_name": self.name,
+                    "attribute": fileset_name,
+                    "messages": error_messages,
+                }
+            )
+
+        return result_warnings, result_errors
 
 
 # pylint: enable=too-many-public-methods
