@@ -1,0 +1,68 @@
+.. _craft_parts_<plugin-key>_plugin:
+
+<BuildSystem> plugin
+====================
+
+<BuildSystem> plugin is a plugin that simplifies building projects that use the
+<BuildSystem> build system.
+
+Keys
+----
+
+This plugin provides the following unique keys.
+
+
+<prefix>-task
+~~~~~~~~~~~~~
+
+**Type:** string
+
+Task to execute with <BuildSystem>.
+
+
+<prefix>-parameters
+~~~~~~~~~~~~~~~~~~~
+
+**Type:** list of strings
+
+Additional command-line arguments passed to the <BuildSystem> command.
+
+
+<prefix>-use-wrapper
+~~~~~~~~~~~~~~~~~~~~
+
+**Type:** boolean
+
+Whether to use a project-provided wrapper script.
+
+
+<prefix>-version
+~~~~~~~~~~~~~~~~
+
+**Type:** string
+
+Tool version to bootstrap from official releases when wrapper mode is disabled.
+
+
+Dependencies
+------------
+
+The plugin does not make a runtime available in the target environment. This must be
+handled by the developer when defining the part, according to each application's
+runtime requirements.
+
+
+Example
+-------
+
+This example shows how to build a real project with the {{plugin_human_name}} plugin.
+The following `parts.yaml` demonstrates this plugin:
+
+.. code-block:: yaml
+
+    # Replace with the example from
+    # examples/.local-tests/<plugin-key>/parts.yaml
+    parts:
+      <plugin-key>-example:
+        plugin: <plugin-key>
+        source: https://example.invalid/project.git
