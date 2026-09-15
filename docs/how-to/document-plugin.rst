@@ -12,6 +12,9 @@ headings and main text.
 
 Replace the instructions with suitable descriptions.
 
+After writing the page, add it to the appropriate language or technology
+group in the :ref:`plugins` reference index.
+
 
 <Name> plugin
 -------------
