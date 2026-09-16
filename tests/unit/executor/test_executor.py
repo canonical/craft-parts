@@ -242,8 +242,8 @@ class TestPackages:
         )
 
     @pytest.mark.usefixtures("enable_build_slices")
-    def test_cut_build_slices_delete_old(self, mocker, new_dir, partitions):
-        """Test that cutting slices deletes old slices if they exist and there's state."""
+    def test_cut_build_slices_delete_previous(self, mocker, new_dir, partitions):
+        """Test that cutting slices deletes old slices if they exist."""
         mocked_cut = mocker.patch("craft_parts.packages.chisel.cut_slices")
 
         p1 = Part(
@@ -269,6 +269,31 @@ class TestPackages:
         mocked_cut.assert_called_once_with(
             slices=expected_slices, target_dir=slices_dir
         )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_no_slices(self, mocker, new_dir, partitions):
+        """Test that cutting slices deletes old slices if they exist, even if no build-slices are requested."""
+        mocked_cut = mocker.patch("craft_parts.packages.chisel.cut_slices")
+
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": []},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+        slices_dir.mkdir(parents=True, exist_ok=False)
+
+        rmtree = mocker.spy(shutil, "rmtree")
+
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+
+        rmtree.assert_called_once_with(slices_dir)
+        assert not mocked_cut.called
 
     @pytest.mark.usefixtures("enable_build_slices")
     def test_cut_build_slices_rerun_same_slices(self, mocker, new_dir, partitions):
