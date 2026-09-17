@@ -22,8 +22,10 @@ import logging
 import multiprocessing
 import os
 import shutil
+import subprocess
 import sys
 from collections.abc import Callable
+from dataclasses import dataclass
 from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar
@@ -41,11 +43,21 @@ logger = logging.getLogger(__name__)
 _T = TypeVar("_T")
 
 
+@dataclass(frozen=True)
+class BindMount:
+    """A bind mount to make available inside a chroot."""
+
+    source: Path
+    target: Path
+    read_only: bool = False
+
+
 def chroot(
     path: Path,
     target: Callable[..., _T],
     *args: Any,
     use_host_sources: bool = False,
+    bind_mounts: Sequence[BindMount] = (),
     **kwargs: Any,
 ) -> _T:
     """Execute a callable in a chroot environment.
@@ -56,6 +68,7 @@ def chroot(
     :param kwargs: Keyword arguments for target.
     :param use_host_sources: Whether overlay steps should also include the repository
       sources defined on the host.
+    :param bind_mounts: Additional paths to bind mount inside the chroot.
 
     :returns: The target function return value.
     """
@@ -84,14 +97,26 @@ def chroot(
         target=_runner, args=(Path(path), child_conn, target, args, kwargs)
     )
     logger.debug("[pid=%d] set up chroot", os.getpid())
-    _setup_chroot(path, use_host_sources=use_host_sources)
+    extra_mounts = [
+        (
+            _ReadOnlyBindMount(mount.source, mount.target, skip_missing=False)
+            if mount.read_only
+            else _BindMount(mount.source, mount.target, skip_missing=False)
+        )
+        for mount in bind_mounts
+    ]
     try:
+        _setup_chroot(
+            path, use_host_sources=use_host_sources, extra_mounts=extra_mounts
+        )
         child.start()
         res, err = parent_conn.recv()
         child.join()
     finally:
         logger.debug("[pid=%d] clean up chroot", os.getpid())
-        _cleanup_chroot(path, use_host_sources=use_host_sources)
+        _cleanup_chroot(
+            path, use_host_sources=use_host_sources, extra_mounts=extra_mounts
+        )
 
     if isinstance(err, str):
         raise errors.OverlayChrootExecutionError(err)
@@ -139,7 +164,9 @@ def _host_compatible_chroot(path: Path) -> None:
     _compare_os_release(host_os_release, chroot_os_release)
 
 
-def _setup_chroot(path: Path, *, use_host_sources: bool) -> None:
+def _setup_chroot(
+    path: Path, *, use_host_sources: bool, extra_mounts: Sequence[_Mount] = ()
+) -> None:
     """Prepare the chroot environment before executing the target function."""
     logger.debug("setup chroot: %r", path)
     if sys.platform == "linux":
@@ -150,11 +177,16 @@ def _setup_chroot(path: Path, *, use_host_sources: bool) -> None:
             _host_compatible_chroot(path)
             _setup_chroot_mounts(path, _ubuntu_apt_mounts)
 
+        _setup_chroot_mounts(path, extra_mounts)
 
-def _cleanup_chroot(path: Path, *, use_host_sources: bool) -> None:
+
+def _cleanup_chroot(
+    path: Path, *, use_host_sources: bool, extra_mounts: Sequence[_Mount] = ()
+) -> None:
     """Clean the chroot environment after executing the target function."""
     logger.debug("cleanup chroot: %r", path)
     if sys.platform == "linux":
+        _cleanup_chroot_mounts(path, extra_mounts)
         _cleanup_chroot_mounts(path, _linux_mounts)
 
         if use_host_sources:
@@ -186,6 +218,7 @@ class _Mount:
         self.dst = Path(dst)
         self.args = [*args]
         self.skip_missing = skip_missing
+        self._mounted = False
 
         if fstype is not None:
             self.args.append(f"-t{fstype}")
@@ -231,10 +264,14 @@ class _Mount:
             return
         self.create_dst(chroot)
         self._mount(self.src, chroot, *self.args, *args)
+        self._mounted = True
 
     def unmount_from(self, chroot: Path, *args: str) -> None:
         """Unmount `self.dst` within chroot."""
         logger.debug(f"Mounting {self.dst}")
+        if not self._mounted:
+            return
+
         if self.skip_missing and not self.dst_exists(chroot):
             abs_dst = self.get_abs_path(chroot, self.dst)
             logger.warning("[pid=%d] umount: %r not found!", os.getpid(), abs_dst)
@@ -247,6 +284,7 @@ class _Mount:
         os_utils.mount(abs_dst, None, "--make-rprivate")
 
         self._umount(chroot, *args)
+        self._mounted = False
 
 
 class _BindMount(_Mount):
@@ -306,6 +344,17 @@ class _RBindMount(_BindMount):
 
     def _umount(self, chroot: Path, *args: str) -> None:
         super()._umount(chroot, *args, "--lazy")
+
+
+class _ReadOnlyBindMount(_BindMount):
+    def _mount(self, src: Path, chroot: Path, *args: str) -> None:
+        super()._mount(src, chroot, *args)
+        abs_dst = self.get_abs_path(chroot, self.dst)
+        try:
+            os_utils.mount(abs_dst, None, "-o", "remount,bind,ro")
+        except subprocess.CalledProcessError:
+            self._umount(chroot)
+            raise
 
 
 class _TempFSClone(_Mount):
