@@ -40,21 +40,29 @@ During the build step, the plugin performs the following actions:
 #. Copy all contents and preserve the directory structure to the part's install
    directory.
 
-Example
--------
+Examples
+--------
 
-The following snippet declares a part using the Dump plugin with the local directory
-as the source. It also declares an ``after`` dependency on the ``nginx`` part and uses
-``organize`` to introduce the ``nginx.conf`` and ``default.conf`` files:
+The following example declares a part using the Dump plugin with the directory
+containing the project file as its source. The source directory structure is
+preserved in the part's install directory.
+
+.. code-block:: yaml
+
+  parts:
+    assets:
+      plugin: dump
+      source: .
+
+The following example declares a part that uses ``organize`` to place selected
+source files at specific locations in the part's install directory.
 
 .. code-block:: yaml
 
   parts:
     config:
       plugin: dump
-      after:
-        - nginx
-      source: .
+      source: ./files
       organize:
-        nginx.conf: etc/nginx/nginx.conf
-        default.conf: etc/nginx/conf.d/default.conf
+        my-app.service: usr/lib/systemd/system/my-app.service
+        my-app.conf: etc/my-app/my-app.conf
