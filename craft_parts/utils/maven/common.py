@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
-from lxml import etree
+from lxml import etree  # ty: ignore[unresolved-import]
 from semver import Version
 from typing_extensions import Self, override
 
