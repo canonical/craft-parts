@@ -84,6 +84,19 @@ def test_validate_environment_invalid_fpc(dependency_fixture, plugin):
     assert raised.value.reason == "invalid fpc compiler version ''"
 
 
+@pytest.mark.parametrize("version", ["3.2", "3.2.2rc1", "3.2.2-r12345", "Free Pascal"])
+def test_validate_environment_unexpected_version(dependency_fixture, plugin, version):
+    fpc = dependency_fixture("fpc", output=version)
+
+    validator = plugin.validator_class(
+        part_name="my-part", env=f"PATH={str(fpc.parent)}", properties=plugin._options
+    )
+    with pytest.raises(errors.PluginEnvironmentValidationError) as raised:
+        validator.validate_environment()
+
+    assert raised.value.reason == f"invalid fpc compiler version {version!r}"
+
+
 def test_validate_environment_with_fpc_part(plugin):
     validator = plugin.validator_class(
         part_name="my-part", env="PATH=/foo", properties=plugin._options

@@ -30,7 +30,7 @@ from . import validator
 from .base import Plugin
 from .properties import PluginProperties
 
-_VERSION_PATTERN = re.compile(r"^\d+\.\d+")
+_VERSION_PATTERN = re.compile(r"\d+\.\d+\.\d+")
 
 
 class FpcPluginProperties(PluginProperties, frozen=True):
@@ -71,7 +71,7 @@ class FpcPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
             part_dependencies=part_dependencies,
             argument="-iV",
         )
-        if not _VERSION_PATTERN.match(version) and (
+        if not _VERSION_PATTERN.fullmatch(version) and (
             part_dependencies is None or "fpc-deps" not in part_dependencies
         ):
             raise errors.PluginEnvironmentValidationError(
