@@ -198,6 +198,7 @@ class TestStepHandlerBuiltins:
                 f'export CRAFT_ARCH_TRIPLET_BUILD_FOR="{triplet}"',
                 'export CRAFT_PARALLEL_BUILD_COUNT="1"',
                 f'export CRAFT_PROJECT_DIR="{new_dir}"',
+                'export DEBIAN_FRONTEND="noninteractive"',
                 *partition_script_lines,
                 f'export CRAFT_STAGE="{new_dir}/stage"',
                 f'export CRAFT_PRIME="{new_dir}/prime"',
@@ -308,7 +309,7 @@ class TestStepHandlerBuiltins:
 
     def test_run_builtin_invalid(self, new_dir):
         sh = _step_handler_for_step(
-            999,  # type: ignore[reportGeneralTypeIssues]
+            999,  # ty: ignore[invalid-argument-type]
             cache_dir=new_dir,
             part_info=self._part_info,
             part=self._part,

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
+from craft_parts.packages import errors
 from craft_parts.packages.deb_package import DebPackage
 
 
@@ -47,3 +49,37 @@ def test_parse_version():
     assert DebPackage.from_unparsed("foo=4.5") == DebPackage(
         name="foo", arch=None, version="4.5"
     )
+
+
+def test_parse_arch_and_version_new_separator():
+    assert DebPackage.from_unparsed("foo:arch@4.5") == DebPackage(
+        name="foo", arch="arch", version="4.5"
+    )
+
+
+def test_parse_version_new_separator():
+    assert DebPackage.from_unparsed("foo@4.5") == DebPackage(
+        name="foo", arch=None, version="4.5"
+    )
+
+
+@pytest.mark.parametrize(
+    "package",
+    [
+        "foo @ 4.5",
+        "foo@ 4.5",
+        "foo @4.5",
+        "foo = 4.5",
+        "foo= 4.5",
+        "foo =4.5",
+        "foo@4.5=1.0",
+        "foo=",
+        "foo@",
+        "foo:arch=",
+        "foo:arch =1.5",
+        "foo:arch@ 1.5",
+    ],
+)
+def test_parse_rejects_invalid_format(package):
+    with pytest.raises(errors.DebPackageInvalidFormatError):
+        DebPackage.from_unparsed(package)

@@ -19,26 +19,29 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
 Unreleased
 ----------
 
 New features:
 
-- The ``colcon`` plugin now passes ``-DBUILD_TESTING=OFF`` to CMake by default,
-  disabling test targets that are not useful inside a rock or snap and would
-  otherwise pull in large test-only dependencies. Users can opt back in by
-  passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
+- Verify conflicts between namespaced part names during parts validation.
+
+- Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS
+  certificates.
+
+- Craft Parts now always ignores Ubuntu's phased updates when installing
+  build packages or fetching stage packages, so the latest available version
+  of each package is used.
 
 Bug fixes:
 
-- The Overlay and Build steps of parts that organize content to the overlay
-  are executed before these steps in other parts, even when ``after`` is
-  used.
-- Fix the ``colcon`` plugin to declare ``make`` and
-  ``python3-colcon-recursive-crawl`` as explicit build packages. Both are only
-  *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
-  they were absent when packages are installed with ``--no-install-recommends``,
-  causing builds to fail.
+- The ``qmake`` plugin recognizes ``source-subdir`` if the part declares it,
+  keeping compatibility in cases where ``qmake-project-file`` was also set.
+
+- Add ``build-environment`` values to the build state to rebuild parts when the
+  environment declaration changes.
+  
 - Fix transient build failures when installing build snaps. A failed store
   query through snapd (for example while snapd is restarting shortly after a
   build instance is created) caused the snap installation to be silently
@@ -47,6 +50,99 @@ Bug fixes:
   example the ``uv`` plugin with ``build-snaps: [astral-uv]``). Store queries
   are now retried with a delay between attempts, and installation is
   attempted even if the query still fails.
+
+
+.. _release-2.36.0:
+
+2.36.0 (2026-08-31)
+-------------------
+
+New features:
+
+- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
+  snap name and channel.
+
+- Allow ``stage-packages`` and ``build-packages`` to use the ``@`` separator
+  between a deb package name and its version, in addition to the existing
+  ``=`` separator.
+
+- Add ``overlay-recommended-packages`` key to install overlay packages with their
+  recommended dependencies.
+
+- The ``colcon`` plugin now passes ``-DBUILD_TESTING=OFF`` to CMake by default,
+  disabling test targets that are not useful inside a rock or snap and would
+  otherwise pull in large test-only dependencies. Users can opt back in by
+  passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
+
+- Add a ``stage-slices`` key to declare Chisel slices separately from the
+  ``stage-packages`` key.
+
+- Add a ``stage_packages_slice_support`` parameter to the ``LifecycleManager``
+  so applications can control whether Chisel slices can be declared in the
+  ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
+  should set this to False and use the ``stage-slices`` key instead.
+
+- Add the request URL to the error message for package download errors.
+
+- Add part name and resolution to error message for source checksum mismatch.
+
+Bug fixes:
+
+- Generalize the ``PartitionUsageError`` resolution message to cover invalid
+  partition usage beyond invalid partition names.
+
+- The Overlay and Build steps of parts that organize content to the overlay
+  are executed before these steps in other parts, even when ``after`` is
+  used.
+
+- Skip organization when the resolved destination path and the source path
+  are the same.
+- Refresh the APT cache before marking packages for installation, ensuring
+  the correct package versions are resolved.
+- Use fork context for chroot operations to fix execution on Python 3.14.
+- Check out the commit before updating submodules, preventing errors when
+  the submodule state does not match the checked-out commit.
+- Preserve package architecture information in primed stage packages.
+
+For a complete list of commits, check out the `2.36.0`_ release on GitHub.
+
+.. _release-2.35.1:
+
+2.35.1 (2026-08-27)
+-------------------
+
+Bug fixes:
+
+- (Poetry plugin) Don't install the Poetry export plugin if a ``poetry-deps`` part
+  is provided.
+- `#1458 <https://github.com/canonical/craft-parts/issues/1458>`_ Build step fails on
+  special files
+- The Overlay and Build steps of parts that organize content to the overlay
+  are executed before these steps in other parts, even when ``after`` is used.
+- Fix the ``colcon`` plugin to declare ``make`` and
+  ``python3-colcon-recursive-crawl`` as explicit build packages. Both are only
+  *recommended* (not depended on) by ``cmake`` and ``colcon`` respectively, so
+  they were absent when packages are installed with ``--no-install-recommends``,
+  causing builds to fail.
+- Set ``DEBIAN_FRONTEND=noninteractive`` in the global execution environment,
+  so all steps run non-interactively by default.
+- Add git source mutual exclusivity to JSON schema.
+- Normalize leading slashes in migration paths, fixing application of permissions
+  and ownership in files specified with absolute paths.
+
+For a complete list of commits, check out the `2.35.1`_ release on GitHub.
+
+.. _release-2.34.1:
+
+2.34.1 (2026-07-09)
+-------------------
+
+Bug fixes:
+
+- (Poetry plugin) Don't install the Poetry export plugin if a ``poetry-deps`` part
+  is provided.
+
+For a complete list of commits, check out the `2.34.1`_ release on GitHub.
 
 .. _release-2.33.1:
 
@@ -1782,7 +1878,10 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.36.0: https://github.com/canonical/craft-parts/releases/tag/2.36.0
+.. _2.35.1: https://github.com/canonical/craft-parts/releases/tag/2.35.1
 .. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
+.. _2.34.1: https://github.com/canonical/craft-parts/releases/tag/2.34.1
 .. _2.34.0: https://github.com/canonical/craft-parts/releases/tag/2.34.0
 .. _2.33.1: https://github.com/canonical/craft-parts/releases/tag/2.33.1
 .. _2.33.0: https://github.com/canonical/craft-parts/releases/tag/2.33.0

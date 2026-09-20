@@ -126,7 +126,7 @@ class ProjectVar(pydantic.BaseModel):
         :raise TypeError: If data is not a dict.
         :raise pydantic.ValidationError: If the data fails validation.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("Project variable must be a dictionary.")
 
         return cls.model_validate(data)
@@ -180,7 +180,7 @@ class ProjectVarInfo(pydantic.RootModel[dict[str, "ProjectVar | ProjectVarInfo"]
         :raise TypeError: If data is not a dict.
         :raise pydantic.ValidationError: If the data fails validation.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("Project variable info must be a dictionary.")
 
         return cls.model_validate(data)
@@ -420,6 +420,8 @@ class ProjectInfo:
     :param filesystem_mounts: A dict of filesystem_mounts.
     :param usrmerged_by_default: Whether the parts' install dirs should be filled with
         usrmerge-safe directories and symlinks prior to a part's build.
+    :param stage_packages_slice_support: Whether Chisel slices can be declared
+        in the `stage-packages` key.
     """
 
     def __init__(  # noqa: PLR0913
@@ -440,6 +442,7 @@ class ProjectInfo:
         base_layer_dir: Path | None = None,
         base_layer_hash: bytes | None = None,
         usrmerged_by_default: bool = False,
+        stage_packages_slice_support: bool = True,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         if arch and arch not in _DEB_TO_TRIPLET:
@@ -468,6 +471,7 @@ class ProjectInfo:
         self._base_layer_hash = base_layer_hash
         self.global_environment: dict[str, str] = {}
         self._usrmerged_by_default = usrmerged_by_default
+        self._stage_packages_slice_support = stage_packages_slice_support
 
         self.execution_finished = False
 
@@ -589,6 +593,11 @@ class ProjectInfo:
     def base(self) -> str:
         """Return the project build base."""
         return self._base
+
+    @property
+    def stage_packages_slice_support(self) -> bool:
+        """Return whether Chisel slices may be declared in stage-packages."""
+        return self._stage_packages_slice_support
 
     @property
     def dirs(self) -> ProjectDirs:

@@ -144,7 +144,7 @@ def test_python_plugin_bundled_in_part(new_dir, partitions):
             plugin: python
             source: {source_location}
             stage-packages: [python3]
-            python-packages: [black]
+            python-packages: [black~=26.0]
             python-requirements: [requirements.txt]
         """
     )

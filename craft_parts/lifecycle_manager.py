@@ -20,7 +20,7 @@ import os
 import re
 import sys
 from collections.abc import Iterable, Sequence
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, cast
 
 from pydantic import ValidationError
@@ -92,6 +92,9 @@ class LifecycleManager:
         sources defined on the host.
     :param build_environment: An iterable of environment variables in name=value format
         to be set during the build step.
+    :param stage_packages_slice_support: Whether Chisel slices can be declared in the
+        `stage-packages` key. Defaults to True for backward compatibility, but new apps
+        should set this to False and use the `stage-slices` key instead.
     :param custom_args: Any additional arguments that will be passed directly
         to callbacks.
     """
@@ -123,6 +126,7 @@ class LifecycleManager:
         usrmerged_by_default: bool = False,
         use_host_sources: bool = False,
         build_environment: Iterable[str] | None = None,
+        stage_packages_slice_support: bool = True,
         **custom_args: Any,  # custom passthrough args
     ) -> None:
         # pylint: disable=too-many-locals
@@ -130,7 +134,7 @@ class LifecycleManager:
         if not re.match("^[A-Za-z][0-9A-Za-z_]*$", application_name):
             raise errors.InvalidApplicationName(application_name)
 
-        if not isinstance(all_parts, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(all_parts, dict):
             raise TypeError("parts definition must be a dictionary")
 
         if not application_package_name:
@@ -165,6 +169,7 @@ class LifecycleManager:
             base_layer_dir=base_layer_dir,
             base_layer_hash=base_layer_hash,
             usrmerged_by_default=usrmerged_by_default,
+            stage_packages_slice_support=stage_packages_slice_support,
             **custom_args,
         )
 
@@ -172,9 +177,18 @@ class LifecycleManager:
 
         executor.expand_environment(parts_data, info=project_info)
 
+        _validate_part_names(parts_data)
+
         part_list: list[Part] = []
         for name, spec in parts_data.items():
-            part = _build_part(name, spec, project_dirs, strict_mode, partitions)
+            part = _build_part(
+                name,
+                spec,
+                project_dirs,
+                strict_mode,
+                partitions,
+                stage_packages_slice_support=stage_packages_slice_support,
+            )
             _validate_part_dependencies(part, parts_data)
             part_list.append(part)
 
@@ -187,7 +201,7 @@ class LifecycleManager:
         if self._needs_chisel and not self._has_chisel:
             if extra_build_snaps is None:
                 extra_build_snaps = []
-            extra_build_snaps.append("chisel/latest/stable")
+            extra_build_snaps.append("chisel@latest/stable")
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay or self._organizes_to_overlay:
@@ -342,15 +356,19 @@ def _build_part(
     project_dirs: ProjectDirs,
     strict_plugins: bool,  # noqa: FBT001
     partitions: list[str] | None,
+    *,
+    stage_packages_slice_support: bool = True,
 ) -> Part:
     """Create and populate a :class:`Part` object based on part specification data.
 
     :param spec: A dictionary containing the part specification.
     :param project_dirs: The project's work directories.
+    :param stage_packages_slice_support: Whether Chisel slices can be declared in the
+        `stage-packages` key.
 
     :return: A :class:`Part` object corresponding to the given part specification.
     """
-    if not isinstance(spec, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+    if not isinstance(spec, dict):
         raise errors.PartSpecificationError(
             part_name=name, message="part definition is malformed"
         )
@@ -393,6 +411,7 @@ def _build_part(
         project_dirs=project_dirs,
         plugin_properties=properties,
         partitions=partitions,
+        stage_packages_slice_support=stage_packages_slice_support,
     )
 
 
@@ -400,3 +419,48 @@ def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
     for name in part.dependencies:
         if name not in parts_data:
             raise errors.InvalidPartName(name)
+
+
+def _validate_part_names(parts_data: dict[str, Any]) -> None:
+    """Validate that no part name conflicts with another.
+
+    A part name conflicts with another when one part name is nested inside
+    another, e.g. ``foo`` and ``foo/bar``. Nested parts are undefined and may
+    cause a broken build.
+
+    :param parts_data: A mapping of part names to their specification data.
+
+    :raises PartNameConflict: if a conflict is detected.
+    """
+    part_names = list(parts_data.keys())
+
+    for i, part_name in enumerate(part_names):
+        for other_name in part_names[i + 1 :]:
+            if _part_names_conflict(part_name, other_name):
+                nested, parent = (
+                    (part_name, other_name)
+                    if len(PurePosixPath(part_name).parts)
+                    > len(PurePosixPath(other_name).parts)
+                    else (other_name, part_name)
+                )
+                raise errors.PartNameConflict(
+                    part_name=nested, conflicting_part_name=parent
+                )
+
+
+def _part_names_conflict(a: str, b: str) -> bool:
+    """Return whether one part name is nested inside another.
+
+    Two part names conflict when one is a path prefix of the other. For
+    example, ``foo`` and ``foo/bar`` conflict, but ``foo/bar`` and
+    ``foo/baz`` do not.
+
+    :param a: First part name.
+    :param b: Second part name.
+
+    :returns: True if the part names conflict.
+    """
+    a_path = PurePosixPath(a)
+    b_path = PurePosixPath(b)
+
+    return a_path.is_relative_to(b_path) or b_path.is_relative_to(a_path)

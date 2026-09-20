@@ -21,14 +21,14 @@ import craft_parts
 import pytest
 import yaml
 from craft_parts import Step
-from craft_parts.packages import deb
-from craft_parts.packages.deb import _is_list_of_slices
+from craft_parts.packages import base, deb
+from craft_parts.utils.deb_utils import has_slices
 
 
 def test_is_list_of_slices():
-    assert _is_list_of_slices(["package1_slice1", "package1_slice2", "package2_slice2"])
-    assert not _is_list_of_slices(["package1", "package2"])
-    assert not _is_list_of_slices([])
+    assert has_slices(["package1_slice1", "package1_slice2", "package2_slice2"])
+    assert not has_slices(["package1", "package2"])
+    assert not has_slices([])
 
 
 def test_fetch_stage_slices(tmp_path, fake_apt_cache):
@@ -42,7 +42,6 @@ def test_fetch_stage_slices(tmp_path, fake_apt_cache):
         stage_packages_path=stage_dir,
         base="unused",
         arch="unused",
-        list_only=False,
     )
 
     assert fetched_slices == slices
@@ -53,7 +52,7 @@ def test_fetch_stage_slices(tmp_path, fake_apt_cache):
     assert not fake_apt_cache.called
 
 
-def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run, mocker):
+def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_process_run, mocker):
     stage_dir = tmp_path / "stage"
     stage_dir.mkdir()
 
@@ -68,7 +67,8 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run, mocker):
         stage_packages_path=stage_dir, install_path=install_dir, stage_packages=slices
     )
 
-    fake_deb_run.assert_called_once_with(
+    logger = base.logger
+    fake_process_run.assert_called_once_with(
         [
             "chisel",
             "cut",
@@ -77,7 +77,8 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run, mocker):
             f"--root={install_dir}",
             "package1_slice1",
             "package2_slice2",
-        ]
+        ],
+        logger.debug,
     )
 
     # Make sure the contents of the cut slices have been normalized.
@@ -85,7 +86,7 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_deb_run, mocker):
 
 
 @pytest.mark.slow
-def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):
+def test_chisel_pull_build(new_dir, fake_apt_cache, fake_process_run):
     """Test the combination of 'pulling' and 'building' chisel slices."""
     _parts_yaml = textwrap.dedent(
         """\
@@ -109,7 +110,8 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):
 
     install_dir = lf.project_info.parts_dir / "foo/install"
 
-    fake_deb_run.assert_called_once_with(
+    logger = base.logger
+    fake_process_run.assert_called_once_with(
         [
             "chisel",
             "cut",
@@ -118,5 +120,6 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_deb_run):
             f"--root={install_dir}",
             "package1_slice1",
             "package2_slice2",
-        ]
+        ],
+        logger.debug,
     )

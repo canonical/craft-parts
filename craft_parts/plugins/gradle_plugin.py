@@ -58,7 +58,7 @@ class GradlePluginProperties(PluginProperties, frozen=True):
     gradle_use_daemon: bool = False
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
     @model_validator(mode="after")
     def gradle_task_defined(self) -> Self:
@@ -86,11 +86,11 @@ class GradlePlugin(JavaPlugin):
 
     The Gradle build system is commonly used to build Java projects. This
     plugin requires a build.gradle in the root of the source tree.
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
 
     - gradle-init-script:
       (string)

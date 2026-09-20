@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Allow redefinition in order to include parent tests below.
-# mypy: disable-error-code="no-redef"
-
 import os
 import textwrap
 from itertools import chain
@@ -24,7 +21,7 @@ from pathlib import Path
 
 import craft_parts
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 import yaml
 from craft_parts import Step
 
@@ -32,7 +29,7 @@ from tests.integration.lifecycle import test_lifecycle
 
 # This wildcard import has pytest run any non-overridden lifecycle tests here.
 # pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
-from tests.integration.lifecycle.test_lifecycle import *  # noqa: F403  # pyright: ignore[reportGeneralTypeIssues,reportAssignmentType]
+from tests.integration.lifecycle.test_lifecycle import *  # noqa: F403
 
 basic_parts_yaml = textwrap.dedent(
     """\
