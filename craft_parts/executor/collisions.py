@@ -75,7 +75,8 @@ def _get_candidate_from_install_dir(
         return None
 
     stage_fileset = filesets.Fileset(stage_files, name="stage")
-    srcdir = part.part_install_dirs[partition]
+    resolved_partition = part.default_partition if partition is None else partition
+    srcdir = part.part_install_dirs[resolved_partition]
     part_files, part_directories = filesets.migratable_filesets(
         stage_fileset,
         srcdir,
@@ -87,7 +88,7 @@ def _get_candidate_from_install_dir(
     return StageCandidate(
         part_name=part.name,
         contents=part_contents,
-        source_dir=part.part_install_dirs[partition],
+        source_dir=srcdir,
         permissions=part.spec.permissions,
         is_overlay=False,
     )
@@ -133,14 +134,18 @@ def _get_candidates_from_overlay(
     candidates: list[StageCandidate] = []
     parts_with_overlay = [p for p in part_list if p.has_overlay]
     for i, part in enumerate(parts_with_overlay):
-        part_layer_dir = part.part_layer_dirs[partition]
+        resolved_partition = part.default_partition if partition is None else partition
+        part_layer_dir = part.part_layer_dirs[resolved_partition]
 
         # Start with all files and directories from that part's layer...
         files, dirs = _get_overlay_layer_contents(part_layer_dir)
 
         # ... and progressively remove the items that are hidden by "higher" layers.
         for upper_part in parts_with_overlay[i + 1 :]:
-            upper_layer_dir = upper_part.part_layer_dirs[partition]
+            upper_resolved_partition = (
+                upper_part.default_partition if partition is None else partition
+            )
+            upper_layer_dir = upper_part.part_layer_dirs[upper_resolved_partition]
             visible_files, visible_dirs = overlays.visible_in_layer(
                 part_layer_dir,
                 upper_layer_dir,
