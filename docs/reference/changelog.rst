@@ -36,6 +36,14 @@ New features:
   build packages or fetching stage packages, so the latest available version
   of each package is used.
 
+Bug fixes:
+
+- The ``qmake`` plugin recognizes ``source-subdir`` if the part declares it,
+  keeping compatibility in cases where ``qmake-project-file`` was also set.
+
+- Add ``build-environment`` values to the build state to rebuild parts when the
+  environment declaration changes.
+
 
 .. _release-2.36.0:
 
