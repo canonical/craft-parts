@@ -40,7 +40,7 @@ class MavenUsePluginProperties(PluginProperties, frozen=True):
     maven_use_parameters: list[str] = []
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MavenUsePluginEnvironmentValidator(validator.PluginEnvironmentValidator):

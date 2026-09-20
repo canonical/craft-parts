@@ -53,7 +53,7 @@ class PoetryPluginProperties(PluginProperties, frozen=True):
     )
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class PoetryPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -158,6 +158,16 @@ class PoetryPlugin(BasePythonPlugin):
             # Check that the virtualenv is consistent.
             f"{pip} check",
         ]
+
+    @override
+    def get_build_environment(self) -> dict[str, str]:
+        """Return a dictionary with the environment to use in the build step."""
+        env = super().get_build_environment()
+        # Poetry's HTTPS requests go through Python's requests/urllib3/certifi,
+        # which uses a bundled CA bundle by default. Point it at the OS CA bundle.
+        # User build-environment entries are applied later and can still override this.
+        env["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
+        return env
 
     @override
     def _get_package_install_commands(self) -> list[str]:

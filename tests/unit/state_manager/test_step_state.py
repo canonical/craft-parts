@@ -219,7 +219,7 @@ class TestStepState:
         }
 
     def test_ignore_additional_data(self):
-        state = SomeStepState(extra="something")  # type: ignore[reportGeneralTypeIssues]
+        state = SomeStepState.model_validate({"extra": "something"})
         assert state.marshal() == {
             "partition": None,
             "part-properties": {},

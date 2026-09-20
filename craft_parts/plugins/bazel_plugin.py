@@ -36,7 +36,7 @@ class BazelPluginProperties(PluginProperties, frozen=True):
     bazel_parameters: list[str] = []
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
     after: UniqueList[str] | None = None
 
 

@@ -58,7 +58,7 @@ class GradlePluginProperties(PluginProperties, frozen=True):
     gradle_use_daemon: bool = False
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
     @model_validator(mode="after")
     def gradle_task_defined(self) -> Self:

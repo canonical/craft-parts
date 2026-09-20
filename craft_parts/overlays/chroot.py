@@ -115,7 +115,7 @@ def _runner(
         res = target(*args, **kwargs)
     except Exception as exc:  # noqa: BLE001
         # Just send None for data since it won't be accessed anyways
-        conn.send((None, str(exc)))  # type: ignore[arg-type]
+        conn.send((None, str(exc)))  # ty: ignore[invalid-argument-type]
         return
 
     conn.send((res, None))

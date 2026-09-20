@@ -22,7 +22,7 @@ from typing import Any, cast
 from unittest.mock import call
 
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 from craft_parts import ProjectDirs, errors, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler
@@ -1352,7 +1352,7 @@ class TestDirs:
 
         for i, p in enumerate(partitions or (None,)):
             partition_dir = Path()
-            if p and p != "default":
+            if p is not None and p != "default":
                 partition_dir = Path("partitions", p)
 
             for d in ["parts", "overlay", "prime", "stage"]:
