@@ -57,6 +57,7 @@ class ProjectDirs:
         self.stage_dir = self.work_dir / "stage"
         self.backstage_dir = self.work_dir / "backstage"
         self.prime_dir = self.work_dir / "prime"
+        self.build_slices_dir = self.work_dir / "build-slices"
         if partitions:
             self._partitions: Sequence[str] | None = partitions
             self.partition_dir: Path | None = self.work_dir / "partitions"
