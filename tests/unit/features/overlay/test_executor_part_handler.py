@@ -701,7 +701,8 @@ class TestOverlayMigration:
         self._p3_handler.clean_step(step)
         assert Path(f"{step_dir}/bar").exists()
         if step == Step.STAGE:
-            assert Path(f"{step_dir}/file1").exists()  # file1 remains (also belongs to p1)
+            # file1 remains (also belongs to p1)
+            assert Path(f"{step_dir}/file1").exists()
         else:
             assert Path(f"{step_dir}/file1").exists() is False
 

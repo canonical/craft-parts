@@ -29,7 +29,9 @@ from craft_parts.executor import Fileset, filesets
 )
 def test_fileset(tc_data, tc_entries, tc_includes, tc_excludes):
     fs = Fileset(tc_data)
-    assert fs.entries == [filesets.normalize_entry(entry, "default") for entry in tc_entries]
+    assert fs.entries == [
+        filesets.normalize_entry(entry, "default") for entry in tc_entries
+    ]
     assert fs.includes == [
         filesets.normalize_entry(entry, "default") for entry in tc_includes
     ]

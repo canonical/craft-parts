@@ -403,15 +403,18 @@ class TestPartHandling:
         assert run_builtin_mock.mock_calls == []
 
         if step in {Step.STAGE, Step.PRIME}:
-            assert list(
-                handler._run_step(
-                    step_info=step_info,
-                    scriptlet_name=scriptlet,
-                    work_dir=Path(),
-                    stdout=None,
-                    stderr=None,
-                ).partitions_contents
-            ) == part_info.partitions
+            assert (
+                list(
+                    handler._run_step(
+                        step_info=step_info,
+                        scriptlet_name=scriptlet,
+                        work_dir=Path(),
+                        stdout=None,
+                        stderr=None,
+                    ).partitions_contents
+                )
+                == part_info.partitions
+            )
 
     # pylint: enable=too-many-arguments
 
