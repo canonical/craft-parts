@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import dataclasses
 import http.server
 import os
 import pathlib
@@ -21,6 +21,7 @@ import sys
 import tempfile
 import threading
 import types
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, NamedTuple
 from unittest import mock
@@ -175,6 +176,20 @@ def enable_overlay_and_partitions_features():
 
 
 @pytest.fixture
+def enable_build_slices():
+    current = dataclasses.asdict(Features())
+    Features.reset()
+
+    copied = deepcopy(current)
+    copied["enable_build_slices"] = True
+    Features(**copied)
+
+    yield
+    Features.reset()
+    Features(**current)
+
+
+@pytest.fixture
 def partitions():
     if Features().enable_partitions:
         return ["default", "mypart", "yourpart"]
@@ -192,8 +207,9 @@ def is_deb_based(mocker):
 def enable_all_features():
     assert Features().enable_overlay is False
     assert Features().enable_partitions is False
+    assert Features().enable_build_slices is False
     Features.reset()
-    Features(enable_overlay=True, enable_partitions=True)
+    Features(enable_overlay=True, enable_partitions=True, enable_build_slices=True)
 
     yield
 

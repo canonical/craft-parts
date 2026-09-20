@@ -53,6 +53,7 @@ class TestPartSpecs:
             "stage-slices": [],
             "build-snaps": ["build-snap1", "build-snap2"],
             "build-packages": ["build-pkg1", "build-pkg2"],
+            "build-slices": [],
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
             "build-attributes": ["attr1", "attr2"],
             "organize": {"src1": "dest1", "src2": "dest2"},
@@ -217,6 +218,18 @@ class TestPartSpecs:
         error = r"overlays not supported"
         with pytest.raises(pydantic.ValidationError, match=error):
             PartSpec.unmarshal(data)
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_marshal_unmarshal_build_slices(self, partitions):
+        data = {
+            "plugin": "nil",
+            "build-slices": ["pkg1_slice1", "pkg2_slices2"],
+        }
+
+        data_copy = deepcopy(data)
+
+        spec = PartSpec.unmarshal(data)
+        assert spec.marshal()["build-slices"] == data_copy["build-slices"]
 
 
 class TestPartPartitionUsage:
@@ -784,4 +797,33 @@ class TestPartValidation:
         data = {"plugin": "nil", "build-attributes": ["self-contained"]}
 
         with pytest.raises(errors.UnsupportedBuildAttributesError):
+            parts.validate_part(data)
+
+    def test_part_validate_build_slices_feature(self, partitions):
+        data = {"plugin": "nil", "build-slices": ["python3.12_standard"]}
+
+        with pytest.raises(
+            pydantic.ValidationError, match="The 'build-slices' key is not supported"
+        ):
+            parts.validate_part(data)
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_part_validate_build_slices_feature_enabled(self, partitions):
+        data = {"plugin": "nil", "build-slices": ["python3.12_standard"]}
+
+        # Should not raise an error when the feature is enabled
+        parts.validate_part(data)
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    @pytest.mark.parametrize("build_param", ["build-packages", "build-snaps"])
+    def test_part_validate_build_slices_other_types(self, partitions, build_param):
+        data = {
+            "plugin": "nil",
+            "build-slices": ["python3.12_standard"],
+            build_param: ["package1"],
+        }
+
+        # Should raise an error from conflicting package types
+        msg = "'build-slices' cannot be used with 'build-packages' or 'build-snaps'"
+        with pytest.raises(pydantic.ValidationError, match=re.escape(msg)):
             parts.validate_part(data)

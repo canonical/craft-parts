@@ -18,9 +18,11 @@ import os
 
 import pytest
 from craft_parts import errors
-from craft_parts.infos import PartInfo, ProjectInfo
+from craft_parts.executor import environment
+from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.parts import Part
 from craft_parts.plugins.npm_plugin import NpmPlugin
+from craft_parts.steps import Step
 from pydantic import ValidationError
 
 # pylint: disable=too-many-public-methods
@@ -207,7 +209,10 @@ class TestPluginNpmPlugin:
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
-        assert plugin.get_build_environment() == {"NODE_ENV": "production"}
+        assert plugin.get_build_environment() == {
+            "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
+        }
 
     def test_get_build_environment_include_node_false(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal(
@@ -218,7 +223,10 @@ class TestPluginNpmPlugin:
         )
         plugin = NpmPlugin(properties=properties, part_info=part_info)
 
-        assert plugin.get_build_environment() == {"NODE_ENV": "production"}
+        assert plugin.get_build_environment() == {
+            "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
+        }
 
     def test_get_build_environment_include_node_true(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal(
@@ -233,7 +241,34 @@ class TestPluginNpmPlugin:
         assert plugin.get_build_environment() == {
             "PATH": "${CRAFT_PART_INSTALL}/bin:${PATH}",
             "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
         }
+
+    def test_build_environment_user_tls_settings_override_plugin_default(self, new_dir):
+        """User-defined build-environment values must win in the final build env."""
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part = Part("my-part", {"build-environment": [{"NODE_USE_SYSTEM_CA": "0"}]})
+        part_info = PartInfo(project_info=info, part=part)
+        step_info = StepInfo(part_info=part_info, step=Step.BUILD)
+        plugin = NpmPlugin(
+            properties=NpmPlugin.properties_class.unmarshal({"source": "."}),
+            part_info=part_info,
+        )
+
+        build_environment = environment.generate_step_environment(
+            part=part, plugin=plugin, step_info=step_info
+        )
+
+        exports = [
+            line
+            for line in build_environment.splitlines()
+            if line.startswith("export NODE_USE_SYSTEM_CA=")
+        ]
+
+        assert exports == [
+            'export NODE_USE_SYSTEM_CA="1"',
+            'export NODE_USE_SYSTEM_CA="0"',
+        ]
 
     def test_get_build_commands(self, part_info, new_dir):
         properties = NpmPlugin.properties_class.unmarshal({"source": "."})

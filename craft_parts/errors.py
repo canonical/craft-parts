@@ -138,6 +138,24 @@ class InvalidPartName(PartsError):  # noqa: N818
         super().__init__(brief=brief, resolution=resolution)
 
 
+class PartNameConflict(PartsError):  # noqa: N818
+    """A part name conflicts with another part name because one is nested inside the other.
+
+    :param part_name: The part name being processed.
+    :param conflicting_part_name: The conflicting part name.
+    """
+
+    def __init__(self, *, part_name: str, conflicting_part_name: str) -> None:
+        self.part_name = part_name
+        self.conflicting_part_name = conflicting_part_name
+        brief = f"Part {part_name!r} conflicts with {conflicting_part_name!r}."
+        resolution = (
+            "Review the parts definition and make sure part names do not conflict."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
 class InvalidArchitecture(PartsError):  # noqa: N818
     """The machine architecture is not supported.
 

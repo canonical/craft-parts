@@ -29,7 +29,6 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Callable, Sequence
-from io import StringIO
 from pathlib import Path
 from typing import Any, TypeVar
 
@@ -37,7 +36,7 @@ import zstandard
 
 from craft_parts.utils import deb_utils, file_utils, os_utils
 
-from . import errors
+from . import chisel, errors
 from .base import BaseRepository, get_pkg_name_parts, mark_origin_stage_package
 from .deb_package import DebPackage
 from .normalize import normalize
@@ -979,27 +978,7 @@ class Ubuntu(BaseRepository):
         :param stage_packages: The list of names of slices to cut.
         :param install_path: The destination directory.
         """
-        output_stream = StringIO()
-        handler = logging.StreamHandler(stream=output_stream)
-        logger.addHandler(handler)
-        try:
-            process_run(
-                [
-                    "chisel",
-                    "cut",
-                    "--ignore=unmaintained",
-                    "--ignore=unstable",
-                    f"--root={install_path}",
-                    *stage_packages,
-                ]
-            )
-        except subprocess.CalledProcessError as err:
-            command_output = output_stream.getvalue()
-            raise errors.ChiselError(
-                slices=stage_packages, output=command_output
-            ) from err
-        finally:
-            logger.removeHandler(handler)
+        chisel.cut_slices(slices=stage_packages, target_dir=install_path)
 
         normalize(install_path, repository=cls)
 

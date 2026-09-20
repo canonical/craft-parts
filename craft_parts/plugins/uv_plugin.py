@@ -136,6 +136,9 @@ class UvPlugin(BasePythonPlugin):
             "UV_COMPILE_BYTECODE": "1",
             "UV_PROJECT_ENVIRONMENT": venv_dir,
             "UV_FROZEN": "true",
+            "UV_SYSTEM_CERTS": "true",
+            # Keep the deprecated variable for compatibility with older uv versions.
+            "UV_NATIVE_TLS": "true",
             "UV_PYTHON_DOWNLOADS": "never",
             "UV_PYTHON": '"${PARTS_PYTHON_INTERPRETER}"',
             "UV_PYTHON_PREFERENCE": "only-system",

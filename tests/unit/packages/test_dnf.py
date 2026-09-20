@@ -133,7 +133,7 @@ def test_nomvp_check_installed_packages():
 def test_nomvp_download_packages():
     """Not implemented, raise an Error as it cannot be used."""
     with pytest.raises(NotImplementedError):
-        assert DNFRepository.download_packages([])
+        DNFRepository.download_packages([])
 
 
 def test_nomvp_is_package_installed():
