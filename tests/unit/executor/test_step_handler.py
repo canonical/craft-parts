@@ -157,7 +157,9 @@ class TestStepHandlerBuiltins:
         environment_script_path = Path(new_dir / "parts/p1/run/environment.sh")
         deb = _get_host_architecture()
         triplet = _DEB_TO_TRIPLET[deb]
-        default_partition = partitions[0] if partitions is not None else DEFAULT_PARTITION
+        default_partition = (
+            partitions[0] if partitions is not None else DEFAULT_PARTITION
+        )
         partition_script_lines = [
             f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
             f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
