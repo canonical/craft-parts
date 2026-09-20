@@ -31,10 +31,10 @@ These variable names will contain the (optional) namespace, partition name, and 
 
 When handling ``my-part``::
 
-  $CRAFT_OVERLAY                   -> overlay
-  $CRAFT_DEFAULT_OVERLAY           -> overlay
-  $CRAFT_KERNEL_OVERLAY            -> partitions/kernel/my-part/layer
-  $CRAFT_COMPONENT_BAR_BAZ_OVERLAY -> partitions/component/bar-baz/my-part/layer
+  $CRAFT_OVERLAY                   -> overlay/overlay
+  $CRAFT_DEFAULT_OVERLAY           -> parts/my-part/layer
+  $CRAFT_KERNEL_OVERLAY            -> partitions/kernel/parts/my-part/layer
+  $CRAFT_COMPONENT_BAR_BAZ_OVERLAY -> partitions/component/bar-baz/parts/my-part/layer
 
 When handling ``another-part``::
 
