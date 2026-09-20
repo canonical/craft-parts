@@ -28,8 +28,8 @@ working for external consumers:
 """
 
 import pytest
-from craft_parts.filesystem_mounts import FilesystemMount, FilesystemMountItem
 from craft_parts import Features, ProjectDirs, ProjectInfo
+from craft_parts.filesystem_mounts import FilesystemMount, FilesystemMountItem
 from craft_parts.parts import Part
 from craft_parts.utils.partition_utils import (
     DEFAULT_PARTITION,

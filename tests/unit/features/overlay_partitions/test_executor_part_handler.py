@@ -23,7 +23,7 @@ import pytest
 import yaml
 from craft_parts import errors
 from craft_parts.actions import Action, ActionType
-from craft_parts.executor.part_handler import PartHandler
+from craft_parts.executor.part_handler import MigrationContents, PartHandler
 from craft_parts.filesystem_mounts import FilesystemMounts
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
@@ -31,7 +31,6 @@ from craft_parts.parts import Part
 from craft_parts.state_manager import states
 from craft_parts.state_manager.states import MigrationState
 from craft_parts.steps import Step
-from craft_parts.executor.part_handler import MigrationContents
 
 from tests.unit.features.overlay import test_executor_part_handler
 
