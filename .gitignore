@@ -16,7 +16,8 @@ eggs/
 .eggs/
 lib/
 lib64/
-parts/
+# Only top level parts dir, otherwise this conflicts with inner dirs called parts.
+/parts/
 sdist/
 var/
 wheels/
@@ -73,7 +74,8 @@ instance/
 # Sphinx documentation
 docs/_build/
 docs/_linkcheck/
-docs/reference/gen
+docs/reference/gen/
+docs/spelling/
 
 # PyBuilder
 target/
@@ -154,15 +156,3 @@ dmypy.json
 /.zed/
 # KDevelop
 /.kdev4/
-
-# Lifecycle
-parts/
-stage/
-prime/
-
-# .NET build directories
-**/bin/
-**/obj/
-
-# Ruby plugin artifacts
-ruby-install.tar.gz
