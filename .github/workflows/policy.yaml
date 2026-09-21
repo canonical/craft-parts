@@ -23,6 +23,7 @@ jobs:
       osv-extra-args: "--config=osv-scanner.toml"
       osv-exclude-paths: |
         docs
+        tests/integration/plugins/test_maven_use
       uv-export-no-groups: |
         docs
         docs-sphinx-stack
