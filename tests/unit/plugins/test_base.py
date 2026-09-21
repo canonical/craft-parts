@@ -99,7 +99,7 @@ def test_abstract_methods(new_dir):
     )
 
     with pytest.raises(TypeError, match=expected):
-        FaultyPlugin(properties=None, part_info=part_info)  # ty: ignore[invalid-argument-type]
+        FaultyPlugin(properties=None, part_info=part_info)  # ty: ignore[call-non-callable, invalid-argument-type]
 
 
 class FooPythonPlugin(BasePythonPlugin):
