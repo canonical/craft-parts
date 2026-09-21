@@ -114,7 +114,7 @@ types = [
 ]
 
 [build-system]
-requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
+requires = ["setuptools>=77.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.codespell]
