@@ -77,7 +77,7 @@ class TestSourceHandler:
             "abstract methods? '?pull'?$"
         )
         with pytest.raises(TypeError, match=expected):
-            FaultySource(
+            FaultySource(  # ty: ignore[call-non-callable]
                 source=".",
                 part_src_dir=Path(),
                 cache_dir=Path(),
@@ -309,7 +309,7 @@ class TestFileSourceHandler:
             r"implementation for)? abstract methods? '?provision'?$"
         )
         with pytest.raises(TypeError, match=expected):
-            FaultyFileSource(
+            FaultyFileSource(  # ty: ignore[call-non-callable]
                 source=None,  # ty: ignore[invalid-argument-type]
                 part_src_dir=None,  # ty: ignore[invalid-argument-type]
                 cache_dir=Path(),
