@@ -16,7 +16,7 @@
 
 """Integration tests for build-slices lifecycle behavior."""
 
-import os
+import os.path
 import subprocess
 from pathlib import Path
 
@@ -57,4 +57,11 @@ def test_build_step_runs_in_build_slices_chroot(tmp_homedir_path):
     assert completed_process.stdout == "hello from build slices\n"
     assert not (tmp_homedir_path / "stage/forbidden").exists()
     assert host_only_file.exists()
-    assert os.path.ismount(tmp_homedir_path / "stage") is False
+
+    assert (tmp_homedir_path / "build-slices").exists()
+    assert not (tmp_homedir_path / "build-slices/stage").exists()
+
+    # During the build step the stage dir is bind-mounted inside the build-slices
+    # chroot: check that it's no longer mounted.
+    chroot_work_dir = tmp_homedir_path / f"build-slices/{tmp_homedir_path}"
+    assert not os.path.ismount(chroot_work_dir / "stage")

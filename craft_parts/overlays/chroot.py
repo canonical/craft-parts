@@ -268,7 +268,7 @@ class _Mount:
 
     def unmount_from(self, chroot: Path, *args: str) -> None:
         """Unmount `self.dst` within chroot."""
-        logger.debug(f"Mounting {self.dst}")
+        logger.debug(f"Unmounting {self.dst}")
         if not self._mounted:
             return
 

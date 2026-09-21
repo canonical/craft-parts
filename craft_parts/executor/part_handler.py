@@ -485,7 +485,7 @@ class PartHandler:
         with _conditional_layer_mount(
             self._overlay_manager, top_part=self._part, condition=needs_overlay
         ):
-            if self._part.spec.build_slices:
+            if self._part.has_build_slices:
                 chroot_runner.chroot(
                     self._part_info.project_info.dirs.build_slices_dir,
                     self._run_step,
