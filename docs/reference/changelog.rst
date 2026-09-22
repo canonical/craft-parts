@@ -42,6 +42,9 @@ Bug fixes:
 - Add ``build-environment`` values to the build state to rebuild parts when the
   environment declaration changes.
 
+- The JSON schema for parts now includes the regex pattern for the ``stage``, ``prime``,
+  ``build-slices``, and ``stage-slices`` keys.
+
 
 .. _release-2.36.0:
 
