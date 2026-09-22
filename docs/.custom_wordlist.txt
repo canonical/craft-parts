@@ -36,6 +36,7 @@ gyre
 hashlib
 html
 https
+infos
 ing
 interdependenc(y|ies)
 Intersphinx
@@ -97,6 +98,8 @@ sitemapindex
 Sphinx
 Spread
 spread_test_example
+Starbase
+Starcraft
 stderr
 stdin
 stdout
@@ -134,3 +137,4 @@ xml
 xz
 yaml
 YouTube
+

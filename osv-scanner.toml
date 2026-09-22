@@ -1,1 +1,7 @@
 # OSV Scanner configuration
+[[PackageOverrides]]
+name = 'org\.starcraft:.*'
+nameIsRegex = true
+ecosystem = "Maven"
+ignore = true
+reason = "Test fixture Maven modules used by integration tests; not shipped dependencies."

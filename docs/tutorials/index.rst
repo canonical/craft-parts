@@ -1,3 +1,6 @@
+.. meta::
+    :description: The tutorials for Craft Parts. These tutorials are guided lessons that help you develop skills by using Craft Parts.
+
 .. _tutorials:
 
 Tutorials
@@ -8,7 +11,7 @@ acquire the necessary competencies from real-life examples with fully reproducib
 steps.
 
 .. toctree::
-   :maxdepth: 1
+    :hidden:
 
-   examples
-   hello-craft-parts
+    examples
+    hello-craft-parts
