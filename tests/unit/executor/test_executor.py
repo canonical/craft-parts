@@ -240,6 +240,9 @@ class TestPackages:
         mocked_cut.assert_called_once_with(
             slices=expected_slices, target_dir=slices_dir
         )
+        assert (slices_dir / "dev").is_dir()
+        assert (slices_dir / "proc").is_dir()
+        assert (slices_dir / "sys").is_dir()
 
     @pytest.mark.usefixtures("enable_build_slices")
     def test_cut_build_slices_delete_previous(self, mocker, new_dir, partitions):
@@ -363,6 +366,46 @@ class TestPackages:
         rmtree.assert_called_once_with(slices_dir)
         mocked_cut.assert_called_once_with(
             slices=expected_slices, target_dir=slices_dir
+        )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_verify_plugin_environment_skips_sliced_parts(
+        self, mocker, new_dir, partitions
+    ):
+        """Test that the plugin environment validation performed by the Executor is strictly done for non-sliced parts."""
+        normal = Part("normal", {"plugin": "nil"}, partitions=partitions)
+        sliced = Part(
+            "sliced",
+            {"plugin": "nil", "build-slices": ["base-files_base"]},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        executor = Executor(project_info=info, part_list=[normal, sliced])
+        plugin_class = mocker.MagicMock()
+        get_plugin_class = mocker.patch(
+            "craft_parts.executor.executor.plugins.get_plugin_class",
+            return_value=plugin_class,
+        )
+        mocker.patch(
+            "craft_parts.executor.executor.generate_step_environment",
+            return_value="build environment",
+        )
+
+        executor._verify_plugin_environment()
+
+        get_plugin_class.assert_called_once_with("nil")
+        plugin_class.assert_called_once()
+        plugin_class.validator_class.assert_called_once_with(
+            part_name="normal",
+            env="build environment",
+            properties=normal.plugin_properties,
+        )
+        plugin_class.validator_class.return_value.validate_environment.assert_called_once_with(
+            part_dependencies=normal.dependencies
         )
 
 
