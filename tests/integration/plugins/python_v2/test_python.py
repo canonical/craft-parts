@@ -193,7 +193,7 @@ def test_python_plugin_package_conflicts(new_dir, partitions):
 
     plugins.register({"python": PythonPlugin})
 
-    # requirements-black.txt declares black==24.10.0, but python-packages declares
+    # requirements-black.txt declares black==26.3.1, but python-packages declares
     # black==25.1.0
     parts_yaml = textwrap.dedent(
         f"""\
@@ -207,8 +207,12 @@ def test_python_plugin_package_conflicts(new_dir, partitions):
         """
     )
 
-    expected = re.escape(
-        "Cannot install black==24.10.0 and black==25.1.0 because these package versions have conflicting dependencies."
+    # pip orders the two conflicting pins differently depending on their versions,
+    # so allow either order.
+    expected = (
+        r"Cannot install (black==26\.3\.1 and black==25\.1\.0|black==25\.1\.0 "
+        r"and black==26\.3\.1) because these package versions have conflicting "
+        r"dependencies\."
     )
     with pytest.raises(PluginBuildError, match=expected):
         _run_lifecycle(parts_yaml, new_dir, partitions)
