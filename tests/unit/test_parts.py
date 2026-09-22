@@ -510,6 +510,19 @@ class TestPartData:
         p = Part("foo", tc_spec, partitions=partitions)
         assert p.spec.has_chisel_as_build_snap == tc_result
 
+    @pytest.mark.usefixtures("enable_build_slices")
+    @pytest.mark.parametrize(
+        ("spec", "expected"),
+        [
+            ({}, False),
+            ({"build-slices": []}, False),
+            ({"build-slices": ["bash_bins"]}, True),
+        ],
+    )
+    def test_part_has_build_slices(self, partitions, spec, expected):
+        p = Part("foo", spec, partitions=partitions)
+        assert p.spec.has_build_slices == expected
+
 
 class TestPartOrdering:
     """Test part ordering.
