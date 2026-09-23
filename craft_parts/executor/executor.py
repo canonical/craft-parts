@@ -340,6 +340,7 @@ class Executor:
         state = self._load_build_slices_state(state_file)
         if state and state.slices == build_slices:
             # Nothing to do: slices already cut
+            self._prepare_build_slices_root(slices_dir)
             return
 
         logger.info("Cutting build-slices")
@@ -350,10 +351,16 @@ class Executor:
 
         slices_dir.mkdir(parents=True, exist_ok=False)
         chisel.cut_slices(slices=sorted(build_slices), target_dir=slices_dir)
+        self._prepare_build_slices_root(slices_dir)
 
         # Write the information of which slices we cut, for future runs.
         new_state = chisel.SlicesState(slices=build_slices)
         new_state.write(state_file)
+
+    def _prepare_build_slices_root(self, slices_dir: Path) -> None:
+        """Create mount points for virtual filesystems used during builds."""
+        for mountpoint in ("dev", "proc", "sys"):
+            (slices_dir / mountpoint).mkdir(parents=True, exist_ok=True)
 
     def _build_slices_state_file(self) -> Path:
         return self._project_info.dirs.work_dir / "build_slices_state.yaml"
@@ -368,6 +375,11 @@ class Executor:
 
     def _verify_plugin_environment(self) -> None:
         for part in self._part_list:
+            if part.spec.build_slices:
+                # Slice-provided tools are only visible when validation runs
+                # inside the Build step's chroot.
+                continue
+
             logger.debug("verify plugin environment for part %r", part.name)
 
             part_info = PartInfo(self._project_info, part)
