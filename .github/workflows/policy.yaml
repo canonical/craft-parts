@@ -23,6 +23,7 @@ jobs:
       osv-exclude-paths: |
         docs
         tests/integration
+        tests/integration
       uv-export-no-groups: |
         docs
         docs-starter-pack
