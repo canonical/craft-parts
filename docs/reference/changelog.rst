@@ -19,6 +19,16 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+X.Y.Z (unreleased)
+------------------
+
+Bug fixes:
+
+- Installs the chisel snap if any build-slices are declared.
+
+.. For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
+
 .. _release-2.37.0:
 
 2.37.0 (2026-09-23)
