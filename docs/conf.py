@@ -136,6 +136,7 @@ linkcheck_ignore = [
     r"^https://([\w-]*\.)?npmjs.(org|com)",
     r"^https://rsync.samba.org",
     r"^https://ubuntu.com",
+    r"^https://([\w-]*\.)?debian.org",
     # Known good links that if they break we'll hear it in the news.
     r"^https://([\w-]*\.)?apache.org\/?$",
     r"^https://canonical.com/legal/contributors$",
