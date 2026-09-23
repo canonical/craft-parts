@@ -22,8 +22,7 @@ jobs:
       osv-extra-args: "--config=osv-scanner.toml"
       osv-exclude-paths: |
         docs
-        tests/integration
-        tests/integration
+        g:tests/integration/**
       uv-export-no-groups: |
         docs
         docs-starter-pack
