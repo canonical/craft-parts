@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import shutil
 from pathlib import Path
 
 import pytest
@@ -211,6 +211,202 @@ class TestPackages:
         e.prologue()
 
         install.assert_not_called()
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices(self, mocker, new_dir, partitions):
+        """Happy path test for cutting slices with no previous state."""
+        mocked_cut = mocker.patch("craft_parts.packages.chisel.cut_slices")
+
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+        p2 = Part(
+            "bar",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg1_slice2"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+
+        e = Executor(project_info=info, part_list=[p1, p2])
+        e.prologue()
+
+        expected_slices = ["pkg1_slice1", "pkg1_slice2", "pkg2_slice1"]
+        slices_dir = info.dirs.build_slices_dir
+        mocked_cut.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+        assert (slices_dir / "dev").is_dir()
+        assert (slices_dir / "proc").is_dir()
+        assert (slices_dir / "sys").is_dir()
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_delete_previous(self, mocker, new_dir, partitions):
+        """Test that cutting slices deletes old slices if they exist."""
+        mocked_cut = mocker.patch("craft_parts.packages.chisel.cut_slices")
+
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+        slices_dir.mkdir(parents=True, exist_ok=False)
+
+        rmtree = mocker.spy(shutil, "rmtree")
+
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+
+        rmtree.assert_called_once_with(slices_dir)
+
+        expected_slices = ["pkg1_slice1", "pkg2_slice1"]
+        mocked_cut.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_no_slices(self, mocker, new_dir, partitions):
+        """Test that cutting slices deletes old slices if they exist, even if no build-slices are requested."""
+        mocked_cut = mocker.patch("craft_parts.packages.chisel.cut_slices")
+
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": []},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+        slices_dir.mkdir(parents=True, exist_ok=False)
+
+        rmtree = mocker.spy(shutil, "rmtree")
+
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+
+        rmtree.assert_called_once_with(slices_dir)
+        assert not mocked_cut.called
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_rerun_same_slices(self, mocker, new_dir, partitions):
+        """Test that cutting the same slices is a no-op."""
+        mocked_cut = mocker.patch("craft_parts.packages.chisel.cut_slices")
+
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+
+        # First run: must cut slices
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+        expected_slices = ["pkg1_slice1", "pkg2_slice1"]
+        mocked_cut.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+
+        # Second run: must *not* cut the same slices again
+        mocked_cut.reset_mock()
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+        assert not mocked_cut.called
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_rerun_different_slices(self, mocker, new_dir, partitions):
+        """Test that cutting different slices removes the old ones."""
+        mocked_cut = mocker.patch("craft_parts.packages.chisel.cut_slices")
+
+        old_part = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+        new_part = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg3_slice3"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+
+        # First run: must cut slices
+        e = Executor(project_info=info, part_list=[old_part])
+        e.prologue()
+        expected_slices = ["pkg1_slice1", "pkg2_slice1"]
+        mocked_cut.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+
+        # Second run with different slices: must remove old slices and cut new ones
+        rmtree = mocker.spy(shutil, "rmtree")
+        mocked_cut.reset_mock()
+        e = Executor(project_info=info, part_list=[new_part])
+        e.prologue()
+        expected_slices = ["pkg3_slice3"]
+        rmtree.assert_called_once_with(slices_dir)
+        mocked_cut.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_verify_plugin_environment_skips_sliced_parts(
+        self, mocker, new_dir, partitions
+    ):
+        """Test that the plugin environment validation performed by the Executor is strictly done for non-sliced parts."""
+        normal = Part("normal", {"plugin": "nil"}, partitions=partitions)
+        sliced = Part(
+            "sliced",
+            {"plugin": "nil", "build-slices": ["base-files_base"]},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        executor = Executor(project_info=info, part_list=[normal, sliced])
+        plugin_class = mocker.MagicMock()
+        get_plugin_class = mocker.patch(
+            "craft_parts.executor.executor.plugins.get_plugin_class",
+            return_value=plugin_class,
+        )
+        mocker.patch(
+            "craft_parts.executor.executor.generate_step_environment",
+            return_value="build environment",
+        )
+
+        executor._verify_plugin_environment()
+
+        get_plugin_class.assert_called_once_with("nil")
+        plugin_class.assert_called_once()
+        plugin_class.validator_class.assert_called_once_with(
+            part_name="normal",
+            env="build environment",
+            properties=normal.plugin_properties,
+        )
+        plugin_class.validator_class.return_value.validate_environment.assert_called_once_with(
+            part_dependencies=normal.dependencies
+        )
 
 
 class TestExecutionContext:
