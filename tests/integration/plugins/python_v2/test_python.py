@@ -17,12 +17,12 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import distro
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
 from craft_parts.errors import PluginBuildError
 from craft_parts.plugins.python_v2.python_plugin import PythonPlugin
-import distro
 
 
 def is_ubuntu_jammy() -> bool:

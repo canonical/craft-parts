@@ -19,10 +19,10 @@ import textwrap
 import warnings
 from pathlib import Path
 
+import distro
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
-import distro
 
 pytestmark = [pytest.mark.java]
 

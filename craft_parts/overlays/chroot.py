@@ -160,11 +160,12 @@ def _host_compatible_chroot(path: Path) -> None:
     chroot_id = chroot_ld.id()
     chroot_version = chroot_ld.version()
 
-    if host_id != chroot_id:
-        raise errors.IncompatibleChrootError("id", host_id, chroot_id)
-
-    if host_version != chroot_version:
-        raise errors.IncompatibleChrootError("version_id", host_version, chroot_version)
+    for key, host_value, chroot_value in (
+        ("id", host_id, chroot_id),
+        ("version_id", host_version, chroot_version),
+    ):
+        if not host_value or not chroot_value or host_value != chroot_value:
+            raise errors.IncompatibleChrootError(key, host_value, chroot_value)
 
 
 def _setup_chroot(

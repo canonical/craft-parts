@@ -20,11 +20,11 @@ import textwrap
 from pathlib import Path
 
 import craft_parts
+import distro
 import pytest
 import yaml
 from craft_parts import Step
 from craft_parts.packages import deb, errors
-import distro
 
 IS_CI: bool = os.getenv("CI") == "true"
 

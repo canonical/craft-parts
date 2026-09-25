@@ -19,10 +19,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import distro
 import pytest
 from craft_parts import ProjectDirs
 from craft_parts.sources.git_source import GitSource
-import distro
 
 
 def _call(cmd: list[str]) -> None:

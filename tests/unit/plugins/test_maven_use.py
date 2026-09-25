@@ -18,11 +18,11 @@ import re
 from pathlib import Path
 from textwrap import dedent
 
+import distro
 import pytest
 from craft_parts import errors
 from craft_parts.infos import PartInfo
 from craft_parts.plugins.maven_use_plugin import MavenUsePlugin
-import distro
 
 
 @pytest.fixture

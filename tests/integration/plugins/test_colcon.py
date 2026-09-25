@@ -18,11 +18,11 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+import distro
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, plugins
 from craft_parts.plugins.colcon_plugin import ColconPlugin
-import distro
 
 
 def is_ubuntu_jammy_or_focal() -> bool:
