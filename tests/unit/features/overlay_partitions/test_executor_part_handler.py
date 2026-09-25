@@ -23,11 +23,12 @@ import pytest
 import yaml
 from craft_parts import errors
 from craft_parts.actions import Action, ActionType
-from craft_parts.executor.part_handler import PartHandler
+from craft_parts.executor.part_handler import MigrationContents, PartHandler
 from craft_parts.filesystem_mounts import FilesystemMounts
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
+from craft_parts.state_manager import states
 from craft_parts.state_manager.states import MigrationState
 from craft_parts.steps import Step
 
@@ -120,6 +121,23 @@ class TestPartHandling(test_executor_part_handler.TestPartHandling):
         assert file2.is_file()
         assert (p1.part_layer_dirs["mypart"] / "foo1").is_file()
         assert (p1.part_layer_dirs["mypart"] / "bar1").exists() is False
+
+    def test_run_overlay(self, mocker):
+        mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+        mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
+        mocker.patch("craft_parts.overlays.OverlayManager.install_packages")
+
+        state = self._handler._run_overlay(
+            StepInfo(self._part_info, Step.OVERLAY), stdout=None, stderr=None
+        )
+        assert state == states.OverlayState(
+            part_properties=self._part.spec.marshal(),
+            project_options=self._part_info.project_options,
+            partitions_contents={
+                "mypart": MigrationContents(files=set(), directories=set()),
+                "yourpart": MigrationContents(files=set(), directories=set()),
+            },
+        )
 
     def test_run_overlay_with_filter(self, mocker, new_dir, partitions):
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")

@@ -316,12 +316,19 @@ class FileSourceHandler(SourceHandler):
             request.raise_for_status()
             url_utils.download_request(request, self._file)
         except requests.HTTPError as err:
-            if err.response.status_code == requests.codes.not_found:
+            response = err.response
+            if response is None:
+                raise errors.NetworkRequestError(
+                    message=f"http request failed without response (request={err.request!r})",
+                    source=self.source,
+                ) from err
+
+            if response.status_code == requests.codes.not_found:
                 raise errors.SourceNotFound(source=self.source) from err
 
             raise errors.HttpRequestError(
-                status_code=err.response.status_code,
-                reason=err.response.reason,
+                status_code=response.status_code,
+                reason=response.reason or "unknown",
                 source=self.source,
             ) from err
         except requests.RequestException as err:

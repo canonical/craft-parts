@@ -21,7 +21,6 @@ from pathlib import PurePath
 from typing import NamedTuple, TypeVar
 
 from craft_parts.errors import FeatureError
-from craft_parts.features import Features
 from craft_parts.utils import partition_utils
 
 FlexiblePath = TypeVar("FlexiblePath", PurePath, str)
@@ -35,7 +34,7 @@ HAS_PARTITION_REGEX = re.compile(
 class PartitionPathPair(NamedTuple):
     """A pair containing a partition name and a path."""
 
-    partition: str | None
+    partition: str
     path: PurePath | str
 
 
@@ -51,21 +50,11 @@ def get_partition_and_path(
 
     If the path begins with a partition, that is used. Otherwise, the default
     partition is used.
-    If partitions are not enabled, the partition will be None.
-
     :param path: The filepath to parse.
 
     :returns: A tuple of (partition, filepath)
     """
     str_path = str(path)
-
-    if not Features().enable_partitions:
-        if _has_partition(str_path):
-            partition, inner_path = _split_partition_and_inner_path(str_path)
-            partition_name = partition.strip("()")
-            if partition_name == partition_utils.BUILD_PARTITION:
-                return PartitionPathPair(partition_name, type(path)(inner_path))
-        return PartitionPathPair(None, path)
 
     if _has_partition(str_path):
         partition, inner_path = _split_partition_and_inner_path(str_path)

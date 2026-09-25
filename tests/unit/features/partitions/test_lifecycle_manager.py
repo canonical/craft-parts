@@ -136,19 +136,15 @@ class TestPartitionsSupport:
 
     @pytest.mark.parametrize("partitions", [None, []])
     def test_no_partitions(self, new_dir, parts_data, partitions):
-        """Raise an error if the partitions feature is enabled but not defined."""
-        with pytest.raises(errors.FeatureError) as raised:
-            lifecycle_manager.LifecycleManager(
-                parts_data,
-                application_name="test_manager",
-                cache_dir=new_dir,
-                partitions=partitions,
-            )
-
-        assert (
-            raised.value.message
-            == "Partition feature is enabled but no partitions are defined."
+        """No partitions means the canonical default partition."""
+        lifecycle = lifecycle_manager.LifecycleManager(
+            parts_data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            partitions=partitions,
         )
+
+        assert lifecycle.project_info.partitions == ["default"]
 
     # `new_dir` is function-scoped but does not affect the testing of partition names
     @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])

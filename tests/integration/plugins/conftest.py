@@ -14,24 +14,10 @@
 """Configuration for plugins integration tests."""
 
 import pytest
-from craft_parts.features import Features
 
 
-@pytest.fixture(params=["none", "partitions"], autouse=True)
-def enabled_features(request: pytest.FixtureRequest):
-    Features.reset()
-    enable_overlay = "overlay" in request.param
-    enable_partitions = "partitions" in request.param
-    return Features(
-        enable_overlay=enable_overlay,
-        enable_partitions=enable_partitions,
-    )
-
-
-@pytest.fixture(autouse=True)
-def partitions(enabled_features: Features) -> list[str] | None:
-    return (
-        ["default", "mypart", "yourpart"]
-        if enabled_features.enable_partitions
-        else None
-    )
+@pytest.fixture(params=["default", "partitions"], autouse=True)
+def partitions(request: pytest.FixtureRequest) -> list[str]:
+    if request.param == "partitions":
+        return ["default", "mypart", "yourpart"]
+    return ["default"]
