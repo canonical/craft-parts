@@ -37,6 +37,8 @@ For a complete list of commits, check out the `2.37.1`_ release on GitHub.
 
 New features:
 
+- Add the ``fpc`` plugin, which builds programs with the Free Pascal compiler.
+
 - Verify conflicts between namespaced part names during parts validation.
 
 - Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS

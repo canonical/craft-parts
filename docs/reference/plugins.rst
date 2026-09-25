@@ -17,6 +17,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/cmake_plugin.rst
    /common/craft-parts/reference/plugins/colcon_plugin.rst
    /common/craft-parts/reference/plugins/dump_plugin.rst
+   /common/craft-parts/reference/plugins/fpc_plugin.rst
    /common/craft-parts/reference/plugins/go_plugin.rst
    /common/craft-parts/reference/plugins/go_use_plugin.rst
    /common/craft-parts/reference/plugins/gradle_plugin.rst

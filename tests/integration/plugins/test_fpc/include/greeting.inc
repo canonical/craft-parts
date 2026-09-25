@@ -1,0 +1,2 @@
+const
+  GreetingText = 'Hello, world!';
