@@ -16,6 +16,7 @@
 
 import multiprocessing
 import subprocess
+import textwrap
 from pathlib import Path, PosixPath
 from unittest.mock import ANY, call
 
@@ -32,6 +33,17 @@ def target_func(content: str) -> int:
 
 def target_func_error(content: str) -> int:
     raise RuntimeError("bummer")
+
+
+def _write_os_release(path: Path, release_id: str = "ubuntu", version: str = "24.04") -> None:
+    path.write_text(
+        textwrap.dedent(
+            f"""\
+            ID={release_id}
+            VERSION_ID="{version}"
+            """
+        )
+    )
 
 
 class FakeConn:
@@ -196,6 +208,8 @@ class TestChroot:
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         mock_copytree = mocker.patch("shutil.copytree")
+        mocker.patch("craft_parts.overlays.chroot.distro.id", return_value="ubuntu")
+        mocker.patch("craft_parts.overlays.chroot.distro.version", return_value="24.04")
 
         spy_process = mocker.spy(_FORK_CTX, "Process")
         new_root = Path(new_dir, "dir1")
@@ -204,6 +218,7 @@ class TestChroot:
         Path("dir1").mkdir()
         for subdir in ["etc", "proc", "sys", "dev", "dev/shm"]:
             Path(new_root, subdir).mkdir()
+        _write_os_release(new_root / "etc" / "os-release")
 
         chroot.chroot(new_root, target_func, "content", use_host_sources=True)
 
@@ -280,6 +295,60 @@ class TestChroot:
                 dirs_exist_ok=True,
             )
         ]
+
+    def test_host_compatible_chroot(self, mocker, new_dir):
+        new_root = Path(new_dir, "dir1")
+        etc_dir = new_root / "etc"
+        etc_dir.mkdir(parents=True)
+        _write_os_release(etc_dir / "os-release")
+        mocker.patch("craft_parts.overlays.chroot.distro.id", return_value="ubuntu")
+        mocker.patch("craft_parts.overlays.chroot.distro.version", return_value="24.04")
+
+        chroot._host_compatible_chroot(new_root)
+
+    @pytest.mark.parametrize(
+        ("release_id", "version", "expected_key"),
+        [
+            ("debian", "24.04", "id"),
+            ("ubuntu", "22.04", "version_id"),
+        ],
+    )
+    def test_host_compatible_chroot_mismatch(
+        self, mocker, new_dir, release_id, version, expected_key
+    ):
+        new_root = Path(new_dir, "dir1")
+        etc_dir = new_root / "etc"
+        etc_dir.mkdir(parents=True)
+        _write_os_release(etc_dir / "os-release", release_id=release_id, version=version)
+        mocker.patch("craft_parts.overlays.chroot.distro.id", return_value="ubuntu")
+        mocker.patch("craft_parts.overlays.chroot.distro.version", return_value="24.04")
+
+        with pytest.raises(
+            chroot.errors.IncompatibleChrootError, match=rf"key {expected_key} "
+        ):
+            chroot._host_compatible_chroot(new_root)
+
+    def test_host_compatible_chroot_missing_os_release(self, mocker, new_dir):
+        new_root = Path(new_dir, "dir1")
+        (new_root / "etc").mkdir(parents=True)
+        mocker.patch("craft_parts.overlays.chroot.distro.id", return_value="ubuntu")
+        mocker.patch("craft_parts.overlays.chroot.distro.version", return_value="24.04")
+
+        with pytest.raises(chroot.errors.IncompatibleChrootError, match=r"key id "):
+            chroot._host_compatible_chroot(new_root)
+
+    def test_host_compatible_chroot_symlinked_os_release(self, mocker, new_dir):
+        new_root = Path(new_dir, "dir1")
+        etc_dir = new_root / "etc"
+        usr_lib_dir = new_root / "usr/lib"
+        etc_dir.mkdir(parents=True)
+        usr_lib_dir.mkdir(parents=True)
+        _write_os_release(usr_lib_dir / "os-release")
+        (etc_dir / "os-release").symlink_to("../usr/lib/os-release")
+        mocker.patch("craft_parts.overlays.chroot.distro.id", return_value="ubuntu")
+        mocker.patch("craft_parts.overlays.chroot.distro.version", return_value="24.04")
+
+        chroot._host_compatible_chroot(new_root)
 
     def test_chroot_additional_bind_mounts(self, mocker, new_dir, mock_chroot):
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")

@@ -188,9 +188,9 @@ def test_include_export_plugin(
     plugin: PoetryPlugin, mocker: MockFixture, version: str, should_install: bool
 ) -> None:
     """Make sure that the export command plugin is included on 25.04+"""
-    mocker.patch("craft_parts.utils.os_utils.OsRelease.name", return_value="Ubuntu")
+    mocker.patch("craft_parts.plugins.poetry_plugin.distro.name", return_value="Ubuntu")
     mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
+        "craft_parts.plugins.poetry_plugin.distro.version", return_value=version
     )
     mocker.patch.object(plugin, "_system_has_poetry", return_value=False)
 
@@ -204,9 +204,9 @@ def test_poetry_deps_nullifies_build_packages(
     plugin: PoetryPlugin, mocker: MockFixture, version: str
 ):
     """Ensure Poetry-related build packages aren't installed when a 'poetry-deps' part is present."""
-    mocker.patch("craft_parts.utils.os_utils.OsRelease.name", return_value="Ubuntu")
+    mocker.patch("craft_parts.plugins.poetry_plugin.distro.name", return_value="Ubuntu")
     mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
+        "craft_parts.plugins.poetry_plugin.distro.version", return_value=version
     )
 
     mocker.patch.object(plugin._part_info, "_part_dependencies", {"poetry-deps"})

@@ -17,13 +17,11 @@
 import itertools
 import os
 import subprocess
-import textwrap
 from pathlib import Path
 from unittest import mock
 from unittest.mock import call
 
 import pytest
-from craft_parts import errors
 from craft_parts.utils import os_utils
 
 
@@ -233,92 +231,6 @@ class TestTerminal:
         mocker.patch.dict(os.environ, {"TERM": term})
 
         assert os_utils.is_dumb_terminal() == result
-
-
-@pytest.mark.usefixtures("new_dir")
-class TestOsRelease:
-    """Verify os-release data retrieval."""
-
-    def _write_os_release(self, contents) -> Path:
-        path = Path("os-release")
-        path.write_text(contents)
-        return path
-
-    def test_blank_lines(self):
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                NAME="Arch Linux"
-
-                PRETTY_NAME="Arch Linux"
-                ID=arch
-                ID_LIKE=archlinux
-                VERSION_ID="foo"
-                VERSION_CODENAME="bar"
-
-            """
-                )
-            )
-        )
-
-        assert release.id() == "arch"
-        assert release.name() == "Arch Linux"
-        assert release.version_id() == "foo"
-
-    def test_no_id(self):
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                NAME="Arch Linux"
-                PRETTY_NAME="Arch Linux"
-                ID_LIKE=archlinux
-                VERSION_ID="foo"
-                VERSION_CODENAME="bar"
-            """
-                )
-            )
-        )
-
-        with pytest.raises(errors.OsReleaseIdError):
-            release.id()
-
-    def test_no_name(self):
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                ID=arch
-                PRETTY_NAME="Arch Linux"
-                ID_LIKE=archlinux
-                VERSION_ID="foo"
-                VERSION_CODENAME="bar"
-            """
-                )
-            )
-        )
-
-        with pytest.raises(errors.OsReleaseNameError):
-            release.name()
-
-    def test_no_version_id(self):
-        release = os_utils.OsRelease(
-            os_release_file=self._write_os_release(
-                textwrap.dedent(
-                    """\
-                NAME="Arch Linux"
-                ID=arch
-                PRETTY_NAME="Arch Linux"
-                ID_LIKE=archlinux
-                VERSION_CODENAME="bar"
-            """
-                )
-            )
-        )
-
-        with pytest.raises(errors.OsReleaseVersionIdError):
-            release.version_id()
 
 
 class TestEnvironment:
