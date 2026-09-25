@@ -194,7 +194,7 @@ class LifecycleManager:
 
         self._has_overlay = any(p.has_overlay for p in part_list)
         self._organizes_to_overlay = any(p.organizes_to_overlay for p in part_list)
-        self._needs_chisel = any(p.has_slices for p in part_list)
+        self._needs_chisel = any(p.has_slices or p.has_build_slices for p in part_list)
         self._has_chisel = any(p.has_chisel_as_build_snap for p in part_list)
 
         # add a chisel as a build snap if needed
