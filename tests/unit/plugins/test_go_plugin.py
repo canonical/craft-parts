@@ -198,6 +198,73 @@ def test_get_build_commands_go_generate(part_info):
     ]
 
 
+def test_get_build_commands_enable_check(project_info):
+    part_data = {"source": ".", "build-attributes": ["enable-check"]}
+    properties = GoPlugin.properties_class.unmarshal(part_data)
+    part_info = PartInfo(
+        project_info=project_info,
+        part=Part("my-part", part_data),
+    )
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "go mod download all",
+        'go install -p "1"  ./...',
+        'go test -p "1"  ./...',
+    ]
+
+
+def test_get_build_commands_enable_check_with_buildtags(project_info):
+    part_data = {"source": ".", "build-attributes": ["enable-check"]}
+    plugin_data = {**part_data, "go-buildtags": ["dev", "debug"]}
+    properties = GoPlugin.properties_class.unmarshal(plugin_data)
+    part_info = PartInfo(
+        project_info=project_info,
+        part=Part("my-part", part_data),
+    )
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "go mod download all",
+        'go install -p "1" -tags=dev,debug ./...',
+        'go test -p "1" -tags=dev,debug ./...',
+    ]
+
+
+def test_get_build_commands_enable_check_with_testtags(project_info):
+    part_data = {"source": ".", "build-attributes": ["enable-check"]}
+    plugin_data = {**part_data, "go-testtags": ["unit", "fast"]}
+    properties = GoPlugin.properties_class.unmarshal(plugin_data)
+    part_info = PartInfo(
+        project_info=project_info,
+        part=Part("my-part", part_data),
+    )
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "go mod download all",
+        'go install -p "1"  ./...',
+        'go test -p "1" -tags=unit,fast ./...',
+    ]
+
+
+def test_get_build_commands_enable_check_with_buildtags_and_testtags(project_info):
+    part_data = {"source": ".", "build-attributes": ["enable-check"]}
+    plugin_data = {**part_data, "go-buildtags": ["dev"], "go-testtags": ["unit"]}
+    properties = GoPlugin.properties_class.unmarshal(plugin_data)
+    part_info = PartInfo(
+        project_info=project_info,
+        part=Part("my-part", part_data),
+    )
+    plugin = GoPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "go mod download all",
+        'go install -p "1" -tags=dev ./...',
+        'go test -p "1" -tags=dev,unit ./...',
+    ]
+
+
 @pytest.mark.parametrize(
     "part_data",
     [
