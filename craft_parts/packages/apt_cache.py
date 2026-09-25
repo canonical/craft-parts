@@ -165,33 +165,50 @@ class AptCache(ContextDecorator):
         # Copy apt configuration from host.
         cache_etc_apt_path = Path(self.stage_cache, "etc", "apt")
 
-        # Delete potentially outdated cache configuration.
-        if cache_etc_apt_path.is_symlink():
-            cache_etc_apt_path.unlink()
-        elif cache_etc_apt_path.exists():
-            shutil.rmtree(cache_etc_apt_path)
+        try:
+            # Delete potentially outdated cache configuration.
+            if cache_etc_apt_path.is_symlink():
+                cache_etc_apt_path.unlink()
+            elif cache_etc_apt_path.exists():
+                shutil.rmtree(cache_etc_apt_path)
 
-        # Copy current cache configuration.
-        cache_etc_apt_path.parent.mkdir(parents=True, exist_ok=True)
+            # Copy current cache configuration.
+            cache_etc_apt_path.parent.mkdir(parents=True, exist_ok=True)
 
-        shutil.copytree("/etc/apt", cache_etc_apt_path, ignore=_ignore_unreadable_files)
+            shutil.copytree(
+                "/etc/apt", cache_etc_apt_path, ignore=_ignore_unreadable_files
+            )
 
-        # Specify default arch (if specified).
-        if self.stage_cache_arch is not None:
-            arch_conf_path = cache_etc_apt_path / "apt.conf.d" / "00default-arch"
-            arch_conf_path.write_text(f'APT::Architecture "{self.stage_cache_arch}";\n')
+            # Specify default arch (if specified).
+            if self.stage_cache_arch is not None:
+                arch_conf_path = cache_etc_apt_path / "apt.conf.d" / "00default-arch"
+                arch_conf_path.write_text(
+                    f'APT::Architecture "{self.stage_cache_arch}";\n'
+                )
 
-        # dpkg also needs to be in the rootdir in order to support multiarch
-        # (apt calls dpkg --print-foreign-architectures).
-        dpkg_path = shutil.which("dpkg")
-        if dpkg_path:
-            # Symlink it into place
-            destination = Path(self.stage_cache, dpkg_path[1:])
-            if not destination.exists():
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.symlink_to(dpkg_path)
-        else:
-            logger.warning("Cannot find 'dpkg' command needed to support multiarch")
+            # dpkg also needs to be in the rootdir in order to support multiarch
+            # (apt calls dpkg --print-foreign-architectures).
+            dpkg_path = shutil.which("dpkg")
+            if dpkg_path:
+                # Symlink it into place
+                destination = Path(self.stage_cache, dpkg_path[1:])
+                if not destination.exists():
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    destination.symlink_to(dpkg_path)
+            else:
+                logger.warning("Cannot find 'dpkg' command needed to support multiarch")
+        except OSError as err:
+            raise errors.PackagesError(
+                brief="Cannot prepare the package cache.",
+                details=(
+                    f"Failed to prepare the APT cache at {self.stage_cache}: {err}."
+                ),
+                resolution=(
+                    "This is usually caused by running the application with sudo "
+                    "and then without. Remove the cache directory manually or run "
+                    "the application with the same privileges."
+                ),
+            ) from err
 
     def _autokeep_packages(self) -> None:
         # If the package has been installed automatically as a dependency
