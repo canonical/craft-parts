@@ -22,7 +22,7 @@ from pathlib import Path
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
-from craft_parts.utils.os_utils import OsRelease
+import distro
 
 pytestmark = [pytest.mark.java]
 
@@ -33,7 +33,7 @@ def expected_jdk_version() -> str:
 
     This method should be expanded as tests are supported on more platforms."""
 
-    platform = OsRelease().version_id()
+    platform = distro.version()
 
     match platform:
         # Even though 22.04's "default-jdk" virtual package resolves to JDK 11,

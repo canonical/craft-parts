@@ -30,6 +30,8 @@ from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar
 
+import distro
+
 from craft_parts.utils import os_utils
 
 from . import errors
@@ -146,22 +148,23 @@ def _runner(
     conn.send((res, None))
 
 
-def _compare_os_release(host: os_utils.OsRelease, chroot: os_utils.OsRelease) -> None:
-    """Compare OsRelease objects from host and chroot for compatibility. See _host_compatible_chroot."""
-    if (host_val := host.id()) != (chroot_val := chroot.id()):
-        raise errors.IncompatibleChrootError("id", host_val, chroot_val)
-
-    if (host_val := host.version_id()) != (chroot_val := chroot.version_id()):
-        raise errors.IncompatibleChrootError("version_id", host_val, chroot_val)
-
-
 def _host_compatible_chroot(path: Path) -> None:
     """Raise exception if host and chroot are not the same distribution and release."""
     # Note: /etc/os-release is symlinked to /usr/lib/os-release
     # This could cause an issue if /etc/os-release is removed at any point.
-    host_os_release = os_utils.OsRelease()
-    chroot_os_release = os_utils.OsRelease(os_release_file=path / "/etc/os-release")
-    _compare_os_release(host_os_release, chroot_os_release)
+    host_id = distro.id()
+    host_version = distro.version()
+    chroot_ld = distro.LinuxDistribution(
+        os_release_file=str(path / "etc/os-release"), include_lsb=False
+    )
+    chroot_id = chroot_ld.id()
+    chroot_version = chroot_ld.version()
+
+    if host_id != chroot_id:
+        raise errors.IncompatibleChrootError("id", host_id, chroot_id)
+
+    if host_version != chroot_version:
+        raise errors.IncompatibleChrootError("version_id", host_version, chroot_version)
 
 
 def _setup_chroot(

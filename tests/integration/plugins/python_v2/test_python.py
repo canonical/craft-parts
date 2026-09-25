@@ -22,14 +22,13 @@ import yaml
 from craft_parts import LifecycleManager, Step, errors, plugins
 from craft_parts.errors import PluginBuildError
 from craft_parts.plugins.python_v2.python_plugin import PythonPlugin
-from craft_parts.utils import os_utils
+import distro
 
 
 def is_ubuntu_jammy() -> bool:
-    release = os_utils.OsRelease()
     try:
-        return release.id() == "ubuntu" and release.version_id() == "22.04"
-    except errors.OsReleaseIdError:
+        return distro.id() == "ubuntu" and distro.version() == "22.04"
+    except Exception:
         return False
 
 

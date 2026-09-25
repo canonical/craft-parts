@@ -21,17 +21,16 @@ from pathlib import Path
 
 import pytest
 import yaml
-from craft_parts import LifecycleManager, Step, errors
-from craft_parts.utils import os_utils
+from craft_parts import LifecycleManager, Step
+import distro
 
 
 def is_ubuntu_jammy_or_focal() -> bool:
-    release = os_utils.OsRelease()
     try:
-        return release.id() == "ubuntu" and (
-            release.version_id() == "22.04" or release.version_id() == "20.04"
+        return distro.id() == "ubuntu" and (
+            distro.version() == "22.04" or distro.version() == "20.04"
         )
-    except errors.OsReleaseIdError:
+    except Exception:
         return False
 
 
