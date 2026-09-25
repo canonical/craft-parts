@@ -41,6 +41,6 @@ class Features(metaclass=Singleton):
     @classmethod
     def reset(cls) -> None:
         """Delete stored class instance."""
-        logger.warning("deleting current features configuration")
+        logger.debug("deleting current features configuration")
         with contextlib.suppress(KeyError):
             del cls._instances[cls]

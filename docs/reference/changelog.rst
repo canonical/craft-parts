@@ -19,6 +19,17 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+X.Y.Z (YYYY-MM-DD)
+------------------
+
+New features:
+
+Bug fixes:
+
+- Update a log message about resetting Features from Warning to Debug.
+
+Documentation:
+
 .. _release-2.37.0:
 
 2.37.0 (2026-09-23)
