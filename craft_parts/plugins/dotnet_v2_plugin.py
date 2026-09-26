@@ -42,22 +42,46 @@ class DotnetConfiguration(str, Enum):
     """The .NET build configuration."""
 
     DEBUG = "Debug"
+    """Build with debug symbols and no optimizations."""
+
     RELEASE = "Release"
+    """Build with optimizations and no debug symbols. This is the default
+    configuration.
+    """
 
 
 class DotnetVerbosity(str, Enum):
     """The .NET build verbosity level."""
 
     QUIET = "quiet"
+    """Show only errors."""
+
     QUIET_SHORT = "q"
+    """Alias for ``quiet``."""
+
     MINIMAL = "minimal"
+    """Show minimal build output."""
+
     MINIMAL_SHORT = "m"
+    """Alias for ``minimal``."""
+
     NORMAL = "normal"
+    """Show normal build output. This is the default level."""
+
     NORMAL_SHORT = "n"
+    """Alias for ``normal``."""
+
     DETAILED = "detailed"
+    """Show detailed build output."""
+
     DETAILED_SHORT = "d"
+    """Alias for ``detailed``."""
+
     DIAGNOSTIC = "diagnostic"
+    """Show diagnostic build output, the most verbose level."""
+
     DIAGNOSTIC_SHORT = "diag"
+    """Alias for ``diagnostic``."""
 
 
 class DotnetV2PluginProperties(PluginProperties, frozen=True):
@@ -66,24 +90,129 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
     plugin: Literal["dotnet"] = "dotnet"
 
     # Global flags
-    dotnet_configuration: DotnetConfiguration = DotnetConfiguration.RELEASE
-    dotnet_project: str | None = None
-    dotnet_properties: dict[str, str] = {}
-    dotnet_self_contained: bool = False
-    dotnet_verbosity: DotnetVerbosity = DotnetVerbosity.NORMAL
-    dotnet_version: str | None = None
+    dotnet_configuration: DotnetConfiguration = pydantic.Field(
+        default=DotnetConfiguration.RELEASE,
+        description="The .NET build configuration to use.",
+    )
+    """The .NET build configuration to use."""
+
+    dotnet_project: str | None = pydantic.Field(
+        default=None,
+        description="The path to the solution or project file to build, relative to the root of the snap source.",
+    )
+    """The path to the solution or project file to build, relative to the root of the
+    snap source.
+
+    If a path isn't specified, MSBuild will search the root of the source for a file
+    with the ``.*proj`` or ``.sln`` extension.
+    """
+
+    dotnet_properties: dict[str, str] = pydantic.Field(
+        default={},
+        description="The MSBuild properties to append to the restore, build, and publish commands.",
+    )
+    """The MSBuild properties to append to the restore, build, and publish commands.
+    """
+
+    dotnet_self_contained: bool = pydantic.Field(
+        default=False,
+        description="Whether to create a self-contained .NET part.",
+    )
+    """Whether to create a self-contained .NET part.
+
+    The Runtime Identifier will be automatically set based on the value of the
+    ``$CRAFT_BUILD_FOR`` environment variable:
+
+    .. list-table::
+        :header-rows: 1
+
+        * - `$CRAFT_BUILD_FOR`` value
+          - Runtime Identifier
+        * - ``amd64``
+          - ``linux-x64``
+        * - ``arm64``
+          - ``linux-arm64``
+    """
+
+    dotnet_verbosity: DotnetVerbosity = pydantic.Field(
+        default=DotnetVerbosity.NORMAL,
+        description="The verbosity of the MSBuild log.",
+    )
+    """The verbosity of the MSBuild log.
+    """
+
+    dotnet_version: str | None = pydantic.Field(
+        default=None,
+        description="The .NET version to build the part with.",
+    )
+    """The .NET version to build the part with.
+
+    If set, the plugin will download the necessary .NET SDK content snap and use it to
+    build the app.
+
+    See :ref:`craft_parts_dotnet_v2_plugin-details-begin` for a more detailed
+    explanation of this key.
+    """
 
     # Restore specific flags
-    dotnet_restore_configfile: str | None = None
-    dotnet_restore_properties: dict[str, str] = {}
-    dotnet_restore_sources: list[str] = []
+    dotnet_restore_configfile: str | None = pydantic.Field(
+        default=None,
+        description="The path to the part's NuGet configuration file.",
+    )
+    """The path to the part's NuGet configuration file.
+
+    If set, only the settings from this file will be used.
+
+    If unset, the hierarchy of configuration files from the current directory will be
+    used. For more information, see `Common NuGet Configurations
+    <https://learn.microsoft.com/en-us/nuget/consume-packages/configuring-nuget-behavior>`__.
+    """
+
+    dotnet_restore_properties: dict[str, str] = pydantic.Field(
+        default={},
+        description="The MSBuild properties to append to the restore command.",
+    )
+    """The MSBuild properties to append to the restore command.
+    """
+
+    dotnet_restore_sources: list[str] = pydantic.Field(
+        default=[],
+        description="The URIs of the NuGet package sources for use during a restore.",
+    )
+    """The URIs of the NuGet package sources for use during a restore.
+
+    If set, the URIs override all of the sources declared in the ``nuget.config`` files.
+    """
 
     # Build specific flags
-    dotnet_build_framework: str | None = None
-    dotnet_build_properties: dict[str, str] = {}
+    dotnet_build_framework: str | None = pydantic.Field(
+        default=None,
+        description="The specific .NET framework to compile for.",
+        examples=["net7.0", "net462"],
+    )
+    """The specific `.NET framework
+    <https://learn.microsoft.com/en-us/dotnet/standard/frameworks>`__ to compile for.
+
+    The framework must be defined in the `.NET project file
+    <https://learn.microsoft.com/en-us/dotnet/core/project-sdk/overview>`__.
+    """
+
+    dotnet_build_properties: dict[str, str] = pydantic.Field(
+        default={},
+        description="The MSBuild properties to append to the build command.",
+    )
+    """The MSBuild properties to append to the build command, in the
+    format ``-p:<Key>=<Value>``.
+    """
 
     # Publish specific flags
-    dotnet_publish_properties: dict[str, str] = {}
+    dotnet_publish_properties: dict[str, str] = pydantic.Field(
+        default={},
+        description="The MSBuild properties to append to the publish command.",
+    )
+    """The MSBuild properties to append to the publish command, in the
+    format ``-p:<Key>=<Value>``.
+    """
 
     # part properties required by the plugin
     source: str

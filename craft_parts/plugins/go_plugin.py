@@ -19,6 +19,7 @@
 import logging
 from typing import TYPE_CHECKING, Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts import errors
@@ -38,8 +39,24 @@ class GoPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["go"] = "go"
 
-    go_buildtags: list[str] = []
-    go_generate: list[str] = []
+    go_buildtags: list[str] = pydantic.Field(
+        default=[],
+        description="The build tags to pass to the compiler.",
+    )
+    """The `build tags <https://pkg.go.dev/cmd/go#hdr-Build_constraints>`__ to pass to the compiler.
+    """
+
+    go_generate: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to ``go generate`` before building.",
+    )
+    """The parameters to pass to `go generate <https://go.dev/blog/generate>`__ before
+    compiling.
+
+    Each parameter will result in a separate ``go generate`` call.
+
+    If unset, ``go generate`` isn't called.
+    """
 
     # part properties required by the plugin
     source: str

@@ -13,13 +13,9 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.make_plugin
 
-make-parameters
-~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Options to pass to make.
+.. kitbash-field:: MakePluginProperties make_parameters
 
 
 Dependencies

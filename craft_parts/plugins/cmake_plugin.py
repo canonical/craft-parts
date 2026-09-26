@@ -18,6 +18,7 @@
 
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from .base import Plugin
@@ -29,8 +30,31 @@ class CMakePluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["cmake"] = "cmake"
 
-    cmake_parameters: list[str] = []
-    cmake_generator: str = "Unix Makefiles"
+    cmake_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to the build system.",
+    )
+    """The parameters to pass to the build system.
+    """
+
+    cmake_generator: str = pydantic.Field(
+        default="Unix Makefiles",
+        description="The build system to use.",
+    )
+    """The build system to use.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``Unix Makefiles``
+          - Default. Runs `GNU Make <https://www.gnu.org/software/make>`__.
+        * - ``Ninja``
+          - Runs `Ninja <https://ninja-build.org>`__
+    """
 
     # part properties required by the plugin
     source: str

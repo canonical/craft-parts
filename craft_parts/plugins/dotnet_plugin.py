@@ -19,6 +19,7 @@
 import logging
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from . import validator
@@ -33,8 +34,24 @@ class DotnetPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["dotnet"] = "dotnet"
 
-    dotnet_build_configuration: str = "Release"
-    dotnet_self_contained_runtime_identifier: str | None = None
+    dotnet_build_configuration: str = pydantic.Field(
+        default="Release",
+        description="The .NET build configuration to use.",
+    )
+    """The .NET build configuration to use.
+
+    Defaults to ``Release``.
+    """
+
+    dotnet_self_contained_runtime_identifier: str | None = pydantic.Field(
+        default=None,
+        description="The Runtime Identifier of the .NET project.",
+    )
+    """The `Runtime Identifier
+    <https://learn.microsoft.com/en-us/dotnet/core/rid-catalog>`__ of the .NET project.
+
+    If set to a valid identifier, the part will be self-contained.
+    """
 
     # part properties required by the plugin
     source: str
