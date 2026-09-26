@@ -18,6 +18,7 @@
 
 from typing import Any, Literal, cast
 
+import pydantic
 from pydantic import model_validator
 from typing_extensions import Self, override
 
@@ -30,10 +31,40 @@ class JLinkPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the JLink plugin."""
 
     plugin: Literal["jlink"] = "jlink"
-    jlink_jars: list[str] = []
-    jlink_extra_modules: list[str] = []
-    jlink_modules: list[str] = []
-    jlink_multi_release: int | str = "base"
+
+    jlink_jars: list[str] = pydantic.Field(
+        default=[],
+        description="The paths to the part's JAR files.",
+    )
+    """The paths to the part's JAR files.
+
+    If unset, the part will source all JAR files in the staging area.
+    """
+
+    jlink_extra_modules: list[str] = pydantic.Field(
+        default=[],
+        description="Additional modules to include in the OpenJDK image.",
+    )
+    """Additional modules to include in the OpenJDK image.
+    """
+
+    jlink_modules: list[str] = pydantic.Field(
+        default=[],
+        description="The exhaustive list of modules to include in the OpenJDK image.",
+    )
+    """The exhaustive list of modules to include in the OpenJDK image.
+
+    If set, this key overrides all other path keys for this plugin.
+    """
+
+    jlink_multi_release: int | str = pydantic.Field(
+        default="base",
+        description="The OpenJDK version to use for multi-release JARs.",
+    )
+    """The OpenJDK version to use for multi-release JARs.
+
+    Defaults to ``base``.
+    """
 
     def _get_jlink_attributes(self, attribute_dict: dict[str, Any]) -> dict[str, Any]:
         return {

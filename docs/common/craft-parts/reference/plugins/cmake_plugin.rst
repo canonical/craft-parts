@@ -3,8 +3,9 @@
 CMake plugin
 ============
 
-The CMake plugin configures projects using CMake_ and builds them either using `GNU
-Make`_ or Ninja_.
+The CMake plugin configures projects using `CMake <https://cmake.org>`__ and builds them
+either using `GNU Make <https://www.gnu.org/software/make>`__ or `Ninja
+<https://ninja-build.org>`__ as the build system.
 
 After a successful build, this plugin will install the generated binaries in
 ``$CRAFT_PART_INSTALL``.
@@ -15,30 +16,17 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.cmake_plugin
 
-cmake-parameters
-~~~~~~~~~~~~~~~~
+.. kitbash-field:: CMakePluginProperties cmake_generator
 
-**Type:** list of strings
-
-Parameters to configure the project using common CMake semantics.
-
-
-cmake-generator
-~~~~~~~~~~~~~~~
-
-**Type:** string
-
-**Default:** "Unix Makefiles"
-
-Determine the tool to use to build.  Can be either set to ``Ninja`` or ``Unix
-Makefiles``.
+.. kitbash-field:: CMakePluginProperties cmake_parameters
 
 
 Environment variables
 ---------------------
 
-The plugin sets the CMAKE_PREFIX_PATH_ to the stage directory.
+The plugin sets the :literalref:`CMAKE_PREFIX_PATH <https://cmake.org/cmake/help/latest/variable/CMAKE_PREFIX_PATH.html>` to the stage directory.
 
 
 Dependencies
@@ -71,7 +59,7 @@ Example
 -------
 
 The following snippet declares a part using the ``cmake`` plugin. It sets the
-CMAKE_BUILD_TYPE_ to ``RelWithDebInfo`` to generate debug symbols from the build:
+:literalref:`CMAKE_BUILD_TYPE <https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>` to ``RelWithDebInfo`` to generate debug symbols from the build:
 
 .. code-block:: yaml
 
@@ -81,10 +69,3 @@ CMAKE_BUILD_TYPE_ to ``RelWithDebInfo`` to generate debug symbols from the build
         plugin: cmake
         cmake-parameters:
           - -DCMAKE_BUILD_TYPE=RelWithDebInfo
-
-
-.. _GNU Make: https://www.gnu.org/software/make/
-.. _Ninja: https://ninja-build.org/
-.. _CMake: https://cmake.org/
-.. _CMAKE_PREFIX_PATH: https://cmake.org/cmake/help/latest/variable/CMAKE_PREFIX_PATH.html
-.. _CMAKE_BUILD_TYPE: https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html

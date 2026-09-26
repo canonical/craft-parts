@@ -40,14 +40,131 @@ class RustPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["rust"] = "rust"
 
     # part properties required by the plugin
-    rust_features: UniqueList[str] = []
-    rust_path: UniqueList[str] = ["."]
-    rust_channel: str | None = None
-    rust_use_global_lto: bool = False
-    rust_no_default_features: bool = False
-    rust_ignore_toolchain_file: bool = False
-    rust_cargo_parameters: list[str] = []
-    rust_inherit_ldflags: bool = False
+    rust_features: UniqueList[str] = pydantic.Field(
+        default=[],
+        description="The build features to use for optional dependencies.",
+    )
+    """The build features to use for optional dependencies.
+
+    Equivalent to the ``--features`` option in Cargo. Set to ``["*"]`` to select all the
+    features available in the project.
+
+    This option doesn't override any default features specified by the project itself.
+
+    To override the default features, see the :ref:`rust-no-default-features` key.
+    """
+
+    rust_path: UniqueList[str] = pydantic.Field(
+        default=["."],
+        description="The path to the directory containing the manifest.",
+    )
+    """The path to the directory containing the manifest.
+
+    Equivalent to the ``--manifest-path`` option in Cargo.
+
+    Defaults to ``"."``.
+    """
+
+    rust_channel: str | None = pydantic.Field(
+        default=None,
+        description="The Rust channel or version to use.",
+    )
+    """The `Rust channel or version
+    <https://rust-lang.github.io/rustup/concepts/channels.html#channels>`__ to use.
+
+    Accepted values:
+
+    - A version number, such as ``"1.99"``
+    - A channel number, one of ``stable``, ``beta``, or ``nightly``
+    - A nightly version number, in the format ``nightly-YYYY-MM-DD``
+    - ``"none"`` to stop the plugin from installing the Rust toolchain
+
+    If this key is set to a channel or version, ``rustup`` must also be available in the
+    build environment so the plugin can install or select the requested toolchain.
+
+    If this key is left unset, the plugin uses ``rustup`` and defaults to the ``stable``
+    channel. However, if Cargo and the Rust compiler are already available in the build
+    environment, the plugin uses those directly and skips the ``rustup`` toolchain
+    selection.
+    """
+
+    rust_use_global_lto: bool = pydantic.Field(
+        default=False,
+        description="Whether to use global LTO.",
+    )
+    """Whether to use global LTO.
+
+    This option may significantly impact the build performance but reduce the final
+    binary size and improve runtime performance. This will forcibly enable LTO for all
+    the crates you specified, regardless of whether the projects have the LTO option
+    enabled in the manifest.
+
+    This is equivalent to declaring ``lto = "fat"`` in the manifest.
+
+    To further improve runtime performance, see :ref:`Performance tuning <perf-tuning>`.
+    """
+
+    rust_no_default_features: bool = pydantic.Field(
+        default=False,
+        description="Whether to ignore the features specified by the project.",
+    )
+    """Whether to ignore the features specified by the project.
+
+    If set, the :ref:`rust-features` key can specify an exhaustive list of features to
+    override.
+    """
+
+    rust_ignore_toolchain_file: bool = pydantic.Field(
+        default=False,
+        description="Whether to ignore the rust-toolchain.toml and rust-toolchain files.",
+    )
+    """Whether to ignore the ``rust-toolchain.toml`` and ``rust-toolchain``
+    files.
+
+    The part source may use this file to specify which Rust toolchain to use and which
+    component to install. To bypass the upstream project's specifications, set to
+    ``true``.
+    """
+
+    rust_cargo_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The extra parameters to pass to Cargo.",
+    )
+    """The extra parameters to pass to Cargo.
+    """
+
+    rust_inherit_ldflags: bool = pydantic.Field(
+        default=False,
+        description="Whether to inherit the LDFLAGS environment variable.",
+    )
+    r"""Whether to inherit the ``LDFLAGS`` environment variable.
+
+    This key adds ``LDFLAGS`` from the environment to the Rust linker directives.
+
+    By default, the Cargo build system and Rust compiler don't respect the ``LDFLAGS``
+    environment variable. If set to ``true``,the plugin forcibly adds the contents
+    listed by ``LDFLAGS`` to the Rust linker directives by wrapping and appending the
+    its value to ``RUSTFLAGS``.
+
+    Squashing ``LDFLAGS`` into ``RUSTFLAGS`` makes the Rust binary in a
+    classically-confined snap respect the snap linkage, so that the binary won't find
+    the libraries in the host filesystem. Here's an example part that does this:
+
+    .. code-block:: yaml
+
+        parts:
+          my-classic-app:
+            plugin: rust
+            source: .
+            rust-inherit-ldflags: true
+            build-environment:
+              - LDFLAGS: >
+                -Wl,-rpath=\$ORIGIN/lib:/snap/core24/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR
+                -Wl,-dynamic-linker=$(find
+                /snap/core24/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR -name
+                'ld*.so.*' -print | head -n1)
+    """
+
     source: str
     after: UniqueList[str] | None = None
 

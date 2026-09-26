@@ -20,6 +20,7 @@ import logging
 from enum import Enum
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from . import validator
@@ -44,9 +45,16 @@ class RubyFlavor(str, Enum):
     """All Ruby implementations supported by ruby-install."""
 
     ruby = "ruby"
+    """The reference (MRI/CRuby) Ruby implementation."""
+
     jruby = "jruby"
+    """A Ruby implementation that runs on the JVM."""
+
     truffleruby = "truffleruby"
+    """A high-performance Ruby implementation built on GraalVM."""
+
     mruby = "mruby"
+    """A lightweight Ruby implementation designed for embedding."""
 
 
 class RubyPluginProperties(PluginProperties, frozen=True):
@@ -55,15 +63,55 @@ class RubyPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["ruby"] = "ruby"
     source: str
 
-    ruby_gems: list[str] = []
-    ruby_use_bundler: bool = False
+    ruby_gems: list[str] = pydantic.Field(
+        default=[],
+        description="The gems to install.",
+    )
+    """The gems to install."""
+
+    ruby_use_bundler: bool = pydantic.Field(
+        default=False,
+        description="Whether to use Bundler to build the gems.",
+    )
+    """Whether to use Bundler to build the gems."""
 
     # build arguments
-    ruby_flavor: RubyFlavor | None = None
-    ruby_version: str | None = None
-    ruby_use_jemalloc: bool = False
-    ruby_shared: bool = False
-    ruby_configure_options: list[str] = []
+    ruby_flavor: RubyFlavor | None = pydantic.Field(
+        default=None,
+        description="The Ruby interpreter to build and include.",
+    )
+    """The Ruby interpreter to build and include."""
+
+    ruby_version: str | None = pydantic.Field(
+        default=None,
+        description="The version of the Ruby interpreter to build.",
+    )
+    """The version of the Ruby interpreter to build."""
+
+    ruby_use_jemalloc: bool = pydantic.Field(
+        default=False,
+        description="Whether to build Ruby with support for jemalloc.",
+    )
+    """Whether to build Ruby with support for jemalloc."""
+
+    ruby_shared: bool = pydantic.Field(
+        default=False,
+        description="Whether to build libruby.so, a shared library that other binaries can link against.",
+    )
+    """Whether to build libruby.so, a shared library that other binaries can link
+    against.
+
+    When set to ``true``, the plugin builds ``libruby.so``, a shared library that other
+    binaries can link against.
+    """
+
+    ruby_configure_options: list[str] = pydantic.Field(
+        default=[],
+        description="The extra arguments to pass to the configure script when building the Ruby interpreter.",
+    )
+    """The extra arguments to pass to the ``configure`` script when building the Ruby
+    interpreter.
+    """
 
 
 class RubyPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

@@ -18,6 +18,7 @@
 
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts import errors
@@ -32,7 +33,11 @@ class SConsPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["scons"] = "scons"
 
-    scons_parameters: list[str] = []
+    scons_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to SCons.",
+    )
+    """The parameters to pass to SCons."""
 
     # part properties required by the plugin
     source: str

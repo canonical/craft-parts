@@ -20,6 +20,7 @@ import shlex
 from textwrap import dedent
 from typing import Literal
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts.plugins.base import Plugin
@@ -31,8 +32,30 @@ class PythonPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["python"] = "python"
 
-    python_requirements: list[str] = []
-    python_packages: list[str] = []
+    python_requirements: list[str] = pydantic.Field(
+        default=[],
+        description="List of paths to requirements files.",
+    )
+    """List of paths to requirements files.
+
+    Use this key when dependencies must be installed from one or more explicit
+    requirements files, such as ``requirements.txt``. The plugin does not
+    automatically select a requirements file from the source tree; each file
+    must be listed here.
+
+    A part does not need this key when its dependencies are already declared by
+    the project metadata used during package installation. For example, when
+    the source contains a ``setup.py`` or ``pyproject.toml`` file, the plugin
+    installs the project and pip resolves the dependencies declared by the
+    package itself. That metadata may also come from configuration files such
+    as ``setup.cfg``.
+    """
+
+    python_packages: list[str] = pydantic.Field(
+        default=[],
+        description="Additional Python packages to install with pip.",
+    )
+    """Additional Python packages to install with pip."""
 
     # part properties required by the plugin
     source: str

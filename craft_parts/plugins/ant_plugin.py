@@ -23,6 +23,7 @@ from collections.abc import Iterator
 from typing import Literal, cast
 from urllib.parse import urlsplit
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts import errors
@@ -39,9 +40,26 @@ class AntPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["ant"] = "ant"
 
-    ant_build_targets: list[str] = []
-    ant_build_file: str | None = None
-    ant_properties: dict[str, str] = {}
+    ant_build_targets: list[str] = pydantic.Field(
+        default=[],
+        description="The targets to build.",
+    )
+    """The targets to build.
+    """
+
+    ant_build_file: str | None = pydantic.Field(
+        default="build.xml",
+        description="The name of the main XML build file.",
+    )
+    """The name of the main XML build file.
+    """
+
+    ant_properties: dict[str, str] = pydantic.Field(
+        default={},
+        description="The properties of the Ant build.",
+    )
+    """The properties of the Ant build, passed with the ``-D{key}={value}`` argument.
+    """
 
     source: str
 
