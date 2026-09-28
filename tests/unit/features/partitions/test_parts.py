@@ -18,7 +18,7 @@ from pathlib import Path
 from textwrap import dedent, indent
 
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 from craft_parts import ProjectDirs, errors
 from craft_parts.parts import Part
 from craft_parts.utils.partition_utils import get_partition_dir_map

@@ -46,7 +46,7 @@ class PullState(StepState):
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("state data is not a dictionary")
 
         return cls(**data)
@@ -78,7 +78,9 @@ class PullState(StepState):
             "source-submodules",
             "override-pull",
             "stage-packages",
+            "stage-slices",
             "overlay-packages",
+            "overlay-recommended-packages",
             *(extra_properties or []),
         ]
 

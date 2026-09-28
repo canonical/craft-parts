@@ -134,8 +134,10 @@ def test_get_build_commands_self_contained(part_info):
 
     assert plugin.get_build_commands() == [
         "dotnet build -c Release",
-        f"dotnet publish -c Release -o {plugin._part_info.part_install_dir} "
-        "--self-contained -r linux-x64",
+        (
+            f"dotnet publish -c Release -o {plugin._part_info.part_install_dir} "
+            "--self-contained -r linux-x64"
+        ),
     ]
 
 

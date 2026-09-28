@@ -22,7 +22,7 @@ from typing import Any, cast
 from unittest.mock import call
 
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 from craft_parts import ProjectDirs, errors, packages
 from craft_parts.actions import Action, ActionType
 from craft_parts.executor import filesets, part_handler
@@ -109,6 +109,9 @@ class TestPartHandling:
         )
 
     def test_run_build(self, mocker):
+        mock_chroot = mocker.patch(
+            "craft_parts.executor.part_handler.chroot_runner.chroot"
+        )
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
         mocker.patch(
             "craft_parts.packages.Repository.get_installed_packages",
@@ -138,6 +141,108 @@ class TestPartHandling:
 
         assert self._mock_mount_overlayfs.mock_calls == []
         assert self._mock_umount.mock_calls == []
+        mock_chroot.assert_not_called()
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_run_build_with_build_slices(self, mocker, new_dir, partitions):
+        part = Part(
+            "sliced",
+            {"plugin": "nil", "build-slices": ["base-files_base"]},
+            partitions=partitions,
+        )
+        part_info = PartInfo(self._project_info, part)
+        overlay_manager = OverlayManager(
+            project_info=self._project_info,
+            part_list=[part],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+        handler = PartHandler(
+            part,
+            part_info=part_info,
+            part_list=[part],
+            overlay_manager=overlay_manager,
+        )
+        events = []
+        mock_run_step = mocker.patch.object(handler, "_run_step")
+        mocker.patch(
+            "craft_parts.executor.part_handler.shutil.copytree",
+            side_effect=lambda *args, **kwargs: events.append("copy"),
+        )
+        mock_chroot = mocker.patch(
+            "craft_parts.executor.part_handler.chroot_runner.chroot",
+            side_effect=lambda *args, **kwargs: events.append("chroot"),
+        )
+        mocker.patch(
+            "craft_parts.executor.part_handler.callbacks.run_step",
+            side_effect=lambda *args, **kwargs: events.append("callback"),
+        )
+        mocker.patch(
+            "craft_parts.executor.part_handler.organize_files",
+            side_effect=lambda *args, **kwargs: events.append("organize"),
+        )
+        mocker.patch(
+            "craft_parts.packages.Repository.get_installed_packages",
+            return_value=[],
+        )
+        mocker.patch(
+            "craft_parts.packages.snaps.get_installed_snaps",
+            return_value=[],
+        )
+        mocker.patch("subprocess.check_output", return_value=b"os-info")
+
+        step_info = StepInfo(part_info, Step.BUILD)
+        handler._run_build(step_info, stdout=None, stderr=None)
+
+        mock_chroot.assert_called_once_with(
+            self._project_info.dirs.build_slices_dir,
+            mock_run_step,
+            step_info=step_info,
+            scriptlet_name="override-build",
+            work_dir=part.part_build_dir,
+            stdout=None,
+            stderr=None,
+            bind_mounts=handler._get_build_slices_bind_mounts(),
+        )
+        mock_run_step.assert_not_called()
+        assert events == ["copy", "chroot", "callback", "organize"]
+
+    def test_get_build_slices_bind_mounts(self, partitions):
+        part_dir = self._part.parts_dir / self._part.name
+
+        expected_mounts = [
+            part_handler.chroot_runner.BindMount(
+                source=part_dir,
+                target=part_dir,
+            )
+        ]
+
+        # Add dirs provided by partitions
+        expected_mounts.extend(
+            part_handler.chroot_runner.BindMount(
+                source=install_dir,
+                target=install_dir,
+            )
+            for install_dir in sorted(self._part.part_install_dirs.values())
+            if not install_dir.is_relative_to(part_dir)
+        )
+
+        # Add the stage dirs, as read-only
+        expected_mounts.extend(
+            part_handler.chroot_runner.BindMount(
+                source=stage_dir,
+                target=stage_dir,
+                read_only=True,
+            )
+            for stage_dir in sorted(set(self._part.stage_dirs.values()))
+        )
+
+        assert self._handler._get_build_slices_bind_mounts() == expected_mounts
+
+        mounted_paths = {
+            mount.source for mount in self._handler._get_build_slices_bind_mounts()
+        }
+        assert self._project_info.project_dir not in mounted_paths
 
     def test_run_build_passes_build_dir_to_organize(self, mocker):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
@@ -792,14 +897,34 @@ class TestRerunStep:
 class TestPackages:
     """Verify package handling."""
 
-    def test_fetch_stage_packages(self, mocker, new_dir, partitions):
-        mocker.patch(
+    @pytest.mark.parametrize(
+        ("part_key", "declared_names", "fetched_names"),
+        [
+            pytest.param(
+                "stage-packages",
+                ["pkg1"],
+                ["pkg1", "pkg2"],
+                id="stage-packages",
+            ),
+            pytest.param(
+                "stage-slices",
+                ["pkg1_bins"],
+                ["pkg1_bins", "pkg2_bins"],
+                id="stage-slices",
+            ),
+        ],
+    )
+    def test_fetch_stage_packages_or_slices(
+        self, mocker, new_dir, partitions, part_key, declared_names, fetched_names
+    ):
+        """The part handler should handle stage-packages and stage-slices identically."""
+        fetch_stage_packages = mocker.patch(
             "craft_parts.packages.Repository.fetch_stage_packages",
-            return_value=["pkg1", "pkg2"],
+            return_value=fetched_names,
         )
 
         p1 = Part(
-            "p1", {"plugin": "nil", "stage-packages": ["pkg1"]}, partitions=partitions
+            "p1", {"plugin": "nil", part_key: declared_names}, partitions=partitions
         )
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         part_info = PartInfo(info, p1)
@@ -812,7 +937,14 @@ class TestPackages:
         )
 
         result = handler._fetch_stage_packages(step_info=step_info)
-        assert result == ["pkg1", "pkg2"]
+        assert result == fetched_names
+        fetch_stage_packages.assert_called_once_with(
+            cache_dir=mocker.ANY,
+            package_names=declared_names,
+            arch=mocker.ANY,
+            base=mocker.ANY,
+            stage_packages_path=mocker.ANY,
+        )
 
     def test_fetch_stage_packages_none(self, mocker, new_dir, partitions):
         p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
@@ -1325,7 +1457,7 @@ class TestDirs:
 
         for i, p in enumerate(partitions or (None,)):
             partition_dir = Path()
-            if p and p != "default":
+            if p is not None and p != "default":
                 partition_dir = Path("partitions", p)
 
             for d in ["parts", "overlay", "prime", "stage"]:

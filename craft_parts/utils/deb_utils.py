@@ -17,7 +17,7 @@
 """deb-related utilities used by both `packages` and `sources`."""
 
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
 from craft_parts import errors
@@ -36,3 +36,32 @@ def extract_deb(
         )
     except subprocess.CalledProcessError as err:
         raise errors.DebError(deb_path, command, err.returncode) from err
+
+
+def _is_chisel_slice(name: str) -> bool:
+    """Return whether a name is a Deb package or a Chisel slice.
+
+    A Chisel slice uses the `<package-name>_<slice-name>` syntax.
+
+    This is a simple check that assumes the name is either a valid Deb package
+    or Chisel slice.
+
+    :param name: A package or slice name.
+    """
+    return "_" in name
+
+
+def has_slices(names: Iterable[str]) -> bool:
+    """Return whether a list contains any Chisel slices.
+
+    :param names: An iterable of packages and slices.
+    """
+    return any(_is_chisel_slice(name) for name in names)
+
+
+def has_debs(names: Iterable[str]) -> bool:
+    """Return whether a list contains any Debian packages.
+
+    :param names: An iterable of packages and slices.
+    """
+    return any(not _is_chisel_slice(name) for name in names)

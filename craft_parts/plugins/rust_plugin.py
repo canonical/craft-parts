@@ -48,7 +48,7 @@ class RustPluginProperties(PluginProperties, frozen=True):
     rust_ignore_toolchain_file: bool = False
     rust_cargo_parameters: list[str] = []
     rust_inherit_ldflags: bool = False
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
     after: UniqueList[str] | None = None
 
     @pydantic.field_validator("rust_channel")
@@ -120,11 +120,11 @@ class RustPlugin(Plugin):
 
     Rust uses cargo to drive the build.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
         - rust-channel
           (string, default "stable")
           Used to select which Rust channel or version to use.

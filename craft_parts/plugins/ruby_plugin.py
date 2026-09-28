@@ -53,7 +53,7 @@ class RubyPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the Ruby plugin."""
 
     plugin: Literal["ruby"] = "ruby"
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
     ruby_gems: list[str] = []
     ruby_use_bundler: bool = False
@@ -111,7 +111,7 @@ class RubyPlugin(Plugin):
 
     The desired Ruby interpreter is compiled using ruby-install.
 
-    The ruby plugin uses the  following ruby-specific keywords:
+    The ruby plugin uses the following plugin-specific keys:
 
     - ``ruby-flavor``
       (string)
