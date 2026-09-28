@@ -24,6 +24,7 @@ from typing import Any, cast
 import pytest
 from craft_parts import errors
 from craft_parts.executor.organize import organize_files
+from craft_parts.utils.partition_utils import BUILD_PARTITION
 
 
 @pytest.fixture(autouse=True, params=range(6))
@@ -400,7 +401,9 @@ def organize_and_assert(
     setup_dirs,
     setup_files,
     setup_symlinks: list[tuple[str, str]],
-    organize_map,
+    setup_build_dirs=None,
+    setup_build_files=None,
+    organize_map: dict[str, str],
     expected: list[Any],
     expected_message,
     expected_overwrite,
@@ -411,12 +414,25 @@ def organize_and_assert(
         Path(dest_install_dir).mkdir(parents=True, exist_ok=True)
     install_dir = Path(tmp_path / "install")
     install_dir.mkdir(parents=True, exist_ok=True)
+    build_dir = Path(install_dirs.get(BUILD_PARTITION, tmp_path / "build_dir"))
+    setup_build_dirs = setup_build_dirs or []
+    setup_build_files = setup_build_files or []
 
     for directory in setup_dirs:
-        (install_dir / directory).mkdir(exist_ok=True)
+        (install_dir / directory).mkdir(parents=True, exist_ok=True)
 
     for file_entry in setup_files:
-        (install_dir / file_entry).touch()
+        file_path = install_dir / file_entry
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.touch()
+
+    for directory in setup_build_dirs:
+        (build_dir / directory).mkdir(parents=True, exist_ok=True)
+
+    for file_entry in setup_build_files:
+        file_path = build_dir / file_entry
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.touch()
 
     for symlink_entry, symlink_target in setup_symlinks:
         symlink_path = install_dir / symlink_entry
@@ -451,3 +467,77 @@ def organize_and_assert(
             dir_path = install_dir / expect[1]
             dir_contents = sorted(path.name for path in dir_path.iterdir())
             assert dir_contents == expect[0]
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        pytest.param(
+            {
+                "setup_build_files": ["generated.txt"],
+                "organize_map": {"(build)/generated.txt": "generated/generated.txt"},
+                "expected": [
+                    (["generated"], ""),
+                    (["generated.txt"], "generated"),
+                    (["generated.txt"], "../build_dir"),
+                ],
+            },
+            id="build-file-creates-destination-directory",
+        ),
+        pytest.param(
+            {
+                "setup_dirs": ["target"],
+                "setup_files": ["target/existing.txt"],
+                "setup_build_dirs": ["generated"],
+                "setup_build_files": ["generated/new.txt"],
+                "organize_map": {"(build)/generated": "target"},
+                "expected": [
+                    (["target"], ""),
+                    (["existing.txt", "new.txt"], "target"),
+                    (["generated"], "../build_dir"),
+                    (["new.txt"], "../build_dir/generated"),
+                ],
+            },
+            id="build-explicit-directory-merges-into-target",
+        ),
+        pytest.param(
+            {
+                "setup_dirs": ["target"],
+                "setup_build_dirs": ["generated-a", "generated-b"],
+                "setup_build_files": [
+                    "generated-a/a.txt",
+                    "generated-b/b.txt",
+                ],
+                "organize_map": {"(build)/generated-*": "target"},
+                "expected": [
+                    (["target"], ""),
+                    (["generated-a", "generated-b"], "target"),
+                    (["a.txt"], "target/generated-a"),
+                    (["b.txt"], "target/generated-b"),
+                    (["generated-a", "generated-b"], "../build_dir"),
+                    (["a.txt"], "../build_dir/generated-a"),
+                    (["b.txt"], "../build_dir/generated-b"),
+                ],
+            },
+            id="build-glob-directories-nest-in-existing-target",
+        ),
+    ],
+)
+def test_organize_from_build(data, new_dir):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=data.get("setup_dirs", []),
+        setup_files=data.get("setup_files", []),
+        setup_symlinks=[],
+        setup_build_dirs=data.get("setup_build_dirs", []),
+        setup_build_files=data.get("setup_build_files", []),
+        organize_map=data["organize_map"],
+        expected=data["expected"],
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={
+            None: Path(new_dir / "install"),
+            BUILD_PARTITION: Path(new_dir / "build_dir"),
+        },
+    )

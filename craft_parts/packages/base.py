@@ -76,10 +76,13 @@ class BaseRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache.
 
         :param package_names: A list with the names of the packages to download.
+        :param include_recommends: Whether or not to include recommended packages.
         """
 
     @classmethod
@@ -88,8 +91,8 @@ class BaseRepository(abc.ABC):
         cls,
         package_names: list[str],
         *,
-        list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,
     ) -> list[str]:
         """Install packages on the host system.
 
@@ -105,8 +108,8 @@ class BaseRepository(abc.ABC):
         host failed :class:`BuildPackagesNotInstalled` should be raised.
 
         :param package_names: A list of package names to install.
-        :param list_only: Only list the packages that would be installed.
         :param refresh_package_cache: Refresh the cache before installing.
+        :param include_recommends: Whether or not to include recommended packages.
 
         :return: A list with the packages installed and their versions.
         """
@@ -139,18 +142,13 @@ class BaseRepository(abc.ABC):
         stage_packages_path: Path,
         base: str,
         arch: str,
-        list_only: bool = False,
     ) -> list[str]:
         """Fetch stage packages to stage_packages_path.
 
-        :param application_name: A unique identifier for the application
-            using Craft Parts.
         :param package_names: A list with the names of the packages to fetch.
-        :stage_packages_path: The path stage packages will be fetched to.
+        :param stage_packages_path: The path stage packages will be fetched to.
         :param base: The base this project will run on.
         :param arch: The architecture of the packages to fetch.
-        :param list_only: Whether to obtain a list of packages to be fetched
-            instead of actually fetching the packages.
 
         :return: The list of all packages to be fetched, including dependencies.
         """
@@ -205,7 +203,9 @@ class DummyRepository(BaseRepository):
 
     @override
     @classmethod
-    def download_packages(cls, package_names: list[str]) -> None:
+    def download_packages(
+        cls, package_names: list[str], *, include_recommends: bool = False
+    ) -> None:
         """Download the specified packages to the local package cache."""
 
     @override
@@ -214,8 +214,8 @@ class DummyRepository(BaseRepository):
         cls,
         package_names: list[str],
         *,
-        list_only: bool = False,
         refresh_package_cache: bool = True,
+        include_recommends: bool = False,
     ) -> list[str]:
         """Install packages on the host system."""
         logger.debug("Package manager not defined, not installing any packages")

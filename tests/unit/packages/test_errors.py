@@ -48,10 +48,26 @@ def test_packages_not_found():
 
 
 def test_package_fetch_error():
-    err = errors.PackageFetchError("something bad happened")
-    assert err.message == "something bad happened"
-    assert err.brief == "Failed to fetch package: something bad happened."
+    err = errors.PackageFetchError("http://example.com/mock.deb")
+    assert err.url == "http://example.com/mock.deb"
+    assert err.brief == "Failed to fetch package from http://example.com/mock.deb."
     assert err.details is None
+    assert err.resolution is None
+
+
+def test_package_fetch_error_with_details():
+    err = errors.PackageFetchError("http://example.com/mock.deb", details="boom")
+    assert err.url == "http://example.com/mock.deb"
+    assert err.brief == "Failed to fetch package from http://example.com/mock.deb."
+    assert err.details == "boom"
+    assert err.resolution is None
+
+
+def test_package_fetch_error_without_uri():
+    err = errors.PackageFetchError(None, details="boom")
+    assert err.url is None
+    assert err.brief == "Failed to fetch package."
+    assert err.details == "boom"
     assert err.resolution is None
 
 

@@ -19,7 +19,7 @@
 import logging
 import os
 import shutil
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
@@ -31,6 +31,7 @@ from craft_parts.actions import Action, ActionType
 from craft_parts.filesystem_mounts import FilesystemMount
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
+from craft_parts.overlays import chroot as chroot_runner
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
@@ -49,7 +50,7 @@ from craft_parts.state_manager import (
 from craft_parts.state_manager.stage_state import StageState
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import BUILD_PARTITION, DEFAULT_PARTITION
 
 from . import filesets, migration
 from .environment import generate_step_environment
@@ -229,6 +230,7 @@ class PartHandler:
         overlay_manager: OverlayManager,
         ignore_patterns: list[str] | None = None,
         base_layer_hash: LayerHash | None = None,
+        build_environment: Iterable[str] | None = None,
     ) -> None:
         self._part = part
         self._part_info = part_info
@@ -236,7 +238,7 @@ class PartHandler:
         self._track_stage_packages = track_stage_packages
         self._overlay_manager = overlay_manager
         self._base_layer_hash = base_layer_hash
-        self._app_environment: dict[str, str] = {}
+        self._build_environment = build_environment
 
         self._plugin = plugins.get_plugin(
             part=part,
@@ -370,11 +372,19 @@ class PartHandler:
         if self._part.has_overlay:
             # install overlay packages (from spec and plugin)
             overlay_packages = self._merged_overlay_packages()
-            if overlay_packages:
+            overlay_recommended_packages = self._merged_overlay_recommended_packages()
+            if overlay_packages or overlay_recommended_packages:
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
                 ) as ctx:
-                    ctx.install_packages(overlay_packages)
+                    # include-recommends should be processed first, packages in recommends
+                    # chain will be skipped if any already installed via overlay-packages
+                    if overlay_recommended_packages:
+                        ctx.install_packages(
+                            overlay_recommended_packages, include_recommends=True
+                        )
+                    if overlay_packages:
+                        ctx.install_packages(overlay_packages)
 
             if self._part.spec.override_overlay or self._plugin.uses_overlay:
                 # Run in chroot: either override-overlay scriptlet or
@@ -461,7 +471,10 @@ class PartHandler:
 
             # Copy source from the part source dir to the part build dir
             shutil.copytree(
-                self._part.part_src_dir, self._part.part_build_dir, symlinks=True
+                self._part.part_src_dir,
+                self._part.part_build_dir,
+                symlinks=True,
+                copy_function=file_utils.copy,
             )
 
         # Perform the build step
@@ -472,13 +485,25 @@ class PartHandler:
         with _conditional_layer_mount(
             self._overlay_manager, top_part=self._part, condition=needs_overlay
         ):
-            self._run_step(
-                step_info=step_info,
-                scriptlet_name="override-build",
-                work_dir=self._part.part_build_dir,
-                stdout=stdout,
-                stderr=stderr,
-            )
+            if self._part.has_build_slices:
+                chroot_runner.chroot(
+                    self._part_info.project_info.dirs.build_slices_dir,
+                    self._run_step,
+                    step_info=step_info,
+                    scriptlet_name="override-build",
+                    work_dir=self._part.part_build_dir,
+                    stdout=stdout,
+                    stderr=stderr,
+                    bind_mounts=self._get_build_slices_bind_mounts(),
+                )
+            else:
+                self._run_step(
+                    step_info=step_info,
+                    scriptlet_name="override-build",
+                    work_dir=self._part.part_build_dir,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
 
             logger.debug("Run pre-organize callbacks")
             callbacks.run_step(step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE)
@@ -496,12 +521,17 @@ class PartHandler:
             # files brought in from stage-packages, but in the case of updating build, we
             # want the part to have the ability to organize over the files it organized last
             # time around. We can be confident that this won't overwrite anything else,
-            # because to do so would require changing the `organize` keyword, which will
+            # because to do so would require changing the `organize` key, which will
             # make the build step dirty and require a clean instead of an update.
+            organize_install_dirs = {
+                **self._part.part_install_dirs,
+                BUILD_PARTITION: self._part.part_build_dir,
+            }
+
             organize_files(
                 part_name=self._part.name,
                 file_map=self._part.spec.organize_files,
-                install_dir_map=self._part.part_install_dirs,
+                install_dir_map=organize_install_dirs,
                 overwrite=update,
                 default_partition=step_info.default_partition,
             )
@@ -525,6 +555,31 @@ class PartHandler:
             overlay_hash=overlay_hash.hex(),
         )
 
+    def _get_build_slices_bind_mounts(self) -> list[chroot_runner.BindMount]:
+        """Get the bind mounts required to build this part in a sliced root."""
+        part_dir = self._part.parts_dir / self._part.name
+        writable_dirs = {
+            install_dir
+            for install_dir in self._part.part_install_dirs.values()
+            if not install_dir.is_relative_to(part_dir)
+        }
+
+        return [
+            chroot_runner.BindMount(source=part_dir, target=part_dir),
+            *[
+                chroot_runner.BindMount(source=path, target=path)
+                for path in sorted(writable_dirs)
+            ],
+            *[
+                chroot_runner.BindMount(
+                    source=stage_dir,
+                    target=stage_dir,
+                    read_only=True,
+                )
+                for stage_dir in sorted(set(self._part.stage_dirs.values()))
+            ],
+        ]
+
     def _run_stage(
         self,
         step_info: StepInfo,
@@ -540,6 +595,8 @@ class PartHandler:
         """
         self._make_dirs()
 
+        self._migrate_overlay_files_to_stage()
+
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-stage",
@@ -547,8 +604,6 @@ class PartHandler:
             stdout=stdout,
             stderr=stderr,
         )
-
-        self._migrate_overlay_files_to_stage()
 
         # Overlay integrity is checked based by the hash of its last (topmost) layer,
         # so we compute it for all parts. The overlay hash is added to the stage state
@@ -597,6 +652,8 @@ class PartHandler:
         """
         self._make_dirs()
 
+        self._migrate_overlay_files_to_prime()
+
         contents = self._run_step(
             step_info=step_info,
             scriptlet_name="override-prime",
@@ -605,7 +662,6 @@ class PartHandler:
             stderr=stderr,
         )
 
-        self._migrate_overlay_files_to_prime()
         default_partition = self._part_info.default_partition or DEFAULT_PARTITION
 
         primed_stage_packages: set[str]
@@ -661,6 +717,9 @@ class PartHandler:
         )
 
         if step_info.step == Step.BUILD:
+            # Prepend environment set by the application.
+            step_env = self._prepend_build_environment(step_env)
+
             # Validate build environment. Unlike the pre-validation we did in
             # the execution prologue, we don't assume that a different part
             # can add elements to the build environment. All part dependencies
@@ -1263,7 +1322,9 @@ class PartHandler:
 
         :raises StagePackageNotFound: If a package is not available for download.
         """
-        stage_packages = self._part.spec.stage_packages
+        # 'stage-packages' and 'stage-slices' are mutually exclusive, so at most one
+        # of these is populated.
+        stage_packages = self._part.spec.stage_packages or self._part.spec.stage_slices
         if not stage_packages:
             return None
 
@@ -1301,13 +1362,20 @@ class PartHandler:
         plugin_packages = sorted(self._plugin.get_overlay_packages())
         return spec_packages + [p for p in plugin_packages if p not in spec_packages]
 
+    def _merged_overlay_recommended_packages(self) -> list[str]:
+        """Return overlay recommended packages from both the part spec and the plugin."""
+        spec_packages = list(self._part.spec.overlay_recommended_packages)
+        plugin_packages = sorted(self._plugin.get_overlay_recommended_packages())
+        return spec_packages + [p for p in plugin_packages if p not in spec_packages]
+
     def _fetch_overlay_packages(self) -> None:
         """Download overlay packages to the local package cache.
 
         :raises OverlayPackageNotFound: If a package is not available for download.
         """
         overlay_packages = self._merged_overlay_packages()
-        if not overlay_packages:
+        overlay_recommended_packages = self._merged_overlay_recommended_packages()
+        if not (overlay_packages or overlay_recommended_packages):
             return
 
         try:
@@ -1317,7 +1385,14 @@ class PartHandler:
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
                 ctx.refresh_packages_list()
-                ctx.download_packages(overlay_packages)
+                # include-recommends should be processed first, packages in recommends
+                # chain will be skipped if any already installed via overlay-packages
+                if overlay_recommended_packages:
+                    ctx.download_packages(
+                        overlay_recommended_packages, include_recommends=True
+                    )
+                if overlay_packages:
+                    ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
                 part_name=self._part.name, package_name=err.package_name
@@ -1363,6 +1438,24 @@ class PartHandler:
 
         for snap_source in snap_sources:
             snap_source.provision(install_dir, keep=True)
+
+    def _prepend_build_environment(self, content: str) -> str:
+        if not self._build_environment:
+            return content
+
+        current_dir = Path.cwd()
+        try:
+            # Set the current working directory to the build directory. Build
+            # environment generators may produce different results depending
+            # on the current path.
+            os.chdir(self._part.part_build_dir)
+            env_list = ["# Build environment from application"]
+            env_list.extend([f"export {x}" for x in self._build_environment])
+            env_list.extend(["", content])
+        finally:
+            os.chdir(current_dir)
+
+        return "\n".join(env_list)
 
 
 def _remove(filename: Path) -> None:

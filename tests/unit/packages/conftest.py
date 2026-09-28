@@ -43,6 +43,11 @@ def fake_apt_cache(mocker):
 
 
 @pytest.fixture
+def fake_process_run(mocker):
+    return mocker.patch("craft_parts.utils.os_utils.process_run")
+
+
+@pytest.fixture
 def fake_deb_run(mocker):
     return mocker.patch("craft_parts.packages.deb.process_run")
 

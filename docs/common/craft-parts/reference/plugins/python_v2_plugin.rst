@@ -26,6 +26,16 @@ python-requirements
 
 List of paths to requirements files.
 
+Use this key when dependencies must be installed from one or more explicit
+requirements files, such as ``requirements.txt``. The plugin does not
+automatically select a requirements file from the source tree; each file must be
+listed here.
+
+A part does not need this key when its dependencies are already declared by the
+project metadata used during package installation. For example, when the source
+contains a ``setup.py`` or ``pyproject.toml`` file, the plugin installs the
+project and pip resolves the dependencies declared by the package itself. That metadata may also come from configuration files such as ``setup.cfg``.
+
 
 python-packages
 ~~~~~~~~~~~~~~~

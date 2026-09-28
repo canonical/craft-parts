@@ -16,8 +16,10 @@
 
 """Definitions and helpers for the action executor."""
 
+import itertools
 import logging
 import shutil
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 
 from typing_extensions import Self
@@ -26,6 +28,7 @@ from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
+from craft_parts.packages import chisel
 from craft_parts.parts import Part, sort_parts
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -55,6 +58,7 @@ class Executor:
     :param ignore_patterns: File patterns to ignore when pulling local sources.
     :param use_host_sources: Whether overlay steps should also include the repository
       sources defined on the host.
+    :param build_environment: The environment variables to be set during build.
     """
 
     def __init__(  # noqa: PLR0913
@@ -69,6 +73,7 @@ class Executor:
         base_layer_dir: Path | None = None,
         base_layer_hash: LayerHash | None = None,
         use_host_sources: bool = False,
+        build_environment: Iterable[str] | None = None,
     ) -> None:
         self._part_list = sort_parts(part_list)
         self._project_info = project_info
@@ -79,6 +84,7 @@ class Executor:
         self._handler: dict[str, PartHandler] = {}
         self._ignore_patterns = ignore_patterns
         self._use_host_sources = use_host_sources
+        self._build_environment = build_environment
 
         # The cache layer level is set to the first part that doesn't organize
         # to the overlay coming after a part that organizes to the overlay.
@@ -107,6 +113,7 @@ class Executor:
         """
         self._install_build_packages()
         self._install_build_snaps()
+        self._cut_build_slices()
 
         self._verify_plugin_environment()
 
@@ -114,7 +121,10 @@ class Executor:
         # overlay packages if the cache level is the first layer after the base,
         # to keep compatibility with existing behavior.
         if (
-            any(p.spec.overlay_packages for p in self._part_list)
+            any(
+                p.spec.overlay_packages or p.spec.overlay_recommended_packages
+                for p in self._part_list
+            )
             and self._overlay_manager.cache_level == 0
         ):
             logger.info("Updating base overlay system")
@@ -260,6 +270,12 @@ class Executor:
         if part.name in self._handler:
             return self._handler[part.name]
 
+        build_environment = self._build_environment
+        if isinstance(self._build_environment, Iterator):
+            # Give a new generator instance to each part
+            build_environment, next_gen = itertools.tee(self._build_environment, 2)
+            self._build_environment = next_gen
+
         handler = PartHandler(
             part,
             part_info=PartInfo(self._project_info, part),
@@ -268,6 +284,7 @@ class Executor:
             overlay_manager=self._overlay_manager,
             ignore_patterns=self._ignore_patterns,
             base_layer_hash=self._base_layer_hash,
+            build_environment=build_environment,
         )
         self._handler[part.name] = handler
 
@@ -305,8 +322,64 @@ class Executor:
             logger.info("Installing build-snaps")
             packages.snaps.install_snaps(build_snaps)
 
+    def _cut_build_slices(self) -> None:
+        build_slices: set[str] = set()
+        for part in self._part_list:
+            build_slices.update(part.spec.build_slices)
+
+        state_file = self._build_slices_state_file()
+        slices_dir = self._project_info.dirs.build_slices_dir
+
+        if not build_slices:
+            # No build slices requested: delete previous state and slices.
+            state_file.unlink(missing_ok=True)
+            if slices_dir.exists():
+                shutil.rmtree(slices_dir)
+            return
+
+        state = self._load_build_slices_state(state_file)
+        if state and state.slices == build_slices:
+            # Nothing to do: slices already cut
+            self._prepare_build_slices_root(slices_dir)
+            return
+
+        logger.info("Cutting build-slices")
+
+        if slices_dir.exists():
+            # Need to cut new slices: remove the old ones.
+            shutil.rmtree(slices_dir)
+
+        slices_dir.mkdir(parents=True, exist_ok=False)
+        chisel.cut_slices(slices=sorted(build_slices), target_dir=slices_dir)
+        self._prepare_build_slices_root(slices_dir)
+
+        # Write the information of which slices we cut, for future runs.
+        new_state = chisel.SlicesState(slices=build_slices)
+        new_state.write(state_file)
+
+    def _prepare_build_slices_root(self, slices_dir: Path) -> None:
+        """Create mount points for virtual filesystems used during builds."""
+        for mountpoint in ("dev", "proc", "sys"):
+            (slices_dir / mountpoint).mkdir(parents=True, exist_ok=True)
+
+    def _build_slices_state_file(self) -> Path:
+        return self._project_info.dirs.work_dir / "build_slices_state.yaml"
+
+    def _load_build_slices_state(
+        self, slices_state_file: Path
+    ) -> chisel.SlicesState | None:
+        if not slices_state_file.exists():
+            return None
+
+        return chisel.SlicesState.read(slices_state_file)
+
     def _verify_plugin_environment(self) -> None:
         for part in self._part_list:
+            if part.spec.build_slices:
+                # Slice-provided tools are only visible when validation runs
+                # inside the Build step's chroot.
+                continue
+
             logger.debug("verify plugin environment for part %r", part.name)
 
             part_info = PartInfo(self._project_info, part)
