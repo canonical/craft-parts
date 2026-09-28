@@ -12,157 +12,33 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.dotnet_v2_plugin
 
-.. _craft_parts_dotnet_v2_plugin-global_flags:
+.. kitbash-field:: DotnetV2PluginProperties dotnet_configuration
 
-Global flags
-~~~~~~~~~~~~
+.. kitbash-field:: DotnetV2PluginProperties dotnet_project
 
-dotnet-configuration
-^^^^^^^^^^^^^^^^^^^^
+.. kitbash-field:: DotnetV2PluginProperties dotnet_properties
 
-**Type:** string
+.. kitbash-field:: DotnetV2PluginProperties dotnet_self_contained
+    :label: craft_parts_dotnet_v2_plugin-dotnet_self_contained
 
-**Default:** ``"Release"``
+.. kitbash-field:: DotnetV2PluginProperties dotnet_verbosity
 
-The .NET build configuration to use. Possible values are ``"Debug"`` and ``"Release"``.
+.. kitbash-field:: DotnetV2PluginProperties dotnet_version
+    :label: craft_parts_dotnet_v2_plugin-dotnet_version
 
+.. kitbash-field:: DotnetV2PluginProperties dotnet_restore_configfile
 
-dotnet-project
-^^^^^^^^^^^^^^
+.. kitbash-field:: DotnetV2PluginProperties dotnet_restore_properties
 
-**Type:** string
+.. kitbash-field:: DotnetV2PluginProperties dotnet_restore_sources
 
-The path to the solution or project file to build, relative to the root of the snap
-source. If a path isn't specified, MSBuild will search the root of the source for a file
-with the ``.*proj`` or ``.sln`` extension.
+.. kitbash-field:: DotnetV2PluginProperties dotnet_build_framework
 
+.. kitbash-field:: DotnetV2PluginProperties dotnet_build_properties
 
-dotnet-properties
-^^^^^^^^^^^^^^^^^
-
-**Type:** dict of strings to strings
-
-A list of MSBuild properties to be appended to the restore, build, and publish commands
-in the format of ``-p:<Key>=<Value>``.
-
-
-.. _craft_parts_dotnet_v2_plugin-dotnet_self_contained:
-
-dotnet-self-contained
-^^^^^^^^^^^^^^^^^^^^^
-
-**Type:** boolean
-
-**Default:** ``False``
-
-Create a self-contained .NET application. The Runtime Identifier (RID) will be
-automatically set based on the ``$CRAFT_BUILD_FOR`` variable for a given build, such
-that:
-
-+------------------------------+------------------------+
-| ``$CRAFT_BUILD_FOR`` value   | .NET RID               |
-+==============================+========================+
-| ``amd64``                    | ``linux-x64``          |
-+------------------------------+------------------------+
-| ``arm64``                    | ``linux-arm64``        |
-+------------------------------+------------------------+
-
-
-dotnet-verbosity
-^^^^^^^^^^^^^^^^
-
-**Type:** string
-
-**Default:** ``"normal"``
-
-Sets the MSBuild log output verbosity for the build. Possible values are: ``q[uiet]``,
-``m[inimal]``, ``n[ormal]``, ``d[etailed]``, and ``diag[nostic]``.
-
-
-.. _craft_parts_dotnet_v2_plugin-dotnet_version:
-
-dotnet-version
-^^^^^^^^^^^^^^
-
-**Type:** string
-
-Sets the .NET version to build the project with. By setting this key, the plugin will
-download the necessary .NET SDK content snap and use it to build the application.
-
-See the :ref:`craft_parts_dotnet_v2_plugin-details-begin` section for a more detailed
-explanation of this key.
-
-
-.. _craft_parts_dotnet_v2_plugin-restore_flags:
-
-Restore flags
-~~~~~~~~~~~~~
-
-dotnet-restore-configfile
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**Type:** string
-
-A path to the NuGet configuration file (nuget.config) to use. If specified, only the
-settings from this file will be used. If not specified, the hierarchy of configuration
-files from the current directory will be used. For more information, see `Common NuGet
-Configurations`_.
-
-
-dotnet-restore-properties
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**Type:** dict of strings to strings
-
-A list of MSBuild properties to be appended to the restore command in the format of
-``-p:<Key>=<Value>``.
-
-
-dotnet-restore-sources
-^^^^^^^^^^^^^^^^^^^^^^
-
-**Type:** list of strings
-
-Specifies the URIs of the NuGet package sources to use during the restore operation.
-This setting overrides all of the sources specified in the *nuget.config* files.
-
-
-.. _craft_parts_dotnet_v2_plugin-build_flags:
-
-Build flags
-~~~~~~~~~~~
-
-dotnet-build-framework
-^^^^^^^^^^^^^^^^^^^^^^
-
-**Type:** string
-
-Compiles for a specific `framework`_. The framework must be defined in the `project
-file`_. Examples: ``net7.0``, ``net462``.
-
-
-dotnet-build-properties
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**Type:** dict of strings to strings
-
-A list of MSBuild properties to be appended to the build command in the format of
-``-p:<Key>=<Value>``.
-
-
-.. _craft_parts_dotnet_v2_plugin-publish_flags:
-
-Publish flags
-~~~~~~~~~~~~~
-
-dotnet-publish-properties
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**Type:** dict of strings to strings
-
-A list of MSBuild properties to be appended to the publish command in the format of
-``-p:<Key>=<Value>``.
+.. kitbash-field:: DotnetV2PluginProperties dotnet_publish_properties
 
 
 .. _craft_parts_dotnet_v2_plugin-details-begin:
@@ -217,16 +93,12 @@ How it works
 
 During the build step the plugin performs the following actions:
 
-#. Call ``dotnet restore`` with the relevant
-   :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
-   :ref:`restore-specific flags <craft_parts_dotnet_v2_plugin-restore_flags>`.
-#. Call ``dotnet build --no-restore`` with the relevant
-   :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
-   :ref:`build-specific flags <craft_parts_dotnet_v2_plugin-build_flags>`.
-#. Call ``dotnet publish --no-restore --no-build`` with the relevant
-   :ref:`global flags <craft_parts_dotnet_v2_plugin-global_flags>` and
-   :ref:`publish-specific flags <craft_parts_dotnet_v2_plugin-publish_flags>`.
-   The generated assets are placed by default into ``${CRAFT_PART_INSTALL}``.
+#. Call ``dotnet restore`` with the relevant global flags and restore-specific flags.
+#. Call ``dotnet build --no-restore`` with the relevant global flags and build-specific
+   flags.
+#. Call ``dotnet publish --no-restore --no-build`` with the relevant global and
+   publication flags. The generated assets are placed in ``${CRAFT_PART_INSTALL}`` by
+   default.
 
 
 Examples
@@ -307,9 +179,6 @@ steps, as it's a dependency of the .NET SDK used during build and .NET Runtime u
 runtime.
 
 
-.. _Common NuGet Configurations: https://learn.microsoft.com/en-us/nuget/consume-packages/configuring-nuget-behavior
-.. _framework: https://learn.microsoft.com/en-us/dotnet/standard/frameworks
-.. _project file: https://learn.microsoft.com/en-us/dotnet/core/project-sdk/overview
 .. _content snaps: https://github.com/canonical/dotnet-content-snaps
 .. _dotnet-sdk-8.0: https://packages.ubuntu.com/noble/dotnet-sdk-8.0
 .. _dotnet-sdk-80: https://snapcraft.io/dotnet-sdk-80
