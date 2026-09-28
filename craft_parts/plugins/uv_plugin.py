@@ -36,10 +36,10 @@ class UvPluginProperties(PluginProperties, frozen=True):
 
     uv_extras: set[str] = pydantic.Field(
         default_factory=set,
-        title="The extra dependencies to build with.",
-        description="The extra dependencies to build with.",
+        title="The extra dependencies to include in the part.",
+        description="The extra dependencies to include in the part.",
     )
-    """The extra dependencies to build with.
+    """The extra dependencies to include in the part.
     """
 
     uv_groups: set[str] = pydantic.Field(
