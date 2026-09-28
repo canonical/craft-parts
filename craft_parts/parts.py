@@ -794,6 +794,11 @@ class PartSpec(BaseModel):
                 return True
         return False
 
+    @property
+    def has_build_slices(self) -> bool:
+        """Return whether the part has build slices."""
+        return bool(self.build_slices)
+
 
 def _get_build_partition_usage_error(fileset_name: str, partition: str) -> str | None:
     """Return an error message if the build pseudo-partition is misused."""
@@ -1096,6 +1101,11 @@ class Part:
     def has_chisel_as_build_snap(self) -> bool:
         """Return whether this part has chisel in its build-snaps."""
         return self.spec.has_chisel_as_build_snap
+
+    @property
+    def has_build_slices(self) -> bool:
+        """Return whether this part has build-slices."""
+        return self.spec.has_build_slices
 
     @property
     def default_partition(self) -> str:

@@ -20,7 +20,7 @@ import re
 from collections.abc import Callable
 from typing import Annotated, TypeVar
 
-from pydantic import AfterValidator, BeforeValidator, Field
+from pydantic import AfterValidator, BeforeValidator, Field, WithJsonSchema
 
 T = TypeVar("T")
 Tv = TypeVar("Tv")
@@ -79,11 +79,18 @@ def _validate_relative_path_str(path: str) -> str:
 
 RelativePathStr = Annotated[
     str,
-    # The functional validator is used to provide better error messages when parsing
-    # this type.
+    # Provides better error messages when parsing this type.
     BeforeValidator(_validate_relative_path_str),
-    # The field here is used to provide information in the JSON schema and IDEs.
-    Field(description="relative path", min_length=1, pattern=re.compile(r"^[^\/].*")),
+    # Only the first validator is used for the JSON schema and the BeforeValidator
+    # doesn't have schema-friendly rules, so we must define the schema.
+    WithJsonSchema(
+        {
+            "type": "string",
+            "description": "relative path",
+            "minLength": 1,
+            "pattern": r"^[^\/].*",
+        }
+    ),
 ]
 
 UniqueList = Annotated[list[T], AfterValidator(_validate_list_is_unique)]
@@ -100,14 +107,20 @@ MESSAGE_INVALID_CHISEL_SLICE = (
 
 ChiselSliceStr = Annotated[
     str,
+    # Provides better error messages when parsing this type.
     BeforeValidator(
         get_validator_by_regex(
             CHISEL_SLICE_COMPILED_REGEX, MESSAGE_INVALID_CHISEL_SLICE
         )
     ),
-    Field(
-        description="Chisel slice reference",
-        pattern=CHISEL_SLICE_PATTERN,
+    # Only the first validator is used for the JSON schema and the BeforeValidator
+    # doesn't have schema-friendly rules, so we must define the schema.
+    WithJsonSchema(
+        {
+            "type": "string",
+            "description": "Chisel slice reference",
+            "pattern": CHISEL_SLICE_PATTERN,
+        }
     ),
 ]
 

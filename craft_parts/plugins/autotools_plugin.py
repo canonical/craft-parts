@@ -18,6 +18,7 @@
 
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from .base import Plugin
@@ -29,8 +30,22 @@ class AutotoolsPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["autotools"] = "autotools"
 
-    autotools_configure_parameters: list[str] = []
-    autotools_bootstrap_parameters: list[str] = []
+    autotools_configure_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to Autotools.",
+    )
+    """The parameters to pass to Autotools.
+    """
+
+    autotools_bootstrap_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The bootstrap flags to pass to Autotools.",
+    )
+    """The bootstrap flags to pass to Autotools, if the part has a bootstrap file.
+
+    In some cases, bootstrap files can be found by running ``./bootstrap --help``.
+    """
+
     disable_parallel: bool = False
 
     # part properties required by the plugin
