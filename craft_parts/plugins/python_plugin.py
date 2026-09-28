@@ -56,9 +56,9 @@ class PythonPluginProperties(PluginProperties, frozen=True):
 
     python_packages: list[str] = pydantic.Field(
         default=["pip", "setuptools", "wheel"],
-        description="A dependencies to install from PyPI.",
+        description="The dependencies to install from PyPI.",
     )
-    """A dependencies to install from PyPI.
+    """The dependencies to install from PyPI.
 
     If needed, ``pip``, ``setuptools`` and ``wheel`` can be upgraded here.
     """

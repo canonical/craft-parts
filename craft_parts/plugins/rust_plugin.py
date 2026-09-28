@@ -75,7 +75,7 @@ class RustPluginProperties(PluginProperties, frozen=True):
     Accepted values:
 
     - A version number, such as ``"1.99"``
-    - A channel number, one of ``stable``, ``beta``, or ``nightly``
+    - A channel name, either ``stable``, ``beta``, or ``nightly``
     - A nightly version number, in the format ``nightly-YYYY-MM-DD``
     - ``"none"`` to stop the plugin from installing the Rust toolchain
 
@@ -143,8 +143,8 @@ class RustPluginProperties(PluginProperties, frozen=True):
 
     By default, the Cargo build system and Rust compiler don't respect the ``LDFLAGS``
     environment variable. If set to ``true``,the plugin forcibly adds the contents
-    listed by ``LDFLAGS`` to the Rust linker directives by wrapping and appending the
-    its value to ``RUSTFLAGS``.
+    listed by ``LDFLAGS`` to the Rust linker directives by wrapping and appending its
+    value to ``RUSTFLAGS``.
 
     Squashing ``LDFLAGS`` into ``RUSTFLAGS`` makes the Rust binary in a
     classically-confined snap respect the snap linkage, so that the binary won't find

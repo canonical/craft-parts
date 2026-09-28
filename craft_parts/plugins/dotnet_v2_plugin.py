@@ -126,7 +126,7 @@ class DotnetV2PluginProperties(PluginProperties, frozen=True):
     .. list-table::
         :header-rows: 1
 
-        * - `$CRAFT_BUILD_FOR`` value
+        * - ``$CRAFT_BUILD_FOR`` value
           - Runtime Identifier
         * - ``amd64``
           - ``linux-x64``

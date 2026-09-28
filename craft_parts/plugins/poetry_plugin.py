@@ -59,10 +59,10 @@ class PoetryPluginProperties(PluginProperties, frozen=True):
 
     poetry_pip_extra_args: list[str] = pydantic.Field(
         default_factory=list,
-        title="The arguments to pass to pass to pip when installing dependencies.",
-        description="The arguments to pass to pass to pip when installing dependencies.",
+        title="The arguments to pass to pip when installing dependencies.",
+        description="The arguments to pass to pip when installing dependencies.",
     )
-    """The arguments to pass to pass to pip when installing dependencies.
+    """The arguments to pass to pip when installing dependencies.
     """
 
     # part properties required by the plugin

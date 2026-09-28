@@ -48,7 +48,7 @@ class AntPluginProperties(PluginProperties, frozen=True):
     """
 
     ant_build_file: str | None = pydantic.Field(
-        default="build.xml",
+        default=None,
         description="The name of the main XML build file.",
     )
     """The name of the main XML build file.
