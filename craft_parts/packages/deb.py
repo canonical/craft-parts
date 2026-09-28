@@ -641,6 +641,11 @@ class Ubuntu(BaseRepository):
                 packages = {"rpm"}
             case "7z" | "7zip":
                 packages = {"p7zip-full"}
+                try:
+                    if os_utils.OsRelease().version_id() >= "25.04":
+                        packages = {"7zip"}
+                except errors.PartsError:
+                    pass
             case _:
                 packages = set()
 

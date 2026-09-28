@@ -64,8 +64,12 @@ APT_PACKAGES += mmdebstrap
 endif
 
 # Dependencies for sources
-ifeq ($(wildcard /usr/share/doc/p7zip-*/copyright),)
+ifeq ($(wildcard /usr/share/doc/p7zip-*/copyright)$(wildcard /usr/share/doc/7zip/copyright),)
+ifneq ($(filter $(UBUNTU_CODENAME),plucky questing resolute stonking),)
+APT_PACKAGES += 7zip
+else
 APT_PACKAGES += p7zip-full
+endif
 endif
 ifeq ($(wildcard /usr/share/doc/curl/copyright),)
 APT_PACKAGES += curl
@@ -334,6 +338,13 @@ endif
 _gh-runner-clean:
 # Prepare and fix issues on Github-hosted runners.
 ifeq ($(CI)_$(RUNNER_ENVIRONMENT),true_github-hosted)
+	# On Ubuntu 24.10+ / 26.04+, /tmp is mounted as tmpfs with half of RAM (~3.5 GB),
+	# causing disk quota exceeded errors in large test suites. Unmount it so /tmp uses the root disk.
+	sudo systemctl stop tmp.mount 2>/dev/null || true
+	sudo systemctl mask tmp.mount 2>/dev/null || true
+	sudo umount -l /tmp 2>/dev/null || true
+	sudo chmod 1777 /tmp
+
 	# Android SDK
 	nohup sudo rm -rf /usr/local/lib/android/ > /dev/null &
 

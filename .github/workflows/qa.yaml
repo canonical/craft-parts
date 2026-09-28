@@ -165,7 +165,7 @@ jobs:
       slow-test-python-versions: '["3.14"]'
       lowest-python-version: ""
       pytest-markers: flaky
-      setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
+      setup-vars: NO_JAVA=1 NO_PYTHON=1
       use-lxd: false
   test-java-plugins-resolute:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
