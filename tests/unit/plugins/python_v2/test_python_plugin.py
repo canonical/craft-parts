@@ -11,6 +11,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import subprocess
 from textwrap import dedent
 
 import pytest
@@ -40,10 +41,11 @@ def test_get_build_commands(new_dir):
       fi
     """)
 
-    assert commands[1:4] == [
+    assert commands[1:5] == [
         "REQUIREMENTS=(-r requirements.txt)",
         "PACKAGES=(black)",
         project_line,
+        'pip install "${REQUIREMENTS[@]}" "${PACKAGES[@]}"',
     ]
 
     assert commands[-1].startswith("# Add a sitecustomize")
@@ -74,6 +76,43 @@ def test_get_build_commands_quotes_package_arguments(new_dir, package):
 
     assert f"PACKAGES=('{package}')" in commands
     assert 'pip install "${REQUIREMENTS[@]}" "${PACKAGES[@]}"' in commands
+
+
+def test_get_build_commands_packages_with_version_operator(new_dir):
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part_info = PartInfo(project_info=info, part=Part("p1", {}))
+    properties = PythonPlugin.properties_class.unmarshal(
+        {
+            "source": ".",
+            "python-packages": ["gunicorn>=20.0"],
+        }
+    )
+
+    python_plugin = PythonPlugin(part_info=part_info, properties=properties)
+
+    commands = python_plugin.get_build_commands()
+    pip_commands = [
+        command
+        for command in commands
+        if command.startswith(("REQUIREMENTS=", "PACKAGES=", "pip install "))
+    ]
+    script = "\n".join(
+        [
+            "pip() { printf '%s\\n' \"$@\"; }",
+            *pip_commands,
+        ]
+    )
+
+    result = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True,
+        text=True,
+        cwd=new_dir,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == ["install", "gunicorn>=20.0"]
 
 
 def test_get_build_environment(new_dir):
