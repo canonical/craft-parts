@@ -20,6 +20,7 @@ import shlex
 from pathlib import Path
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts.utils.gradle_utils import PUBLISH_BLOCK_TEMPLATE
@@ -29,23 +30,35 @@ from .properties import PluginProperties
 
 
 class GradleUsePluginProperties(PluginProperties, frozen=True):
-    """The part properties used by the gradle plugin.
-
-    - gradle_init_script:
-      (string)
-      The path to init script to run before build script is executed.
-    - gradle_parameters:
-      (list of strings)
-      Extra arguments to pass along to Gradle task execution.
-    - gradle_use_daemon:
-      (boolean)
-      Whether to use the Gradle daemon during the build.
-    """
+    """The part properties used by the gradle plugin."""
 
     plugin: Literal["gradle-use"] = "gradle-use"
-    gradle_init_script: str = ""
-    gradle_parameters: list[str] = []
-    gradle_use_daemon: bool = False
+
+    gradle_init_script: str = pydantic.Field(
+        default="",
+        description="The path to the initialization script to run before the build script is run.",
+    )
+    """The path to the `initialization script
+    <https://docs.gradle.org/current/userguide/init_scripts.html>`__ to run before
+    the build script is run.
+    """
+
+    gradle_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The extra arguments to pass to Gradle.",
+    )
+    """The extra arguments to pass to Gradle.
+    """
+
+    gradle_use_daemon: bool = pydantic.Field(
+        default=False,
+        description="Whether to use the Gradle daemon during build.",
+    )
+    """Whether to use the `Gradle daemon
+    <https://docs.gradle.org/current/userguide/gradle_daemon.html>`__ during build.
+
+    Defaults to ``false``.
+    """
 
     # part properties required by the plugin
     source: str
