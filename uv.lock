@@ -540,7 +540,7 @@ requires-dist = [
 dev = [
     { name = "build" },
     { name = "coverage", extras = ["toml"], specifier = "~=7.4" },
-    { name = "distro" },
+    { name = "distro", specifier = ">=1.9.0" },
     { name = "hypothesis" },
     { name = "jsonschema" },
     { name = "pyfakefs", specifier = "~=6.1" },
