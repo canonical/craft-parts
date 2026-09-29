@@ -19,6 +19,7 @@ import shutil
 import stat
 from pathlib import Path
 
+import distro
 import pytest
 import yaml
 from craft_parts import errors
@@ -579,6 +580,12 @@ def create_overlay_whiteout(name: Path) -> None:
 @pytest.mark.usefixtures("new_dir")
 class TestOverlayMigrationFilesystems:
     """Overlay migration to stage and prime test cases with a non-default filesystems."""
+
+    pytestmark = (
+        pytest.mark.requires_root
+        if distro.id() == "ubuntu" and distro.version() == "20.04"
+        else []
+    )
 
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
