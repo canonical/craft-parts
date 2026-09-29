@@ -147,5 +147,5 @@ jobs:
       lowest-python-version: "3.10"
       pytest-markers: requires_root
       setup-vars: NO_PYTHON=1
-      test-command-prefix: sudo env "PATH=$PATH"
+      test-command-prefix: sudo env "PATH=$PATH" ${UV_RESOLUTION:+UV_RESOLUTION=$UV_RESOLUTION}
       use-lxd: false
