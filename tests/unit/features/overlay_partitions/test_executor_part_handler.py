@@ -581,6 +581,10 @@ def create_overlay_whiteout(name: Path) -> None:
 class TestOverlayMigrationFilesystems:
     """Overlay migration to stage and prime test cases with a non-default filesystems."""
 
+    # The focal runners need root for these tests: they create overlayfs
+    # whiteouts (character devices with major:minor 0:0) via mknod(), and
+    # Ubuntu 20.04's 5.4 kernel only allows unprivileged users to create
+    # such devices from kernel 5.8 on.
     pytestmark = (
         pytest.mark.requires_root
         if distro.id() == "ubuntu" and distro.version() == "20.04"
