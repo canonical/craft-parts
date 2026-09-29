@@ -16,7 +16,6 @@
 
 """Utilities related to the operating system."""
 
-import contextlib
 import logging
 import os
 import subprocess
@@ -25,8 +24,6 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
-
-from craft_parts import errors
 
 logger = logging.getLogger(__name__)
 
@@ -285,55 +282,6 @@ def umount(mountpoint: Path | str, *args: str) -> None:
                 attempt,
                 _UMOUNT_RETRIES,
             )
-
-
-class OsRelease:
-    """A class to intelligently determine the OS on which we're running."""
-
-    def __init__(self, *, os_release_file: Path | None = None) -> None:
-        """Create a new OsRelease instance.
-
-        :param os_release_file: Path to os-release file to be parsed.
-        """
-        if os_release_file is None:
-            os_release_file = Path("/etc/os-release")
-        self._os_release: dict[str, str] = {}
-        with contextlib.suppress(FileNotFoundError):
-            with os_release_file.open() as file:
-                for line in file:
-                    entry = line.rstrip().split("=")
-                    if len(entry) == 2:  # noqa: PLR2004
-                        self._os_release[entry[0]] = entry[1].strip('"')
-
-    def id(self) -> str:
-        """Return the OS ID.
-
-        :raises OsReleaseIdError: If no ID can be determined.
-        """
-        with contextlib.suppress(KeyError):
-            return self._os_release["ID"]
-
-        raise errors.OsReleaseIdError
-
-    def name(self) -> str:
-        """Return the OS name.
-
-        :raises OsReleaseNameError: If no name can be determined.
-        """
-        with contextlib.suppress(KeyError):
-            return self._os_release["NAME"]
-
-        raise errors.OsReleaseNameError
-
-    def version_id(self) -> str:
-        """Return the OS version ID.
-
-        :raises OsReleaseVersionIdError: If no version ID can be determined.
-        """
-        with contextlib.suppress(KeyError):
-            return self._os_release["VERSION_ID"]
-
-        raise errors.OsReleaseVersionIdError
 
 
 def process_run(
