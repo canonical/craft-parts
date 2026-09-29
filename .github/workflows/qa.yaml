@@ -146,5 +146,6 @@ jobs:
       lowest-python-platform: '["amd64", "focal"]'
       lowest-python-version: "3.10"
       pytest-markers: requires_root
+      setup-vars: NO_PYTHON=1
       test-command-prefix: sudo env "PATH=$PATH"
       use-lxd: false
