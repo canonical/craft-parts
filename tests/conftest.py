@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import dataclasses
 import http.server
 import os
 import pathlib
@@ -21,6 +21,7 @@ import sys
 import tempfile
 import threading
 import types
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, NamedTuple
 from unittest import mock
@@ -28,8 +29,8 @@ from unittest import mock
 import craft_parts
 import craft_parts.packages
 import pytest
-import xdg  # type: ignore[import]
 from craft_parts.features import Features
+from xdg import BaseDirectory
 
 from . import fake_servers
 from .fake_snap_command import FakeSnapCommand
@@ -175,6 +176,20 @@ def enable_overlay_and_partitions_features():
 
 
 @pytest.fixture
+def enable_build_slices():
+    current = dataclasses.asdict(Features())
+    Features.reset()
+
+    copied = deepcopy(current)
+    copied["enable_build_slices"] = True
+    Features(**copied)
+
+    yield
+    Features.reset()
+    Features(**current)
+
+
+@pytest.fixture
 def partitions():
     if Features().enable_partitions:
         return ["default", "mypart", "yourpart"]
@@ -192,8 +207,9 @@ def is_deb_based(mocker):
 def enable_all_features():
     assert Features().enable_overlay is False
     assert Features().enable_partitions is False
+    assert Features().enable_build_slices is False
     Features.reset()
-    Features(enable_overlay=True, enable_partitions=True)
+    Features(enable_overlay=True, enable_partitions=True, enable_build_slices=True)
 
     yield
 
@@ -239,15 +255,11 @@ def temp_xdg(tmp_path: Path, mocker):
     )
     mocker.patch(
         "xdg.BaseDirectory.xdg_config_dirs",
-        new=[
-            xdg.BaseDirectory.xdg_config_home  # pyright: ignore[reportGeneralTypeIssues]
-        ],
+        new=[BaseDirectory.xdg_config_home],
     )
     mocker.patch(
         "xdg.BaseDirectory.xdg_data_dirs",
-        new=[
-            xdg.BaseDirectory.xdg_data_home  # pyright: ignore[reportGeneralTypeIssues]
-        ],
+        new=[BaseDirectory.xdg_data_home],
     )
     mocker.patch.dict(
         os.environ, {"XDG_CONFIG_HOME": (tmp_path / ".config").as_posix()}
@@ -349,13 +361,13 @@ class ChmodCall(NamedTuple):
 
 
 @pytest.fixture
-def mock_chown(mocker) -> dict[str, ChmodCall]:
+def mock_chown(mocker) -> dict[Path, ChmodCall]:
     """Mock os.chown() and keep a record of calls to it.
 
     The returned object is a dict where the keys match the ``path`` parameter of the
     os.chown() call and the values are ``ChmodCall`` tuples containing the other parameters.
     """
-    calls = {}
+    calls: dict[Path, ChmodCall] = {}
 
     def fake_chown(path, uid, gid, **kwargs):
         calls[Path(path)] = ChmodCall(owner=uid, group=gid, kwargs=kwargs)

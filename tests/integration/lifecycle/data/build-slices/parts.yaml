@@ -1,0 +1,42 @@
+parts:
+  dependency-regular-build:
+    plugin: nil
+    override-build: |
+      printf '%s\n' dependency > "$CRAFT_PART_INSTALL/dependency"
+
+  sliced:
+    after: [dependency-regular-build]
+    plugin: nil
+    build-slices:
+      - bash_bins
+      - base-files_base
+    override-build: |
+      # Make sure we can access $CRAFT_STAGE
+      IFS= read -r dependency < "$CRAFT_STAGE/dependency"
+      printf '%s\n' "$dependency" > "$CRAFT_PART_INSTALL/result"
+      # Make sure we *cannot* write to $CRAFT_STAGE
+      if printf '%s\n' forbidden > "$CRAFT_STAGE/forbidden"; then
+        echo "Error: $CRAFT_STAGE is writable, but it should be read-only"
+        exit 1
+      fi
+      # Make sure we *cannot* access $CRAFT_PROJECT_DIR
+      if [ -e "$CRAFT_PROJECT_DIR/tests/integration/lifecycle/data/build-slices/host-only" ]; then
+        echo "Error: $CRAFT_PROJECT_DIR is accessible, but it should not be"
+        exit 1
+      fi
+
+  plugin-dump:
+    plugin: dump
+    source: tests/integration/lifecycle/data/build-slices/dump
+    build-slices:
+      - coreutils_bins
+
+  plugin-go:
+    plugin: go
+    source: tests/integration/lifecycle/data/build-slices/go
+    build-slices:
+      - golang-go_core
+    build-environment:
+      # The Chisel slice for go is very minimal and needs GOROOT to be set explicitly
+      # for "go version" to succeed
+      - GOROOT: /usr/lib/go

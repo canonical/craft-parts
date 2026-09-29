@@ -16,6 +16,7 @@
 
 import textwrap
 from pathlib import Path
+from typing import Any
 
 import craft_parts
 import pytest
@@ -55,7 +56,7 @@ def test_basic_lifecycle_actions(new_dir, mocker):
     # no need to untar the file
     mocker.patch("craft_parts.sources.tar_source.TarSource.provision")
 
-    lf_kwargs = {
+    lf_kwargs: dict[str, Any] = {
         "application_name": "test_demo",
         "cache_dir": new_dir,
         "partitions": ["default"],

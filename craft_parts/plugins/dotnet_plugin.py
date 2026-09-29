@@ -19,6 +19,7 @@
 import logging
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from . import validator
@@ -33,11 +34,27 @@ class DotnetPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["dotnet"] = "dotnet"
 
-    dotnet_build_configuration: str = "Release"
-    dotnet_self_contained_runtime_identifier: str | None = None
+    dotnet_build_configuration: str = pydantic.Field(
+        default="Release",
+        description="The .NET build configuration to use.",
+    )
+    """The .NET build configuration to use.
+
+    Defaults to ``Release``.
+    """
+
+    dotnet_self_contained_runtime_identifier: str | None = pydantic.Field(
+        default=None,
+        description="The Runtime Identifier of the .NET project.",
+    )
+    """The `Runtime Identifier
+    <https://learn.microsoft.com/en-us/dotnet/core/rid-catalog>`__ of the .NET project.
+
+    If set to a valid identifier, the part will be self-contained.
+    """
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class DotPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -70,8 +87,8 @@ class DotnetPlugin(Plugin):
     or to have it installed or built in a different part. In this case, the
     name of the part supplying the dotnet compiler must be "dotnet".
 
-    The dotnet plugin uses the common plugin keywords as well as those for "sources".
-    Additionally, the following plugin-specific keywords can be used:
+    The dotnet plugin uses the common plugin keys as well as those for "sources".
+    Additionally, the following plugin-specific keys can be used:
 
     - ``dotnet-build-configuration``
       (string)

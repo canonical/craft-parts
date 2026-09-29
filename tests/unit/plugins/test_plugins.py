@@ -115,7 +115,7 @@ class TestGetPlugin:
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
-                properties=None,  # type: ignore[reportGeneralTypeIssues]
+                properties=None,  # ty: ignore[invalid-argument-type]
             )
 
     def test_get_plugin_unspecified(self, new_dir):
@@ -127,7 +127,7 @@ class TestGetPlugin:
             plugins.get_plugin(
                 part=part,
                 part_info=part_info,
-                properties=None,  # type: ignore[reportGeneralTypeIssues]
+                properties=None,  # ty: ignore[invalid-argument-type]
             )
 
 

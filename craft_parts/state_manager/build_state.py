@@ -48,7 +48,7 @@ class BuildState(StepState):
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("state data is not a dictionary")
 
         return cls(**data)
@@ -70,6 +70,7 @@ class BuildState(StepState):
         relevant_properties = [
             "after",
             "build-attributes",
+            "build-environment",
             "build-packages",
             "disable-parallel",
             "organize",

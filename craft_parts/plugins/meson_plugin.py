@@ -20,6 +20,7 @@ import logging
 import shlex
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from . import validator
@@ -34,10 +35,18 @@ class MesonPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["meson"] = "meson"
 
-    meson_parameters: list[str] = []
+    meson_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to Meson.",
+    )
+    """The parameters to pass to Meson.
+
+    For the list of valid parameters, see the `Meson command reference
+    <https://mesonbuild.com/Commands.html#setup>`__ .
+    """
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MesonPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -73,8 +82,8 @@ class MesonPlugin(Plugin):
     or ``build-snaps``, or to have it installed or built in a different part.
     In this case, the name of the part supplying meson must be "meson".
 
-    The meson plugin uses the common plugin keywords as well as those for "sources".
-    Additionally, the following plugin-specific keywords can be used:
+    The meson plugin uses the common plugin keys as well as those for "sources".
+    Additionally, the following plugin-specific keys can be used:
 
     - ``meson-parameters``
       (list of strings)

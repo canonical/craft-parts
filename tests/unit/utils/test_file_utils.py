@@ -189,6 +189,43 @@ class TestCopy:
             file_utils.copy(Path("2"), Path("3"))
         assert raised.value.name == "2"
 
+    @pytest.mark.requires_root
+    def test_copy_chardev(self):
+        Path("1").unlink()
+        os.mknod("1", 0o750 | stat.S_IFCHR, os.makedev(1, 5))
+
+        file_utils.copy("1", "3")
+        dest_stat = os.stat("3")  # noqa: PTH116
+
+        assert Path("3").exists()
+        assert stat.S_ISCHR(dest_stat.st_mode)
+        assert os.major(dest_stat.st_rdev) == 1
+        assert os.minor(dest_stat.st_rdev) == 5
+
+    @pytest.mark.requires_root
+    def test_copy_blockdev(self):
+        Path("1").unlink()
+        os.mknod("1", 0o750 | stat.S_IFBLK, os.makedev(7, 99))
+
+        file_utils.copy("1", "3")
+        dest_stat = os.stat("3")  # noqa: PTH116
+
+        assert Path("3").exists()
+        assert stat.S_ISBLK(dest_stat.st_mode)
+        assert os.major(dest_stat.st_rdev) == 7
+        assert os.minor(dest_stat.st_rdev) == 99
+
+    def test_copy_fifo(self):
+        Path("1").unlink()
+        os.mkfifo("1", 0o640)
+
+        file_utils.copy("1", "3")
+        dest_stat = os.stat("3")  # noqa: PTH116
+
+        assert Path("3").exists()
+        assert stat.S_ISFIFO(dest_stat.st_mode)
+        assert stat.S_IMODE(dest_stat.st_mode) == 0o640
+
 
 class TestMove:
     """Verify func:`move` usage scenarios."""
@@ -729,3 +766,43 @@ def test_link_or_copy_samefile_symlink(tmp_path: Path) -> None:
     assert source.read_text() == "test data"
     assert destination.exists()
     assert destination.is_symlink()
+
+
+def test_non_blocking_rw_fifo_round_trip(tmp_path: Path) -> None:
+    """A value written to the FIFO can be read back."""
+    fifo = file_utils.NonBlockingRWFifo(str(tmp_path / "fifo"))
+    try:
+        fifo.write("hello")
+        assert fifo.read() == "hello"
+    finally:
+        fifo.close()
+
+
+def test_non_blocking_rw_fifo_read_empty(tmp_path: Path) -> None:
+    """Reading an empty FIFO returns an empty string without raising."""
+    fifo = file_utils.NonBlockingRWFifo(str(tmp_path / "fifo"))
+    try:
+        assert fifo.read() == ""
+    finally:
+        fifo.close()
+
+
+def test_non_blocking_rw_fifo_large_data(tmp_path: Path) -> None:
+    """Data larger than the read buffer is fully read back."""
+    fifo = file_utils.NonBlockingRWFifo(str(tmp_path / "fifo"))
+    try:
+        data = "x" * 5000
+        fifo.write(data)
+        assert fifo.read() == data
+    finally:
+        fifo.close()
+
+
+def test_non_blocking_rw_fifo_path(tmp_path: Path) -> None:
+    """The path property returns the FIFO path."""
+    path = str(tmp_path / "fifo")
+    fifo = file_utils.NonBlockingRWFifo(path)
+    try:
+        assert fifo.path == path
+    finally:
+        fifo.close()

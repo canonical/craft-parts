@@ -14,9 +14,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts.executor import environment
+from craft_parts.infos import StepInfo
 from craft_parts.plugins.uv_plugin import UvPlugin
+from craft_parts.steps import Step
 from pydantic import ValidationError
 
 
@@ -116,3 +120,39 @@ def test_get_out_of_source_build(plugin):
 
 def test_should_remove_symlinks(plugin):
     assert plugin._should_remove_symlinks() is False
+
+
+def test_get_build_environment_uses_native_tls(plugin):
+    env = plugin.get_build_environment()
+    assert env["UV_SYSTEM_CERTS"] == "true"
+    assert env["UV_NATIVE_TLS"] == "true"
+
+
+@pytest.mark.parametrize(
+    "env_var",
+    ["UV_SYSTEM_CERTS", "UV_NATIVE_TLS"],
+)
+def test_build_environment_user_tls_settings_override_plugin_defaults(new_dir, env_var):
+    """User-defined build-environment values must win in the final build env."""
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    part = Part("p1", {"build-environment": [{env_var: "false"}]})
+    part_info = PartInfo(project_info=info, part=part)
+    step_info = StepInfo(part_info=part_info, step=Step.BUILD)
+    plugin = UvPlugin(
+        part_info=part_info,
+        properties=UvPlugin.properties_class.unmarshal({"source": "."}),
+    )
+
+    build_environment = environment.generate_step_environment(
+        part=part, plugin=plugin, step_info=step_info
+    )
+
+    exports = [
+        line
+        for line in build_environment.splitlines()
+        if line.startswith(f"export {env_var}=")
+    ]
+    assert exports == [
+        f'export {env_var}="true"',
+        f'export {env_var}="false"',
+    ]

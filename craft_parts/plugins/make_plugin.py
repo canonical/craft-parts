@@ -18,6 +18,7 @@
 
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from .base import Plugin
@@ -29,10 +30,15 @@ class MakePluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["make"] = "make"
 
-    make_parameters: list[str] = []
+    make_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The options to pass to Make.",
+    )
+    """The options to pass to Make.
+    """
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MakePlugin(Plugin):
@@ -42,13 +48,13 @@ class MakePlugin(Plugin):
     build.
 
     This plugin always runs 'make' followed by 'make install', except when
-    the 'artifacts' keyword is used.
+    the 'artifacts' key is used.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
 
         - make-parameters
           (list of strings)

@@ -31,7 +31,7 @@ class DumpPluginProperties(PluginProperties, frozen=True):
     """The part properties used by the dump plugin."""
 
     plugin: Literal["dump"] = "dump"
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class DumpPlugin(Plugin):

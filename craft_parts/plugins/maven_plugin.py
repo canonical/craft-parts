@@ -20,6 +20,7 @@ import pathlib
 import re
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts import errors
@@ -35,11 +36,25 @@ class MavenPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["maven"] = "maven"
 
-    maven_parameters: list[str] = []
-    maven_use_wrapper: bool = False
+    maven_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to Maven.",
+    )
+    """The parameters to pass to Maven.
+    """
+
+    maven_use_wrapper: bool = pydantic.Field(
+        default=False,
+        description="Whether the build uses the Maven wrapper provided in the part.",
+    )
+    """Whether the build uses the Maven wrapper provided in the part.
+
+    The default path is ``<project-root>/mvnw``. If set to ``true``, the Maven call
+    during build is ``./mvnw package``.
+    """
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MavenPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -83,11 +98,11 @@ class MavenPlugin(JavaPlugin):
     The Maven build system is commonly used to build Java projects. This
     plugin requires a pom.xml in the root of the source tree.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
 
     - maven-parameters:
       (list of strings)
