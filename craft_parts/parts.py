@@ -521,6 +521,7 @@ class PartSpec(BaseModel):
     in ``overlay-packages``.
 
     This key is mutually incompatible with ``override-overlay``.
+    It cannot be used in a part that organizes files to ``(overlay)/``.
     """
 
     override_overlay: str | None = Field(
@@ -533,6 +534,7 @@ class PartSpec(BaseModel):
     This is executed inside the overlay mount namespace using a chroot.
 
     This key is mutually incompatible with ``overlay-script``.
+    It cannot be used in a part that organizes files to ``(overlay)/``.
     """
 
     override_build: str | None = Field(
@@ -634,6 +636,24 @@ class PartSpec(BaseModel):
             raise ValueError(
                 "override-overlay and overlay-script cannot both be defined"
             )
+        return self
+
+    @model_validator(mode="after")
+    def validate_organize_to_overlay_scripts(self) -> Self:
+        """Reject overlay scripts in parts that organize files to the overlay."""
+        if self.organizes_to_overlay:
+            for name, script in (
+                ("overlay-script", self.overlay_script),
+                ("override-overlay", self.override_overlay),
+            ):
+                if script is not None:
+                    raise ValueError(
+                        f"'{name}' cannot be used in a part that organizes files "
+                        "to the overlay. Use 'override-build' to generate files in "
+                        "$CRAFT_PART_INSTALL and organize them to '(overlay)/', "
+                        "or move the overlay script to a separate part that "
+                        "depends on this part using 'after'."
+                    )
         return self
 
     @field_validator("build_slices")

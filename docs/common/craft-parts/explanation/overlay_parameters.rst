@@ -19,6 +19,14 @@ The ``override-overlay`` key is unique in that it runs the script in a
 chroot environment. This is useful for scripts that need to execute within the target
 filesystem as opposed to the host.
 
+Parts that organize files to ``(overlay)/`` cannot use ``overlay-script`` or
+``override-overlay``. To prepare a root filesystem, generate its contents in
+``$CRAFT_PART_INSTALL`` during ``override-build``, then use ``organize`` to place
+those files in the overlay. To modify that filesystem afterwards, use an overlay
+script in a separate part with ``after`` pointing to the part that prepares it.
+When moving commands between these steps, adjust their paths and account for the
+different execution environments; changing the script key alone is not sufficient.
+
 An example of a parts section with overlay parameters looks as follows:
 
 .. code-block:: yaml

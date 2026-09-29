@@ -140,6 +140,22 @@ def test_part_specification_error_from_validation_error() -> None:
     assert err.resolution == "Review part 'foo' and make sure it's correct."
 
 
+def test_part_specification_error_from_model_validation_error():
+    """Model validators have no field location, but their message must survive."""
+    err = errors.PartSpecificationError.from_validation_error(
+        part_name="rootfs",
+        error_list=[
+            {
+                "loc": (),
+                "msg": "conflicting overlay configuration",
+                "type": "value_error",
+                "input": {},
+            }
+        ],
+    )
+    assert err.details == "- conflicting overlay configuration"
+
+
 def test_copy_tree_error():
     err = errors.CopyTreeError("something bad happened")
     assert err.message == "something bad happened"
