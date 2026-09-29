@@ -19,6 +19,7 @@
 import pathlib
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from .base import Plugin
@@ -30,9 +31,34 @@ class ColconPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["colcon"] = "colcon"
 
-    colcon_cmake_args: list[str] = []
-    colcon_packages: list[str] = []
-    colcon_packages_ignore: list[str] = []
+    colcon_cmake_args: list[str] = pydantic.Field(
+        default=[],
+        description="Arguments to pass to CMake projects.",
+    )
+    """Arguments to pass to CMake projects.
+
+    If an argument has the same name as a colcon argument, it must be prefixed with a
+    space to avoid a collision. A space in an argument is made literal by wrapping the
+    argument in double quotation marks (").
+    """
+
+    colcon_packages: list[str] = pydantic.Field(
+        default=[],
+        description="The colcon packages to build.",
+    )
+    """The colcon packages to build.
+
+    If unset, all packages in the workspace will be built. If set to an empty list
+    (``[]``), no packages will be built, which could be useful if you only want Debian
+    packages in the snap.
+    """
+
+    colcon_packages_ignore: list[str] = pydantic.Field(
+        default=[],
+        description="The packages for colcon to ignore.",
+    )
+    """The packages for colcon to ignore.
+    """
 
     # part properties required by the plugin
     source: str

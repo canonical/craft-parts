@@ -20,6 +20,7 @@ import pathlib
 import re
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts import errors
@@ -35,8 +36,22 @@ class MavenPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["maven"] = "maven"
 
-    maven_parameters: list[str] = []
-    maven_use_wrapper: bool = False
+    maven_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to Maven.",
+    )
+    """The parameters to pass to Maven.
+    """
+
+    maven_use_wrapper: bool = pydantic.Field(
+        default=False,
+        description="Whether the build uses the Maven wrapper provided in the part.",
+    )
+    """Whether the build uses the Maven wrapper provided in the part.
+
+    The default path is ``<project-root>/mvnw``. If set to ``true``, the Maven call
+    during build is ``./mvnw package``.
+    """
 
     # part properties required by the plugin
     source: str
