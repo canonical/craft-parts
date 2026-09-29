@@ -21,6 +21,7 @@ import tempfile
 from pathlib import Path
 
 import craft_parts
+import distro
 import pytest
 import yaml
 from craft_parts import Step, plugins
@@ -30,9 +31,14 @@ from tests.integration.features.overlay_plugins import (
     PackageOverlayPlugin,
 )
 
+# The chisel base cut by the _chisel_cache fixture needs the "apt_apt-get"
+# slice, and the chisel-releases "ubuntu-20.04" branch has no "apt" slices.
 pytestmark = [
     pytest.mark.usefixtures("enable_overlay_feature"),
     pytest.mark.requires_root,
+    pytest.mark.skipif(
+        distro.id() == "ubuntu" and distro.version() == "20.04", reason="not on focal"
+    ),
 ]
 
 

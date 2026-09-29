@@ -21,6 +21,7 @@ import subprocess
 from pathlib import Path
 
 import craft_parts
+import distro
 import pytest
 import yaml
 from craft_parts import Step
@@ -28,6 +29,11 @@ from craft_parts import Step
 DATA_DIR = Path(__file__).parent / "data/build-slices"
 
 
+# The chisel-releases "ubuntu-20.04" branch has no "golang-go" slices, so
+# the go plugin part below cannot be cut there.
+@pytest.mark.skipif(
+    distro.id() == "ubuntu" and distro.version() == "20.04", reason="not on focal"
+)
 @pytest.mark.requires_root
 @pytest.mark.slow
 @pytest.mark.usefixtures("enable_build_slices")
