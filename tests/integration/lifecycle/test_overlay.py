@@ -851,12 +851,11 @@ class TestOverlaySpecScenarios:
         ]
 
 
-# focal ships mmdebstrap 0.4.1, which does not support the --format=dir
-# flag used by the test fixture.
 @pytest.mark.slow
 @pytest.mark.requires_root
 @pytest.mark.skipif(
-    distro.id() == "ubuntu" and distro.version() == "20.04", reason="not on focal"
+    distro.id() == "ubuntu" and distro.version() == "20.04",
+    reason="focal's mmdebstrap lacks --format=dir",
 )
 class TestOverrideOverlayScriptWithMmdebstrap:
     """Validate override-overlay using mmdebstrap in pytest temp directory."""

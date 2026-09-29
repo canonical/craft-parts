@@ -29,10 +29,9 @@ from craft_parts import Step
 DATA_DIR = Path(__file__).parent / "data/build-slices"
 
 
-# The chisel-releases "ubuntu-20.04" branch has no "golang-go" slices, so
-# the go plugin part below cannot be cut there.
 @pytest.mark.skipif(
-    distro.id() == "ubuntu" and distro.version() == "20.04", reason="not on focal"
+    distro.id() == "ubuntu" and distro.version() == "20.04",
+    reason="focal has no golang-go chisel slices",
 )
 @pytest.mark.requires_root
 @pytest.mark.slow
