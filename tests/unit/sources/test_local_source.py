@@ -637,6 +637,37 @@ class TestLocalUpdate:
         local.update()
         assert (destination / "ignored" / "file").is_file()
 
+    def test_ignored_deleted_glob_paths_are_preserved(self, new_dir, partitions):
+        source = Path("source")
+        destination = Path("destination")
+        source.mkdir()
+        destination.mkdir()
+        (source / "keep.txt").write_text("1")
+        (source / "foo.pyc").write_text("2")
+        (source / "bar.pyc").write_text("3")
+        reference = Path("reference")
+        reference.touch()
+
+        local = LocalSource(
+            source,
+            destination,
+            cache_dir=new_dir,
+            project_dirs=ProjectDirs(partitions=partitions),
+        )
+        local.pull()
+        (source / "foo.pyc").unlink()
+        (source / "bar.pyc").unlink()
+        os.utime(source, (reference.stat().st_atime, reference.stat().st_mtime + 1))
+
+        # Without ignore_files the deletions are detected.
+        assert local.check_if_outdated(reference) is True
+
+        # A glob pattern in ignore_files must also be honored.
+        assert local.check_if_outdated(reference, ignore_files=["*.pyc"]) is False
+        local.update()
+        assert (destination / "foo.pyc").is_file()
+        assert (destination / "bar.pyc").is_file()
+
     def test_type_changes_remove_stale_destination_before_copy(
         self, new_dir, partitions
     ):

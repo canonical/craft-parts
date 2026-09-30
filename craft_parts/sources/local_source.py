@@ -23,6 +23,7 @@ import os
 import pathlib
 import shutil
 from collections.abc import Callable
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -121,7 +122,7 @@ class LocalSource(SourceHandler):
 
     @override
     def check_if_outdated(
-        self, target: str, *, ignore_files: list[str] | None = None
+        self, target: str | Path, *, ignore_files: list[str] | None = None
     ) -> bool:
         """Check if pulled sources have changed since target was created.
 
@@ -238,20 +239,13 @@ class LocalSource(SourceHandler):
                 else:
                     self._deleted_files.add(rel_path)
 
-        ignored = set(ignore_files)
         self._deleted_files = {
-            path
-            for path in self._deleted_files
-            if not any(
-                path == item or path.startswith(item + os.sep) for item in ignored
-            )
+            path for path in self._deleted_files if not _is_ignored(path, ignore_files)
         }
         self._deleted_directories = {
             path
             for path in self._deleted_directories
-            if not any(
-                path == item or path.startswith(item + os.sep) for item in ignored
-            )
+            if not _is_ignored(path, ignore_files)
         }
 
     @override
@@ -385,3 +379,17 @@ def _ignore(
                 ignored += files
 
     return ignored
+
+
+def _is_ignored(rel_path: str, ignore_files: list[str]) -> bool:
+    """Return whether *rel_path* matches any pattern in *ignore_files*.
+
+    Patterns are matched against the leading components of the path so that
+    descendants of an ignored directory are ignored as well.
+    """
+    parts = pathlib.PurePath(rel_path).parts
+    return any(
+        fnmatch(str(pathlib.PurePath(*parts[:i])), pattern)
+        for pattern in ignore_files
+        for i in range(1, len(parts) + 1)
+    )
