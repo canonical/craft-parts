@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Allow redefinition in order to include parent tests below.
-# mypy: disable-error-code="no-redef"
-
 import os
 import textwrap
 from itertools import chain
@@ -24,7 +21,7 @@ from pathlib import Path
 
 import craft_parts
 import pytest
-import pytest_check  # type: ignore[import]
+import pytest_check
 import yaml
 from craft_parts import Step
 
@@ -32,7 +29,7 @@ from tests.integration.lifecycle import test_lifecycle
 
 # This wildcard import has pytest run any non-overridden lifecycle tests here.
 # pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import
-from tests.integration.lifecycle.test_lifecycle import *  # noqa: F403  # pyright: ignore[reportGeneralTypeIssues,reportAssignmentType]
+from tests.integration.lifecycle.test_lifecycle import *  # noqa: F403
 
 basic_parts_yaml = textwrap.dedent(
     """\
@@ -377,3 +374,56 @@ def test_partition_symlinks_default_partition(new_dir):
         ctx.execute(actions)
 
     assert sorted(next(os.walk(Path("partitions")))[1]) == ["binaries", "docs"]
+
+
+def test_organize_from_build_with_partitions(new_dir):
+    new_dir = Path(new_dir)
+    partitions = ["default", "docs"]
+    parts_yaml = textwrap.dedent(
+        """
+        parts:
+          foo:
+            plugin: nil
+            override-build: |
+              echo "from build" > README
+              mkdir -p examples
+              echo "example" > examples/demo.txt
+            organize:
+              (build)/README: usr/share/doc/foo/README
+              (build)/examples: (docs)/usr/share/doc/foo/examples
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lifecycle = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_organize_from_build_with_partitions",
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+
+    actions = lifecycle.plan(Step.PRIME)
+
+    with lifecycle.action_executor() as ctx:
+        ctx.execute(actions)
+
+    build_dir = new_dir / "parts/foo/build"
+    install_dir = new_dir / "parts/foo/install"
+    docs_install_dir = new_dir / "partitions/docs/parts/foo/install"
+    prime_dir = new_dir / "prime"
+    docs_prime_dir = new_dir / "partitions/docs/prime"
+
+    assert (build_dir / "README").read_text().strip() == "from build"
+    assert (build_dir / "examples/demo.txt").read_text().strip() == "example"
+
+    assert (
+        install_dir / "usr/share/doc/foo/README"
+    ).read_text().strip() == "from build"
+    assert (
+        docs_install_dir / "usr/share/doc/foo/examples/demo.txt"
+    ).read_text().strip() == "example"
+
+    assert (prime_dir / "usr/share/doc/foo/README").read_text().strip() == "from build"
+    assert (
+        docs_prime_dir / "usr/share/doc/foo/examples/demo.txt"
+    ).read_text().strip() == "example"

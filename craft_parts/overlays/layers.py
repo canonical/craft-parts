@@ -57,6 +57,8 @@ class LayerHash:
             hasher.update(previous_layer_hash.digest)
         for entry in part.spec.overlay_packages:
             hasher.update(entry.encode())
+        for entry in part.spec.overlay_recommended_packages:
+            hasher.update(entry.encode())
         digest = hasher.digest()
 
         hasher = hashlib.sha1()  # noqa: S324
@@ -86,7 +88,7 @@ class LayerHash:
         if not hash_file.exists():
             return None
 
-        with open(hash_file) as file:  # noqa: PTH123
+        with hash_file.open() as file:
             hex_string = file.readline()
 
         return cls(bytes.fromhex(hex_string))

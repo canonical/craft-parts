@@ -163,3 +163,16 @@ class TestPluginAutotools:
 
     def test_get_out_of_source_build(self):
         assert self._plugin.get_out_of_source_build() is False
+
+    def test_subclass_default_parameters(self, new_dir):
+        class LocalAutotoolsPlugin(AutotoolsPlugin):
+            default_configure_parameters = ["--custom=True"]
+
+        properties = LocalAutotoolsPlugin.properties_class.unmarshal({"source": "."})
+        part = Part("foo", {})
+
+        project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        part_info = PartInfo(project_info=project_info, part=part)
+        plugin = LocalAutotoolsPlugin(properties=properties, part_info=part_info)
+
+        assert "./configure --custom=True" in plugin.get_build_commands()

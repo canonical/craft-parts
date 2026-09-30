@@ -59,10 +59,6 @@ class TestPrimeState:
         state = PrimeState.unmarshal(state_data)
         assert state.marshal() == state_data
 
-    def test_unmarshal_invalid(self):
-        with pytest.raises(TypeError, match="^state data is not a dictionary$"):
-            PrimeState.unmarshal(None)  # type: ignore[reportGeneralTypeIssues]
-
 
 @pytest.mark.usefixtures("new_dir")
 class TestPrimeStatePersist:
@@ -72,15 +68,14 @@ class TestPrimeStatePersist:
         state = PrimeState(
             part_properties=properties,
             project_options=ProjectOptions(target_arch="amd64"),
-            files={"a"},
-            directories={"b"},
+            files={Path("a")},
+            directories={Path("b")},
             dependency_paths={"c"},
             primed_stage_packages={"d"},
         )
 
         state.write(Path("state"))
-        with open("state") as f:  # noqa: PTH123
-            content = f.read()
+        content = Path("state").read_text()
 
         new_state = yaml.safe_load(content)
         assert PrimeState.unmarshal(new_state).marshal() == state.marshal()

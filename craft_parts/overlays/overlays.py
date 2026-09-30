@@ -27,7 +27,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[str], set[str]]:
+def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[Path], set[Path]]:
     """Determine the files and directories that are visible in a layer.
 
     Given a pair of directories containing lower and upper layer entries, list the
@@ -41,8 +41,8 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[str], set[st
 
     :returns: A tuple containing the sets of files and directories that are visible.
     """
-    visible_files: set[str] = set()
-    visible_dirs: set[str] = set()
+    visible_files: set[Path] = set()
+    visible_dirs: set[Path] = set()
 
     logger.debug("check layer visibility in %s, compared to %s", lower_dir, upper_dir)
 
@@ -59,7 +59,7 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[str], set[st
 
             upper_path = upper_dir / relpath
             if not upper_path.exists() and not oci_whiteout(upper_path).exists():
-                visible_files.add(str(relpath))
+                visible_files.add(relpath)
 
         for directory in directories:
             path = Path(root, directory)
@@ -70,9 +70,9 @@ def visible_in_layer(lower_dir: Path, upper_dir: Path) -> tuple[set[str], set[st
             upper_path = upper_dir / relpath
             if not upper_path.exists():
                 if path.is_symlink():
-                    visible_files.add(str(relpath))
+                    visible_files.add(relpath)
                 else:
-                    visible_dirs.add(str(relpath))
+                    visible_dirs.add(relpath)
             elif is_oci_opaque_dir(upper_path):
                 logger.debug("is opaque dir: %s", relpath)
                 # Don't descend into this directory, overridden by opaque
@@ -92,7 +92,7 @@ def _is_path_visible(root: Path, relpath: Path) -> bool:
     levels = len(relpath.parts)
 
     for level in range(levels):
-        path = Path(root, os.path.join(*relpath.parts[: level + 1]))  # noqa: PTH118
+        path = Path(root, Path(*relpath.parts[: level + 1]))
         if oci_whiteout(path).exists() or is_oci_opaque_dir(path):
             logger.debug("is whiteout or opaque: %s", path)
             return False

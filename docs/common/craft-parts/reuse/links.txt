@@ -1,5 +1,5 @@
 .. _`Charmcraft`: https://juju.is/docs/sdk/charmcraft
-.. _`Craft Providers`: https://canonical-craft-providers.readthedocs-hosted.com/en/latest/
+.. _`Craft Providers`: https://documentation.ubuntu.com/craft-providers/latest/
 .. _`Juju`: https://juju.is/docs/sdk
 .. _`SDL`: https://www.libsdl.org/
 .. _`Snapcraft`: https://documentation.ubuntu.com/snapcraft/

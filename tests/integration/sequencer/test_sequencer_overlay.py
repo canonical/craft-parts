@@ -43,7 +43,9 @@ _pull_state_foo = textwrap.dedent(
       source-commit: ''
       source-submodules: null
       stage-packages: []
+      stage-slices: []
       overlay-packages: []
+      overlay-recommended-packages: []
     project_options:
       target_arch: amd64
     assets:
@@ -62,6 +64,7 @@ _build_state_foo = textwrap.dedent(
       build-packages: []
       organize: {}
       build-attributes: []
+      build-environment: []
     project_options:
       target_arch: amd64
     assets: {}
@@ -80,7 +83,9 @@ _pull_state_bar = textwrap.dedent(
       source-commit: ''
       source-submodules: null
       stage-packages: []
+      stage-slices: []
       overlay-packages: []
+      overlay-recommended-packages: []
     project_options:
       target_arch: amd64
     assets:

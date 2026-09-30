@@ -220,13 +220,123 @@ class TestGitSource:
                         "-c",
                         "advice.detachedHead=false",
                         "clone",
-                        "--recursive",
                         "git://my-source",
                         "source_dir",
                     ]
                 ),
                 mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
                 mock.call(["git", "-C", "source_dir", "checkout", commit]),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "submodule",
+                        "update",
+                        "--init",
+                        "--recursive",
+                    ]
+                ),
+            ]
+        )
+
+    def test_fetch_commit_deep_with_submodules_empty(
+        self,
+        fake_check_output: mock.MagicMock,
+        fake_run: mock.MagicMock,
+        new_dir: Path,
+        mocker: MockerFixture,
+    ) -> None:
+        short_commit = "2514f9533e"
+        commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
+        fake_check_output.return_value = commit
+        mocker.patch(
+            "craft_parts.sources.git_source.GitSource._clone_at_commit",
+            side_effect=ShallowFetchError,
+        )
+
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_commit=short_commit,
+            source_submodules=[],
+            project_dirs=self._dirs,
+        )
+
+        git.pull()
+
+        fake_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "git",
+                        "-c",
+                        "advice.detachedHead=false",
+                        "clone",
+                        "git://my-source",
+                        "source_dir",
+                    ]
+                ),
+                mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
+                mock.call(["git", "-C", "source_dir", "checkout", commit]),
+            ]
+        )
+        assert all("submodule" not in call.args[0] for call in fake_run.mock_calls)
+
+    def test_fetch_commit_deep_with_submodules(
+        self,
+        fake_check_output: mock.MagicMock,
+        fake_run: mock.MagicMock,
+        new_dir: Path,
+        mocker: MockerFixture,
+    ) -> None:
+        short_commit = "2514f9533e"
+        commit = "2514f9533ec9b45d07883e10a561b248497a8e3c"
+        fake_check_output.return_value = commit
+        mocker.patch(
+            "craft_parts.sources.git_source.GitSource._clone_at_commit",
+            side_effect=ShallowFetchError,
+        )
+
+        git = GitSource(
+            "git://my-source",
+            Path("source_dir"),
+            cache_dir=new_dir,
+            source_commit=short_commit,
+            source_submodules=["submodule_1", "dir/submodule_2"],
+            project_dirs=self._dirs,
+        )
+
+        git.pull()
+
+        fake_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "git",
+                        "-c",
+                        "advice.detachedHead=false",
+                        "clone",
+                        "git://my-source",
+                        "source_dir",
+                    ]
+                ),
+                mock.call(["git", "-C", "source_dir", "fetch", "origin", commit]),
+                mock.call(["git", "-C", "source_dir", "checkout", commit]),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
+                        "submodule",
+                        "update",
+                        "--init",
+                        "--recursive",
+                        "submodule_1",
+                        "dir/submodule_2",
+                    ]
+                ),
             ]
         )
 

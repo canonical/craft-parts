@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The Go Use plugin."""
+"""The Go-use plugin."""
 
 import logging
 from typing import Literal
@@ -31,12 +31,12 @@ logger = logging.getLogger(__name__)
 
 
 class GoUsePluginProperties(PluginProperties, frozen=True):
-    """The part properties used by the Go Use plugin."""
+    """The part properties used by the Go-use plugin."""
 
     plugin: Literal["go-use"] = "go-use"
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class GoUsePlugin(Plugin):

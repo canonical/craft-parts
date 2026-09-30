@@ -1,0 +1,9 @@
+parts:
+  mypart:
+    plugin: package-overlay
+    source: .
+    overlay-packages:
+      - sed
+    override-overlay: |
+      craftctl default
+      sed 's/plugin-overlay-works/override-also-works/' /plugin-overlay-proof.txt > /override-proof.txt

@@ -13,23 +13,11 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.uv_plugin
 
-uv-extras
-~~~~~~~~~
+.. kitbash-field:: UvPluginProperties uv_extras
 
-**Type:** list of strings
-
-Extra dependencies to build with. Each element of the list is passed
-exactly as ``--extra EXTRA``.
-
-
-uv-groups
-~~~~~~~~~
-
-**Type:** list of strings
-
-Extra dependency groups to build with. Each element of the list is passed
-exactly as ``--group GROUP``.
+.. kitbash-field:: UvPluginProperties uv_groups
 
 
 .. _craft_parts_uv_plugin-environment_variables:
@@ -65,6 +53,11 @@ UV_PROJECT_ENVIRONMENT
 A path to the Python virtual environment to build with. By default, this variable
 populates itself with the directory in which this plugin will create the virtual
 environment.
+
+Because the default virtual environment is created in ``${CRAFT_PART_INSTALL}``,
+avoid unpacking unrelated ``stage-packages`` into the same part. If those packages
+must be staged, define them in a separate part and list that part in the
+``uv`` part's ``after`` key.
 
 
 UV_PYTHON_DOWNLOADS

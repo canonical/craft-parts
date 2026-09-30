@@ -23,10 +23,11 @@ from textwrap import dedent
 from typing import Literal, cast
 from urllib.parse import urlparse
 
+import pydantic
 from pydantic import model_validator
 from typing_extensions import Self, override
 
-from craft_parts.utils.gradle_utils import INIT_SCRIPT_TEMPLATE, PUBLISH_BLOCK_TEMPLATE
+from craft_parts.utils.gradle_utils import INIT_SCRIPT_TEMPLATE
 
 from . import validator
 from .java_plugin import JavaPlugin
@@ -34,31 +35,51 @@ from .properties import PluginProperties
 
 
 class GradlePluginProperties(PluginProperties, frozen=True):
-    """The part properties used by the gradle plugin.
-
-    - gradle_init_script:
-      (string)
-      The path to init script to run before build script is executed.
-    - gradle_parameters:
-      (list of strings)
-      Extra arguments to pass along to Gradle task execution.
-    - gradle_task:
-      (string)
-      The task to run to build the project.
-    - gradle_use_daemon:
-      (boolean)
-      Whether to use the Gradle daemon during the build.
-    """
+    """The part properties used by the gradle plugin."""
 
     plugin: Literal["gradle"] = "gradle"
 
-    gradle_init_script: str = ""
-    gradle_parameters: list[str] = []
-    gradle_task: str = "build"
-    gradle_use_daemon: bool = False
+    gradle_init_script: str = pydantic.Field(
+        default="",
+        description="The path to the initialization script to run before the build script is run.",
+    )
+    """The path to the `initialization script
+    <https://docs.gradle.org/current/userguide/init_scripts.html>`__ to run before the
+    build script is run.
+
+    The command run is ``gradle --init-script <gradle-init-script>``.
+    """
+
+    gradle_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The extra arguments to pass to Gradle.",
+    )
+    """The extra arguments to pass to Gradle.
+    """
+
+    gradle_task: str = pydantic.Field(
+        default="build",
+        description="The Gradle task to run during build.",
+    )
+    """The `Gradle task
+    <https://docs.gradle.org/current/userguide/more_about_tasks.html>`__ to run during
+    build.
+
+    Defaults to ``build``.
+    """
+
+    gradle_use_daemon: bool = pydantic.Field(
+        default=False,
+        description="Whether to use the Gradle daemon during build.",
+    )
+    """Whether to use the `Gradle daemon
+    <https://docs.gradle.org/current/userguide/gradle_daemon.html>`_ during build.
+
+    Defaults to ``false``.
+    """
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
     @model_validator(mode="after")
     def gradle_task_defined(self) -> Self:
@@ -86,11 +107,11 @@ class GradlePlugin(JavaPlugin):
 
     The Gradle build system is commonly used to build Java projects. This
     plugin requires a build.gradle in the root of the source tree.
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
 
     - gradle-init-script:
       (string)
@@ -120,11 +141,6 @@ class GradlePlugin(JavaPlugin):
             if (self._part_info.part_build_subdir / "gradlew").exists()
             else "gradle"
         )
-
-    @property
-    def _publish_maven_repo(self) -> Path:
-        """Path to local Maven repository for publishing."""
-        return self._part_info.part_export_dir / "maven-use"
 
     @property
     def _local_maven_repo(self) -> Path:
@@ -166,7 +182,7 @@ class GradlePlugin(JavaPlugin):
                 [
                     "--offline",
                     "--init-script",
-                    self._create_self_contained_init_script(options=options),
+                    self._create_self_contained_init_script(),
                 ]
             )
 
@@ -191,23 +207,15 @@ class GradlePlugin(JavaPlugin):
             *self._get_java_post_build_commands(),
         ]
 
-    def _create_self_contained_init_script(
-        self, options: GradlePluginProperties
-    ) -> str:
+    def _create_self_contained_init_script(self) -> str:
         init_script = (
             self._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
         )
         init_script.parent.mkdir(parents=True, exist_ok=True)
-        publish_block = ""
-        if "publish" in options.gradle_task:
-            publish_block = PUBLISH_BLOCK_TEMPLATE.format(
-                publish_maven_repo=self._publish_maven_repo.as_uri()
-            )
 
         init_script.write_text(
             INIT_SCRIPT_TEMPLATE.format(
-                local_maven_repo=self._local_maven_repo.as_uri(),
-                publish_block=publish_block,
+                local_maven_repo=self._local_maven_repo.as_uri()
             )
         )
         return str(init_script)
@@ -228,8 +236,8 @@ class GradlePlugin(JavaPlugin):
                 continue
             proxy_url = urlparse(case_insensitive_env[env_name])
 
-            with open(  # noqa: PTH123
-                gradle_properties, "a+", encoding="utf-8"
+            with gradle_properties.open(
+                "a+", encoding="utf-8"
             ) as gradle_properties_file:
                 gradle_properties_file.write(
                     dedent(

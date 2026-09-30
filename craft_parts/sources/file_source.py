@@ -26,7 +26,7 @@ from craft_parts.dirs import ProjectDirs
 from .base import BaseFileSourceModel, FileSourceHandler, get_model_config
 
 
-class FileSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+class FileSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic model for plain file source."""
 
     model_config = get_model_config()
@@ -40,7 +40,7 @@ class FileSource(FileSourceHandler):
 
     def __init__(
         self,
-        source: str,
+        source: str | Path,
         part_src_dir: Path,
         *,
         cache_dir: Path,

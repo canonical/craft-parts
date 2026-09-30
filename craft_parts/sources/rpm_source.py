@@ -17,7 +17,6 @@
 """The RPM source handler."""
 
 import logging
-import os
 import subprocess
 import tarfile
 from pathlib import Path
@@ -36,7 +35,7 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 
-class RpmSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+class RpmSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic model for an rpm file source."""
 
     pattern = r"\.rpm$"
@@ -57,7 +56,7 @@ class RpmSource(FileSourceHandler):
         src: Path | None = None,
     ) -> None:
         """Extract rpm file contents to the part source dir."""
-        rpm_path = src or self.part_src_dir / os.path.basename(self.source)  # noqa: PTH119
+        rpm_path = src or self.part_src_dir / Path(self.source).name
         # NOTE: rpm2archive chosen here because while it's slower, it has broader
         # compatibility than rpm2cpio.
         # --nocompression parameter excluded until all supported platforms

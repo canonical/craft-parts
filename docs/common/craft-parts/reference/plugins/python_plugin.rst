@@ -18,30 +18,13 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.python_plugin
 
-python-requirements
-~~~~~~~~~~~~~~~~~~~
+.. kitbash-field:: PythonPluginProperties python_requirements
 
-**Type:** list of strings
+.. kitbash-field:: PythonPluginProperties python_constraints
 
-List of paths to requirements files.
-
-
-python-constraints
-~~~~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-List of paths to constraint files.
-
-
-python-packages
-~~~~~~~~~~~~~~~
-
-**Type:** list
-
-A list of dependencies to install from PyPI. If needed, ``pip``, ``setuptools`` and
-``wheel`` can be upgraded here.
+.. kitbash-field:: PythonPluginProperties python_packages
 
 
 .. _craft_parts_python_plugin-environment_variables:

@@ -18,6 +18,7 @@
 
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from .base import Plugin
@@ -29,12 +30,26 @@ class AutotoolsPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["autotools"] = "autotools"
 
-    autotools_configure_parameters: list[str] = []
-    autotools_bootstrap_parameters: list[str] = []
+    autotools_configure_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to Autotools.",
+    )
+    """The parameters to pass to Autotools.
+    """
+
+    autotools_bootstrap_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The bootstrap flags to pass to Autotools.",
+    )
+    """The bootstrap flags to pass to Autotools, if the part has a bootstrap file.
+
+    In some cases, bootstrap files can be found by running ``./bootstrap --help``.
+    """
+
     disable_parallel: bool = False
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class AutotoolsPlugin(Plugin):
@@ -47,11 +62,11 @@ class AutotoolsPlugin(Plugin):
     cannot be found, it will first try to run 'autogen.sh' or 'bootstrap'
     to generate one.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    In addition, this plugin uses the following plugin-specific keywords:
+    In addition, this plugin uses the following plugin-specific keys:
 
         - autotools-bootstrap-parameters
           (list of strings)
@@ -66,6 +81,7 @@ class AutotoolsPlugin(Plugin):
     """
 
     properties_class = AutotoolsPluginProperties
+    default_configure_parameters: list[str] = []
 
     @override
     def get_build_snaps(self) -> set[str]:
@@ -84,7 +100,11 @@ class AutotoolsPlugin(Plugin):
 
     def _get_configure_command(self) -> str:
         options = cast(AutotoolsPluginProperties, self._options)
-        cmd = ["./configure", *options.autotools_configure_parameters]
+        cmd = [
+            "./configure",
+            *self.default_configure_parameters,
+            *options.autotools_configure_parameters,
+        ]
         return " ".join(cmd)
 
     def _get_bootstrap_command(self) -> str:

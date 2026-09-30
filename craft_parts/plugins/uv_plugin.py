@@ -36,18 +36,22 @@ class UvPluginProperties(PluginProperties, frozen=True):
 
     uv_extras: set[str] = pydantic.Field(
         default_factory=set,
-        title="Optional extra dependencies",
-        description="Optional extra dependencies to include when installing.",
+        title="The extra dependencies to include in the part.",
+        description="The extra dependencies to include in the part.",
     )
+    """The extra dependencies to include in the part.
+    """
 
     uv_groups: set[str] = pydantic.Field(
         default_factory=set,
-        title="Optional dependency groups",
-        description="Optional dependency groups to include when installing.",
+        title="The extra dependency groups to build with.",
+        description="The extra dependency groups to build with.",
     )
+    """The extra dependency groups to build with.
+    """
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class UvPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -136,6 +140,9 @@ class UvPlugin(BasePythonPlugin):
             "UV_COMPILE_BYTECODE": "1",
             "UV_PROJECT_ENVIRONMENT": venv_dir,
             "UV_FROZEN": "true",
+            "UV_SYSTEM_CERTS": "true",
+            # Keep the deprecated variable for compatibility with older uv versions.
+            "UV_NATIVE_TLS": "true",
             "UV_PYTHON_DOWNLOADS": "never",
             "UV_PYTHON": '"${PARTS_PYTHON_INTERPRETER}"',
             "UV_PYTHON_PREFERENCE": "only-system",

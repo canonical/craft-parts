@@ -1,9 +1,9 @@
 .. _craft_parts_cargo_use_plugin:
 
-Cargo Use plugin
-=====================
+Cargo-use plugin
+================
 
-The Cargo Use plugin sets up a local `cargo registry`_ for `Rust`_ crates. It's a
+The Cargo-use plugin sets up a local `cargo registry`_ for `Rust`_ crates. It's a
 companion plugin meant to be used with the :ref:`Rust plugin <craft_parts_rust_plugin>`.
 It affects all Rust parts in a project.
 
@@ -19,7 +19,7 @@ This plugin has no unique keys.
 Dependencies
 ------------
 
-The ``cargo-use`` plugin has no dependencies.
+This plugin has no dependencies.
 
 .. _cargo-use-details-end:
 
@@ -39,7 +39,7 @@ Example
 
 The following snippet declares a pair of parts.
 
-The first is named ``librust-cfg-if`` and uses the ``cargo-use`` plugin.
+The first is named ``librust-cfg-if`` and uses the Cargo-use plugin.
 
 The second, the app of the pair, is named ``hello`` and uses the ``rust`` plugin. The
 app's source has ``cfg-if`` as a dependency, which is why the ``librust-cfg-if`` part is

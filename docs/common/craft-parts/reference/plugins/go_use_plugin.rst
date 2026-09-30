@@ -1,9 +1,9 @@
 .. _craft_parts_go_use_plugin:
 
-Go Use plugin
+Go-use plugin
 =============
 
-The Go Use plugin allows for setting up a `go workspace`_ for `Go`_ modules. It is a
+The Go-use plugin allows for setting up a `go workspace`_ for `Go`_ modules. It is a
 companion plugin meant to be used with the :ref:`Go plugin <craft_parts_go_plugin>`. Use
 of this plugin sets up ``go.work`` and affects all parts.
 
@@ -49,8 +49,8 @@ During the build step the plugin performs the following actions:
 Example
 -------
 
-The following snippet declares a parts named ``go-flags`` using the ``go-use`` plugin
-and a ``hello`` part that declares this ``go-flags``` in its ``go.mod`` using the ``go``
+The following snippet declares a parts named ``go-flags`` using the Go-use plugin
+and a ``hello`` part that declares this ``go-flags``` in its ``go.mod`` using the Go
 plugin. Correct ordering is achieved with the use of the ``after`` key in the ``hello``
 part.
 

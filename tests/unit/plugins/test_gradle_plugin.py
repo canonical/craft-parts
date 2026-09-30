@@ -257,17 +257,3 @@ def test_get_build_commands_self_contained(self_contained_part_info):
     init_script = init_script_path.read_text()
     assert "settingsEvaluated" in init_script
     assert "maven-publish" not in init_script
-
-
-def test_get_build_commands_self_contained_publish(self_contained_part_info):
-    properties = GradlePlugin.properties_class.unmarshal(
-        {"source": ".", "gradle-task": "publish"}
-    )
-    plugin = GradlePlugin(properties=properties, part_info=self_contained_part_info)
-
-    gradle_cmd = plugin.get_build_commands()[0]
-    assert "--offline" in gradle_cmd
-    init_script = (
-        plugin._part_info.part_build_subdir / ".parts" / "self-contained.init.gradle"
-    ).read_text()
-    assert "maven-publish" in init_script

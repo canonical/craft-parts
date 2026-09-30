@@ -18,6 +18,7 @@
 
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts import errors
@@ -32,10 +33,14 @@ class SConsPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["scons"] = "scons"
 
-    scons_parameters: list[str] = []
+    scons_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to SCons.",
+    )
+    """The parameters to pass to SCons."""
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class SConsPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -89,7 +94,7 @@ class SConsPlugin(Plugin):
     variable which contains the root which the SConstruct file should use to
     configure its ``Install()`` builder target.
 
-    The plugin supports the following keywords:
+    The plugin supports the following keys:
 
     - ``scons-parameters``
       (list of strings)

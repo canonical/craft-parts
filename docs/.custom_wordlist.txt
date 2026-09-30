@@ -12,6 +12,7 @@ boolean
 Bundler
 Canonical('s)?
 Charmcraft
+chroot
 cjk
 CMake
 colcon
@@ -64,6 +65,7 @@ onboarding
 Open Graph
 openapi
 otf
+pathlib
 PDF
 plantuml
 PNG
