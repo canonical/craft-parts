@@ -35,7 +35,7 @@ from .base import (
 )
 
 
-class SnapSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+class SnapSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic model for a snap file source."""
 
     pattern = r"\.snap$"

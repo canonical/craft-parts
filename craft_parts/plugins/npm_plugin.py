@@ -24,6 +24,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
 
+import pydantic
 import requests
 from pydantic import model_validator
 from typing_extensions import Self, override
@@ -59,9 +60,50 @@ class NpmPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["npm", "npm-use"] = "npm"
 
     # part properties required by the plugin
-    npm_include_node: bool = False
-    npm_node_version: str | None = None
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    npm_include_node: bool = pydantic.Field(
+        default=False,
+        description="Whether to download and include the Node.js binaries and its dependencies in the part.",
+    )
+    """Whether to download and include the Node.js binaries and its dependencies in the part.
+
+    If this key is set to ``true``, then the ``npm-node-version`` key must also be set.
+    """
+
+    npm_node_version: str | None = pydantic.Field(
+        default=None,
+        description="The version of Node.js to download and include in the part.",
+    )
+    """The version of Node.js to download and include in the part.
+
+    Accepted version formats:
+
+    - Exact version, such as ``"20.12.2"``
+    - Major version, such as ``"20"``
+    - Minor version, such as ``"20.12"``
+    - LTS code name, such as ``"lts/iron"``
+    - Latest mainline version, such as ``"node"``
+
+    When setting a loose version identifier, the plugin selects the latest version that
+    satisfies the provided version range. If the version picked by the plugin doesn't
+    publish binaries for the target architecture, the plugin picks the nearest version
+    that both satisfies the version range and also publishes binaries for the target
+    architecture.
+
+    Required if the ``npm-include-node`` key is set to ``true``.
+
+    .. warning::
+
+        With the ``nvm`` utility, you can set ``system`` to use the system Node.js
+        package, but this is unsupported by this plugin, as it uses upstream Node.js
+        binaries.
+
+        Also, the ``iojs`` specifier is unsupported in this plugin, as the ``iojs``
+        project was merged back to Node.js in 2015. Using a very old ``iojs`` runtime
+        poses a significant security hazard. If a part requires a JavaScript runtime
+        from this era, consider migrating it to a modern Node.js runtime.
+    """
+
+    source: str
     build_attributes: list[str] = []
 
     @model_validator(mode="after")
@@ -115,11 +157,11 @@ class NpmPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
 class NpmPlugin(Plugin):
     """A plugin for npm projects.
 
-    This plugin uses the common plugin keywords as well as those for "sources".
+    This plugin uses the common plugin keys as well as those for "sources".
     For more information check the 'plugins' topic for the former and the
     'sources' topic for the latter.
 
-    Additionally, this plugin uses the following plugin-specific keywords:
+    Additionally, this plugin uses the following plugin-specific keys:
         - npm-include-node
           (bool; default: False)
           If true, download and include the node binary and its dependencies.
@@ -283,6 +325,7 @@ class NpmPlugin(Plugin):
         # set the Node environment to production mode
         base_env = {
             "NODE_ENV": "production",
+            "NODE_USE_SYSTEM_CA": "1",
         }
         if cast(NpmPluginProperties, self._options).npm_include_node:
             base_env["PATH"] = "${CRAFT_PART_INSTALL}/bin:${PATH}"
@@ -334,7 +377,7 @@ class NpmPlugin(Plugin):
             cmd += [
                 dedent(
                     f"""\
-                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \
+                tar -xzf "{self._node_binary_path}" -C "${{CRAFT_PART_INSTALL}}/" \\
                     --no-same-owner --strip-components=1
                 """
                 ),

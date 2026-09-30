@@ -31,6 +31,7 @@ from craft_parts.actions import Action, ActionType
 from craft_parts.filesystem_mounts import FilesystemMount
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
+from craft_parts.overlays import chroot as chroot_runner
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
@@ -470,7 +471,10 @@ class PartHandler:
 
             # Copy source from the part source dir to the part build dir
             shutil.copytree(
-                self._part.part_src_dir, self._part.part_build_dir, symlinks=True
+                self._part.part_src_dir,
+                self._part.part_build_dir,
+                symlinks=True,
+                copy_function=file_utils.copy,
             )
 
         # Perform the build step
@@ -481,13 +485,25 @@ class PartHandler:
         with _conditional_layer_mount(
             self._overlay_manager, top_part=self._part, condition=needs_overlay
         ):
-            self._run_step(
-                step_info=step_info,
-                scriptlet_name="override-build",
-                work_dir=self._part.part_build_dir,
-                stdout=stdout,
-                stderr=stderr,
-            )
+            if self._part.has_build_slices:
+                chroot_runner.chroot(
+                    self._part_info.project_info.dirs.build_slices_dir,
+                    self._run_step,
+                    step_info=step_info,
+                    scriptlet_name="override-build",
+                    work_dir=self._part.part_build_dir,
+                    stdout=stdout,
+                    stderr=stderr,
+                    bind_mounts=self._get_build_slices_bind_mounts(),
+                )
+            else:
+                self._run_step(
+                    step_info=step_info,
+                    scriptlet_name="override-build",
+                    work_dir=self._part.part_build_dir,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
 
             logger.debug("Run pre-organize callbacks")
             callbacks.run_step(step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE)
@@ -505,7 +521,7 @@ class PartHandler:
             # files brought in from stage-packages, but in the case of updating build, we
             # want the part to have the ability to organize over the files it organized last
             # time around. We can be confident that this won't overwrite anything else,
-            # because to do so would require changing the `organize` keyword, which will
+            # because to do so would require changing the `organize` key, which will
             # make the build step dirty and require a clean instead of an update.
             organize_install_dirs = {
                 **self._part.part_install_dirs,
@@ -538,6 +554,31 @@ class PartHandler:
             assets=assets,
             overlay_hash=overlay_hash.hex(),
         )
+
+    def _get_build_slices_bind_mounts(self) -> list[chroot_runner.BindMount]:
+        """Get the bind mounts required to build this part in a sliced root."""
+        part_dir = self._part.parts_dir / self._part.name
+        writable_dirs = {
+            install_dir
+            for install_dir in self._part.part_install_dirs.values()
+            if not install_dir.is_relative_to(part_dir)
+        }
+
+        return [
+            chroot_runner.BindMount(source=part_dir, target=part_dir),
+            *[
+                chroot_runner.BindMount(source=path, target=path)
+                for path in sorted(writable_dirs)
+            ],
+            *[
+                chroot_runner.BindMount(
+                    source=stage_dir,
+                    target=stage_dir,
+                    read_only=True,
+                )
+                for stage_dir in sorted(set(self._part.stage_dirs.values()))
+            ],
+        ]
 
     def _run_stage(
         self,
@@ -1281,7 +1322,9 @@ class PartHandler:
 
         :raises StagePackageNotFound: If a package is not available for download.
         """
-        stage_packages = self._part.spec.stage_packages
+        # 'stage-packages' and 'stage-slices' are mutually exclusive, so at most one
+        # of these is populated.
+        stage_packages = self._part.spec.stage_packages or self._part.spec.stage_slices
         if not stage_packages:
             return None
 

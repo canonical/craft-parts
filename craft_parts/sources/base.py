@@ -137,7 +137,7 @@ def get_model_config(
     )
 
 
-class BaseSourceModel(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
+class BaseSourceModel(pydantic.BaseModel, frozen=True):
     """A base model for source types."""
 
     model_config = get_model_config()
@@ -212,6 +212,7 @@ class SourceHandler(abc.ABC):
         self.source = str(source)
         self.part_src_dir = part_src_dir
         self._cache_dir = cache_dir
+        self._part_name: str | None = None
         self.source_details: dict[str, str | None] | None = None
         self._dirs = project_dirs
         self._checked = False
@@ -219,6 +220,10 @@ class SourceHandler(abc.ABC):
 
         self.outdated_files: list[str] | None = None
         self.outdated_dirs: list[str] | None = None
+
+    def set_part_name(self, part_name: str) -> None:
+        """Set the part name used for error reporting."""
+        self._part_name = part_name
 
     def __getattr__(self, name: str) -> Any:  # noqa: ANN401 (this must be dynamic)
         return getattr(self._data, name)
@@ -342,7 +347,12 @@ class FileSourceHandler(SourceHandler):
 
         # Verify before provisioning
         if self.source_checksum:
-            verify_checksum(self.source_checksum, source_file)
+            verify_checksum(
+                self.source_checksum,
+                source_file,
+                part_name=self._part_name,
+                source=self.source,
+            )
 
         self.provision(self.part_src_dir, src=source_file)
 

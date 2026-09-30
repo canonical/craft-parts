@@ -38,22 +38,35 @@ class PoetryPluginProperties(PluginProperties, frozen=True):
 
     poetry_with: set[str] = pydantic.Field(
         default_factory=set,
-        title="Dependency groups to include",
-        description="dependency groups to include. By default, only the main dependencies are included.",
+        title="The dependency groups to include.",
+        description="The dependency groups to include.",
     )
+    """The `dependency groups
+    <https://python-poetry.org/docs/managing-dependencies#dependency-groups>`__
+    to include.
+
+    By default, the main dependencies are included.
+    """
+
     poetry_export_extra_args: list[str] = pydantic.Field(
         default_factory=list,
-        title="Extra arguments for poetry export",
-        description="extra arguments to pass to poetry export when creating requirements.txt.",
+        title="The extra arguments to pass at the end of the Poetry export command.",
+        description="The extra arguments to pass at the end of the Poetry export command.",
     )
+    """The extra arguments to pass at the end of the Poetry `export command
+    <https://python-poetry.org/docs/cli/#export>`__.
+    """
+
     poetry_pip_extra_args: list[str] = pydantic.Field(
         default_factory=list,
-        title="Extra arguments for pip install",
-        description="extra arguments to pass to pip install installing dependencies.",
+        title="The arguments to pass to pip when installing dependencies.",
+        description="The arguments to pass to pip when installing dependencies.",
     )
+    """The arguments to pass to pip when installing dependencies.
+    """
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class PoetryPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
@@ -158,6 +171,16 @@ class PoetryPlugin(BasePythonPlugin):
             # Check that the virtualenv is consistent.
             f"{pip} check",
         ]
+
+    @override
+    def get_build_environment(self) -> dict[str, str]:
+        """Return a dictionary with the environment to use in the build step."""
+        env = super().get_build_environment()
+        # Poetry's HTTPS requests go through Python's requests/urllib3/certifi,
+        # which uses a bundled CA bundle by default. Point it at the OS CA bundle.
+        # User build-environment entries are applied later and can still override this.
+        env["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
+        return env
 
     @override
     def _get_package_install_commands(self) -> list[str]:

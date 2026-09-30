@@ -28,6 +28,7 @@ from craft_parts import callbacks, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
+from craft_parts.packages import chisel
 from craft_parts.parts import Part, sort_parts
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -112,6 +113,7 @@ class Executor:
         """
         self._install_build_packages()
         self._install_build_snaps()
+        self._cut_build_slices()
 
         self._verify_plugin_environment()
 
@@ -320,8 +322,64 @@ class Executor:
             logger.info("Installing build-snaps")
             packages.snaps.install_snaps(build_snaps)
 
+    def _cut_build_slices(self) -> None:
+        build_slices: set[str] = set()
+        for part in self._part_list:
+            build_slices.update(part.spec.build_slices)
+
+        state_file = self._build_slices_state_file()
+        slices_dir = self._project_info.dirs.build_slices_dir
+
+        if not build_slices:
+            # No build slices requested: delete previous state and slices.
+            state_file.unlink(missing_ok=True)
+            if slices_dir.exists():
+                shutil.rmtree(slices_dir)
+            return
+
+        state = self._load_build_slices_state(state_file)
+        if state and state.slices == build_slices:
+            # Nothing to do: slices already cut
+            self._prepare_build_slices_root(slices_dir)
+            return
+
+        logger.info("Cutting build-slices")
+
+        if slices_dir.exists():
+            # Need to cut new slices: remove the old ones.
+            shutil.rmtree(slices_dir)
+
+        slices_dir.mkdir(parents=True, exist_ok=False)
+        chisel.cut_slices(slices=sorted(build_slices), target_dir=slices_dir)
+        self._prepare_build_slices_root(slices_dir)
+
+        # Write the information of which slices we cut, for future runs.
+        new_state = chisel.SlicesState(slices=build_slices)
+        new_state.write(state_file)
+
+    def _prepare_build_slices_root(self, slices_dir: Path) -> None:
+        """Create mount points for virtual filesystems used during builds."""
+        for mountpoint in ("dev", "proc", "sys"):
+            (slices_dir / mountpoint).mkdir(parents=True, exist_ok=True)
+
+    def _build_slices_state_file(self) -> Path:
+        return self._project_info.dirs.work_dir / "build_slices_state.yaml"
+
+    def _load_build_slices_state(
+        self, slices_state_file: Path
+    ) -> chisel.SlicesState | None:
+        if not slices_state_file.exists():
+            return None
+
+        return chisel.SlicesState.read(slices_state_file)
+
     def _verify_plugin_environment(self) -> None:
         for part in self._part_list:
+            if part.spec.build_slices:
+                # Slice-provided tools are only visible when validation runs
+                # inside the Build step's chroot.
+                continue
+
             logger.debug("verify plugin environment for part %r", part.name)
 
             part_info = PartInfo(self._project_info, part)

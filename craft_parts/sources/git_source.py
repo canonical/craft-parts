@@ -41,12 +41,39 @@ logger = logging.getLogger(__name__)
 
 MAX_COMMIT_LENGTH = 40
 
+# Mutually exclusive git source options as declared in the JSON schema.
+_SOURCE_REFS = ("source-tag", "source-branch", "source-commit")
 
-class GitSourceModel(BaseSourceModel, frozen=True):  # type: ignore[misc]
+
+def _get_json_extra_schema(type_pattern: str) -> dict[str, Any]:
+    """Get extra values for the git source JSON schema.
+
+    Declares that ``source-tag``, ``source-branch`` and ``source-commit`` are
+    mutually exclusive.
+    """
+    one_of: list[dict[str, Any]] = [
+        {
+            "required": [ref],
+            "not": {
+                "anyOf": [
+                    {"required": [other]} for other in _SOURCE_REFS if other != ref
+                ]
+            },
+        }
+        for ref in _SOURCE_REFS
+    ]
+    one_of.append({"not": {"anyOf": [{"required": [ref]} for ref in _SOURCE_REFS]}})
+
+    schema: dict[str, Any] = get_json_extra_schema(type_pattern)
+    schema["oneOf"] = one_of
+    return schema
+
+
+class GitSourceModel(BaseSourceModel, frozen=True):
     """Pydantic model for a git-based source."""
 
     pattern = r"(^git(\+.+:|[@:])|\.git$)"
-    model_config = get_model_config(get_json_extra_schema(r"(^git[+@:]|\.git$)"))
+    model_config = get_model_config(_get_json_extra_schema(r"(^git[+@:]|\.git$)"))
     source_type: Literal["git"] = "git"
     source: str
     source_tag: str | None = None
@@ -462,8 +489,8 @@ class GitSource(SourceHandler):
         components = version.split(".", maxsplit=2)
 
         # Ignore the type, the regex already asserts that it will be a 3-piece tuple
-        # but mypy believes this is `tuple[int, ...]`
-        return tuple(int(component) for component in components)  # type: ignore[return-value]
+        # but type checkers believe this is `tuple[int, ...]`
+        return tuple(int(component) for component in components)  # ty: ignore[invalid-return-type]
 
 
 class ShallowFetchError(Exception):
