@@ -12,6 +12,7 @@ can be used, and the lifecycle of the different steps performed on them.
    /common/craft-parts/explanation/parts
    /common/craft-parts/explanation/lifecycle
    /common/craft-parts/explanation/file-migration
+   /common/craft-parts/explanation/organize
    implementation
    /common/craft-parts/explanation/filesets
    /common/craft-parts/explanation/overlays
