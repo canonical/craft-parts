@@ -177,37 +177,7 @@ class LocalSource(SourceHandler):
         logger.debug("updated files: %r", self._updated_files)
         logger.debug("updated directories: %r", self._updated_directories)
 
-        # Detect files/directories deleted from the source since the last pull
-        # by comparing the current source against the stored manifest.
-        # We intentionally compare source-vs-manifest (not destination-vs-source)
-        # so that files added to part_src_dir by later lifecycle steps (e.g. build
-        # artifacts in part_build_dir when LocalSource is used for build updates)
-        # are never incorrectly treated as deletions.
-        prev_entries = _read_source_manifest(self.part_src_dir)
-        if prev_entries is not None:
-            current_entries = _collect_source_entries(self.source_abspath, self._ignore)
-            deleted = prev_entries - current_entries
-
-            # Classify each deleted entry as a file or a directory based on
-            # what is currently present in the destination (part_src_dir).
-            deleted_dirs: set[str] = set()
-            for rel_path in deleted:
-                dest_path = Path(self.part_src_dir) / rel_path
-                if not dest_path.is_symlink() and dest_path.is_dir():
-                    deleted_dirs.add(rel_path)
-                else:
-                    self._deleted_files.add(rel_path)
-
-            # Filter out files that are inside deleted directories – the whole
-            # directory tree will be removed by shutil.rmtree in update().
-            self._deleted_files = {
-                f
-                for f in self._deleted_files
-                if not any(
-                    f == d or f.startswith(d + os.sep) for d in deleted_dirs
-                )
-            }
-            self._deleted_directories = deleted_dirs
+        self._detect_deletions()
 
         logger.debug("deleted files: %r", self._deleted_files)
         logger.debug("deleted directories: %r", self._deleted_directories)
@@ -218,6 +188,41 @@ class LocalSource(SourceHandler):
             or len(self._deleted_files) > 0
             or len(self._deleted_directories) > 0
         )
+
+    def _detect_deletions(self) -> None:
+        """Detect files/directories deleted from the source since the last pull.
+
+        Compares the current source against the stored manifest.  We
+        intentionally compare source-vs-manifest (not destination-vs-source)
+        so that files added to part_src_dir by later lifecycle steps (e.g. build
+        artifacts in part_build_dir when LocalSource is used for build updates)
+        are never incorrectly treated as deletions.
+        """
+        prev_entries = _read_source_manifest(self.part_src_dir)
+        if prev_entries is None:
+            return
+
+        current_entries = _collect_source_entries(self.source_abspath, self._ignore)
+        deleted = prev_entries - current_entries
+
+        # Classify each deleted entry as a file or a directory based on
+        # what is currently present in the destination (part_src_dir).
+        deleted_dirs: set[str] = set()
+        for rel_path in deleted:
+            dest_path = Path(self.part_src_dir) / rel_path
+            if not dest_path.is_symlink() and dest_path.is_dir():
+                deleted_dirs.add(rel_path)
+            else:
+                self._deleted_files.add(rel_path)
+
+        # Filter out files that are inside deleted directories - the whole
+        # directory tree will be removed by shutil.rmtree in update().
+        self._deleted_files = {
+            f
+            for f in self._deleted_files
+            if not any(f == d or f.startswith(d + os.sep) for d in deleted_dirs)
+        }
+        self._deleted_directories = deleted_dirs
 
     @override
     def get_outdated_files(self) -> tuple[list[str], list[str]]:
@@ -264,7 +269,7 @@ class LocalSource(SourceHandler):
         # Remove deleted files
         for file_path in self._deleted_files:
             dest_path = os.path.join(self.part_src_dir, file_path)  # noqa: PTH118
-            if os.path.lexists(dest_path):  # noqa: PTH110
+            if os.path.lexists(dest_path):
                 os.remove(dest_path)  # noqa: PTH107
 
         # Refresh the manifest only if one already exists (i.e. pull() was
@@ -281,7 +286,7 @@ class LocalSource(SourceHandler):
 
 
 def _collect_source_entries(
-    source: str,
+    source: Path,
     ignore_fn: Callable[..., list[str]],
 ) -> set[str]:
     """Walk *source* and return relative paths of all entries (with ignore).
@@ -298,12 +303,12 @@ def _collect_source_entries(
             directories[:] = [d for d in directories if d not in ignored]
 
         for file_name in set(file_names) - ignored:
-            path = os.path.join(root, file_name)  # noqa: PTH118
-            entries.add(os.path.relpath(path, source))  # noqa: PTH118
+            path = Path(root) / file_name
+            entries.add(os.path.relpath(path, source))
 
         for directory in list(directories):
-            path = os.path.join(root, directory)  # noqa: PTH118
-            entries.add(os.path.relpath(path, source))  # noqa: PTH118
+            path = Path(root) / directory
+            entries.add(os.path.relpath(path, source))
             if os.path.islink(path):  # noqa: PTH114
                 # Treat dir-symlinks as opaque entries; do not descend.
                 directories.remove(directory)

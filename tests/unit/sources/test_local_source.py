@@ -508,10 +508,10 @@ class TestLocalUpdate:
         assert local._ignore_patterns == ["*.ignore"]
 
     def test_file_removed(self, new_dir, partitions):
-        source = "source"
-        destination = "destination"
-        os.mkdir(source)  # noqa: PTH102
-        os.mkdir(destination)  # noqa: PTH102
+        source = Path("source")
+        destination = Path("destination")
+        source.mkdir()
+        destination.mkdir()
 
         with open(os.path.join(source, "file1"), "w") as f:  # noqa: PTH118, PTH123
             f.write("1")
@@ -551,11 +551,11 @@ class TestLocalUpdate:
         assert os.path.isfile(os.path.join(destination, "file2"))  # noqa: PTH113, PTH118
 
     def test_file_removed_from_subdirectory(self, new_dir, partitions):
-        source = "source"
-        source_dir = os.path.join(source, "dir")  # noqa: PTH118
-        destination = "destination"
-        os.makedirs(source_dir)  # noqa: PTH103
-        os.mkdir(destination)  # noqa: PTH102
+        source = Path("source")
+        source_dir = source / "dir"
+        destination = Path("destination")
+        source_dir.mkdir(parents=True)
+        destination.mkdir()
 
         with open(os.path.join(source_dir, "file1"), "w") as f:  # noqa: PTH118, PTH123
             f.write("1")
@@ -618,7 +618,7 @@ class TestLocalUpdate:
 
         dirs = ProjectDirs(partitions=partitions)
 
-        # NOTE: no pull() call here – this LocalSource mimics the build-update
+        # NOTE: no pull() call here - this LocalSource mimics the build-update
         # use case where pull() is never invoked for this source/dest pair.
         local = LocalSource(source, destination, cache_dir=new_dir, project_dirs=dirs)
 
