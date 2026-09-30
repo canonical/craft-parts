@@ -42,8 +42,8 @@ from .base import (
 
 logger = logging.getLogger(__name__)
 
-# Hidden file written to part_src_dir after a pull to record the set of source
-# entries at that point in time.  Used by check_if_outdated() to detect files
+# File written to the source cache after a pull to record the set of source
+# entries at that point in time. Used by check_if_outdated() to detect files
 # and directories that were deleted from the source since the last pull.
 _SOURCE_MANIFEST_FILENAME = ".craft-parts-source-manifest"
 
@@ -74,6 +74,7 @@ class LocalSource(SourceHandler):
         super().__init__(*args, project_dirs=project_dirs, **kwargs)
         self.source_abspath = Path(self.source).absolute()
         self.copy_function = copy_function
+        self._manifest_path = Path(self._cache_dir) / _SOURCE_MANIFEST_FILENAME
 
         if self._dirs.work_dir.resolve() == Path(self.source_abspath):
             # ignore parts/stage/dir if source dir matches workdir
@@ -114,7 +115,7 @@ class LocalSource(SourceHandler):
         )
 
         _write_source_manifest(
-            self.part_src_dir,
+            self._manifest_path,
             _collect_source_entries(self.source_abspath, self._ignore),
         )
 
@@ -177,7 +178,7 @@ class LocalSource(SourceHandler):
         logger.debug("updated files: %r", self._updated_files)
         logger.debug("updated directories: %r", self._updated_directories)
 
-        self._detect_deletions()
+        self._detect_deletions(ignore_files)
 
         logger.debug("deleted files: %r", self._deleted_files)
         logger.debug("deleted directories: %r", self._deleted_directories)
@@ -189,7 +190,7 @@ class LocalSource(SourceHandler):
             or len(self._deleted_directories) > 0
         )
 
-    def _detect_deletions(self) -> None:
+    def _detect_deletions(self, ignore_files: list[str]) -> None:
         """Detect files/directories deleted from the source since the last pull.
 
         Compares the current source against the stored manifest.  We
@@ -198,11 +199,13 @@ class LocalSource(SourceHandler):
         artifacts in part_build_dir when LocalSource is used for build updates)
         are never incorrectly treated as deletions.
         """
-        prev_entries = _read_source_manifest(self.part_src_dir)
+        prev_entries = _read_source_manifest(self._manifest_path)
         if prev_entries is None:
             return
 
-        current_entries = _collect_source_entries(self.source_abspath, self._ignore)
+        current_entries = _collect_source_entries(
+            self.source_abspath, self._ignore, also_ignore=ignore_files
+        )
         deleted = prev_entries - current_entries
 
         # Classify each deleted entry as a file or a directory based on
@@ -224,6 +227,33 @@ class LocalSource(SourceHandler):
         }
         self._deleted_directories = deleted_dirs
 
+        for rel_path in current_entries:
+            source_path = self.source_abspath / rel_path
+            dest_path = Path(self.part_src_dir) / rel_path
+            source_is_dir = source_path.is_dir() and not source_path.is_symlink()
+            dest_is_dir = dest_path.is_dir() and not dest_path.is_symlink()
+            if source_is_dir != dest_is_dir and os.path.lexists(dest_path):
+                if dest_is_dir:
+                    self._deleted_directories.add(rel_path)
+                else:
+                    self._deleted_files.add(rel_path)
+
+        ignored = set(ignore_files)
+        self._deleted_files = {
+            path
+            for path in self._deleted_files
+            if not any(
+                path == item or path.startswith(item + os.sep) for item in ignored
+            )
+        }
+        self._deleted_directories = {
+            path
+            for path in self._deleted_directories
+            if not any(
+                path == item or path.startswith(item + os.sep) for item in ignored
+            )
+        }
+
     @override
     def get_outdated_files(self) -> tuple[list[str], list[str]]:
         """Obtain lists of outdated files and directories.
@@ -242,6 +272,19 @@ class LocalSource(SourceHandler):
         Call method :meth:`check_if_outdated` before updating to populate the
         lists of files and directories to copy.
         """
+        # Remove stale paths before copying replacements.
+        for directory in sorted(self._deleted_directories, reverse=True):
+            dest_path = os.path.join(self.part_src_dir, directory)  # noqa: PTH118
+            if os.path.islink(dest_path):  # noqa: PTH114
+                os.remove(dest_path)  # noqa: PTH107
+            elif os.path.isdir(dest_path):  # noqa: PTH112
+                shutil.rmtree(dest_path)
+
+        for file_path in self._deleted_files:
+            dest_path = os.path.join(self.part_src_dir, file_path)  # noqa: PTH118
+            if os.path.lexists(dest_path):
+                os.remove(dest_path)  # noqa: PTH107
+
         # First, copy the directories
         for directory in self._updated_directories:
             file_utils.link_or_copy_tree(
@@ -258,29 +301,15 @@ class LocalSource(SourceHandler):
                 Path(self.part_src_dir, file_path),
             )
 
-        # Remove deleted directories (sort in reverse to remove deepest paths first)
-        for directory in sorted(self._deleted_directories, reverse=True):
-            dest_path = os.path.join(self.part_src_dir, directory)  # noqa: PTH118
-            if os.path.islink(dest_path):  # noqa: PTH114
-                os.remove(dest_path)  # noqa: PTH107
-            elif os.path.isdir(dest_path):  # noqa: PTH112
-                shutil.rmtree(dest_path)
-
-        # Remove deleted files
-        for file_path in self._deleted_files:
-            dest_path = os.path.join(self.part_src_dir, file_path)  # noqa: PTH118
-            if os.path.lexists(dest_path):
-                os.remove(dest_path)  # noqa: PTH107
-
         # Refresh the manifest only if one already exists (i.e. pull() was
         # previously called for this source→destination pair).  Skipping this
         # when no manifest is present avoids inadvertently creating a manifest
         # for uses of LocalSource where pull() is never called (e.g. the
         # src→build update in _update_build), which would cause build artifacts
         # to be misidentified as deleted source files on the next check.
-        if (Path(self.part_src_dir) / _SOURCE_MANIFEST_FILENAME).exists():
+        if self._manifest_path.exists():
             _write_source_manifest(
-                self.part_src_dir,
+                self._manifest_path,
                 _collect_source_entries(self.source_abspath, self._ignore),
             )
 
@@ -288,6 +317,8 @@ class LocalSource(SourceHandler):
 def _collect_source_entries(
     source: Path,
     ignore_fn: Callable[..., list[str]],
+    *,
+    also_ignore: list[str] | None = None,
 ) -> set[str]:
     """Walk *source* and return relative paths of all entries (with ignore).
 
@@ -298,7 +329,9 @@ def _collect_source_entries(
     """
     entries: set[str] = set()
     for root, directories, file_names in os.walk(source, topdown=True):
-        ignored = set(ignore_fn(root, directories + file_names))
+        ignored = set(
+            ignore_fn(root, directories + file_names, also_ignore=also_ignore)
+        )
         if ignored:
             directories[:] = [d for d in directories if d not in ignored]
 
@@ -316,22 +349,21 @@ def _collect_source_entries(
     return entries
 
 
-def _read_source_manifest(part_src_dir: Path) -> set[str] | None:
+def _read_source_manifest(manifest_path: Path) -> set[str] | None:
     """Return the set of source entries recorded at the last pull, or None.
 
     Returns ``None`` when no manifest exists (e.g. after a clean or before
     the first pull with manifest support).
     """
-    manifest_path = Path(part_src_dir) / _SOURCE_MANIFEST_FILENAME
     if not manifest_path.is_file():
         return None
     content = manifest_path.read_text().strip()
     return set(content.splitlines()) if content else set()
 
 
-def _write_source_manifest(part_src_dir: Path, entries: set[str]) -> None:
-    """Write the source entry manifest to *part_src_dir*."""
-    manifest_path = Path(part_src_dir) / _SOURCE_MANIFEST_FILENAME
+def _write_source_manifest(manifest_path: Path, entries: set[str]) -> None:
+    """Write the source entry manifest to the cache."""
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text("\n".join(sorted(entries)) + "\n")
 
 

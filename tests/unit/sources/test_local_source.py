@@ -299,6 +299,25 @@ class TestLocal:
         assert file_symlink.is_symlink()
         assert file_symlink.readlink() == Path("file")
 
+    def test_pull_allows_manifest_named_source_file(self, new_dir, partitions):
+        source = Path("source")
+        destination = Path("destination")
+        source.mkdir()
+        destination.mkdir()
+        (source / ".craft-parts-source-manifest").write_text("source content")
+
+        local = LocalSource(
+            source,
+            destination,
+            cache_dir=new_dir,
+            project_dirs=ProjectDirs(partitions=partitions),
+        )
+        local.pull()
+
+        assert (
+            destination / ".craft-parts-source-manifest"
+        ).read_text() == "source content"
+
     def test_has_source_handler_entry(self):
         assert sources._get_source_handler_class("", source_type="local") is LocalSource
 
@@ -593,6 +612,60 @@ class TestLocalUpdate:
         assert not os.path.isfile(os.path.join(destination, "dir", "file1"))  # noqa: PTH113, PTH118
         # file2 was not removed, it must still be in destination
         assert os.path.isfile(os.path.join(destination, "dir", "file2"))  # noqa: PTH113, PTH118
+
+    def test_ignored_deleted_paths_are_preserved(self, new_dir, partitions):
+        source = Path("source")
+        destination = Path("destination")
+        ignored_dir = source / "ignored"
+        ignored_dir.mkdir(parents=True)
+        destination.mkdir()
+        (ignored_dir / "file").write_text("1")
+        reference = Path("reference")
+        reference.touch()
+
+        local = LocalSource(
+            source,
+            destination,
+            cache_dir=new_dir,
+            project_dirs=ProjectDirs(partitions=partitions),
+        )
+        local.pull()
+        (ignored_dir / "file").unlink()
+        os.utime(source, (reference.stat().st_atime, reference.stat().st_mtime + 1))
+
+        assert local.check_if_outdated(reference, ignore_files=["ignored"]) is False
+        local.update()
+        assert (destination / "ignored" / "file").is_file()
+
+    def test_type_changes_remove_stale_destination_before_copy(
+        self, new_dir, partitions
+    ):
+        source = Path("source")
+        destination = Path("destination")
+        source.mkdir()
+        destination.mkdir()
+        (source / "entry").mkdir()
+        (source / "entry" / "file").write_text("1")
+        reference = Path("reference")
+        reference.touch()
+
+        local = LocalSource(
+            source,
+            destination,
+            cache_dir=new_dir,
+            project_dirs=ProjectDirs(partitions=partitions),
+        )
+        local.pull()
+        shutil.rmtree(source / "entry")
+        (source / "entry").write_text("2")
+        os.utime(
+            source / "entry",
+            (reference.stat().st_atime, reference.stat().st_mtime + 1),
+        )
+
+        assert local.check_if_outdated(reference)
+        local.update()
+        assert (destination / "entry").read_text() == "2"
 
     def test_non_source_files_in_destination_not_deleted(self, new_dir, partitions):
         """Files added to destination by later steps must not be treated as deletions.
