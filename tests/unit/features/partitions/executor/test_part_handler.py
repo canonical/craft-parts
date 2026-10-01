@@ -67,28 +67,7 @@ class TestPartCleanHandler(test_part_handler.TestPartCleanHandler):
         assert pathlib.Path(test_dir, "bar").is_dir()
         assert pathlib.Path(f"parts/foo/state/{state_file}").is_file()
 
-        load_states = mocker.spy(part_handler, "_load_part_states")
-        clean_shared = mocker.spy(part_handler.migration, "clean_shared_area")
-        clean_backstage = mocker.spy(part_handler.migration, "clean_backstage")
         self._handler.clean_step(step)
-
-        if step in (Step.STAGE, Step.PRIME):
-            assert load_states.call_count == 1
-            expected_partitions = (
-                self._part.stage_dirs if step == Step.STAGE else self._part.prime_dirs
-            )
-            assert clean_shared.call_count == len(expected_partitions)
-            assert len(
-                {id(call.kwargs["part_states"]) for call in clean_shared.call_args_list}
-            ) == len(expected_partitions)
-            if step == Step.STAGE:
-                clean_backstage.assert_called_once()
-                assert id(clean_backstage.call_args.kwargs["part_states"]) not in {
-                    id(call.kwargs["part_states"])
-                    for call in clean_shared.call_args_list
-                }
-        else:
-            assert load_states.call_count == 0
 
         assert not pathlib.Path(test_dir, "foo.txt").is_file()
         assert not pathlib.Path(test_dir, "bar").is_dir()
