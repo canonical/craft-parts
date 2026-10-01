@@ -21,7 +21,6 @@ import os
 import shutil
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from copy import deepcopy
 from pathlib import Path
 from typing import Any, cast
 
@@ -1170,13 +1169,18 @@ class PartHandler:
                 Step.STAGE,
                 partition=partition,
                 shared_dir=stage_dir,
-                part_states=deepcopy(part_states),
+                part_states=_copy_part_states_for_cleanup(
+                    part_states, self._part.name, partition=partition
+                ),
             )
 
         migration.clean_backstage(
             part_name=self._part.name,
             shared_dir=self._part.backstage_dir,
-            part_states=cast(dict[str, StageState], deepcopy(part_states)),
+            part_states=cast(
+                dict[str, StageState],
+                _copy_stage_states_for_backstage_cleanup(part_states, self._part.name),
+            ),
         )
 
     def _clean_prime(self) -> None:
@@ -1190,7 +1194,9 @@ class PartHandler:
                 Step.PRIME,
                 partition=partition,
                 shared_dir=prime_dir,
-                part_states=deepcopy(part_states),
+                part_states=_copy_part_states_for_cleanup(
+                    part_states, self._part.name, partition=partition
+                ),
             )
 
     def _clean_shared(
@@ -1620,6 +1626,66 @@ def _load_part_states(step: Step, part_list: list[Part]) -> dict[str, StepState]
         if state:
             part_states[part.name] = state
     return part_states
+
+
+def _copy_part_states_for_cleanup(
+    part_states: dict[str, StepState],
+    part_name: str,
+    *,
+    partition: str | None,
+) -> dict[str, StepState]:
+    """Copy only the state fields that shared-area cleanup mutates."""
+    copied_states = part_states.copy()
+    state = part_states.get(part_name)
+    if state is None:
+        return copied_states
+
+    if partition is None or partition == state.partition:
+        copied_state = state.model_copy(
+            update={
+                "files": state.files.copy(),
+                "directories": state.directories.copy(),
+            }
+        )
+    else:
+        partition_contents = state.partitions_contents.get(partition)
+        if partition_contents is None:
+            return copied_states
+
+        copied_contents = partition_contents.model_copy(
+            update={
+                "files": partition_contents.files.copy(),
+                "directories": partition_contents.directories.copy(),
+            }
+        )
+        copied_partitions = state.partitions_contents.copy()
+        copied_partitions[partition] = copied_contents
+        copied_state = state.model_copy(
+            update={"partitions_contents": copied_partitions}
+        )
+
+    copied_states[part_name] = copied_state
+    return copied_states
+
+
+def _copy_stage_states_for_backstage_cleanup(
+    part_states: dict[str, StepState], part_name: str
+) -> dict[str, StepState]:
+    """Copy only the backstage sets that cleanup mutates."""
+    copied_states = part_states.copy()
+    state = part_states.get(part_name)
+    if state is None:
+        return copied_states
+    if not isinstance(state, StageState):
+        raise TypeError(f"backstage cleanup requires StageState for {part_name!r}")
+
+    copied_states[part_name] = state.model_copy(
+        update={
+            "backstage_files": state.backstage_files.copy(),
+            "backstage_directories": state.backstage_directories.copy(),
+        }
+    )
+    return copied_states
 
 
 def _parts_with_overlay_in_step(step: Step, *, part_list: list[Part]) -> list[Part]:
