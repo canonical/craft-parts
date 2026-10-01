@@ -21,6 +21,7 @@ import os
 import shutil
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, cast
 
@@ -1160,30 +1161,45 @@ class PartHandler:
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
+        part_states = _load_part_states(Step.STAGE, self._part_list)
         for (
             partition,
             stage_dir,
         ) in self._part.stage_dirs.items():  # iterate over partitions
-            self._clean_shared(Step.STAGE, partition=partition, shared_dir=stage_dir)
+            self._clean_shared(
+                Step.STAGE,
+                partition=partition,
+                shared_dir=stage_dir,
+                part_states=deepcopy(part_states),
+            )
 
         migration.clean_backstage(
             part_name=self._part.name,
             shared_dir=self._part.backstage_dir,
-            part_states=cast(
-                dict[str, StageState], _load_part_states(Step.STAGE, self._part_list)
-            ),
+            part_states=cast(dict[str, StageState], deepcopy(part_states)),
         )
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
+        part_states = _load_part_states(Step.PRIME, self._part_list)
         for (
             partition,
             prime_dir,
         ) in self._part.prime_dirs.items():  # iterate over partitions
-            self._clean_shared(Step.PRIME, partition=partition, shared_dir=prime_dir)
+            self._clean_shared(
+                Step.PRIME,
+                partition=partition,
+                shared_dir=prime_dir,
+                part_states=deepcopy(part_states),
+            )
 
     def _clean_shared(
-        self, step: Step, *, partition: str | None, shared_dir: Path
+        self,
+        step: Step,
+        *,
+        partition: str | None,
+        shared_dir: Path,
+        part_states: dict[str, StepState],
     ) -> None:
         """Remove the current part's shared files from the given directory.
 
@@ -1193,7 +1209,6 @@ class PartHandler:
         logger.debug(
             f"clean shared dir: {shared_dir} for step: {step} for partition {partition}"
         )
-        part_states = _load_part_states(step, self._part_list)
         overlay_migration_state = states.load_overlay_migration_state(
             self._part.overlay_dirs[partition], step
         )
