@@ -34,6 +34,11 @@ from .step_state import MigrationState, StepState
 
 logger = logging.getLogger(__name__)
 
+if getattr(yaml, "__with_libyaml__", False):
+    _STATE_YAML_LOADER = yaml.CSafeLoader
+else:
+    _STATE_YAML_LOADER = yaml.SafeLoader
+
 
 def load_step_state(part: Part, step: Step) -> StepState | None:
     """Retrieve the persistent state for the given part and step.
@@ -51,7 +56,10 @@ def load_step_state(part: Part, step: Step) -> StepState | None:
 
     logger.debug("load state file: %s", filename)
     with filename.open() as yaml_file:
-        state_data = yaml.safe_load(yaml_file)
+        state_data = yaml.load(
+            yaml_file,
+            Loader=_STATE_YAML_LOADER,  # noqa: S506 -- only safe loaders are selected
+        )
 
     state_class: type[StepState]
 
@@ -83,7 +91,10 @@ def load_overlay_migration_state(state_dir: Path, step: Step) -> MigrationState 
 
     logger.debug("load overlay migration state file: %s", filename)
     with filename.open() as yaml_file:
-        state_data = yaml.safe_load(yaml_file)
+        state_data = yaml.load(
+            yaml_file,
+            Loader=_STATE_YAML_LOADER,  # noqa: S506 -- only safe loaders are selected
+        )
 
     return MigrationState.unmarshal(state_data)
 

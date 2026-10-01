@@ -112,6 +112,14 @@ class TestStepStates:
         assert isinstance(state, states.StageState)
         assert state.marshal() == state_data
 
+    def test_load_state_rejects_unsafe_yaml_tags(self):
+        state_file = Path("parts/foo/state/stage")
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text("!!python/object/apply:builtins.str ['unsafe']")
+
+        with pytest.raises(yaml.YAMLError):
+            states.load_step_state(Part("foo", {}), Step.STAGE)
+
     def test_load_prime_state(self):
         state_data = {
             "partition": None,
