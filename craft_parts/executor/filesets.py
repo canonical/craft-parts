@@ -128,6 +128,27 @@ class Fileset:
                 )
 
 
+class _ResolvedPathResolver:
+    """Resolve parents relative to one base and reuse shared parent results."""
+
+    def __init__(self, base_directory: Path) -> None:
+        self._base_directory = base_directory
+        self._resolved_base = base_directory.resolve()
+        self._resolved_parents: dict[Path, Path] = {}
+
+    def resolve(self, relative_path: Path) -> Path:
+        parent_relpath, filename = relative_path.parent, relative_path.name
+        if parent_relpath == Path():
+            parent_abspath = self._resolved_base
+        else:
+            parent_abspath = self._resolved_parents.get(parent_relpath)
+            if parent_abspath is None:
+                parent_abspath = (self._base_directory / parent_relpath).resolve()
+                self._resolved_parents[parent_relpath] = parent_abspath
+
+        return Path(parent_abspath, filename).relative_to(self._resolved_base)
+
+
 def migratable_filesets(
     fileset: Fileset,
     srcdir: Path,
@@ -157,17 +178,21 @@ def migratable_filesets(
     # Remove dirs from files.
     files = files - dirs
 
-    # Include (resolved) parent directories for each selected file.
-    for _filename in files:
-        filename = _get_resolved_relative_path(_filename, srcdir)
+    if not files and not dirs:
+        return files, dirs
+
+    path_resolver = _ResolvedPathResolver(srcdir)
+
+    # Resolve files once and use them to collect their parent directories.
+    resolved_files = {path_resolver.resolve(name) for name in files}
+    for filename in resolved_files:
         dirname = filename.parent
         while dirname != Path():
             dirs.add(dirname)
             dirname = dirname.parent
 
-    # Resolve parent paths for dirs and files.
-    resolved_dirs = {_get_resolved_relative_path(dirname, srcdir) for dirname in dirs}
-    resolved_files = {_get_resolved_relative_path(name, srcdir) for name in files}
+    # Resolve the parent paths while preserving the final path component.
+    resolved_dirs = {path_resolver.resolve(dirname) for dirname in dirs}
 
     return resolved_files, resolved_dirs
 
@@ -305,11 +330,7 @@ def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Pa
 
     :return: Resolved path, relative to base_directory.
     """
-    parent_relpath, filename = relative_path.parent, relative_path.name
-    parent_abspath = (base_directory / parent_relpath).resolve()
-
-    filename_abspath = Path(parent_abspath, filename)
-    return filename_abspath.relative_to(base_directory.resolve())
+    return _ResolvedPathResolver(base_directory).resolve(relative_path)
 
 
 def normalize_entry(entry: str, default_partition: str) -> str:
