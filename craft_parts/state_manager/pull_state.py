@@ -68,6 +68,7 @@ class PullState(StepState):
         relevant_properties = [
             "plugin",
             "source",
+            "patches",
             "source-commit",
             "source-depth",
             "source-tag",
