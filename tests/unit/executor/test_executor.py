@@ -19,7 +19,9 @@ from pathlib import Path
 import pytest
 from craft_parts import callbacks
 from craft_parts.actions import Action
-from craft_parts.executor import ExecutionContext, Executor
+from craft_parts.dirs import ProjectDirs
+from craft_parts.executor import ExecutionContext, Executor, collisions
+from craft_parts.executor import executor as executor_module
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -110,6 +112,54 @@ class TestExecutor:
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         e = Executor(project_info=info, part_list=parts)
         assert e._overlay_manager.cache_level == level
+
+    def test_stage_candidate_cache_lifecycle_invalidation(self, mocker, new_dir):
+        project_dirs = ProjectDirs(work_dir=new_dir)
+        parts = [
+            Part(
+                name,
+                {"plugin": "nil"},
+                project_dirs=project_dirs,
+            )
+            for name in ("p1", "p2")
+        ]
+        for part in parts:
+            part.part_install_dir.mkdir(parents=True)
+            (part.part_install_dir / f"{part.name}.txt").write_text(part.name)
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        executor = Executor(project_info=info, part_list=parts)
+        migratable = mocker.spy(collisions.filesets, "migratable_filesets")
+        collision_checks = mocker.spy(executor_module, "check_for_stage_collisions")
+        handler = mocker.Mock()
+
+        def run_action(action, **_kwargs):
+            if action.step == Step.BUILD:
+                (parts[0].part_install_dir / "added.txt").write_text("added")
+
+        handler.run_action.side_effect = run_action
+        mocker.patch.object(executor, "_create_part_handler", return_value=handler)
+
+        executor._run_action(Action("p1", Step.STAGE), stdout=None, stderr=None)
+        executor._run_action(Action("p2", Step.STAGE), stdout=None, stderr=None)
+
+        assert migratable.call_count == 2
+        assert collision_checks.call_count == 2
+
+        executor._run_action(Action("p1", Step.BUILD), stdout=None, stderr=None)
+        executor._run_action(Action("p2", Step.STAGE), stdout=None, stderr=None)
+
+        assert migratable.call_count == 3
+        assert collision_checks.call_count == 3
+        updated = executor._stage_candidate_cache.get_install_candidate(parts[0], None)
+        assert updated is not None
+        assert Path("added.txt") in updated.contents
+
+        executor.clean(Step.BUILD, part_names=["p1"])
+        executor._run_action(Action("p2", Step.STAGE), stdout=None, stderr=None)
+
+        assert migratable.call_count == 5
+        assert collision_checks.call_count == 4
 
 
 class TestPackages:
