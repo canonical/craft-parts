@@ -83,6 +83,7 @@ class Executor:
         self._base_layer_hash = base_layer_hash
         self._handler: dict[str, PartHandler] = {}
         self._stage_candidate_cache = StageCandidateCache()
+        self._has_overlay_parts = any(part.has_overlay for part in self._part_list)
         self._ignore_patterns = ignore_patterns
         self._use_host_sources = use_host_sources
         self._build_environment = build_environment
@@ -257,17 +258,34 @@ class Executor:
             return
 
         if action.step in (Step.PULL, Step.OVERLAY, Step.BUILD):
-            self._stage_candidate_cache.invalidate(part)
+            overlays_changed = action.step == Step.OVERLAY or (
+                action.step == Step.BUILD and self._has_overlay_parts
+            )
+            self._stage_candidate_cache.invalidate(
+                part, overlays_changed=overlays_changed
+            )
 
+        mutating_stage_callbacks = False
         if action.step == Step.STAGE:
+            mutating_stage_callbacks = callbacks.step_callbacks_may_mutate_filesystem(
+                Step.STAGE
+            )
             check_for_stage_collisions(
                 part_list=self._part_list,
                 partitions=self._project_info.partitions,
                 candidate_cache=self._stage_candidate_cache,
+                reuse_validation=True,
             )
 
         handler = self._create_part_handler(part)
-        handler.run_action(action, stdout=stdout, stderr=stderr)
+        try:
+            handler.run_action(action, stdout=stdout, stderr=stderr)
+        finally:
+            if action.step == Step.STAGE and (
+                mutating_stage_callbacks
+                or part.spec.get_scriptlet(Step.STAGE) is not None
+            ):
+                self._stage_candidate_cache.invalidate()
 
     def _create_part_handler(
         self,
