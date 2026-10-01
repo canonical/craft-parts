@@ -149,9 +149,6 @@ endif
 
 # Colcon is not available in apt on jammy or focal.
 ifeq ($(filter $(VERSION_CODENAME),jammy focal),)
-ifeq ($(wildcard /usr/share/doc/colcon/copyright),)
-APT_PACKAGES += colcon
-endif
 ifeq ($(wildcard /usr/share/doc/python3-colcon-core/),)
 APT_PACKAGES += python3-colcon-core
 endif
