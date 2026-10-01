@@ -33,7 +33,7 @@ from craft_parts.parts import Part, sort_parts
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
-from .collisions import check_for_stage_collisions
+from .collisions import StageCandidateCache, check_for_stage_collisions
 from .environment import generate_step_environment
 from .part_handler import PartHandler
 from .step_handler import Stream
@@ -45,10 +45,10 @@ class Executor:
     """Execute lifecycle actions.
 
     The executor takes the part definition and a list of actions to run for
-    a part and step. Action execution is stateless: no information is kept from
-    the execution of previous parts. On-disk state information written after
-    running each action is read by the sequencer before planning a new set of
-    actions.
+    a part and step. On-disk state information written after running each action is
+    read by the sequencer before planning a new set of actions. The executor keeps a
+    transient cache of derived stage-candidate inventories, invalidated when a
+    lifecycle action can change an install tree.
 
     :param part_list: The list of parts to process.
     :param project_info: Information about this project.
@@ -82,6 +82,7 @@ class Executor:
         self._track_stage_packages = track_stage_packages
         self._base_layer_hash = base_layer_hash
         self._handler: dict[str, PartHandler] = {}
+        self._stage_candidate_cache = StageCandidateCache()
         self._ignore_patterns = ignore_patterns
         self._use_host_sources = use_host_sources
         self._build_environment = build_environment
@@ -178,6 +179,7 @@ class Executor:
             specified, all parts will be cleaned and work directories
             will be removed.
         """
+        self._stage_candidate_cache.invalidate()
         selected_parts = parts.part_list_by_name(part_names, self._part_list)
 
         selected_steps = [initial_step, *initial_step.next_steps()]
@@ -254,9 +256,14 @@ class Executor:
                 )
             return
 
+        if action.step in (Step.PULL, Step.OVERLAY, Step.BUILD):
+            self._stage_candidate_cache.invalidate(part)
+
         if action.step == Step.STAGE:
             check_for_stage_collisions(
-                part_list=self._part_list, partitions=self._project_info.partitions
+                part_list=self._part_list,
+                partitions=self._project_info.partitions,
+                candidate_cache=self._stage_candidate_cache,
             )
 
         handler = self._create_part_handler(part)

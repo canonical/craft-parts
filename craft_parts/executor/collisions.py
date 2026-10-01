@@ -30,8 +30,81 @@ from craft_parts.permissions import Permissions, permissions_are_compatible
 from . import filesets
 
 
+@dataclass
+class StageCandidate:
+    """Representation of a set of files and directories that want to be staged."""
+
+    # Name of the part that produced these files and directories
+    part_name: str
+    # The actual files and directories, relative to ``source_dir``
+    contents: set[Path]
+    # The directory that contains ``contents``
+    source_dir: Path
+    # The permissions that apply to ``contents``
+    permissions: list[Permissions]
+    # Whether this set comes from a part's overlay (used for error reporting)
+    is_overlay: bool
+
+
+class StageCandidateCache:
+    """Cache install-tree inventories while always validating every candidate pair.
+
+    The cache is scoped to one executor run. Callers must invalidate a part before
+    lifecycle actions that can change its install tree. Overlay candidates are not
+    cached because their visibility depends on the current layer stack.
+    """
+
+    def __init__(self) -> None:
+        self._install_contents: dict[
+            tuple[str, str | None, tuple[str, ...], Path, str], set[Path]
+        ] = {}
+
+    def get_install_candidate(
+        self, part: Part, partition: str | None
+    ) -> StageCandidate | None:
+        """Return a candidate using cached contents and current part metadata."""
+        stage_files = tuple(part.spec.stage_files)
+        if not stage_files:
+            return None
+
+        source_dir = part.part_install_dirs[partition]
+        key = (
+            part.name,
+            partition,
+            stage_files,
+            source_dir,
+            part.default_partition,
+        )
+        if key not in self._install_contents:
+            candidate = _get_candidate_from_install_dir(part, partition)
+            if candidate is None:
+                return None
+            self._install_contents[key] = candidate.contents
+
+        return StageCandidate(
+            part_name=part.name,
+            contents=self._install_contents[key],
+            source_dir=source_dir,
+            permissions=part.spec.permissions,
+            is_overlay=False,
+        )
+
+    def invalidate(self, part: Part | None = None) -> None:
+        """Invalidate one part's inventory, or all inventories when omitted."""
+        if part is None:
+            self._install_contents.clear()
+            return
+
+        for key in tuple(self._install_contents):
+            if key[0] == part.name:
+                del self._install_contents[key]
+
+
 def check_for_stage_collisions(
-    part_list: list[Part], partitions: list[str] | None
+    part_list: list[Part],
+    partitions: list[str] | None,
+    *,
+    candidate_cache: StageCandidateCache | None = None,
 ) -> None:
     """Verify whether parts have conflicting files to stage.
 
@@ -58,23 +131,7 @@ def check_for_stage_collisions(
         )
 
     for partition in partitions or [None]:
-        _check_for_stage_collisions_per_partition(part_list, partition)
-
-
-@dataclass
-class StageCandidate:
-    """Representation of a set of files and directories that want to be staged."""
-
-    # Name of the part that produced these files and directories
-    part_name: str
-    # The actual files and directories, relative to ``source_dir``
-    contents: set[Path]
-    # The directory that contains ``contents``
-    source_dir: Path
-    # The permissions that apply to ``contents``
-    permissions: list[Permissions]
-    # Whether this set comes from a part's overlay (used for error reporting)
-    is_overlay: bool
+        _check_for_stage_collisions_per_partition(part_list, partition, candidate_cache)
 
 
 def _get_candidate_from_install_dir(
@@ -175,6 +232,7 @@ def _get_candidates_from_overlay(
 def _check_for_stage_collisions_per_partition(
     part_list: list[Part],
     partition: str | None,
+    candidate_cache: StageCandidateCache | None,
 ) -> None:
     """Verify whether parts have conflicting files for a stage directory in a partition.
 
@@ -195,7 +253,11 @@ def _check_for_stage_collisions_per_partition(
     )
 
     for part in part_list:
-        candidate = _get_candidate_from_install_dir(part, partition)
+        candidate = (
+            candidate_cache.get_install_candidate(part, partition)
+            if candidate_cache is not None
+            else _get_candidate_from_install_dir(part, partition)
+        )
         if candidate is None:
             continue
 
