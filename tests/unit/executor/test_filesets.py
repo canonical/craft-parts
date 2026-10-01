@@ -199,3 +199,24 @@ def test_migratable_filesets_resolves_shared_parent_once(tmp_path, mocker):
     assert files == {Path(entry) for entry in entries}
     assert directories == {Path("shared")}
     assert resolve_calls == 2
+
+
+def test_migratable_filesets_expands_included_directory(tmp_path):
+    source = tmp_path / "install"
+    directory = source / "usr/lib/nested"
+    directory.mkdir(parents=True)
+    (directory / "file").write_text("contents")
+    (source / "usr/lib/linked").symlink_to("nested", target_is_directory=True)
+
+    files, directories = filesets.migratable_filesets(
+        Fileset(["usr/lib"]),
+        source,
+        default_partition="default",
+    )
+
+    assert files == {Path("usr/lib/nested/file"), Path("usr/lib/linked")}
+    assert directories == {
+        Path("usr"),
+        Path("usr/lib"),
+        Path("usr/lib/nested"),
+    }

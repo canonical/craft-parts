@@ -292,8 +292,9 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[Path]:
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= {Path(root, d).relative_to(directory) for d in dirs}
-            include_files |= {Path(root, f).relative_to(directory) for f in files}
+            relative_root = Path(root).relative_to(directory)
+            include_files.update(relative_root / name for name in dirs)
+            include_files.update(relative_root / name for name in files)
 
     return include_files
 
