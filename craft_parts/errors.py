@@ -201,7 +201,10 @@ class PartSpecificationError(PartsError):
             loc = error["loc"]
             msg = error["msg"]
 
-            if not loc or not msg:
+            if not msg:
+                continue
+            if not loc:
+                formatted_errors.append(f"- {msg}")
                 continue
 
             field = cls._format_loc(loc)

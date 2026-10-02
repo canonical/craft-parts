@@ -19,6 +19,14 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+Unreleased
+----------
+
+Bug fixes:
+
+- Reject ``overlay-script`` and ``override-overlay`` in parts that organize files
+  to the overlay, with guidance on how to separate these operations.
+
 2.37.1 (2026-09-25)
 -------------------
 
