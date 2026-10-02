@@ -19,6 +19,16 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+X.Y.Z (YYYY-MM-DD)
+------------------
+
+Bug fixes:
+
+- Stage packages are now marked in the order they are declared, making the
+  resolution of alternative dependencies deterministic. For example,
+  ``locales-all`` listed before ``postgresql`` is staged without also
+  staging ``locales``.
+
 2.37.1 (2026-09-25)
 -------------------
 
