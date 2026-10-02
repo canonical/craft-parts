@@ -905,7 +905,10 @@ class Ubuntu(BaseRepository):
 
         with AptCache(stage_cache=stage_cache_dir, stage_cache_arch=arch) as apt_cache:
             # Deduplicate `package_names` elements while preserving order
-            apt_cache.mark_packages(list(dict.fromkeys(package_names)))
+            deduplicated_package_names = list(dict.fromkeys(package_names))
+
+            logger.debug("Marking packages: %s", deduplicated_package_names)
+            apt_cache.mark_packages(deduplicated_package_names)
             apt_cache.unmark_packages(filtered_names)
 
             for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
