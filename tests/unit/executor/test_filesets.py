@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+
 import pytest
 from craft_parts import errors
 from craft_parts.executor import Fileset, filesets
@@ -150,4 +152,71 @@ def test_filesets_excludes_without_relative_paths():
     assert raised.value.message == "path '/abs/exclude' must be relative."
 
 
-# migratable_filesets tested in tests/unit/executor/test_step_handler.py
+def test_migratable_filesets_resolves_symlink_parent_but_not_final_symlink(tmp_path):
+    source = tmp_path / "install"
+    real_directory = source / "real/nested"
+    real_directory.mkdir(parents=True)
+    (real_directory / "file").write_text("contents")
+    (real_directory / "final-link").symlink_to("file")
+    (source / "linked").symlink_to("real", target_is_directory=True)
+
+    files, directories = filesets.migratable_filesets(
+        Fileset(["linked/nested/file", "linked/nested/final-link"]),
+        source,
+        default_partition="default",
+    )
+
+    assert files == {Path("real/nested/file"), Path("real/nested/final-link")}
+    assert directories == {Path("real"), Path("real/nested")}
+    assert (real_directory / "final-link").is_symlink()
+
+
+def test_migratable_filesets_resolves_shared_parent_once(tmp_path, mocker):
+    source = tmp_path / "install"
+    directory = source / "shared"
+    directory.mkdir(parents=True)
+    entries = []
+    for index in range(8):
+        filename = f"file-{index}"
+        (directory / filename).write_text(filename)
+        entries.append(f"shared/{filename}")
+
+    original_resolve = Path.resolve
+    resolve_calls = 0
+
+    def count_resolve(path: Path, *, strict: bool = False) -> Path:
+        nonlocal resolve_calls
+        resolve_calls += 1
+        return original_resolve(path, strict=strict)
+
+    mocker.patch.object(Path, "resolve", count_resolve)
+    files, directories = filesets.migratable_filesets(
+        Fileset(entries),
+        source,
+        default_partition="default",
+    )
+
+    assert files == {Path(entry) for entry in entries}
+    assert directories == {Path("shared")}
+    assert resolve_calls == 2
+
+
+def test_migratable_filesets_expands_included_directory(tmp_path):
+    source = tmp_path / "install"
+    directory = source / "usr/lib/nested"
+    directory.mkdir(parents=True)
+    (directory / "file").write_text("contents")
+    (source / "usr/lib/linked").symlink_to("nested", target_is_directory=True)
+
+    files, directories = filesets.migratable_filesets(
+        Fileset(["usr/lib"]),
+        source,
+        default_partition="default",
+    )
+
+    assert files == {Path("usr/lib/nested/file"), Path("usr/lib/linked")}
+    assert directories == {
+        Path("usr"),
+        Path("usr/lib"),
+        Path("usr/lib/nested"),
+    }

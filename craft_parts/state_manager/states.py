@@ -17,8 +17,11 @@
 """Helpers and definitions for lifecycle states."""
 
 import contextlib
+import copy
+import functools
 import logging
 from pathlib import Path
+from typing import Any, TypeAlias
 
 import yaml
 
@@ -33,6 +36,27 @@ from .stage_state import StageState
 from .step_state import MigrationState, StepState
 
 logger = logging.getLogger(__name__)
+
+if getattr(yaml, "__with_libyaml__", False):
+    _STATE_YAML_LOADER = yaml.CSafeLoader
+else:
+    _STATE_YAML_LOADER = yaml.SafeLoader
+
+_STATE_DATA_CACHE_SIZE = 64
+_StateData: TypeAlias = dict[str, Any]
+
+
+@functools.lru_cache(maxsize=_STATE_DATA_CACHE_SIZE)
+def _load_cached_step_state_data(
+    cache_key: tuple[Path, int, int, int, int, int],
+) -> _StateData:
+    """Load reusable YAML data for an unchanged stage or prime state file."""
+    filename = cache_key[0]
+    with filename.open() as yaml_file:
+        return yaml.load(
+            yaml_file,
+            Loader=_STATE_YAML_LOADER,  # noqa: S506 -- only safe loaders are selected
+        )
 
 
 def load_step_state(part: Part, step: Step) -> StepState | None:
@@ -50,8 +74,25 @@ def load_step_state(part: Part, step: Step) -> StepState | None:
         return None
 
     logger.debug("load state file: %s", filename)
-    with filename.open() as yaml_file:
-        state_data = yaml.safe_load(yaml_file)
+    if step in (Step.STAGE, Step.PRIME):
+        file_stat = filename.stat()
+        # Cache keyed on identity/size/mtime/ctime so a cache hit never returns
+        # stale data for a file that changed since it was last loaded.
+        cache_key = (
+            filename.absolute(),
+            file_stat.st_dev,
+            file_stat.st_ino,
+            file_stat.st_size,
+            file_stat.st_mtime_ns,
+            file_stat.st_ctime_ns,
+        )
+        state_data = copy.deepcopy(_load_cached_step_state_data(cache_key))
+    else:
+        with filename.open() as yaml_file:
+            state_data = yaml.load(
+                yaml_file,
+                Loader=_STATE_YAML_LOADER,  # noqa: S506 -- only safe loaders are selected
+            )
 
     state_class: type[StepState]
 
@@ -83,7 +124,10 @@ def load_overlay_migration_state(state_dir: Path, step: Step) -> MigrationState 
 
     logger.debug("load overlay migration state file: %s", filename)
     with filename.open() as yaml_file:
-        state_data = yaml.safe_load(yaml_file)
+        state_data = yaml.load(
+            yaml_file,
+            Loader=_STATE_YAML_LOADER,  # noqa: S506 -- only safe loaders are selected
+        )
 
     return MigrationState.unmarshal(state_data)
 

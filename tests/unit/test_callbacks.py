@@ -228,6 +228,24 @@ class TestCallbackRegistration:
             "callback function '_callback_1' is already registered."
         )
 
+    def test_step_callbacks_report_filesystem_mutations(self):
+        assert not callbacks.step_callbacks_may_mutate_filesystem(Step.STAGE)
+
+        callbacks.register_pre_step(_callback_1, step_list=[Step.STAGE])
+        assert callbacks.step_callbacks_may_mutate_filesystem(Step.STAGE)
+        assert not callbacks.step_callbacks_may_mutate_filesystem(Step.BUILD)
+
+        callbacks.unregister_all()
+        callbacks.register_post_step(
+            _callback_1,
+            step_list=[Step.STAGE],
+            may_mutate_filesystem=False,
+        )
+        assert not callbacks.step_callbacks_may_mutate_filesystem(Step.STAGE)
+
+        callbacks.register_post_step(_callback_2, step_list=[])
+        assert callbacks.step_callbacks_may_mutate_filesystem(Step.STAGE)
+
 
 class TestCallbackExecution:
     """Test different scenarios of callback function execution."""

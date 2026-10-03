@@ -1160,30 +1160,52 @@ class PartHandler:
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
+        part_states = _load_part_states(Step.STAGE, self._part_list)
         for (
             partition,
             stage_dir,
         ) in self._part.stage_dirs.items():  # iterate over partitions
-            self._clean_shared(Step.STAGE, partition=partition, shared_dir=stage_dir)
+            self._clean_shared(
+                Step.STAGE,
+                partition=partition,
+                shared_dir=stage_dir,
+                part_states=_copy_part_states_for_cleanup(
+                    part_states, self._part.name, partition=partition
+                ),
+            )
 
         migration.clean_backstage(
             part_name=self._part.name,
             shared_dir=self._part.backstage_dir,
             part_states=cast(
-                dict[str, StageState], _load_part_states(Step.STAGE, self._part_list)
+                dict[str, StageState],
+                _copy_stage_states_for_backstage_cleanup(part_states, self._part.name),
             ),
         )
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
+        part_states = _load_part_states(Step.PRIME, self._part_list)
         for (
             partition,
             prime_dir,
         ) in self._part.prime_dirs.items():  # iterate over partitions
-            self._clean_shared(Step.PRIME, partition=partition, shared_dir=prime_dir)
+            self._clean_shared(
+                Step.PRIME,
+                partition=partition,
+                shared_dir=prime_dir,
+                part_states=_copy_part_states_for_cleanup(
+                    part_states, self._part.name, partition=partition
+                ),
+            )
 
     def _clean_shared(
-        self, step: Step, *, partition: str | None, shared_dir: Path
+        self,
+        step: Step,
+        *,
+        partition: str | None,
+        shared_dir: Path,
+        part_states: dict[str, StepState],
     ) -> None:
         """Remove the current part's shared files from the given directory.
 
@@ -1193,7 +1215,6 @@ class PartHandler:
         logger.debug(
             f"clean shared dir: {shared_dir} for step: {step} for partition {partition}"
         )
-        part_states = _load_part_states(step, self._part_list)
         overlay_migration_state = states.load_overlay_migration_state(
             self._part.overlay_dirs[partition], step
         )
@@ -1605,6 +1626,66 @@ def _load_part_states(step: Step, part_list: list[Part]) -> dict[str, StepState]
         if state:
             part_states[part.name] = state
     return part_states
+
+
+def _copy_part_states_for_cleanup(
+    part_states: dict[str, StepState],
+    part_name: str,
+    *,
+    partition: str | None,
+) -> dict[str, StepState]:
+    """Copy only the state fields that shared-area cleanup mutates."""
+    copied_states = part_states.copy()
+    state = part_states.get(part_name)
+    if state is None:
+        return copied_states
+
+    if partition is None or partition == state.partition:
+        copied_state = state.model_copy(
+            update={
+                "files": state.files.copy(),
+                "directories": state.directories.copy(),
+            }
+        )
+    else:
+        partition_contents = state.partitions_contents.get(partition)
+        if partition_contents is None:
+            return copied_states
+
+        copied_contents = partition_contents.model_copy(
+            update={
+                "files": partition_contents.files.copy(),
+                "directories": partition_contents.directories.copy(),
+            }
+        )
+        copied_partitions = state.partitions_contents.copy()
+        copied_partitions[partition] = copied_contents
+        copied_state = state.model_copy(
+            update={"partitions_contents": copied_partitions}
+        )
+
+    copied_states[part_name] = copied_state
+    return copied_states
+
+
+def _copy_stage_states_for_backstage_cleanup(
+    part_states: dict[str, StepState], part_name: str
+) -> dict[str, StepState]:
+    """Copy only the backstage sets that cleanup mutates."""
+    copied_states = part_states.copy()
+    state = part_states.get(part_name)
+    if state is None:
+        return copied_states
+    if not isinstance(state, StageState):
+        raise TypeError(f"backstage cleanup requires StageState for {part_name!r}")
+
+    copied_states[part_name] = state.model_copy(
+        update={
+            "backstage_files": state.backstage_files.copy(),
+            "backstage_directories": state.backstage_directories.copy(),
+        }
+    )
+    return copied_states
 
 
 def _parts_with_overlay_in_step(step: Step, *, part_list: list[Part]) -> list[Part]:

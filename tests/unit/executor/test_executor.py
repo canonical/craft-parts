@@ -17,9 +17,12 @@ import shutil
 from pathlib import Path
 
 import pytest
-from craft_parts import callbacks
+from craft_parts import callbacks, errors
 from craft_parts.actions import Action
-from craft_parts.executor import ExecutionContext, Executor
+from craft_parts.dirs import ProjectDirs
+from craft_parts.executor import ExecutionContext, Executor, collisions
+from craft_parts.executor import executor as executor_module
+from craft_parts.features import Features
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
 from craft_parts.steps import Step
@@ -110,6 +113,193 @@ class TestExecutor:
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         e = Executor(project_info=info, part_list=parts)
         assert e._overlay_manager.cache_level == level
+
+    def test_stage_candidate_cache_lifecycle_invalidation(self, mocker, new_dir):
+        project_dirs = ProjectDirs(work_dir=new_dir)
+        parts = [
+            Part(
+                name,
+                {"plugin": "nil"},
+                project_dirs=project_dirs,
+            )
+            for name in ("p1", "p2")
+        ]
+        for part in parts:
+            part.part_install_dir.mkdir(parents=True)
+            (part.part_install_dir / f"{part.name}.txt").write_text(part.name)
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        executor = Executor(project_info=info, part_list=parts)
+        migratable = mocker.spy(collisions.filesets, "migratable_filesets")
+        collision_checks = mocker.spy(executor_module, "check_for_stage_collisions")
+        pair_checks = mocker.spy(collisions, "_check_candidate_pairs")
+        handler = mocker.Mock()
+
+        def run_action(action, **_kwargs):
+            if action.step == Step.BUILD:
+                (parts[0].part_install_dir / "added.txt").write_text("added")
+
+        handler.run_action.side_effect = run_action
+        mocker.patch.object(executor, "_create_part_handler", return_value=handler)
+
+        executor._run_action(Action("p1", Step.STAGE), stdout=None, stderr=None)
+        executor._run_action(Action("p2", Step.STAGE), stdout=None, stderr=None)
+
+        assert migratable.call_count == 2
+        assert collision_checks.call_count == 2
+        assert pair_checks.call_count == 1
+
+        executor._run_action(Action("p1", Step.BUILD), stdout=None, stderr=None)
+        executor._run_action(Action("p2", Step.STAGE), stdout=None, stderr=None)
+
+        assert migratable.call_count == 3
+        assert collision_checks.call_count == 3
+        assert pair_checks.call_count == 2
+        assert pair_checks.call_args_list[-1].args[1] == {"p1"}
+        updated = executor._stage_candidate_cache.get_install_candidate(parts[0], None)
+        assert updated is not None
+        assert Path("added.txt") in updated.contents
+
+        executor.clean(Step.BUILD, part_names=["p1"])
+        executor._run_action(Action("p2", Step.STAGE), stdout=None, stderr=None)
+
+        assert migratable.call_count == 5
+        assert collision_checks.call_count == 4
+        assert pair_checks.call_count == 3
+        assert pair_checks.call_args_list[-1].args[1] is None
+
+    def test_collision_cache_detects_conflict_after_build(self, mocker, new_dir):
+        project_dirs = ProjectDirs(work_dir=new_dir)
+        parts = [
+            Part(name, {"plugin": "nil"}, project_dirs=project_dirs)
+            for name in ("p1", "p2")
+        ]
+        for part in parts:
+            part.part_install_dir.mkdir(parents=True)
+            (part.part_install_dir / f"{part.name}.txt").write_text(part.name)
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        executor = Executor(project_info=info, part_list=parts)
+        handler = mocker.Mock()
+        handler.run_action.side_effect = lambda action, **_kwargs: (
+            (parts[0].part_install_dir / "p2.txt").write_text("different")
+            if action.step == Step.BUILD
+            else None
+        )
+        mocker.patch.object(executor, "_create_part_handler", return_value=handler)
+
+        executor._run_action(Action("p1", Step.STAGE), stdout=None, stderr=None)
+        executor._run_action(Action("p1", Step.BUILD), stdout=None, stderr=None)
+        with pytest.raises(errors.PartFilesConflict) as raised:
+            executor._run_action(Action("p2", Step.STAGE), stdout=None, stderr=None)
+
+        assert raised.value.part_name == "p2"
+        assert raised.value.other_part_name == "p1"
+        assert raised.value.conflicting_files == [Path("p2.txt")]
+
+    def test_overlay_action_forces_full_collision_check(self, mocker, new_dir):
+        project_dirs = ProjectDirs(work_dir=new_dir)
+        parts = [
+            Part(name, {"plugin": "nil"}, project_dirs=project_dirs)
+            for name in ("p1", "p2")
+        ]
+        for part in parts:
+            part.part_install_dir.mkdir(parents=True)
+            (part.part_install_dir / f"{part.name}.txt").write_text(part.name)
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        executor = Executor(project_info=info, part_list=parts)
+        pair_checks = mocker.spy(collisions, "_check_candidate_pairs")
+        handler = mocker.Mock()
+        mocker.patch.object(executor, "_create_part_handler", return_value=handler)
+
+        executor._run_action(Action("p1", Step.STAGE), stdout=None, stderr=None)
+        executor._run_action(Action("p1", Step.OVERLAY), stdout=None, stderr=None)
+        executor._run_action(Action("p2", Step.STAGE), stdout=None, stderr=None)
+
+        assert pair_checks.call_count == 2
+        assert pair_checks.call_args_list[-1].args[1] is None
+
+    def test_build_forces_full_check_when_overlay_parts_exist(self, mocker, new_dir):
+        # Managed directly (rather than via the `enable_overlay_feature` fixture)
+        # so this test works whether or not the overlay feature is already
+        # enabled by an enclosing test suite.
+        overlay_already_enabled = Features().enable_overlay
+        if not overlay_already_enabled:
+            Features.reset()
+            Features(enable_overlay=True)
+        try:
+            project_dirs = ProjectDirs(work_dir=new_dir)
+            parts = [
+                Part(
+                    "p1",
+                    {"plugin": "nil", "overlay": ["-foo"]},
+                    project_dirs=project_dirs,
+                ),
+                Part("p2", {"plugin": "nil"}, project_dirs=project_dirs),
+            ]
+            for part in parts:
+                part.part_install_dir.mkdir(parents=True)
+                (part.part_install_dir / f"{part.name}.txt").write_text(part.name)
+
+            info = ProjectInfo(application_name="test", cache_dir=new_dir)
+            executor = Executor(project_info=info, part_list=parts)
+            pair_checks = mocker.spy(collisions, "_check_candidate_pairs")
+            handler = mocker.Mock()
+            mocker.patch.object(executor, "_create_part_handler", return_value=handler)
+
+            executor._run_action(Action("p1", Step.STAGE), stdout=None, stderr=None)
+            executor._run_action(Action("p1", Step.BUILD), stdout=None, stderr=None)
+            executor._run_action(Action("p2", Step.STAGE), stdout=None, stderr=None)
+
+            assert pair_checks.call_count == 2
+            assert pair_checks.call_args_list[-1].args[1] is None
+        finally:
+            if not overlay_already_enabled:
+                Features.reset()
+
+    def test_mutating_stage_callback_disables_collision_reuse(self, mocker, new_dir):
+        part = Part("p1", {"plugin": "nil"}, project_dirs=ProjectDirs(work_dir=new_dir))
+        part.part_install_dir.mkdir(parents=True)
+        (part.part_install_dir / "file.txt").write_text("contents")
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        executor = Executor(project_info=info, part_list=[part])
+        pair_checks = mocker.spy(collisions, "_check_candidate_pairs")
+        mocker.patch.object(
+            callbacks,
+            "step_callbacks_may_mutate_filesystem",
+            return_value=True,
+        )
+        handler = mocker.Mock()
+        mocker.patch.object(executor, "_create_part_handler", return_value=handler)
+
+        executor._run_action(Action("p1", Step.STAGE), stdout=None, stderr=None)
+        executor._run_action(Action("p1", Step.STAGE), stdout=None, stderr=None)
+
+        assert pair_checks.call_count == 2
+
+    def test_stage_scriptlet_invalidates_collision_cache(self, mocker, new_dir):
+        part = Part(
+            "p1",
+            {"plugin": "nil", "override-stage": "echo stage"},
+            project_dirs=ProjectDirs(work_dir=new_dir),
+        )
+        part.part_install_dir.mkdir(parents=True)
+        (part.part_install_dir / "file.txt").write_text("contents")
+
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        executor = Executor(project_info=info, part_list=[part])
+        migratable = mocker.spy(collisions.filesets, "migratable_filesets")
+        pair_checks = mocker.spy(collisions, "_check_candidate_pairs")
+        handler = mocker.Mock()
+        mocker.patch.object(executor, "_create_part_handler", return_value=handler)
+
+        executor._run_action(Action("p1", Step.STAGE), stdout=None, stderr=None)
+        executor._run_action(Action("p1", Step.STAGE), stdout=None, stderr=None)
+
+        assert migratable.call_count == 2
+        assert pair_checks.call_count == 2
 
 
 class TestPackages:

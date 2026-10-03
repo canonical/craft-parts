@@ -112,6 +112,56 @@ class TestStepStates:
         assert isinstance(state, states.StageState)
         assert state.marshal() == state_data
 
+    def test_load_state_rejects_unsafe_yaml_tags(self):
+        state_file = Path("parts/foo/state/stage")
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text("!!python/object/apply:builtins.str ['unsafe']")
+
+        with pytest.raises(yaml.YAMLError):
+            states.load_step_state(Part("foo", {}), Step.STAGE)
+
+    def test_cached_stage_state_loads_are_independent(self):
+        part = Part("foo", {})
+        state_file = Path("parts/foo/state/stage")
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(
+            yaml.safe_dump(
+                {
+                    "files": {"original"},
+                    "part-properties": {"nested": {"values": ["original"]}},
+                }
+            )
+        )
+
+        first = states.load_step_state(part, Step.STAGE)
+        second = states.load_step_state(part, Step.STAGE)
+
+        assert isinstance(first, states.StageState)
+        assert isinstance(second, states.StageState)
+        first.files.add(Path("mutated"))
+        first.part_properties["nested"]["values"].append("mutated")
+
+        assert Path("mutated") not in second.files
+        assert second.part_properties["nested"]["values"] == ["original"]
+
+    def test_cached_stage_state_load_refreshes_changed_file(self):
+        part = Part("foo", {})
+        state_file = Path("parts/foo/state/stage")
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(yaml.safe_dump({"files": {"before"}}))
+
+        initial = states.load_step_state(part, Step.STAGE)
+        assert isinstance(initial, states.StageState)
+        assert initial.files == {Path("before")}
+
+        state_file.write_text(
+            yaml.safe_dump({"files": {"after", "with-a-different-size"}})
+        )
+        updated = states.load_step_state(part, Step.STAGE)
+
+        assert isinstance(updated, states.StageState)
+        assert updated.files == {Path("after"), Path("with-a-different-size")}
+
     def test_load_prime_state(self):
         state_data = {
             "partition": None,
