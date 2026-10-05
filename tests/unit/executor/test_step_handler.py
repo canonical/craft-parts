@@ -674,6 +674,7 @@ class TestBuildSlicesScriptlet:
             )
         assert raised.value.stderr is not None
         assert b"__CRAFTCTL_DEFAULT_FAILED__" not in raised.value.stderr
+        assert b"+ echo " not in raised.value.stderr
         assert not (self._part.part_build_subdir / "should-not-run.txt").exists()
 
     def test_craftctl_default_no_build_commands(self, new_dir):

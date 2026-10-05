@@ -525,7 +525,7 @@ class StepHandler:
             "craftctl() {\n"
             '    if [ "$#" -eq 1 ] && [ "$1" = "default" ]; then\n'
             '        if ! bash -euo pipefail -c "__craftctl_default"; then\n'
-            f'            echo "{default_failed_marker}" >&2\n'
+            f'            (set +x; echo "{default_failed_marker}" >&2)\n'
             "            return 1\n"
             "        fi\n"
             "    else\n"
