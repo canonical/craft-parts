@@ -1,6 +1,5 @@
-.. Craft Parts documentation main file
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. meta::
+    :description: Craft Parts is a Python package that supports a family of tools creating standalone software packages for deployment on Linux-based systems.
 
 Craft Parts
 ===========
@@ -20,16 +19,6 @@ would otherwise be duplicated in separate tools.
 Craft Parts is useful for implementers of packaging tools that share a
 similar view of how data should be processed and prepared for deployment.
 
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   tutorials/index
-   how-to/index
-   reference/index
-   explanation/index
-
-
 .. list-table::
 
     * - | :ref:`Tutorial <tutorials>`
@@ -41,6 +30,7 @@ similar view of how data should be processed and prepared for deployment.
     * - | :ref:`Explanation <explanation>`
         | **Discussion and clarification** of key topics
 
+
 Project and community
 ---------------------
 
@@ -48,6 +38,14 @@ Craft Parts is a member of the Canonical family. It's an open source project
 that warmly welcomes community projects, contributions, suggestions, fixes
 and constructive feedback.
 
-* `Ubuntu Code of Conduct <https://ubuntu.com/community/docs/ethos/code-of-conduct>`_
-* `Canonical Contributor License Agreement
-  <https://canonical.com/legal/contributors>`_
+- `Ubuntu Code of Conduct <https://ubuntu.com/community/docs/ethos/code-of-conduct>`__
+- `Canonical Contributor License Agreement <https://canonical.com/legal/contributors>`__
+
+
+.. toctree::
+    :hidden:
+
+    tutorials/index
+    how-to/index
+    reference/index
+    explanation/index
