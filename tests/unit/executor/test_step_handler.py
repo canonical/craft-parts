@@ -538,3 +538,142 @@ class TestOverlayScriptlet:
         )
         # Should succeed without error (no-op function body runs `:`)
         sh.run_builtin()
+
+
+class BuildSlicesPlugin(plugins.Plugin):
+    """A test plugin whose build commands change shell state."""
+
+    properties_class = plugins.PluginProperties
+
+    def get_build_snaps(self) -> set[str]:
+        return set()
+
+    def get_build_packages(self) -> set[str]:
+        return set()
+
+    def get_build_environment(self) -> dict[str, str]:
+        return {"PLUGIN_VAR": "plugin-value"}
+
+    def get_build_commands(self) -> list[str]:
+        return [
+            'echo "$PLUGIN_VAR" > plugin-proof.txt',
+            "pwd > plugin-cwd.txt",
+            "export LEAKED=yes",
+            "cd /",
+        ]
+
+
+class TestBuildSlicesScriptlet:
+    """Test the craftctl shim injection for override-build with build-slices."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, new_dir, enable_build_slices):
+        p_info = ProjectInfo(
+            project_dirs=ProjectDirs(work_dir=new_dir),
+            application_name="test",
+            cache_dir=new_dir,
+        )
+        self._dirs = p_info.dirs
+        self._part = Part(
+            "mypart",
+            {
+                "plugin": "nil",
+                "source": ".",
+                "source-subdir": "sub",
+                "build-slices": ["base-files_base"],
+            },
+            project_dirs=self._dirs,
+        )
+        self._part_info = PartInfo(project_info=p_info, part=self._part)
+        self._part.part_run_dir.mkdir(parents=True, exist_ok=True)
+        self._part.part_build_subdir.mkdir(parents=True, exist_ok=True)
+
+    def _handler(self, new_dir, plugin_class=BuildSlicesPlugin) -> StepHandler:
+        return _step_handler_for_step(
+            Step.BUILD,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=plugin_class,
+        )
+
+    def test_craftctl_default_runs_build_commands(self, new_dir, mocker):
+        spy = mocker.spy(StepHandler, "_ctl_server_selector")
+        sh = self._handler(new_dir)
+        build_dir = self._part.part_build_dir
+
+        sh.run_scriptlet(
+            "craftctl default\n"
+            'echo "${LEAKED:-no}" > after-leak.txt\n'
+            "pwd > after-cwd.txt\n"
+            'echo "$CRAFT_PART_NAME" > after-env.txt',
+            scriptlet_name="override-build",
+            step=Step.BUILD,
+            work_dir=build_dir,
+        )
+
+        subdir = self._part.part_build_subdir
+        assert (subdir / "plugin-proof.txt").read_text() == "plugin-value\n"
+        assert (subdir / "plugin-cwd.txt").read_text() == f"{subdir}\n"
+        # plugin shell state does not leak into the scriptlet
+        assert (build_dir / "after-leak.txt").read_text() == "no\n"
+        assert (build_dir / "after-cwd.txt").read_text() == f"{build_dir}\n"
+        assert (build_dir / "after-env.txt").read_text() == "mypart\n"
+        spy.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "cmd", ["craftctl set version=1.0", "craftctl get version"]
+    )
+    def test_craftctl_unsupported_command(self, new_dir, cmd):
+        sh = self._handler(new_dir)
+        with pytest.raises(errors.ScriptletRunError) as raised:
+            sh.run_scriptlet(
+                cmd,
+                scriptlet_name="override-build",
+                step=Step.BUILD,
+                work_dir=self._part.part_build_dir,
+            )
+        assert raised.value.stderr is not None
+        assert b"cannot be used in override-build" in raised.value.stderr
+
+    def test_craftctl_default_failure(self, new_dir):
+        class FailingPlugin(BuildSlicesPlugin):
+            def get_build_commands(self) -> list[str]:
+                return ["false"]
+
+        sh = self._handler(new_dir, plugin_class=FailingPlugin)
+        with pytest.raises(errors.PluginBuildError) as raised:
+            sh.run_scriptlet(
+                "craftctl default",
+                scriptlet_name="override-build",
+                step=Step.BUILD,
+                work_dir=self._part.part_build_dir,
+            )
+        assert raised.value.stderr is not None
+        assert b"__CRAFTCTL_DEFAULT_FAILED__" not in raised.value.stderr
+
+    def test_craftctl_default_no_build_commands(self, new_dir):
+        class EmptyPlugin(BuildSlicesPlugin):
+            def get_build_commands(self) -> list[str]:
+                return []
+
+        sh = self._handler(new_dir, plugin_class=EmptyPlugin)
+        sh.run_scriptlet(
+            "craftctl default\ntouch done.txt",
+            scriptlet_name="override-build",
+            step=Step.BUILD,
+            work_dir=self._part.part_build_dir,
+        )
+        assert (self._part.part_build_dir / "done.txt").exists()
+
+    def test_non_build_step_uses_ctl_socket(self, new_dir, mocker):
+        spy = mocker.spy(StepHandler, "_ctl_server_selector")
+        sh = self._handler(new_dir)
+        sh.run_scriptlet(
+            "true",
+            scriptlet_name="override-stage",
+            step=Step.STAGE,
+            work_dir=new_dir,
+        )
+        spy.assert_called_once()
