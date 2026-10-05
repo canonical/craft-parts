@@ -486,9 +486,8 @@ class StepHandler:
         scriptlet_name: str,
         environment: str | None = None,
         default_cwd: Path | None = None,
-        default_error_factory: Callable[
-            [bytes | None], errors.UserExecutionError
-        ] | None = None,
+        default_error_factory: Callable[[bytes | None], errors.UserExecutionError]
+        | None = None,
     ) -> None:
         """Execute a scriptlet with an injected ``craftctl`` bash function.
 
@@ -510,7 +509,9 @@ class StepHandler:
             # A subshell body keeps plugin cd/export/set from leaking into the
             # scriptlet, matching the separate-script built-in build behavior.
             body = [f"cd {shlex.quote(str(default_cwd))}", *default_commands]
-            indented_commands = "    (\n" + "\n".join(f"        {cmd}" for cmd in body) + "\n    )"
+            indented_commands = (
+                "    (\n" + "\n".join(f"        {cmd}" for cmd in body) + "\n    )"
+            )
         else:
             body = list(default_commands)
             indented_commands = "\n".join(f"    {cmd}" for cmd in body) or "    :"
