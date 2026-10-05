@@ -134,20 +134,24 @@ class _ResolvedPathResolver:
     def __init__(self, base_directory: Path) -> None:
         self._base_directory = base_directory
         self._resolved_base = base_directory.resolve()
-        self._resolved_parents: dict[Path, Path] = {}
+        self._resolved_parents: dict[tuple[str, ...], Path] = {}
 
     def resolve(self, relative_path: Path) -> Path:
-        parent_relpath, filename = relative_path.parent, relative_path.name
-        if parent_relpath == Path():
+        path_parts = relative_path.parts
+        if not path_parts:
+            return Path()
+
+        parent_parts = path_parts[:-1]
+        if not parent_parts:
             resolved_parent = Path()
         else:
-            resolved_parent = self._resolved_parents.get(parent_relpath)
+            resolved_parent = self._resolved_parents.get(parent_parts)
             if resolved_parent is None:
-                parent_abspath = (self._base_directory / parent_relpath).resolve()
+                parent_abspath = self._base_directory.joinpath(*parent_parts).resolve()
                 resolved_parent = parent_abspath.relative_to(self._resolved_base)
-                self._resolved_parents[parent_relpath] = resolved_parent
+                self._resolved_parents[parent_parts] = resolved_parent
 
-        return Path(resolved_parent, filename)
+        return Path(resolved_parent, path_parts[-1])
 
 
 def migratable_filesets(
