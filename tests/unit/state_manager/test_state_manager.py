@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import dataclasses
+import os
 from pathlib import Path
 
 import pytest
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
+from craft_parts.sources.local_source import LocalSource
 from craft_parts.state_manager import StateManager, state_manager, states
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -412,7 +414,7 @@ class TestStepOutdated:
         for step in list(Step):
             assert sm.check_if_outdated(p1, step) is None
 
-    def test_source_outdated(self, new_dir):
+    def test_source_outdated(self, new_dir, monkeypatch):
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {"source": "subdir"})  # source is local
 
@@ -423,6 +425,15 @@ class TestStepOutdated:
         Path("subdir").mkdir()
         os_utils.TimedWriter.write_text(Path("subdir/foo"), "content")
 
+        source_checks = 0
+        original_check = LocalSource.check_if_outdated
+
+        def count_source_checks(self, target, *, ignore_files=None):
+            nonlocal source_checks
+            source_checks += 1
+            return original_check(self, target, ignore_files=ignore_files)
+
+        monkeypatch.setattr(LocalSource, "check_if_outdated", count_source_checks)
         sm = StateManager(project_info=info, part_list=[p1])
 
         for step in list(Step):
@@ -432,6 +443,11 @@ class TestStepOutdated:
                 assert report.reason() == "source changed"
             else:
                 assert report is None
+
+        report = sm.check_if_outdated(p1, Step.PULL)
+        assert report is not None
+        assert report.reason() == "source changed"
+        assert source_checks == 2
 
         # and we updated it!
         sm._state_db.rewrap(part_name="p1", step=Step.PULL, step_updated=True)
@@ -455,6 +471,90 @@ class TestStepOutdated:
         for step in list(Step):
             report = sm.check_if_outdated(p1, step)
             assert report is None
+
+    def test_source_outdated_cache_is_scoped_to_planning(self, new_dir, monkeypatch):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        p1 = Part("p1", {"source": "subdir"})
+        Path("subdir").mkdir()
+        Path("subdir/foo").write_text("content")
+        states.PullState(part_properties=p1.spec.marshal()).write(
+            Path("parts/p1/state/pull")
+        )
+
+        source_checks = 0
+        original_check = LocalSource.check_if_outdated
+
+        def count_source_checks(self, target, *, ignore_files=None):
+            nonlocal source_checks
+            source_checks += 1
+            return original_check(self, target, ignore_files=ignore_files)
+
+        monkeypatch.setattr(LocalSource, "check_if_outdated", count_source_checks)
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        assert sm.check_if_outdated(p1, Step.PULL) is None
+        state_mtime = Path("parts/p1/state/pull").stat().st_mtime_ns
+        os.utime(Path("subdir/foo"), ns=(state_mtime + 1_000_000_000,) * 2)
+        report = sm.check_if_outdated(p1, Step.PULL)
+        assert report is not None
+        assert report.source_modified
+        assert source_checks == 2
+
+        os.utime(Path("subdir/foo"), ns=(state_mtime - 1_000_000_000,) * 2)
+        with sm.cache_source_outdated():
+            assert sm.check_if_outdated(p1, Step.PULL) is None
+            assert sm.check_if_outdated(p1, Step.PULL) is None
+            assert source_checks == 3
+
+        assert sm.check_if_outdated(p1, Step.PULL) is None
+        assert source_checks == 4
+
+        with sm.cache_source_outdated():
+            assert sm.check_if_outdated(p1, Step.PULL) is None
+            assert source_checks == 5
+            sm.set_state(
+                p1,
+                Step.PULL,
+                state=states.PullState(part_properties=p1.spec.marshal()),
+            )
+            assert sm.check_if_outdated(p1, Step.PULL) is None
+            assert source_checks == 6
+
+    def test_cached_source_outdated_reports_are_copied(self, new_dir, monkeypatch):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        p1 = Part("p1", {"source": "subdir"})
+        Path("subdir").mkdir()
+        Path("subdir/foo").write_text("content")
+        states.PullState(part_properties=p1.spec.marshal()).write(
+            Path("parts/p1/state/pull")
+        )
+        state_mtime = Path("parts/p1/state/pull").stat().st_mtime_ns
+        os.utime(Path("subdir/foo"), ns=(state_mtime + 1_000_000_000,) * 2)
+
+        source_checks = 0
+        original_check = LocalSource.check_if_outdated
+
+        def count_source_checks(self, target, *, ignore_files=None):
+            nonlocal source_checks
+            source_checks += 1
+            return original_check(self, target, ignore_files=ignore_files)
+
+        monkeypatch.setattr(LocalSource, "check_if_outdated", count_source_checks)
+        sm = StateManager(project_info=info, part_list=[p1])
+
+        with sm.cache_source_outdated():
+            first_report = sm.check_if_outdated(p1, Step.PULL)
+            assert first_report is not None
+            assert first_report.outdated_files
+            expected_files = first_report.outdated_files.copy()
+            first_report.outdated_files.clear()
+
+            second_report = sm.check_if_outdated(p1, Step.PULL)
+            assert second_report is not None
+            assert second_report.outdated_files == expected_files
+            assert second_report is not first_report
+            assert second_report.outdated_files is not first_report.outdated_files
+            assert source_checks == 1
 
 
 class TestStepDirty:
