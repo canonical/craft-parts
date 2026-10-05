@@ -469,6 +469,28 @@ class TestOverlayScriptlet:
                 work_dir=new_dir,
             )
 
+    def test_run_overlay_scriptlet_default_stops_on_first_failure(self, new_dir):
+        """craftctl default preserves fail-fast semantics for chroot commands."""
+
+        class FailingOverlayPlugin(OverlayChrootPlugin):
+            def get_overlay_chroot_commands(self):
+                return ["false", "touch /tmp/chroot-should-not-run.txt"]
+
+        sh = _step_handler_for_step(
+            Step.OVERLAY,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+            plugin_class=FailingOverlayPlugin,
+        )
+        with pytest.raises(errors.ScriptletRunError):
+            sh._run_overlay_scriptlet(
+                "craftctl default",
+                work_dir=new_dir,
+            )
+        assert not Path("/tmp/chroot-should-not-run.txt").exists()
+
     def test_run_overlay_scriptlet_with_user_commands(self, new_dir):
         """User commands in override-overlay run alongside craftctl default."""
         sh = _step_handler_for_step(
@@ -640,7 +662,7 @@ class TestBuildSlicesScriptlet:
     def test_craftctl_default_failure(self, new_dir):
         class FailingPlugin(BuildSlicesPlugin):
             def get_build_commands(self) -> list[str]:
-                return ["false"]
+                return ["false", "touch should-not-run.txt"]
 
         sh = self._handler(new_dir, plugin_class=FailingPlugin)
         with pytest.raises(errors.PluginBuildError) as raised:
@@ -652,6 +674,7 @@ class TestBuildSlicesScriptlet:
             )
         assert raised.value.stderr is not None
         assert b"__CRAFTCTL_DEFAULT_FAILED__" not in raised.value.stderr
+        assert not (self._part.part_build_subdir / "should-not-run.txt").exists()
 
     def test_craftctl_default_no_build_commands(self, new_dir):
         class EmptyPlugin(BuildSlicesPlugin):
