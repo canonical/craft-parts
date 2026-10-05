@@ -18,9 +18,9 @@
 
 from __future__ import annotations
 
-import contextlib
 import itertools
 import logging
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
@@ -33,6 +33,8 @@ from .reports import Dependency, DirtyReport, OutdatedReport
 from .states import PullState, StepState, get_step_state_path, load_step_state
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from craft_parts.parts import Part
     from craft_parts.sources import SourceHandler
     from craft_parts.state_manager import build_state, stage_state
@@ -185,6 +187,9 @@ class StateManager:
         self._part_list = part_list
         self._ignore_outdated = ignore_outdated
         self._source_handler_cache: dict[str, SourceHandler | None] = {}
+        self._source_outdated_cache: (
+            dict[tuple[str, int], OutdatedReport | None] | None
+        ) = None
         self._dirty_report_cache: dict[tuple[str, Step], DirtyReport | None] = {}
 
         part_step_list = _sort_steps_by_state_timestamp(part_list)
@@ -222,6 +227,19 @@ class StateManager:
             self._state_db.remove(part_name=part.name, step=next_step)
 
         self._dirty_report_cache.pop((part.name, step), None)
+
+    @contextmanager
+    def cache_source_outdated(self) -> Iterator[None]:
+        """Cache source checks for the duration of a lifecycle plan."""
+        if self._source_outdated_cache is not None:
+            yield
+            return
+
+        self._source_outdated_cache = {}
+        try:
+            yield
+        finally:
+            self._source_outdated_cache = None
 
     def has_step_run(self, part: Part, step: Step) -> bool:
         """Determine if a given step of a given part has already run.
@@ -305,31 +323,9 @@ class StateManager:
             return None
 
         if step == Step.PULL:
-            if part.name in self._source_handler_cache:
-                source_handler = self._source_handler_cache[part.name]
-            else:
-                source_handler = sources.get_source_handler(
-                    cache_dir=self._project_info.cache_dir,
-                    part=part,
-                    project_dirs=self._project_info.dirs,
-                    ignore_patterns=self._ignore_outdated,
-                )
-                self._source_handler_cache[part.name] = source_handler
+            return self._check_source_outdated(part, stw)
 
-            state_file = get_step_state_path(part, step)
-
-            if source_handler:
-                # Not all sources support checking for updates
-                with contextlib.suppress(sources.errors.SourceUpdateUnsupported):
-                    if source_handler.check_if_outdated(str(state_file)):
-                        files, dirs = source_handler.get_outdated_files()
-                        return OutdatedReport(
-                            source_modified=True,
-                            outdated_files=files,
-                            outdated_dirs=dirs,
-                        )
-
-        elif step == Step.BUILD:
+        if step == Step.BUILD:
             pull_stw = self._state_db.get(part_name=part.name, step=Step.PULL)
 
             if pull_stw and pull_stw.is_newer_than(stw):
@@ -347,6 +343,66 @@ class StateManager:
                     return OutdatedReport(previous_step_modified=previous_step)
 
         return None
+
+    def _check_source_outdated(
+        self, part: Part, stw: _StateWrapper
+    ) -> OutdatedReport | None:
+        """Check source state, caching results only within a planning scope."""
+        cache_key = (part.name, stw.serial)
+        cache = self._source_outdated_cache
+        if cache is not None and cache_key in cache:
+            return self._copy_outdated_report(cache[cache_key])
+
+        if part.name in self._source_handler_cache:
+            source_handler = self._source_handler_cache[part.name]
+        else:
+            source_handler = sources.get_source_handler(
+                cache_dir=self._project_info.cache_dir,
+                part=part,
+                project_dirs=self._project_info.dirs,
+                ignore_patterns=self._ignore_outdated,
+            )
+            self._source_handler_cache[part.name] = source_handler
+
+        report = None
+        if source_handler:
+            try:
+                state_file = get_step_state_path(part, Step.PULL)
+                if source_handler.check_if_outdated(str(state_file)):
+                    files, dirs = source_handler.get_outdated_files()
+                    report = OutdatedReport(
+                        source_modified=True,
+                        outdated_files=files,
+                        outdated_dirs=dirs,
+                    )
+            except sources.errors.SourceUpdateUnsupported:
+                pass
+
+        if cache is not None:
+            cache[cache_key] = self._copy_outdated_report(report)
+        return report
+
+    @staticmethod
+    def _copy_outdated_report(
+        report: OutdatedReport | None,
+    ) -> OutdatedReport | None:
+        if report is None:
+            return None
+
+        return OutdatedReport(
+            previous_step_modified=report.previous_step_modified,
+            source_modified=report.source_modified,
+            outdated_files=(
+                report.outdated_files.copy()
+                if report.outdated_files is not None
+                else None
+            ),
+            outdated_dirs=(
+                report.outdated_dirs.copy()
+                if report.outdated_dirs is not None
+                else None
+            ),
+        )
 
     def check_if_dirty(self, part: Part, step: Step) -> DirtyReport | None:
         """Verify whether a step is dirty.
