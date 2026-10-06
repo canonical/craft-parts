@@ -35,7 +35,7 @@ from craft_parts.utils import os_utils
 
 from .collisions import check_for_stage_collisions
 from .environment import generate_step_environment
-from .part_handler import PartHandler
+from .part_handler import PartHandler, get_build_slices
 from .step_handler import Stream
 
 logger = logging.getLogger(__name__)
@@ -323,9 +323,7 @@ class Executor:
             packages.snaps.install_snaps(build_snaps)
 
     def _cut_build_slices(self) -> None:
-        build_slices: set[str] = set()
-        for part in self._part_list:
-            build_slices.update(part.spec.build_slices)
+        build_slices = get_build_slices(self._part_list)
 
         state_file = self._build_slices_state_file()
         slices_dir = self._project_info.dirs.build_slices_dir

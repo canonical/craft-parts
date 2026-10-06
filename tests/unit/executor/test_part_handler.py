@@ -210,6 +210,51 @@ class TestPartHandling:
         mock_run_step.assert_not_called()
         assert events == ["copy", "chroot", "callback", "organize"]
 
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_build_state_tracks_shared_build_slices(self, mocker, partitions):
+        sliced = Part(
+            "sliced",
+            {"plugin": "nil", "build-slices": ["base-files_base"]},
+            partitions=partitions,
+        )
+        other = Part(
+            "other",
+            {"plugin": "nil", "build-slices": ["bash_bins"]},
+            partitions=partitions,
+        )
+        part_info = PartInfo(self._project_info, sliced)
+        overlay_manager = OverlayManager(
+            project_info=self._project_info,
+            part_list=[sliced, other],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+        handler = PartHandler(
+            sliced,
+            part_info=part_info,
+            part_list=[sliced, other],
+            overlay_manager=overlay_manager,
+        )
+        mocker.patch.object(handler, "_run_step")
+        mocker.patch("craft_parts.executor.part_handler.shutil.copytree")
+        mocker.patch("craft_parts.executor.part_handler.callbacks.run_step")
+        mocker.patch("craft_parts.executor.part_handler.organize_files")
+        mocker.patch(
+            "craft_parts.packages.Repository.get_installed_packages", return_value=[]
+        )
+        mocker.patch("craft_parts.packages.snaps.get_installed_snaps", return_value=[])
+        mocker.patch("subprocess.check_output", return_value=b"os-info")
+        mocker.patch("craft_parts.executor.part_handler.chroot_runner.chroot")
+
+        state = handler._run_build(
+            StepInfo(part_info, Step.BUILD), stdout=None, stderr=None
+        )
+
+        assert state.part_properties["build-slices"] == [
+            "base-files_base",
+            "bash_bins",
+        ]
+
     def test_get_build_slices_bind_mounts(self, partitions):
         part_dir = self._part.parts_dir / self._part.name
 

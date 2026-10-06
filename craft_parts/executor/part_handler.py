@@ -260,6 +260,7 @@ class PartHandler:
 
         self.build_packages = _get_build_packages(part=self._part, plugin=self._plugin)
         self.build_snaps = _get_build_snaps(part=self._part, plugin=self._plugin)
+        self.build_slices = get_build_slices(part_list)
 
     def run_action(
         self,
@@ -549,8 +550,15 @@ class PartHandler:
         # filesystem if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
+        # All sliced parts share one root, so changes to any participant's
+        # slices must invalidate this part's build state too.
+        build_part_properties = {
+            **self._part_properties,
+            "build-slices": sorted(self.build_slices),
+        }
+
         return states.BuildState(
-            part_properties=self._part_properties,
+            part_properties=build_part_properties,
             project_options=step_info.project_options,
             assets=assets,
             overlay_hash=overlay_hash.hex(),
@@ -1581,6 +1589,18 @@ def _get_build_snaps(*, part: Part, plugin: Plugin) -> list[str]:
         all_snaps.extend(plugin_build_snaps)
 
     return all_snaps
+
+
+def get_build_slices(part_list: list[Part]) -> list[str]:
+    """Obtain the consolidated list of required build slices.
+
+    Build slices are used in a shared root environment, so consolidate
+    slices from all parts.
+    """
+
+    return sorted(
+        {build_slice for part in part_list for build_slice in part.spec.build_slices}
+    )
 
 
 def _get_machine_manifest() -> dict[str, Any]:
