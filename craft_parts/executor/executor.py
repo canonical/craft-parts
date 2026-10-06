@@ -336,7 +336,7 @@ class Executor:
             return
 
         state = self._load_build_slices_state(state_file)
-        if state and state.slices == build_slices:
+        if state and state.slices == set(build_slices):
             # Nothing to do: slices already cut
             self._prepare_build_slices_root(slices_dir)
             return
