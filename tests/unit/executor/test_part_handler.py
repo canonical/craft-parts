@@ -131,6 +131,7 @@ class TestPartHandling:
             project_options=self._part_info.project_options,
             assets={
                 "build-packages": ["pkg3"],
+                "build-slices": [],
                 "build-snaps": [],
                 "uname": "os-info",
                 "installed-packages": ["hello=2.10"],
@@ -192,7 +193,9 @@ class TestPartHandling:
         mocker.patch("subprocess.check_output", return_value=b"os-info")
 
         step_info = StepInfo(part_info, Step.BUILD)
-        handler._run_build(step_info, stdout=None, stderr=None)
+        state = handler._run_build(step_info, stdout=None, stderr=None)
+
+        assert state.assets["build-slices"] == ["base-files_base"]
 
         mock_chroot.assert_called_once_with(
             self._project_info.dirs.build_slices_dir,

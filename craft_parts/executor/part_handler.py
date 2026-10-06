@@ -539,6 +539,7 @@ class PartHandler:
         assets = {
             "build-packages": self.build_packages,
             "build-snaps": self.build_snaps,
+            "build-slices": self._part.spec.build_slices,
         }
         assets.update(_get_machine_manifest())
 

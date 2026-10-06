@@ -365,7 +365,7 @@ class TestStateManager:
         stw = sm._state_db.get(part_name="p1", step=Step.BUILD)
         assert stw is not None
 
-        stw.state.part_properties["build-packages"] = ["new_pkg"]
+        stw.state.part_properties["build-slices"] = ["new_slice"]
 
         # now build should run again
         for step in list(Step):
@@ -492,14 +492,14 @@ class TestStepDirty:
         stw = sm._state_db.get(part_name="p1", step=Step.BUILD)
         assert stw is not None
 
-        stw.state.part_properties["build-packages"] = ["new_pkg"]
+        stw.state.part_properties["build-slices"] = ["new_slice"]
 
         # now check again if dirty
         for step in list(Step):
             report = sm.check_if_dirty(p1, step)
             if step == Step.BUILD:
                 assert report is not None
-                assert report.reason() == "'build-packages' property changed"
+                assert report.reason() == "'build-slices' property changed"
             else:
                 assert report is None
 
