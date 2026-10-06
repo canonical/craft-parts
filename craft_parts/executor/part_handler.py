@@ -1597,7 +1597,6 @@ def get_build_slices(part_list: list[Part]) -> list[str]:
     Build slices are used in a shared root environment, so consolidate
     slices from all parts.
     """
-
     return sorted(
         {build_slice for part in part_list for build_slice in part.spec.build_slices}
     )
