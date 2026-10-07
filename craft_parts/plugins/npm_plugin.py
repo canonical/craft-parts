@@ -24,6 +24,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal, cast
 
+import pydantic
 import requests
 from pydantic import model_validator
 from typing_extensions import Self, override
@@ -59,8 +60,49 @@ class NpmPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["npm", "npm-use"] = "npm"
 
     # part properties required by the plugin
-    npm_include_node: bool = False
-    npm_node_version: str | None = None
+    npm_include_node: bool = pydantic.Field(
+        default=False,
+        description="Whether to download and include the Node.js binaries and its dependencies in the part.",
+    )
+    """Whether to download and include the Node.js binaries and its dependencies in the part.
+
+    If this key is set to ``true``, then the ``npm-node-version`` key must also be set.
+    """
+
+    npm_node_version: str | None = pydantic.Field(
+        default=None,
+        description="The version of Node.js to download and include in the part.",
+    )
+    """The version of Node.js to download and include in the part.
+
+    Accepted version formats:
+
+    - Exact version, such as ``"20.12.2"``
+    - Major version, such as ``"20"``
+    - Minor version, such as ``"20.12"``
+    - LTS code name, such as ``"lts/iron"``
+    - Latest mainline version, such as ``"node"``
+
+    When setting a loose version identifier, the plugin selects the latest version that
+    satisfies the provided version range. If the version picked by the plugin doesn't
+    publish binaries for the target architecture, the plugin picks the nearest version
+    that both satisfies the version range and also publishes binaries for the target
+    architecture.
+
+    Required if the ``npm-include-node`` key is set to ``true``.
+
+    .. warning::
+
+        With the ``nvm`` utility, you can set ``system`` to use the system Node.js
+        package, but this is unsupported by this plugin, as it uses upstream Node.js
+        binaries.
+
+        Also, the ``iojs`` specifier is unsupported in this plugin, as the ``iojs``
+        project was merged back to Node.js in 2015. Using a very old ``iojs`` runtime
+        poses a significant security hazard. If a part requires a JavaScript runtime
+        from this era, consider migrating it to a modern Node.js runtime.
+    """
+
     source: str
     build_attributes: list[str] = []
 

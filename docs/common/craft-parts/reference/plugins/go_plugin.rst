@@ -13,23 +13,11 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.go_plugin
 
-go-buildtags
-~~~~~~~~~~~~
+.. kitbash-field:: GoPluginProperties go_buildtags
 
-**Type:** list of strings
-
-`Build tags`_ to use during the build. The default behavior is not to use any build
-tags.
-
-
-go-generate
-~~~~~~~~~~~
-
-**Type:** list of strings
-
-Parameters to pass to `go generate`_ before building. Each item on the list will be a
-separate ``go generate`` call. The default behavior is not to call ``go generate``.
+.. kitbash-field:: GoPluginProperties go_generate
 
 
 Environment variables
@@ -97,7 +85,5 @@ generate ./cmd`` before building:
           - ./cmd
 
 
-.. _Build tags: https://pkg.go.dev/cmd/go#hdr-Build_constraints
 .. _Go: https://go.dev/
-.. _go generate: https://go.dev/blog/generate
 .. _go workspace: https://go.dev/blog/get-familiar-with-workspaces

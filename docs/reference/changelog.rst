@@ -19,9 +19,36 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+X.Y.Z (YYYY-MM-DD)
+------------------
 
-Unreleased
-----------
+New features:
+
+- Support ``craftctl default`` in ``override-build`` for parts that declare
+  ``build-slices``. Other ``craftctl`` commands are not supported.
+
+Bug fixes:
+
+- Stage packages are now marked in the order they are declared, making the
+  resolution of alternative dependencies deterministic. For example,
+  ``locales-all`` listed before ``postgresql`` is staged without also
+  staging ``locales``.
+
+2.37.1 (2026-09-25)
+-------------------
+
+Bug fixes:
+
+- Update a log message about resetting Features from Warning to Debug.
+
+- Installs the chisel snap if any build-slices are declared.
+
+For a complete list of commits, check out the `2.37.1`_ release on GitHub.
+
+.. _release-2.37.0:
+
+2.37.0 (2026-09-23)
+-------------------
 
 New features:
 
@@ -34,6 +61,9 @@ New features:
   build packages or fetching stage packages, so the latest available version
   of each package is used.
 
+- Support for ``build-slices``, where a set of Chisel slices defines the root system
+  where the part's Build step is executed.
+
 Bug fixes:
 
 - The ``qmake`` plugin recognizes ``source-subdir`` if the part declares it,
@@ -42,6 +72,22 @@ Bug fixes:
 - Add ``build-environment`` values to the build state to rebuild parts when the
   environment declaration changes.
 
+- The JSON schema for parts now includes the regex pattern for the ``stage``, ``prime``,
+  ``build-slices``, and ``stage-slices`` keys.
+
+- Fix a line continuation issue in a ``tar`` call done by the ``npm`` plugin.
+
+- Fix a Permission denied error when accessing a non-existing ``/etc/apt/sources.list``.
+
+- Fix quoting of ``python-packages`` names on the ``python`` plugin v2.
+
+- Fix the schema for paths and slice keys.
+
+Documentation changes:
+
+- Update ``rustc`` and ``cargo`` provisioning in the reference docs for the ``rust`` plugin.
+
+For a complete list of commits, check out the `2.37.0`_ release on GitHub.
 
 .. _release-2.36.0:
 
@@ -1869,6 +1915,8 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.37.1: https://github.com/canonical/craft-parts/releases/tag/2.37.1
+.. _2.37.0: https://github.com/canonical/craft-parts/releases/tag/2.37.0
 .. _2.36.0: https://github.com/canonical/craft-parts/releases/tag/2.36.0
 .. _2.35.1: https://github.com/canonical/craft-parts/releases/tag/2.35.1
 .. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0

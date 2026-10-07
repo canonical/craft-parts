@@ -42,7 +42,7 @@ class TestAptStageCache:
 
         AptCache.configure_apt("test_stage_packages")
         with AptCache(stage_cache=stage_cache) as cache:
-            package_names = {"pciutils"}
+            package_names = ["pciutils"]
             filtered_names = {
                 "base-files",
                 "libc6",
@@ -192,10 +192,10 @@ class TestAptStageCache:
 
         with AptCache(stage_cache=stage_cache) as cache:
             cache.mark_packages(
-                {
+                [
                     "libnvinfer-dev=10.14.1",
                     "libnvinfer10=10.14.1",
-                }
+                ]
             )
 
         for pkg in pkg_mocks.values():

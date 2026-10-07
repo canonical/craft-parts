@@ -1,4 +1,4 @@
-import distro  # ty: ignore[unresolved-import]
+import distro
 
 
 def main() -> int:
