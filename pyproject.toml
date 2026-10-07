@@ -362,7 +362,6 @@ max-args = 8
 classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
 [tool.ruff.lint.per-file-ignores]
-"bench_filesets.py" = ["D", "ANN", "S101", "SLF001", "PLC0415", "PTH", "SIM108", "E741", "PLW1510", "ICN001", "RUF100"]
 "tests/**.py" = [ # Some things we want for the main project are unnecessary in tests.
     "D",       # Ignore docstring rules in tests
     "ANN",     # Ignore type annotations in tests
