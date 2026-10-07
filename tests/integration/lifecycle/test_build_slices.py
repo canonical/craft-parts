@@ -53,6 +53,8 @@ def test_build_step_runs_in_build_slices_chroot(tmp_homedir_path):
 
     assert (tmp_homedir_path / "prime/result").read_text() == "dependency\n"
     assert (tmp_homedir_path / "prime/plugin-file").read_text() == "dump plugin\n"
+    # craftctl default in override-build runs plugin commands, then user commands
+    assert (tmp_homedir_path / "prime/after-default").read_text() == "after-default\n"
     completed_process = subprocess.run(
         [tmp_homedir_path / "prime/bin/hello"],
         check=True,

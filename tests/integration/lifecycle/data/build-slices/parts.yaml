@@ -30,7 +30,9 @@ parts:
     source: tests/integration/lifecycle/data/build-slices/dump
     build-slices:
       - coreutils_bins
-
+    override-build: |
+      craftctl default
+      printf '%s\n' after-default > "$CRAFT_PART_INSTALL/after-default"
   plugin-go:
     plugin: go
     source: tests/integration/lifecycle/data/build-slices/go

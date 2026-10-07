@@ -22,6 +22,11 @@ Changelog
 X.Y.Z (YYYY-MM-DD)
 ------------------
 
+New features:
+
+- Support ``craftctl default`` in ``override-build`` for parts that declare
+  ``build-slices``. Other ``craftctl`` commands are not supported.
+
 Bug fixes:
 
 - Stage packages are now marked in the order they are declared, making the
