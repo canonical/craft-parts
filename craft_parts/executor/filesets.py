@@ -155,6 +155,11 @@ def migratable_filesets(
     """
     includes, excludes = _get_file_list(fileset, partition, default_partition)
 
+    # Resolved-path caches must not outlive a single, unchanged view of the
+    # source tree (a replaced symlink parent changes realpath results).
+    _resolved_parent.cache_clear()
+    _resolved_base.cache_clear()
+
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
 
@@ -326,11 +331,21 @@ def _generate_exclude_set(
 
 @lru_cache(maxsize=65536)
 def _resolved_parent(base_str: str, parent_relpath: str) -> str:
+    """Resolve the parent directory, cached. Only to be used by ``_get_resolved_relative_path``.
+
+    The cache is cleared per filesystem scan (see ``migratable_filesets``);
+    calling this outside that lifecycle can return a stale symlink target.
+    """
     return os.path.realpath(os.path.join(base_str, parent_relpath))  # noqa: PTH118
 
 
 @lru_cache(maxsize=65536)
 def _resolved_base(base_str: str) -> str:
+    """Resolve the base directory, cached. Only to be used by ``_get_resolved_relative_path``.
+
+    The cache is cleared per filesystem scan (see ``migratable_filesets``);
+    calling this outside that lifecycle can return a stale symlink target.
+    """
     return os.path.realpath(base_str)
 
 
