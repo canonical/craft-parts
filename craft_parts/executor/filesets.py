@@ -18,11 +18,21 @@
 
 import os
 from functools import lru_cache
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from craft_parts import errors, features
 from craft_parts.utils import path_utils
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+
+
+@lru_cache(maxsize=65536)
+def _get_path(path: str) -> Path:
+    return Path(path)
+
+
+@lru_cache(maxsize=65536)
+def _get_pure_path(path: str) -> PurePath:
+    return PurePath(path)
 
 
 class Fileset:
@@ -244,14 +254,14 @@ def _get_file_list(
     return processed_includes or ["*"], processed_excludes
 
 
-def _generate_include_set(directory: Path, includes: list[str]) -> set[Path]:
+def _generate_include_set(directory: Path, includes: list[str]) -> set[Path | PurePath]:
     """Obtain the list of files to include based on include file filter.
 
     :param directory: The path to the tree containing the files to filter.
 
     :return: The set of files to include.
     """
-    include_files: set[Path] = set()
+    include_files: set[Path | PurePath] = set()
 
     for include in includes:
         if "*" in include:
@@ -265,16 +275,32 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[Path]:
             include_files |= {directory / include}
 
     include_dirs = [x for x in include_files if x.is_dir() and not x.is_symlink()]
-    include_files = {x.relative_to(directory) for x in include_files}
+    base_str = str(directory)
+    base_str = base_str if base_str.endswith(os.sep) else base_str + os.sep
+    include_files = {
+        _get_pure_path(_strip_base(base_str, str(x))) for x in include_files
+    }
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= {Path(root, d).relative_to(directory) for d in dirs}
-            include_files |= {Path(root, f).relative_to(directory) for f in files}
+            include_files |= {
+                _get_pure_path(_strip_base(base_str, os.path.join(root, d)))  # noqa: PTH118
+                for d in dirs
+            }
+            include_files |= {
+                _get_pure_path(_strip_base(base_str, os.path.join(root, f)))  # noqa: PTH118
+                for f in files
+            }
 
     return include_files
+
+
+def _strip_base(base_str: str, path_str: str) -> str:
+    if path_str.startswith(base_str):
+        return path_str[len(base_str) :]
+    return os.path.relpath(path_str, base_str.rstrip(os.sep))
 
 
 def _generate_exclude_set(
@@ -296,11 +322,6 @@ def _generate_exclude_set(
     exclude_files = {x.relative_to(directory) for x in exclude_files}
 
     return exclude_files, exclude_dirs
-
-
-@lru_cache(maxsize=65536)
-def _get_path(path: str) -> Path:
-    return Path(path)
 
 
 @lru_cache(maxsize=65536)
