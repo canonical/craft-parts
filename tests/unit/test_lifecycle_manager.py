@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 import textwrap
 import time
@@ -331,7 +332,11 @@ class TestLifecycleManager:
         """A part using stage-slices or build-slices should add chisel as a build snap."""
         mock_executor = mocker.patch("craft_parts.executor.Executor")
 
-        data = {"parts": {"foo": {"plugin": "nil", part_key: ["pkg1_bin"]}}}
+        data = {
+            "parts": {
+                "foo": {"plugin": "nil", part_key: ["base-files_bin", "bash_bins"]}
+            }
+        }
 
         lifecycle_manager.LifecycleManager(
             data,
@@ -354,6 +359,79 @@ class TestLifecycleManager:
                 build_environment=None,
             )
         ]
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_build_slices_missing_required_slices(self, new_dir):
+        """A part using build-slices missing required slices should error."""
+        data = {"parts": {"foo": {"plugin": "nil", "build-slices": ["pkg1_bins"]}}}
+        expected = "Required build slices missing: 'base-files_bin' and 'bash_bins'"
+
+        with pytest.raises(errors.MissingBuildSlicesError, match=expected) as raised:
+            lifecycle_manager.LifecycleManager(
+                data,
+                application_name="test_manager",
+                cache_dir=new_dir,
+                **self._lcm_kwargs,
+            )
+
+        assert raised.value.details == (
+            "These slices are required to run the build script in the build "
+            "environment used by parts that declare build slices."
+        )
+        assert raised.value.resolution == (
+            "Add the missing slices to the 'build-slices' key of one of the parts "
+            "that declare build-slices or to the root-level 'build-slices' key."
+        )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_build_slices_split_across_parts(self, new_dir, mocker, caplog):
+        """Required build slices can be spread across multiple parts."""
+        caplog.set_level(logging.DEBUG)
+        mocker.patch("craft_parts.executor.Executor")
+
+        data = {
+            "parts": {
+                "foo": {
+                    "plugin": "nil",
+                    # bash_bins in one part
+                    "build-slices": ["pkg1_bin", "bash_bins"],
+                },
+                "bar": {
+                    "plugin": "nil",
+                    # base-file_bin in another
+                    "build-slices": ["base-files_bin"],
+                },
+            }
+        }
+
+        lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            **self._lcm_kwargs,
+        )
+
+        assert "All required build slices are present." in caplog.text
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_build_slices_skip_validation(self, new_dir, mocker, caplog):
+        """Don't validate build-slices if there are no build-slices defined."""
+        caplog.set_level(logging.DEBUG)
+        mocker.patch("craft_parts.executor.Executor")
+
+        data = {"parts": {"foo": {"plugin": "nil"}, "bar": {"plugin": "nil"}}}
+
+        lifecycle_manager.LifecycleManager(
+            data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            **self._lcm_kwargs,
+        )
+
+        assert (
+            "Skipping build slice validation because no parts have build slices."
+            in caplog.text
+        )
 
     def test_get_primed_stage_packages(self, new_dir):
         lf = lifecycle_manager.LifecycleManager(

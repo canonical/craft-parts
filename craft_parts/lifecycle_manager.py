@@ -16,6 +16,7 @@
 
 """The parts lifecycle manager."""
 
+import logging
 import os
 import re
 import sys
@@ -36,6 +37,8 @@ from craft_parts.parts import Part, part_by_name
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 from craft_parts.utils.partition_utils import validate_partition_names
+
+logger = logging.getLogger(__name__)
 
 
 class LifecycleManager:
@@ -191,6 +194,8 @@ class LifecycleManager:
             )
             _validate_part_dependencies(part, parts_data)
             part_list.append(part)
+
+        _validate_build_slices(part_list)
 
         self._has_overlay = any(p.has_overlay for p in part_list)
         self._organizes_to_overlay = any(p.organizes_to_overlay for p in part_list)
@@ -419,6 +424,31 @@ def _validate_part_dependencies(part: Part, parts_data: dict[str, Any]) -> None:
     for name in part.dependencies:
         if name not in parts_data:
             raise errors.InvalidPartName(name)
+
+
+# These build slices are required to run craft-parts' build script inside the build slices chroot.
+_REQUIRED_BUILD_SLICES = frozenset({"base-files_bin", "bash_bins"})
+
+
+def _validate_build_slices(part_list: list[Part]) -> None:
+    """Check that build-slices parts collectively provide required slices.
+
+    :param part_list: The list of parts to check.
+
+    :raises MissingBuildSlicesError: if any required slice is missing from the combined set of build-slices.
+    """
+    all_build_slices = {
+        slice_name for part in part_list for slice_name in part.spec.build_slices
+    }
+    if not all_build_slices:
+        logger.debug(
+            "Skipping build slice validation because no parts have build slices."
+        )
+        return
+
+    if missing_slices := _REQUIRED_BUILD_SLICES - all_build_slices:
+        raise errors.MissingBuildSlicesError(missing_slices=missing_slices)
+    logger.debug("All required build slices are present.")
 
 
 def _validate_part_names(parts_data: dict[str, Any]) -> None:

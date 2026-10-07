@@ -955,3 +955,21 @@ class UnsupportedBuildAttributesError(PartsError):
             brief=message,
             resolution=f"Remove the {noun}, or use a different plugin.",
         )
+
+
+class MissingBuildSlicesError(PartsError):
+    """Essential build-slices are missing."""
+
+    def __init__(self, *, missing_slices: Iterable[str]) -> None:
+        brief = f"Required build slices missing: {humanize_list(missing_slices, 'and')}"
+
+        details = (
+            "These slices are required to run the build script in the build "
+            "environment used by parts that declare build slices."
+        )
+        resolution = (
+            "Add the missing slices to the 'build-slices' key of one of the parts "
+            "that declare build slices or to the root-level 'build-slices' key."
+        )
+
+        super().__init__(brief=brief, details=details, resolution=resolution)
