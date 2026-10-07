@@ -17,6 +17,7 @@
 """Definitions and helpers to handle filesets."""
 
 import os
+from functools import lru_cache
 from pathlib import Path
 
 from craft_parts import errors, features
@@ -293,6 +294,16 @@ def _generate_exclude_set(
     return exclude_files, exclude_dirs
 
 
+@lru_cache(maxsize=65536)
+def _resolved_parent(base_str: str, parent_relpath: str) -> str:
+    return os.path.realpath(os.path.join(base_str, parent_relpath))  # noqa: PTH118
+
+
+@lru_cache(maxsize=65536)
+def _resolved_base(base_str: str) -> str:
+    return os.path.realpath(base_str)
+
+
 def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Path:
     """Resolve path components against target base_directory.
 
@@ -305,11 +316,18 @@ def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Pa
 
     :return: Resolved path, relative to base_directory.
     """
-    parent_relpath, filename = relative_path.parent, relative_path.name
-    parent_abspath = (base_directory / parent_relpath).resolve()
+    parent_relpath, filename = os.path.split(str(relative_path))
+    if parent_relpath in ("", "."):
+        return Path(filename)
 
-    filename_abspath = Path(parent_abspath, filename)
-    return filename_abspath.relative_to(base_directory.resolve())
+    base_key = os.path.abspath(str(base_directory))  # noqa: PTH100
+    rel = os.path.relpath(
+        os.path.join(_resolved_parent(base_key, parent_relpath), filename),  # noqa: PTH118
+        _resolved_base(base_key),
+    )
+    if rel == os.pardir or rel.startswith(os.pardir + os.sep):
+        raise ValueError(f"{filename!r} not in the subpath of {base_key!r}")
+    return Path(rel)
 
 
 def normalize_entry(entry: str, default_partition: str) -> str:
