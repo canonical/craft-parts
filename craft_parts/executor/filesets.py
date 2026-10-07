@@ -259,14 +259,14 @@ def _get_file_list(
     return processed_includes or ["*"], processed_excludes
 
 
-def _generate_include_set(directory: Path, includes: list[str]) -> set[Path | PurePath]:
+def _generate_include_set(directory: Path, includes: list[str]) -> set[PurePath]:
     """Obtain the list of files to include based on include file filter.
 
     :param directory: The path to the tree containing the files to filter.
 
     :return: The set of files to include.
     """
-    include_files: set[Path | PurePath] = set()
+    include_files: set[Path] = set()
 
     for include in includes:
         if "*" in include:
@@ -282,7 +282,7 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[Path | Pu
     include_dirs = [x for x in include_files if x.is_dir() and not x.is_symlink()]
     base_str = str(directory)
     base_str = base_str if base_str.endswith(os.sep) else base_str + os.sep
-    include_files = {
+    relative_include_files = {
         _get_pure_path(_strip_base(base_str, str(x))) for x in include_files
     }
 
@@ -290,16 +290,16 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[Path | Pu
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= {
+            relative_include_files |= {
                 _get_pure_path(_strip_base(base_str, os.path.join(root, d)))  # noqa: PTH118
                 for d in dirs
             }
-            include_files |= {
+            relative_include_files |= {
                 _get_pure_path(_strip_base(base_str, os.path.join(root, f)))  # noqa: PTH118
                 for f in files
             }
 
-    return include_files
+    return relative_include_files
 
 
 def _strip_base(base_str: str, path_str: str) -> str:
@@ -310,21 +310,29 @@ def _strip_base(base_str: str, path_str: str) -> str:
 
 def _generate_exclude_set(
     directory: Path, excludes: list[str]
-) -> tuple[set[Path], set[Path]]:
+) -> tuple[set[PurePath], set[PurePath]]:
     """Obtain the list of files to exclude based on exclude file filter.
 
     :param directory: The path to the tree containing the files to filter.
 
     :return: The set of files to exclude.
     """
-    exclude_files: set[Path] = set()
+    absolute_exclude_files: set[Path] = set()
 
     for exclude in excludes:
         matches = directory.glob(exclude)
-        exclude_files |= set(matches)
+        absolute_exclude_files |= set(matches)
 
-    exclude_dirs = {x.relative_to(directory) for x in exclude_files if x.is_dir()}
-    exclude_files = {x.relative_to(directory) for x in exclude_files}
+    base_str = str(directory)
+    base_str = base_str if base_str.endswith(os.sep) else base_str + os.sep
+    exclude_dirs = {
+        _get_pure_path(_strip_base(base_str, str(x)))
+        for x in absolute_exclude_files
+        if x.is_dir()
+    }
+    exclude_files = {
+        _get_pure_path(_strip_base(base_str, str(x))) for x in absolute_exclude_files
+    }
 
     return exclude_files, exclude_dirs
 
@@ -349,7 +357,9 @@ def _resolved_base(base_str: str) -> str:
     return os.path.realpath(base_str)
 
 
-def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Path:
+def _get_resolved_relative_path(
+    relative_path: Path | PurePath, base_directory: Path
+) -> Path:
     """Resolve path components against target base_directory.
 
     If the resulting target path is a symlink, it will not be followed.
