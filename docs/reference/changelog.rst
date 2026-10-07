@@ -19,6 +19,19 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.37.2:
+
+2.37.2 (2026-10-08)
+-------------------
+
+Bug fixes:
+
+- Fix performance regressions in fileset migration.
+
+For a complete list of commits, check out the `2.37.1`_ release on GitHub.
+
+.. _release-2.37.1:
+
 2.37.1 (2026-09-25)
 -------------------
 
