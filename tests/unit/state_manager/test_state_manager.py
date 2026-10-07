@@ -503,6 +503,33 @@ class TestStepDirty:
             else:
                 assert report is None
 
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_build_slices_union_not_dirty_on_second_plan(self, new_dir):
+        info = ProjectInfo(application_name="test", cache_dir=new_dir)
+        p1 = Part("p1", {"plugin": "nil", "build-slices": ["base-files_bin"]})
+        p2 = Part("p2", {"plugin": "nil", "build-slices": ["bash_bins"]})
+        # p3 has no build-slices, but shares the sliced root with p1 and p2.
+        p3 = Part("p3", {"plugin": "nil"})
+        p1_properties = state_manager.get_part_properties(p1, part_list=[p1, p2, p3])
+        p2_properties = state_manager.get_part_properties(p2, part_list=[p1, p2, p3])
+        p3_properties = state_manager.get_part_properties(p3, part_list=[p1, p2, p3])
+
+        states.BuildState(part_properties=p1_properties).write(
+            Path("parts/p1/state/build")
+        )
+        states.BuildState(part_properties=p2_properties).write(
+            Path("parts/p2/state/build")
+        )
+        states.BuildState(part_properties=p3_properties).write(
+            Path("parts/p3/state/build")
+        )
+
+        sm = StateManager(project_info=info, part_list=[p1, p2, p3])
+
+        assert sm.check_if_dirty(p1, Step.BUILD) is None
+        assert sm.check_if_dirty(p2, Step.BUILD) is None
+        assert sm.check_if_dirty(p3, Step.BUILD) is None
+
     def test_dirty_dependency(self, new_dir):
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         p1 = Part("p1", {"after": ["p2"]})

@@ -193,7 +193,9 @@ class TestPartHandling:
         mocker.patch("subprocess.check_output", return_value=b"os-info")
 
         step_info = StepInfo(part_info, Step.BUILD)
-        state = cast(states.BuildState, handler._run_build(step_info, stdout=None, stderr=None))
+        state = cast(
+            states.BuildState, handler._run_build(step_info, stdout=None, stderr=None)
+        )
 
         assert state.assets["build-slices"] == ["base-files_base"]
 
