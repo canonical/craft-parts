@@ -153,7 +153,11 @@ def migratable_filesets(
         files = {x for x in files if not x.is_relative_to(exclude_dir)}
 
     # Separate dirs from files.
-    dirs = {x for x in files if (srcdir / x).is_dir() and not (srcdir / x).is_symlink()}
+    dirs = {
+        x
+        for x in files
+        if (p := _get_path(f"{srcdir}/{x}")).is_dir() and not p.is_symlink()
+    }
 
     # Remove dirs from files.
     files = files - dirs
@@ -161,10 +165,10 @@ def migratable_filesets(
     # Include (resolved) parent directories for each selected file.
     for _filename in files:
         filename = _get_resolved_relative_path(_filename, srcdir)
-        dirname = filename.parent
+        dirname = _get_path(os.path.dirname(str(filename)))  # noqa: PTH120
         while dirname != Path():
             dirs.add(dirname)
-            dirname = dirname.parent
+            dirname = _get_path(os.path.dirname(str(dirname)))  # noqa: PTH120
 
     # Resolve parent paths for dirs and files.
     resolved_dirs = {_get_resolved_relative_path(dirname, srcdir) for dirname in dirs}
@@ -295,6 +299,11 @@ def _generate_exclude_set(
 
 
 @lru_cache(maxsize=65536)
+def _get_path(path: str) -> Path:
+    return Path(path)
+
+
+@lru_cache(maxsize=65536)
 def _resolved_parent(base_str: str, parent_relpath: str) -> str:
     return os.path.realpath(os.path.join(base_str, parent_relpath))  # noqa: PTH118
 
@@ -318,7 +327,7 @@ def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Pa
     """
     parent_relpath, filename = os.path.split(str(relative_path))
     if parent_relpath in ("", "."):
-        return Path(filename)
+        return _get_path(filename)
 
     base_key = os.path.abspath(str(base_directory))  # noqa: PTH100
     rel = os.path.relpath(
@@ -327,7 +336,7 @@ def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Pa
     )
     if rel == os.pardir or rel.startswith(os.pardir + os.sep):
         raise ValueError(f"{filename!r} not in the subpath of {base_key!r}")
-    return Path(rel)
+    return _get_path(rel)
 
 
 def normalize_entry(entry: str, default_partition: str) -> str:
