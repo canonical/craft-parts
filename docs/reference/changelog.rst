@@ -19,16 +19,141 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+X.Y.Z (YYYY-MM-DD)
+------------------
+
+New features:
+
+- Support ``craftctl default`` in ``override-build`` for parts that declare
+  ``build-slices``. Other ``craftctl`` commands are not supported.
+
+Bug fixes:
+
+- Stage packages are now marked in the order they are declared, making the
+  resolution of alternative dependencies deterministic. For example,
+  ``locales-all`` listed before ``postgresql`` is staged without also
+  staging ``locales``.
+
+
 .. _release-2.35.2:
 
 2.35.2 (2026-10-08)
 -------------------
 
-Bug fixes:
-
 - Fix performance regressions in fileset migration.
 
 For a complete list of commits, check out the `2.35.2`_ release on GitHub.
+
+
+2.37.1 (2026-09-25)
+-------------------
+
+Bug fixes:
+
+- Update a log message about resetting Features from Warning to Debug.
+
+- Installs the chisel snap if any build-slices are declared.
+
+For a complete list of commits, check out the `2.37.1`_ release on GitHub.
+
+.. _release-2.37.0:
+
+2.37.0 (2026-09-23)
+-------------------
+
+New features:
+
+- Verify conflicts between namespaced part names during parts validation.
+
+- Update the ``uv``, ``poetry``, and ``npm`` plugins to use native TLS
+  certificates.
+
+- Craft Parts now always ignores Ubuntu's phased updates when installing
+  build packages or fetching stage packages, so the latest available version
+  of each package is used.
+
+- Support for ``build-slices``, where a set of Chisel slices defines the root system
+  where the part's Build step is executed.
+
+Bug fixes:
+
+- The ``qmake`` plugin recognizes ``source-subdir`` if the part declares it,
+  keeping compatibility in cases where ``qmake-project-file`` was also set.
+
+- Add ``build-environment`` values to the build state to rebuild parts when the
+  environment declaration changes.
+
+- The JSON schema for parts now includes the regex pattern for the ``stage``, ``prime``,
+  ``build-slices``, and ``stage-slices`` keys.
+
+- Fix a line continuation issue in a ``tar`` call done by the ``npm`` plugin.
+
+- Fix a Permission denied error when accessing a non-existing ``/etc/apt/sources.list``.
+
+- Fix quoting of ``python-packages`` names on the ``python`` plugin v2.
+
+- Fix the schema for paths and slice keys.
+
+Documentation changes:
+
+- Update ``rustc`` and ``cargo`` provisioning in the reference docs for the ``rust`` plugin.
+
+For a complete list of commits, check out the `2.37.0`_ release on GitHub.
+
+.. _release-2.36.0:
+
+2.36.0 (2026-08-31)
+-------------------
+
+New features:
+
+- Allow ``stage-snaps`` and ``build-snaps`` to use the ``@`` separator between the
+  snap name and channel.
+
+- Allow ``stage-packages`` and ``build-packages`` to use the ``@`` separator
+  between a deb package name and its version, in addition to the existing
+  ``=`` separator.
+
+- Add ``overlay-recommended-packages`` key to install overlay packages with their
+  recommended dependencies.
+
+- The ``colcon`` plugin now passes ``-DBUILD_TESTING=OFF`` to CMake by default,
+  disabling test targets that are not useful inside a rock or snap and would
+  otherwise pull in large test-only dependencies. Users can opt back in by
+  passing ``-DBUILD_TESTING=ON`` in ``colcon-cmake-args``.
+
+- Add a ``stage-slices`` key to declare Chisel slices separately from the
+  ``stage-packages`` key.
+
+- Add a ``stage_packages_slice_support`` parameter to the ``LifecycleManager``
+  so applications can control whether Chisel slices can be declared in the
+  ``stage-packages`` key. Defaults to True for backward compatibility, but new apps
+  should set this to False and use the ``stage-slices`` key instead.
+
+- Add the request URL to the error message for package download errors.
+
+- Add part name and resolution to error message for source checksum mismatch.
+
+Bug fixes:
+
+- Generalize the ``PartitionUsageError`` resolution message to cover invalid
+  partition usage beyond invalid partition names.
+
+- The Overlay and Build steps of parts that organize content to the overlay
+  are executed before these steps in other parts, even when ``after`` is
+  used.
+
+- Skip organization when the resolved destination path and the source path
+  are the same.
+- Refresh the APT cache before marking packages for installation, ensuring
+  the correct package versions are resolved.
+- Use fork context for chroot operations to fix execution on Python 3.14.
+- Check out the commit before updating submodules, preventing errors when
+  the submodule state does not match the checked-out commit.
+- Preserve package architecture information in primed stage packages.
+
+For a complete list of commits, check out the `2.36.0`_ release on GitHub.
 
 .. _release-2.35.1:
 
@@ -67,6 +192,18 @@ Bug fixes:
   is provided.
 
 For a complete list of commits, check out the `2.34.1`_ release on GitHub.
+
+.. _release-2.33.1:
+
+2.33.1 (2026-06-17)
+-------------------
+
+Bug fixes:
+
+- Always migrate overlay files to Stage and Prime first, even if the part being staged
+  or primed also has contents coming from the install directory.
+
+For a complete list of commits, check out the `2.33.1`_ release on GitHub.
 
 .. _release-2.35.0:
 
@@ -1790,11 +1927,15 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.37.1: https://github.com/canonical/craft-parts/releases/tag/2.37.1
+.. _2.37.0: https://github.com/canonical/craft-parts/releases/tag/2.37.0
+.. _2.36.0: https://github.com/canonical/craft-parts/releases/tag/2.36.0
 .. _2.35.2: https://github.com/canonical/craft-parts/releases/tag/2.35.2
 .. _2.35.1: https://github.com/canonical/craft-parts/releases/tag/2.35.1
 .. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
 .. _2.34.1: https://github.com/canonical/craft-parts/releases/tag/2.34.1
 .. _2.34.0: https://github.com/canonical/craft-parts/releases/tag/2.34.0
+.. _2.33.1: https://github.com/canonical/craft-parts/releases/tag/2.33.1
 .. _2.33.0: https://github.com/canonical/craft-parts/releases/tag/2.33.0
 .. _2.32.0: https://github.com/canonical/craft-parts/releases/tag/2.32.0
 .. _2.31.0: https://github.com/canonical/craft-parts/releases/tag/2.31.0

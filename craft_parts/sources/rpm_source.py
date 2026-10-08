@@ -35,7 +35,7 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 
-class RpmSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+class RpmSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic model for an rpm file source."""
 
     pattern = r"\.rpm$"

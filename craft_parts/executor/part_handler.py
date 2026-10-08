@@ -31,6 +31,7 @@ from craft_parts.actions import Action, ActionType
 from craft_parts.filesystem_mounts import FilesystemMount
 from craft_parts.infos import PartInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
+from craft_parts.overlays import chroot as chroot_runner
 from craft_parts.packages import errors as packages_errors
 from craft_parts.packages.base import read_origin_stage_package
 from craft_parts.packages.platform import is_deb_based
@@ -371,11 +372,19 @@ class PartHandler:
         if self._part.has_overlay:
             # install overlay packages (from spec and plugin)
             overlay_packages = self._merged_overlay_packages()
-            if overlay_packages:
+            overlay_recommended_packages = self._merged_overlay_recommended_packages()
+            if overlay_packages or overlay_recommended_packages:
                 with overlays.LayerMount(
                     self._overlay_manager, top_part=self._part
                 ) as ctx:
-                    ctx.install_packages(overlay_packages)
+                    # include-recommends should be processed first, packages in recommends
+                    # chain will be skipped if any already installed via overlay-packages
+                    if overlay_recommended_packages:
+                        ctx.install_packages(
+                            overlay_recommended_packages, include_recommends=True
+                        )
+                    if overlay_packages:
+                        ctx.install_packages(overlay_packages)
 
             if self._part.spec.override_overlay or self._plugin.uses_overlay:
                 # Run in chroot: either override-overlay scriptlet or
@@ -476,13 +485,25 @@ class PartHandler:
         with _conditional_layer_mount(
             self._overlay_manager, top_part=self._part, condition=needs_overlay
         ):
-            self._run_step(
-                step_info=step_info,
-                scriptlet_name="override-build",
-                work_dir=self._part.part_build_dir,
-                stdout=stdout,
-                stderr=stderr,
-            )
+            if self._part.has_build_slices:
+                chroot_runner.chroot(
+                    self._part_info.project_info.dirs.build_slices_dir,
+                    self._run_step,
+                    step_info=step_info,
+                    scriptlet_name="override-build",
+                    work_dir=self._part.part_build_dir,
+                    stdout=stdout,
+                    stderr=stderr,
+                    bind_mounts=self._get_build_slices_bind_mounts(),
+                )
+            else:
+                self._run_step(
+                    step_info=step_info,
+                    scriptlet_name="override-build",
+                    work_dir=self._part.part_build_dir,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
 
             logger.debug("Run pre-organize callbacks")
             callbacks.run_step(step_info, hook_point=callbacks.HookPoint.PRE_ORGANIZE)
@@ -533,6 +554,31 @@ class PartHandler:
             assets=assets,
             overlay_hash=overlay_hash.hex(),
         )
+
+    def _get_build_slices_bind_mounts(self) -> list[chroot_runner.BindMount]:
+        """Get the bind mounts required to build this part in a sliced root."""
+        part_dir = self._part.parts_dir / self._part.name
+        writable_dirs = {
+            install_dir
+            for install_dir in self._part.part_install_dirs.values()
+            if not install_dir.is_relative_to(part_dir)
+        }
+
+        return [
+            chroot_runner.BindMount(source=part_dir, target=part_dir),
+            *[
+                chroot_runner.BindMount(source=path, target=path)
+                for path in sorted(writable_dirs)
+            ],
+            *[
+                chroot_runner.BindMount(
+                    source=stage_dir,
+                    target=stage_dir,
+                    read_only=True,
+                )
+                for stage_dir in sorted(set(self._part.stage_dirs.values()))
+            ],
+        ]
 
     def _run_stage(
         self,
@@ -1276,7 +1322,9 @@ class PartHandler:
 
         :raises StagePackageNotFound: If a package is not available for download.
         """
-        stage_packages = self._part.spec.stage_packages
+        # 'stage-packages' and 'stage-slices' are mutually exclusive, so at most one
+        # of these is populated.
+        stage_packages = self._part.spec.stage_packages or self._part.spec.stage_slices
         if not stage_packages:
             return None
 
@@ -1314,13 +1362,20 @@ class PartHandler:
         plugin_packages = sorted(self._plugin.get_overlay_packages())
         return spec_packages + [p for p in plugin_packages if p not in spec_packages]
 
+    def _merged_overlay_recommended_packages(self) -> list[str]:
+        """Return overlay recommended packages from both the part spec and the plugin."""
+        spec_packages = list(self._part.spec.overlay_recommended_packages)
+        plugin_packages = sorted(self._plugin.get_overlay_recommended_packages())
+        return spec_packages + [p for p in plugin_packages if p not in spec_packages]
+
     def _fetch_overlay_packages(self) -> None:
         """Download overlay packages to the local package cache.
 
         :raises OverlayPackageNotFound: If a package is not available for download.
         """
         overlay_packages = self._merged_overlay_packages()
-        if not overlay_packages:
+        overlay_recommended_packages = self._merged_overlay_recommended_packages()
+        if not (overlay_packages or overlay_recommended_packages):
             return
 
         try:
@@ -1330,7 +1385,14 @@ class PartHandler:
             with overlays.PackageCacheMount(self._overlay_manager) as ctx:
                 logger.info("Fetching overlay-packages")
                 ctx.refresh_packages_list()
-                ctx.download_packages(overlay_packages)
+                # include-recommends should be processed first, packages in recommends
+                # chain will be skipped if any already installed via overlay-packages
+                if overlay_recommended_packages:
+                    ctx.download_packages(
+                        overlay_recommended_packages, include_recommends=True
+                    )
+                if overlay_packages:
+                    ctx.download_packages(overlay_packages)
         except packages_errors.PackageNotFound as err:
             raise errors.OverlayPackageNotFound(
                 part_name=self._part.name, package_name=err.package_name

@@ -17,22 +17,11 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.bazel_plugin
 
-bazel-parameters
-~~~~~~~~~~~~~~~~
+.. kitbash-field:: BazelPluginProperties bazel_parameters
 
-**Type:** list of strings
-
-Options to pass to ``bazel build``.
-
-bazel-targets
-~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-**Default:** ``["//..."]``
-
-Targets to pass to ``bazel build``. By default, all targets are built.
+.. kitbash-field:: BazelPluginProperties bazel_targets
 
 Dependencies
 ------------

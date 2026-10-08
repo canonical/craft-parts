@@ -18,21 +18,11 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.python_v2.python_plugin
 
-python-requirements
-~~~~~~~~~~~~~~~~~~~
+.. kitbash-field:: PythonPluginProperties python_requirements
 
-**Type:** list of strings
-
-List of paths to requirements files.
-
-
-python-packages
-~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Additional Python packages to install with pip.
+.. kitbash-field:: PythonPluginProperties python_packages
 
 
 .. _python_plugin_v2-environment_variables:

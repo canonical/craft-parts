@@ -24,7 +24,7 @@ import pytest
 from craft_parts import errors
 from craft_parts.permissions import Permissions
 from craft_parts.utils import file_utils
-from craft_parts.utils.file_utils import get_path_differences
+from craft_parts.utils.file_utils import get_path_differences, link_or_copy
 from typing_extensions import Any
 
 
@@ -745,3 +745,64 @@ def test_find_merge_conflicts_broken_symlink_vs_file(tmp_path: pathlib.Path):
     conflicts = file_utils.find_merge_conflicts(source_root, dest_root)
 
     assert conflicts == {pathlib.Path("my-link"): ["different types (symlink, file)"]}
+
+
+def test_link_or_copy_samefile_symlink(tmp_path: Path) -> None:
+    """Ensure link_or_copy does not crash or delete the file when dest symlinks to source."""
+
+    # Create a source file
+    source = tmp_path / "source.txt"
+    source.write_text("test data")
+
+    # Create a destination that is a symlink pointing directly to the source
+    destination = tmp_path / "dest.txt"
+    destination.symlink_to(source.name)
+
+    # Run the function - this should return silently without throwing FileExistsError
+    link_or_copy(source, destination)
+
+    # Verify the source was NOT deleted (which was the root cause of the bug)
+    assert source.exists()
+    assert source.read_text() == "test data"
+    assert destination.exists()
+    assert destination.is_symlink()
+
+
+def test_non_blocking_rw_fifo_round_trip(tmp_path: Path) -> None:
+    """A value written to the FIFO can be read back."""
+    fifo = file_utils.NonBlockingRWFifo(str(tmp_path / "fifo"))
+    try:
+        fifo.write("hello")
+        assert fifo.read() == "hello"
+    finally:
+        fifo.close()
+
+
+def test_non_blocking_rw_fifo_read_empty(tmp_path: Path) -> None:
+    """Reading an empty FIFO returns an empty string without raising."""
+    fifo = file_utils.NonBlockingRWFifo(str(tmp_path / "fifo"))
+    try:
+        assert fifo.read() == ""
+    finally:
+        fifo.close()
+
+
+def test_non_blocking_rw_fifo_large_data(tmp_path: Path) -> None:
+    """Data larger than the read buffer is fully read back."""
+    fifo = file_utils.NonBlockingRWFifo(str(tmp_path / "fifo"))
+    try:
+        data = "x" * 5000
+        fifo.write(data)
+        assert fifo.read() == data
+    finally:
+        fifo.close()
+
+
+def test_non_blocking_rw_fifo_path(tmp_path: Path) -> None:
+    """The path property returns the FIFO path."""
+    path = str(tmp_path / "fifo")
+    fifo = file_utils.NonBlockingRWFifo(path)
+    try:
+        assert fifo.path == path
+    finally:
+        fifo.close()

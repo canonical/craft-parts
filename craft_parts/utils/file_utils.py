@@ -93,6 +93,10 @@ def link_or_copy(
     :param permissions: The permissions definitions that should be applied to the
         new file.
     """
+    # Protect against self-linking (when destination symlinks back to source)
+    if source.exists() and destination.exists() and source.samefile(destination):
+        return
+
     try:
         if permissions or (not follow_symlinks and source.is_symlink()):
             copy(source, destination)

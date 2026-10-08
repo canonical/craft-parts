@@ -15,6 +15,7 @@
 """Unit tests for the Maven-use plugin."""
 
 import re
+import time
 from pathlib import Path
 from textwrap import dedent
 
@@ -116,6 +117,10 @@ def test_get_build_commands_is_reentrant(
 ) -> None:
     """Make sure a new pom is always written."""
     initial_age = fake_maven_project.stat().st_mtime
+
+    # Filesystem timestamps have coarse granularity (tied to the kernel tick),
+    # so wait past a tick to ensure a rewrite gets a strictly newer mtime.
+    time.sleep(0.1)
 
     plugin.get_build_commands()
 

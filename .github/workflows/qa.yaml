@@ -14,11 +14,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
 jobs:
   lint:
-    permissions:
-      contents: read
-      pull-requests: read
     uses: canonical/starflow/.github/workflows/lint-python.yaml@main
   test-common:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
@@ -32,7 +34,7 @@ jobs:
           ["noble", "s390x", "edge"],
           ["noble", "ppc64el", "edge"],
         ]
-      fast-test-python-versions: '["3.10", "3.12", "3.13"]'
+      fast-test-python-versions: '["3.10", "3.12", "3.13", "3.14"]'
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -53,7 +55,7 @@ jobs:
   test-flaky:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -65,12 +67,12 @@ jobs:
       lowest-python-platform: '["amd64", "focal"]'
       lowest-python-version: "3.10"
       pytest-markers: flaky
-      setup-vars: NO_JAVA=1 NO_PYTHON=1 NO_PLUGIN=1
+      setup-vars: NO_JAVA=1 NO_PYTHON=1
       use-lxd: false
   test-java-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -88,7 +90,7 @@ jobs:
   test-python-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-24.04",
@@ -104,7 +106,7 @@ jobs:
   test-python-plugins-jammy:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -118,7 +120,7 @@ jobs:
   test-other-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
-      fast-test-platforms: "[]"
+      fast-test-platforms: ""
       slow-test-platforms: >
         [
           "ubuntu-22.04",
@@ -141,7 +143,9 @@ jobs:
       fast-test-python-versions: '["3.12"]'
       slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
       slow-test-python-versions: '["3.12"]'
-      lowest-python-version: ""
+      lowest-python-platform: '["amd64", "focal"]'
+      lowest-python-version: "3.10"
       pytest-markers: requires_root
-      test-command-prefix: sudo env "PATH=$PATH"
+      setup-vars: NO_PYTHON=1
+      test-command-prefix: sudo env "PATH=$PATH" ${UV_RESOLUTION:+UV_RESOLUTION=$UV_RESOLUTION}
       use-lxd: false

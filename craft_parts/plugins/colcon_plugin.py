@@ -19,6 +19,7 @@
 import pathlib
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from .base import Plugin
@@ -30,12 +31,37 @@ class ColconPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["colcon"] = "colcon"
 
-    colcon_cmake_args: list[str] = []
-    colcon_packages: list[str] = []
-    colcon_packages_ignore: list[str] = []
+    colcon_cmake_args: list[str] = pydantic.Field(
+        default=[],
+        description="Arguments to pass to CMake projects.",
+    )
+    """Arguments to pass to CMake projects.
+
+    If an argument has the same name as a colcon argument, it must be prefixed with a
+    space to avoid a collision. A space in an argument is made literal by wrapping the
+    argument in double quotation marks (").
+    """
+
+    colcon_packages: list[str] = pydantic.Field(
+        default=[],
+        description="The colcon packages to build.",
+    )
+    """The colcon packages to build.
+
+    If unset, all packages in the workspace will be built. If set to an empty list
+    (``[]``), no packages will be built, which could be useful if you only want Debian
+    packages in the snap.
+    """
+
+    colcon_packages_ignore: list[str] = pydantic.Field(
+        default=[],
+        description="The packages for colcon to ignore.",
+    )
+    """The packages for colcon to ignore.
+    """
 
     # part properties required by the plugin
-    source: str  # type: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class ColconPlugin(Plugin):
@@ -55,12 +81,13 @@ class ColconPlugin(Plugin):
             "gcc",
             "g++",
             "cmake",
-            "colcon",
+            "make",
             "python3-colcon-core",
             "python3-colcon-cmake",
             "python3-colcon-package-selection",
             "python3-colcon-python-setup-py",
             "python3-colcon-parallel-executor",
+            "python3-colcon-recursive-crawl",
         }
 
     @override
@@ -129,17 +156,18 @@ class ColconPlugin(Plugin):
         if options.colcon_packages:
             build_command.extend(["--packages-select", *options.colcon_packages])
 
-        # compile in release only if user did not set the build type in cmake-args
-        if not any("-DCMAKE_BUILD_TYPE=" in s for s in options.colcon_cmake_args):
-            build_command.extend(
-                [
-                    "--cmake-args",
-                    "-DCMAKE_BUILD_TYPE=Release",
-                    *options.colcon_cmake_args,
-                ]
-            )
-        elif len(options.colcon_cmake_args) > 0:
-            build_command.extend(["--cmake-args", *options.colcon_cmake_args])
+        # Inject cmake defaults for options the user has not explicitly set:
+        # - Release build type (for performance; no debug symbols in a rock/snap)
+        # - BUILD_TESTING=OFF (test targets are not useful and pull in heavy deps)
+        # Both can be overridden by passing the corresponding flag in
+        # colcon-cmake-args. Detection matches any arg that sets the variable,
+        # including the typed CMake form (e.g. "-DBUILD_TESTING:BOOL=ON").
+        cmake_args = list(options.colcon_cmake_args)
+        if not any(s.lstrip().startswith("-DCMAKE_BUILD_TYPE") for s in cmake_args):
+            cmake_args.insert(0, "-DCMAKE_BUILD_TYPE=Release")
+        if not any(s.lstrip().startswith("-DBUILD_TESTING") for s in cmake_args):
+            cmake_args.append("-DBUILD_TESTING=OFF")
+        build_command.extend(["--cmake-args", *cmake_args])
 
         # Specify the number of workers
         build_command.extend(

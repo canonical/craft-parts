@@ -95,6 +95,10 @@ class AptCache(ContextDecorator):
 
     # pylint: disable=attribute-defined-outside-init
     def __enter__(self) -> Self:
+        # Always ignore Ubuntu's phased updates so the latest available
+        # package version is installed.
+        apt_pkg.config.set("APT::Get::Always-Include-Phased-Updates", "true")
+
         if self.stage_cache is not None:
             self.progress = LogProgress()
             self._populate_stage_cache_dir()
@@ -253,9 +257,11 @@ class AptCache(ContextDecorator):
                     str(download_path), progress=self.progress
                 )
             except apt.package.FetchError as err:
-                raise errors.PackageFetchError(str(err)) from err
+                package_url = package.candidate.uri
+                raise errors.PackageFetchError(package_url, details=str(err)) from err
 
-            if package.candidate is None:  # type: ignore[reportUnnecessaryComparison] # this appears to be possible after `fetch_binary`
+            # this appears to be possible after `fetch_binary`
+            if package.candidate is None:
                 raise errors.PackageNotFound(package.name)
 
             downloaded.append((package.name, package.candidate.version, Path(dl_path)))
@@ -291,7 +297,7 @@ class AptCache(ContextDecorator):
             (p.name, p.candidate.version) for p in marked_install_pkgs if p.candidate
         ]
 
-    def mark_packages(self, package_names: set[str]) -> None:
+    def mark_packages(self, package_names: list[str]) -> None:
         """Mark the given package names to be fetched from the repository.
 
         Two-pass fix: set all candidate versions before marking any packages.
@@ -299,7 +305,12 @@ class AptCache(ContextDecorator):
         package B (= v1), but B's default candidate is v2. By setting all
         candidates first, mark_install can resolve dependencies correctly.
 
-        :param package_names: The set of package names to be marked.
+        The iteration order of ``package_names`` determines the order in
+        which packages are marked for install, which affects the resolution
+        of alternative dependencies. Callers should pass a deduplicated list
+        in the order given by the user.
+
+        :param package_names: The list of package names to be marked.
         """
         # First pass: resolve names and set candidate versions
         resolved: list[apt.package.Package] = []
