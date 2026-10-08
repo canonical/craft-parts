@@ -380,7 +380,7 @@ class TestLifecycleManager:
         )
         assert raised.value.resolution == (
             "Add the missing slices to the 'build-slices' key of one of the parts "
-            "that declare build-slices or to the root-level 'build-slices' key."
+            "that declare build slices or to the root-level 'build-slices' key."
         )
 
     @pytest.mark.usefixtures("enable_build_slices")
@@ -398,7 +398,7 @@ class TestLifecycleManager:
                 },
                 "bar": {
                     "plugin": "nil",
-                    # base-file_bin in another
+                    # base-files_bin in another
                     "build-slices": ["base-files_bin"],
                 },
             }
