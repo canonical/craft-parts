@@ -17,11 +17,82 @@
 """Definitions and helpers to handle filesets."""
 
 import os
-from pathlib import Path
+from functools import lru_cache
+from pathlib import Path, PurePath
 
 from craft_parts import errors, features
 from craft_parts.utils import path_utils
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+
+
+@lru_cache(maxsize=65536)
+def _get_path(path: str) -> Path:
+    """Return a cached ``Path`` object for *path*.
+
+    By caching the Path construction here, we get to skip the checks that
+    ``Path.__init__`` does when we pass in the same path multiple times.
+    This is crucial for this module because staging a large project can
+    easily result in tens of thousands of Path objects being created from
+    only a few hundred actual path strings.
+    """
+    return Path(path)
+
+
+@lru_cache(maxsize=65536)
+def _get_pure_path(path: str) -> PurePath:
+    """Return a cached ``PurePath`` object for *path*.
+
+    Same as `_get_path` above. These objects are immutable and defined
+    entirely by their backing string.
+    """
+    return PurePath(path)
+
+
+@lru_cache(maxsize=65536)
+def _get_resolved_parent(base_str: str, parent_relpath: str) -> str:
+    """Resolve the parent directory, cached. Only to be used by ``_get_resolved_relative_path``.
+
+    The cache is cleared per filesystem scan (see ``migratable_filesets``);
+    calling this outside that lifecycle can return a stale symlink target.
+
+    Equivalent to ``Path(base_str, parent_relpath).resolve()``. However,
+    we use string operations and ``os.path`` here in order to avoid the
+    validation done when constructing a ``Path`` object, speeding up the
+    process when running this thousands of times.
+
+    Likewise, it's LRU cached because we will feasibly run this dozens
+    of times for the same pair of strings during the same fileset migration,
+    turning a string concatenation and a filesystem lookup into a pair of
+    equality checks (which are ~10% of the time just identity checks).
+    """
+    return os.path.realpath(os.path.join(base_str, parent_relpath))  # noqa: PTH118
+
+
+@lru_cache(maxsize=65536)
+def _get_resolved_base(base_str: str) -> str:
+    """Resolve the base directory, cached. Only to be used by ``_get_resolved_relative_path``.
+
+    The cache is cleared per filesystem scan (see ``migratable_filesets``);
+    calling this outside that lifecycle can return a stale symlink target.
+
+    Equivalent to pathlib's ``resolve()`` method, but cached for similar reasons
+    as ``_get_resolved_parent`` above.
+    """
+    return os.path.realpath(base_str)
+
+
+def _strip_base(base_str: str, path_str: str) -> str:
+    """Strip the base path from a full path.
+
+    This is roughly equivalent to pathlib's ``relative_to`` method, but it returns
+    the unaltered path string where ``relative_to`` would raise a ValueError.
+    This function is faster than ``relative_to`` because it doesn't need to
+    instantiate new ``Path`` objects, which is important in our use case
+    because of the sheer number of paths that might need this check.
+    """
+    if path_str.startswith(base_str):
+        return path_str[len(base_str) :]
+    return os.path.relpath(path_str, base_str.rstrip(os.sep))
 
 
 class Fileset:
@@ -144,6 +215,11 @@ def migratable_filesets(
     """
     includes, excludes = _get_file_list(fileset, partition, default_partition)
 
+    # Resolved-path caches must not outlive a single, unchanged view of the
+    # source tree (a replaced symlink parent changes realpath results).
+    _get_resolved_parent.cache_clear()
+    _get_resolved_base.cache_clear()
+
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
 
@@ -152,18 +228,29 @@ def migratable_filesets(
         files = {x for x in files if not x.is_relative_to(exclude_dir)}
 
     # Separate dirs from files.
-    dirs = {x for x in files if (srcdir / x).is_dir() and not (srcdir / x).is_symlink()}
+    dirs = {
+        x
+        for x in files
+        if (p := _get_path(f"{srcdir}/{x}")).is_dir() and not p.is_symlink()
+    }
 
     # Remove dirs from files.
     files = files - dirs
 
     # Include (resolved) parent directories for each selected file.
+    # This loop can run tens of thousands of times for large packages, especially
+    # for Imagecraft or for large snaps like MAAS. While these operations aren't
+    # exactly *slow* in pathlib, using these direct string resolutions and cached
+    # paths prevents the instantiation of potentially tens of thousands of
+    # redundant Path objects, reducing both memory usage and processing time.
+    # Do very careful performance and memory profiling when touching this loop.
+    cwd = Path()
     for _filename in files:
         filename = _get_resolved_relative_path(_filename, srcdir)
-        dirname = filename.parent
-        while dirname != Path():
+        dirname = _get_path(os.path.dirname(str(filename)))  # noqa: PTH120
+        while dirname != cwd:
             dirs.add(dirname)
-            dirname = dirname.parent
+            dirname = _get_path(os.path.dirname(str(dirname)))  # noqa: PTH120
 
     # Resolve parent paths for dirs and files.
     resolved_dirs = {_get_resolved_relative_path(dirname, srcdir) for dirname in dirs}
@@ -239,7 +326,7 @@ def _get_file_list(
     return processed_includes or ["*"], processed_excludes
 
 
-def _generate_include_set(directory: Path, includes: list[str]) -> set[Path]:
+def _generate_include_set(directory: Path, includes: list[str]) -> set[PurePath]:
     """Obtain the list of files to include based on include file filter.
 
     :param directory: The path to the tree containing the files to filter.
@@ -260,40 +347,60 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[Path]:
             include_files |= {directory / include}
 
     include_dirs = [x for x in include_files if x.is_dir() and not x.is_symlink()]
-    include_files = {x.relative_to(directory) for x in include_files}
+    base_str = str(directory)
+    base_str = base_str if base_str.endswith(os.sep) else base_str + os.sep
+    relative_include_files = {
+        _get_pure_path(_strip_base(base_str, str(x))) for x in include_files
+    }
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= {Path(root, d).relative_to(directory) for d in dirs}
-            include_files |= {Path(root, f).relative_to(directory) for f in files}
+            relative_include_files |= {
+                _get_pure_path(_strip_base(base_str, os.path.join(root, d)))  # noqa: PTH118
+                for d in dirs
+            }
+            relative_include_files |= {
+                _get_pure_path(_strip_base(base_str, os.path.join(root, f)))  # noqa: PTH118
+                for f in files
+            }
 
-    return include_files
+    return relative_include_files
 
 
 def _generate_exclude_set(
     directory: Path, excludes: list[str]
-) -> tuple[set[Path], set[Path]]:
+) -> tuple[set[PurePath], set[PurePath]]:
     """Obtain the list of files to exclude based on exclude file filter.
 
     :param directory: The path to the tree containing the files to filter.
 
     :return: The set of files to exclude.
     """
-    exclude_files: set[Path] = set()
+    absolute_exclude_files: set[Path] = set()
 
     for exclude in excludes:
         matches = directory.glob(exclude)
-        exclude_files |= set(matches)
+        absolute_exclude_files |= set(matches)
 
-    exclude_dirs = {x.relative_to(directory) for x in exclude_files if x.is_dir()}
-    exclude_files = {x.relative_to(directory) for x in exclude_files}
+    base_str = str(directory)
+    base_str = base_str if base_str.endswith(os.sep) else base_str + os.sep
+    exclude_dirs = {
+        _get_pure_path(_strip_base(base_str, str(x)))
+        for x in absolute_exclude_files
+        if x.is_dir()
+    }
+    exclude_files = {
+        _get_pure_path(_strip_base(base_str, str(x))) for x in absolute_exclude_files
+    }
 
     return exclude_files, exclude_dirs
 
 
-def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Path:
+def _get_resolved_relative_path(
+    relative_path: Path | PurePath, base_directory: Path
+) -> Path:
     """Resolve path components against target base_directory.
 
     If the resulting target path is a symlink, it will not be followed.
@@ -305,11 +412,18 @@ def _get_resolved_relative_path(relative_path: Path, base_directory: Path) -> Pa
 
     :return: Resolved path, relative to base_directory.
     """
-    parent_relpath, filename = relative_path.parent, relative_path.name
-    parent_abspath = (base_directory / parent_relpath).resolve()
+    parent_relpath, filename = os.path.split(str(relative_path))
+    if parent_relpath in ("", "."):
+        return _get_path(filename)
 
-    filename_abspath = Path(parent_abspath, filename)
-    return filename_abspath.relative_to(base_directory.resolve())
+    base_key = os.path.abspath(str(base_directory))  # noqa: PTH100
+    rel = os.path.relpath(
+        os.path.join(_get_resolved_parent(base_key, parent_relpath), filename),  # noqa: PTH118
+        _get_resolved_base(base_key),
+    )
+    if rel == os.pardir or rel.startswith(os.pardir + os.sep):
+        raise ValueError(f"{filename!r} not in the subpath of {base_key!r}")
+    return _get_path(rel)
 
 
 def normalize_entry(entry: str, default_partition: str) -> str:
