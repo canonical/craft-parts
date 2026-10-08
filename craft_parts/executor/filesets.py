@@ -238,10 +238,17 @@ def migratable_filesets(
     files = files - dirs
 
     # Include (resolved) parent directories for each selected file.
+    # This loop can run tens of thousands of times for large packages, especially
+    # for Imagecraft or for large snaps like MAAS. While these operations aren't
+    # exactly *slow* in pathlib, using these direct string resolutions and cached
+    # paths prevents the instantiation of potentially tens of thousands of
+    # redundant Path objects, reducing both memory usage and processing time.
+    # Do very careful performance and memory profiling when touching this loop.
+    cwd = Path()
     for _filename in files:
         filename = _get_resolved_relative_path(_filename, srcdir)
         dirname = _get_path(os.path.dirname(str(filename)))  # noqa: PTH120
-        while dirname != Path():
+        while dirname != cwd:
             dirs.add(dirname)
             dirname = _get_path(os.path.dirname(str(dirname)))  # noqa: PTH120
 
