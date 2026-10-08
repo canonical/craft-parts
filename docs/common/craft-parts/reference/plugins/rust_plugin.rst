@@ -14,149 +14,26 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.rust_plugin
 
-rust-channel
-~~~~~~~~~~~~
+.. kitbash-field:: RustPluginProperties rust_channel
 
-**Type:** string
+.. kitbash-field:: RustPluginProperties rust_features
+    :label: rust-features
 
-**Default:** unset
+.. kitbash-field:: RustPluginProperties rust_no_default_features
+    :label: rust-no-default-features
 
-Used to select which `Rust channel or
-version <https://rust-lang.github.io/rustup/concepts/channels.html#channels>`_ to use.
-It can be one of "stable", "beta", "nightly" or a version number. If you want to use a
-specific nightly version, use this format: ``"nightly-YYYY-MM-DD"``. If you don't want
-this plugin to install Rust toolchain for you, you can put ``"none"`` for this option.
+.. kitbash-field:: RustPluginProperties rust_path
 
-If this key is left unset, the plugin uses ``rustup`` and defaults to the ``stable``
-channel. However, if Cargo and the Rust compiler are already available in the build
-environment, the plugin uses those directly and skips the ``rustup`` toolchain selection.
+.. kitbash-field:: RustPluginProperties rust_use_global_lto
+    :label: rust-use-global-lto
 
-If this key is set to a channel or version, ``rustup`` must also be available in the
-build environment so the plugin can install or select the requested toolchain.
+.. kitbash-field:: RustPluginProperties rust_ignore_toolchain_file
 
+.. kitbash-field:: RustPluginProperties rust_cargo_parameters
 
-.. _rust-features:
-
-rust-features
-~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Features used to build optional dependencies. This is equivalent to the ``--features``
-option in Cargo.
-
-You can also use ``["*"]`` to select all the features available in the project.
-
-.. note::
-
-    This option does not override any default features specified by the project itself.
-
-    If you want to override the default features, please see the
-    :ref:`rust-no-default-features` option below.
-
-
-.. _rust-no-default-features:
-
-rust-no-default-features
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Type:** boolean
-
-**Default:** false
-
-If this option is set to ``true``, the default features specified by the project will be
-ignored.
-
-You can then use the :ref:`rust-features` key to specify any features you wish to
-override.
-
-
-rust-path
-~~~~~~~~~
-
-**Type:** list of strings
-
-**Default:** .
-
-The path to the package root (that contains the ``Cargo.toml`` file). This is equivalent
-to the ``--manifest-path`` option in Cargo.
-
-
-.. _rust-use-global-lto:
-
-rust-use-global-lto
-~~~~~~~~~~~~~~~~~~~
-
-**Type:** boolean
-
-**Default:** false
-
-Whether to use global LTO. This option may significantly impact the build performance
-but reducing the final binary size and improve the runtime performance. This will
-forcibly enable LTO for all the crates you specified, regardless of whether the projects
-have the LTO option enabled in the Cargo.toml file.
-
-This is equivalent to the ``lto = "fat"`` option in the ``Cargo.toml`` file.
-
-If you want better runtime performance, see the :ref:`Performance tuning <perf-tuning>`
-section below.
-
-
-rust-ignore-toolchain-file
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Type:** boolean
-
-**Default:** false
-
-Whether to ignore the ``rust-toolchain.toml`` and ``rust-toolchain`` file. The upstream
-project can use this file to specify which Rust toolchain to use and which component to
-install. If you don't want to follow the upstream project's specifications, you can put
-true for this option to ignore the toolchain file.
-
-
-rust-cargo-parameters
-~~~~~~~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Append additional parameters to the Cargo command line.
-
-
-rust-inherit-ldflags
-~~~~~~~~~~~~~~~~~~~~~
-
-**Type:** boolean
-
-**Default:** false
-
-Whether to inherit the LDFLAGS from the environment. This option will add the LDFLAGS
-from the environment to the Rust linker directives.
-
-Cargo build system and Rust compiler by default do not respect the ``LDFLAGS``
-environment variable. This option will cause the craft-parts plugin to forcibly add the
-contents inside the ``LDFLAGS`` to the Rust linker directives by wrapping and appending
-the ``LDFLAGS`` value to ``RUSTFLAGS``.
-
-.. note::
-
-    You may use this option to tune the Rust binary in a classic Snap to respect the
-    Snap linkage, so that the binary will not find the libraries in the host filesystem.
-
-    Here is an example on how you might do this on core24:
-
-    .. code-block:: yaml
-
-        parts:
-          my-classic-app:
-            plugin: rust
-            source: .
-            rust-inherit-ldflags: true
-            build-environment:
-              - LDFLAGS: >
-                  -Wl,-rpath=\$ORIGIN/lib:/snap/core24/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR
-                  -Wl,-dynamic-linker=$(find /snap/core24/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR -name 'ld*.so.*' -print | head -n1)
+.. kitbash-field:: RustPluginProperties rust_inherit_ldflags
 
 
 Environment variables

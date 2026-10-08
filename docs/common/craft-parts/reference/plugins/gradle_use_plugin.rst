@@ -13,33 +13,13 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.gradle_use_plugin
 
-gradle-init-script
-~~~~~~~~~~~~~~~~~~
+.. kitbash-field:: GradleUsePluginProperties gradle_init_script
 
-**Type:** string
+.. kitbash-field:: GradleUsePluginProperties gradle_parameters
 
-The path to the initialization script to run with ``gradle --init-script
-<gradle-init-script>`` command. See `official gradle documentation
-<https://docs.gradle.org/current/userguide/init_scripts.html>`_ on the init script.
-
-
-gradle-parameters
-~~~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Used to add additional parameters to the ``gradle publish`` command line.
-
-
-gradle-use-daemon
-~~~~~~~~~~~~~~~~~
-
-**Type:** boolean
-**Default:** false
-
-Whether to use the `Gradle daemon <https://docs.gradle.org/current/userguide/gradle_daemon.html>`_
-during the build. The daemon is disabled by default.
+.. kitbash-field:: GradleUsePluginProperties gradle_use_daemon
 
 
 Attributes

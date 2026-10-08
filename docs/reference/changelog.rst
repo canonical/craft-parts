@@ -19,6 +19,23 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+X.Y.Z (YYYY-MM-DD)
+------------------
+
+New features:
+
+- Support ``craftctl default`` in ``override-build`` for parts that declare
+  ``build-slices``. Other ``craftctl`` commands are not supported.
+
+Bug fixes:
+
+- Stage packages are now marked in the order they are declared, making the
+  resolution of alternative dependencies deterministic. For example,
+  ``locales-all`` listed before ``postgresql`` is staged without also
+  staging ``locales``.
+
+
 .. _release-2.37.2:
 
 2.37.2 (2026-10-08)
@@ -29,6 +46,17 @@ Bug fixes:
 - Fix performance regressions in fileset migration.
 
 For a complete list of commits, check out the `2.37.2`_ release on GitHub.
+
+
+.. _release-2.35.2:
+
+2.35.2 (2026-10-08)
+-------------------
+
+- Fix performance regressions in fileset migration.
+
+For a complete list of commits, check out the `2.35.2`_ release on GitHub.
+
 
 .. _release-2.37.1:
 
@@ -1917,6 +1945,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _2.37.1: https://github.com/canonical/craft-parts/releases/tag/2.37.1
 .. _2.37.0: https://github.com/canonical/craft-parts/releases/tag/2.37.0
 .. _2.36.0: https://github.com/canonical/craft-parts/releases/tag/2.36.0
+.. _2.35.2: https://github.com/canonical/craft-parts/releases/tag/2.35.2
 .. _2.35.1: https://github.com/canonical/craft-parts/releases/tag/2.35.1
 .. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
 .. _2.34.1: https://github.com/canonical/craft-parts/releases/tag/2.34.1

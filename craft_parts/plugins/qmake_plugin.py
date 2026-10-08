@@ -22,6 +22,7 @@ import logging
 from pathlib import Path
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from .base import Plugin
@@ -35,9 +36,33 @@ class QmakePluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["qmake"] = "qmake"
 
-    qmake_parameters: list[str] = []
-    qmake_project_file: str = ""
-    qmake_major_version: int = 5
+    qmake_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to qmake.",
+    )
+    """The parameters to pass to qmake.
+    """
+
+    qmake_project_file: str = pydantic.Field(
+        default="",
+        description="The path to the qmake project file to use.",
+    )
+    """The path to the qmake project file to use.
+
+    This key is usually only needed if qmake can't determine the project file
+    automatically. If the ``source-subdir`` key is set and the value already starts with
+    that prefix, the path is resolved relative to the source directory. Otherwise, it's
+    resolved relative to the source subdirectory.
+    """
+
+    qmake_major_version: int = pydantic.Field(
+        default=5,
+        description="The major version of Qt to use.",
+    )
+    """The major version of Qt to use.
+
+    Defaults to ``5``.
+    """
 
     # part properties required by the plugin
     source: str

@@ -15,25 +15,11 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.dotnet_plugin
 
-dotnet-build-configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. kitbash-field:: DotnetPluginProperties dotnet_build_configuration
 
-**Type**: string
-
-**Default:** ``"Release"``
-
-The dotnet build configuration to use.
-
-
-dotnet-self-contained-runtime-identifier
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Type:** string
-
-Create a self contained .NET application using the specified Runtime Identifier. See the
-`Runtime Identifier catalogue`_ for a list of possible values. This key has no default
-value, meaning that it won't create self-contained executables unless set.
+.. kitbash-field:: DotnetPluginProperties dotnet_self_contained_runtime_identifier
 
 
 .. _dotnet-details-begin:
@@ -93,6 +79,3 @@ environments.
         build-snaps: [dotnet-sdk]
         dotnet-build-configuration: Debug
         dotnet-self-contained-runtime-identifier: linux-x64
-
-
-.. _Runtime Identifier catalogue: https://learn.microsoft.com/en-us/dotnet/core/rid-catalog

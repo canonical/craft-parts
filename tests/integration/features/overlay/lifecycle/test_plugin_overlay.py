@@ -21,6 +21,7 @@ import tempfile
 from pathlib import Path
 
 import craft_parts
+import distro
 import pytest
 import yaml
 from craft_parts import Step, plugins
@@ -33,6 +34,10 @@ from tests.integration.features.overlay_plugins import (
 pytestmark = [
     pytest.mark.usefixtures("enable_overlay_feature"),
     pytest.mark.requires_root,
+    pytest.mark.skipif(
+        distro.id() == "ubuntu" and distro.version() == "20.04",
+        reason="focal has no apt chisel slices",
+    ),
 ]
 
 

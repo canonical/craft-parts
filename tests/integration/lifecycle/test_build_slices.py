@@ -21,6 +21,7 @@ import subprocess
 from pathlib import Path
 
 import craft_parts
+import distro
 import pytest
 import yaml
 from craft_parts import Step
@@ -28,6 +29,10 @@ from craft_parts import Step
 DATA_DIR = Path(__file__).parent / "data/build-slices"
 
 
+@pytest.mark.skipif(
+    distro.id() == "ubuntu" and distro.version() == "20.04",
+    reason="focal has no golang-go chisel slices",
+)
 @pytest.mark.requires_root
 @pytest.mark.slow
 @pytest.mark.usefixtures("enable_build_slices")
@@ -48,6 +53,8 @@ def test_build_step_runs_in_build_slices_chroot(tmp_homedir_path):
 
     assert (tmp_homedir_path / "prime/result").read_text() == "dependency\n"
     assert (tmp_homedir_path / "prime/plugin-file").read_text() == "dump plugin\n"
+    # craftctl default in override-build runs plugin commands, then user commands
+    assert (tmp_homedir_path / "prime/after-default").read_text() == "after-default\n"
     completed_process = subprocess.run(
         [tmp_homedir_path / "prime/bin/hello"],
         check=True,
