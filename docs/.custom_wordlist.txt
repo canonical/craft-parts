@@ -25,6 +25,7 @@ dotnet
 dvipng
 filesets?
 fonts
+fpc
 freefont
 Furo
 github
