@@ -21,11 +21,23 @@ from __future__ import annotations
 import abc
 import contextlib
 from io import StringIO
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
-from typing_extensions import override
+from typing_extensions import NotRequired, override
 
 from craft_parts.utils.formatting_utils import humanize_list
+
+
+class PartitionMessageInfo(TypedDict):
+    """Structured data for a partition message group."""
+
+    part_name: NotRequired[str]
+    attribute: str
+    messages: list[str]
+
+
+PartitionErrorInfo = PartitionMessageInfo
+PartitionWarningInfo = PartitionMessageInfo
 
 if TYPE_CHECKING:
     import pathlib
@@ -819,27 +831,45 @@ class PartitionError(PartsError):
         super().__init__(brief=brief, details=details, resolution=resolution)
 
 
+def _format_partition_messages(
+    partition_messages: list[PartitionMessageInfo],
+) -> list[str]:
+    formatted_lines: list[str] = []
+
+    for info in partition_messages:
+        part_name = info.get("part_name")
+        if part_name:
+            formatted_lines.append(f"  parts.{part_name}.{info['attribute']}")
+        else:
+            formatted_lines.append(f"  {info['attribute']}")
+        formatted_lines.extend(f"    {message}" for message in info["messages"])
+
+    return formatted_lines
+
+
 class PartitionUsageError(PartitionError):
     """Error for a list of invalid partition usages.
 
-    :param error_list: Iterable of strings describing the invalid usages.
+    :param partition_errors: Structured partition error data.
     :param partitions: Iterable of the names of valid partitions.
     :param brief: Override brief message.
     """
 
     def __init__(
         self,
-        error_list: Iterable[str],
+        partition_errors: list[PartitionErrorInfo],
         partitions: Iterable[str] | None,
         brief: str | None = None,
     ) -> None:
+        formatted_lines = _format_partition_messages(partition_errors)
+
         valid_partitions = (
             f"\nValid partitions: {', '.join(partitions)}" if partitions else ""
         )
 
         super().__init__(
             brief=brief or "Invalid usage of partitions",
-            details="\n".join(error_list) + valid_partitions,
+            details="\n".join(formatted_lines) + valid_partitions,
             resolution="Correct the invalid partition usage and try again.",
         )
 
@@ -847,16 +877,18 @@ class PartitionUsageError(PartitionError):
 class PartitionUsageWarning(PartitionError, Warning):  # noqa: N818
     """Warnings for possibly invalid usages of partitions.
 
-    :param warning_list: Iterable of strings describing the misuses.
+    :param partition_warnings: Structured partition warning data.
     """
 
-    def __init__(self, warning_list: Iterable[str]) -> None:
+    def __init__(self, partition_warnings: list[PartitionWarningInfo]) -> None:
+        formatted_lines = _format_partition_messages(partition_warnings)
+
         super().__init__(
             brief="Possible misuse of partitions",
             details=(
                 "The following entries begin with a valid partition name but are "
                 "not wrapped in parentheses. These entries will go into the "
-                "default partition.\n" + "\n".join(warning_list)
+                "default partition.\n" + "\n".join(formatted_lines)
             ),
             resolution=(
                 "Wrap the partition name in parentheses, for example "
@@ -879,7 +911,7 @@ class PartitionNotFound(PartitionUsageError):  # noqa: N818
         super().__init__(
             brief=f"Requested partition does not exist: {partition_name!r}",
             partitions=partitions,
-            error_list=[],
+            partition_errors=[],
         )
 
 

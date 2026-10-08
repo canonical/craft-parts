@@ -430,9 +430,14 @@ class TestPartitionErrors:
 
     def test_invalid_partition_usage(self):
         err = errors.PartitionUsageError(
-            error_list=[
-                "  parts.test-part.organize",
-                "    unknown partition 'foo' in '(foo)'",
+            partition_errors=[
+                {
+                    "part_name": "test-part",
+                    "attribute": "organize",
+                    "messages": [
+                        "unknown partition 'foo' in '(foo)'",
+                    ],
+                }
             ],
             partitions=["default", "mypart", "yourpart"],
         )
@@ -447,9 +452,14 @@ class TestPartitionErrors:
 
     def test_invalid_partition_warning(self):
         err = errors.PartitionUsageWarning(
-            warning_list=[
-                "  parts.test-part.organize",
-                "    misused partition 'yourpart' in 'yourpart/test-file'",
+            partition_warnings=[
+                {
+                    "part_name": "test-part",
+                    "attribute": "organize",
+                    "messages": [
+                        "misused partition 'yourpart' in 'yourpart/test-file'",
+                    ],
+                }
             ]
         )
 
