@@ -19,7 +19,7 @@
 import logging
 import os
 import shutil
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
@@ -1656,7 +1656,7 @@ def _consolidate_states(
 @contextmanager
 def _conditional_layer_mount(
     overlay_manager: OverlayManager, *, top_part: Part, condition: bool
-) -> Iterator[None]:
+) -> Generator[None]:
     """Conditionally execute the enclosed code block with the overlay mounted."""
     if condition:
         with overlays.LayerMount(overlay_manager, top_part=top_part):
