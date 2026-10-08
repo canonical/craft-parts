@@ -89,7 +89,8 @@ class Sequencer:
             raise errors.FeatureError("Overlay step is not supported.")
 
         self._actions = []
-        self._add_all_actions(target_step, part_names, rerun_target_step=rerun)
+        with self._sm.cache_source_outdated():
+            self._add_all_actions(target_step, part_names, rerun_target_step=rerun)
         return self._actions
 
     def reload_state(self) -> None:
