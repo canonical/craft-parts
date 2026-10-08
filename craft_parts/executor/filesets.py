@@ -27,12 +27,72 @@ from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
 @lru_cache(maxsize=65536)
 def _get_path(path: str) -> Path:
+    """Return a cached ``Path`` object for *path*.
+
+    By caching the Path construction here, we get to skip the checks that
+    ``Path.__init__`` does when we pass in the same path multiple times.
+    This is crucial for this module because staging a large project can
+    easily result in tens of thousands of Path objects being created from
+    only a few hundred actual path strings.
+    """
     return Path(path)
 
 
 @lru_cache(maxsize=65536)
 def _get_pure_path(path: str) -> PurePath:
+    """Return a cached ``PurePath`` object for *path*.
+
+    Same as `_get_path` above. These objects are immutable and defined
+    entirely by their backing string.
+    """
     return PurePath(path)
+
+
+@lru_cache(maxsize=65536)
+def _get_resolved_parent(base_str: str, parent_relpath: str) -> str:
+    """Resolve the parent directory, cached. Only to be used by ``_get_resolved_relative_path``.
+
+    The cache is cleared per filesystem scan (see ``migratable_filesets``);
+    calling this outside that lifecycle can return a stale symlink target.
+
+    Equivalent to ``Path(base_str, parent_relpath).resolve()``. However,
+    we use string operations and ``os.path`` here in order to avoid the
+    validation done when constructing a ``Path`` object, speeding up the
+    process when running this thousands of times.
+
+    Likewise, it's LRU cached because we will feasibly run this dozens
+    of times for the same pair of strings during the same fileset migration,
+    turning a string concatenation and a filesystem lookup into a pair of
+    equality checks (which are ~10% of the time just identity checks).
+    """
+    return os.path.realpath(os.path.join(base_str, parent_relpath))  # noqa: PTH118
+
+
+@lru_cache(maxsize=65536)
+def _get_resolved_base(base_str: str) -> str:
+    """Resolve the base directory, cached. Only to be used by ``_get_resolved_relative_path``.
+
+    The cache is cleared per filesystem scan (see ``migratable_filesets``);
+    calling this outside that lifecycle can return a stale symlink target.
+
+    Equivalent to pathlib's ``resolve()`` method, but cached for similar reasons
+    as ``_get_resolved_parent`` above.
+    """
+    return os.path.realpath(base_str)
+
+
+def _strip_base(base_str: str, path_str: str) -> str:
+    """Strip the base path from a full path.
+
+    This is roughly equivalent to pathlib's ``relative_to`` method, but it returns
+    the unaltered path string where ``relative_to`` would raise a ValueError.
+    This function is faster than ``relative_to`` because it doesn't need to
+    instantiate new ``Path`` objects, which is important in our use case
+    because of the sheer number of paths that might need this check.
+    """
+    if path_str.startswith(base_str):
+        return path_str[len(base_str) :]
+    return os.path.relpath(path_str, base_str.rstrip(os.sep))
 
 
 class Fileset:
@@ -157,8 +217,8 @@ def migratable_filesets(
 
     # Resolved-path caches must not outlive a single, unchanged view of the
     # source tree (a replaced symlink parent changes realpath results).
-    _resolved_parent.cache_clear()
-    _resolved_base.cache_clear()
+    _get_resolved_parent.cache_clear()
+    _get_resolved_base.cache_clear()
 
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
@@ -302,12 +362,6 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[PurePath]
     return relative_include_files
 
 
-def _strip_base(base_str: str, path_str: str) -> str:
-    if path_str.startswith(base_str):
-        return path_str[len(base_str) :]
-    return os.path.relpath(path_str, base_str.rstrip(os.sep))
-
-
 def _generate_exclude_set(
     directory: Path, excludes: list[str]
 ) -> tuple[set[PurePath], set[PurePath]]:
@@ -337,26 +391,6 @@ def _generate_exclude_set(
     return exclude_files, exclude_dirs
 
 
-@lru_cache(maxsize=65536)
-def _resolved_parent(base_str: str, parent_relpath: str) -> str:
-    """Resolve the parent directory, cached. Only to be used by ``_get_resolved_relative_path``.
-
-    The cache is cleared per filesystem scan (see ``migratable_filesets``);
-    calling this outside that lifecycle can return a stale symlink target.
-    """
-    return os.path.realpath(os.path.join(base_str, parent_relpath))  # noqa: PTH118
-
-
-@lru_cache(maxsize=65536)
-def _resolved_base(base_str: str) -> str:
-    """Resolve the base directory, cached. Only to be used by ``_get_resolved_relative_path``.
-
-    The cache is cleared per filesystem scan (see ``migratable_filesets``);
-    calling this outside that lifecycle can return a stale symlink target.
-    """
-    return os.path.realpath(base_str)
-
-
 def _get_resolved_relative_path(
     relative_path: Path | PurePath, base_directory: Path
 ) -> Path:
@@ -377,8 +411,8 @@ def _get_resolved_relative_path(
 
     base_key = os.path.abspath(str(base_directory))  # noqa: PTH100
     rel = os.path.relpath(
-        os.path.join(_resolved_parent(base_key, parent_relpath), filename),  # noqa: PTH118
-        _resolved_base(base_key),
+        os.path.join(_get_resolved_parent(base_key, parent_relpath), filename),  # noqa: PTH118
+        _get_resolved_base(base_key),
     )
     if rel == os.pardir or rel.startswith(os.pardir + os.sep):
         raise ValueError(f"{filename!r} not in the subpath of {base_key!r}")
