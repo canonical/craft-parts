@@ -25,57 +25,58 @@ class TestExecutor:
     """Verify executor class methods with partitions and overlays."""
 
     @pytest.mark.parametrize(
-        ("parts", "level"),
+        ("part_specs", "level"),
         [
             ([], 0),
-            ([Part("p1", {"plugin": "nil"})], 0),
-            ([Part("p1", {"plugin": "nil"}), Part("p2", {"plugin": "nil"})], 0),
+            ([("p1", {"plugin": "nil"})], 0),
+            ([("p1", {"plugin": "nil"}), ("p2", {"plugin": "nil"})], 0),
             (
                 [
-                    Part("p1", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
-                    Part("p2", {"plugin": "nil"}),
+                    ("p1", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    ("p2", {"plugin": "nil"}),
                 ],
                 1,
             ),
             (
                 [
-                    Part("p1", {"plugin": "nil"}),
-                    Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    ("p1", {"plugin": "nil"}),
+                    ("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
                 ],
                 1,
             ),
             (
                 [
-                    Part("p1", {"plugin": "nil"}),
-                    Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
-                    Part("p3", {"plugin": "nil"}),
-                    Part("p4", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    ("p1", {"plugin": "nil"}),
+                    ("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    ("p3", {"plugin": "nil"}),
+                    ("p4", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
                 ],
                 2,
             ),
             (
                 [
-                    Part("p1", {"plugin": "nil"}),
-                    Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
-                    Part("p3", {"plugin": "nil"}),
-                    Part("p4", {"plugin": "nil"}),
-                    Part("p5", {"plugin": "nil"}),
-                    Part("p6", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    ("p1", {"plugin": "nil"}),
+                    ("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    ("p3", {"plugin": "nil"}),
+                    ("p4", {"plugin": "nil"}),
+                    ("p5", {"plugin": "nil"}),
+                    ("p6", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
                 ],
                 2,
             ),
             (
                 [
-                    Part("p1", {"plugin": "nil"}),
-                    Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
-                    Part("p3", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
-                    Part("p4", {"plugin": "nil"}),
+                    ("p1", {"plugin": "nil"}),
+                    ("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    ("p3", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
+                    ("p4", {"plugin": "nil"}),
                 ],
                 2,
             ),
         ],
     )
-    def test_cache_level(self, new_dir, partitions, parts, level):
+    def test_cache_level(self, new_dir, partitions, part_specs, level):
+        parts = [Part(name, data, partitions=partitions) for name, data in part_specs]
         info = ProjectInfo(
             application_name="test", cache_dir=new_dir, partitions=partitions
         )

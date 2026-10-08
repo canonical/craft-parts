@@ -237,7 +237,7 @@ def test_organize(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
     # Verify that it can be organized again by overwriting
@@ -251,7 +251,7 @@ def test_organize(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=True,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -330,7 +330,7 @@ def test_organize_no_overwrite(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -378,7 +378,7 @@ def test_organize_no_overwrite_idempotent(new_dir, data):
         expected_message=data.get("expected_message"),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
     organize_and_assert(
@@ -391,7 +391,7 @@ def test_organize_no_overwrite_idempotent(new_dir, data):
         expected_message=data.get("expected_message_2", data.get("expected_message")),
         expected_overwrite=data.get("expected_overwrite"),
         overwrite=False,
-        install_dirs={None: Path(new_dir / "install")},
+        install_dirs={"default": Path(new_dir / "install")},
     )
 
 
@@ -537,7 +537,7 @@ def test_organize_from_build(data, new_dir):
         expected_overwrite=None,
         overwrite=False,
         install_dirs={
-            None: Path(new_dir / "install"),
+            "default": Path(new_dir / "install"),
             BUILD_PARTITION: Path(new_dir / "build_dir"),
         },
     )

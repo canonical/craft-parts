@@ -85,28 +85,15 @@ class TestExecutor:
         assert file2.exists() is False
 
     @pytest.mark.parametrize(
-        ("parts", "level"),
+        ("part_specs", "level"),
         [
             ([], 0),
-            ([Part("p1", {"plugin": "nil"})], 0),
-            ([Part("p1", {"plugin": "nil"}), Part("p2", {"plugin": "nil"})], 0),
-            (
-                [
-                    Part("p1", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
-                    Part("p2", {"plugin": "nil"}),
-                ],
-                0,
-            ),
-            (
-                [
-                    Part("p1", {"plugin": "nil"}),
-                    Part("p2", {"plugin": "nil", "organize": {"foo": "(overlay)/bar"}}),
-                ],
-                0,
-            ),
+            ([("p1", {"plugin": "nil"})], 0),
+            ([("p1", {"plugin": "nil"}), ("p2", {"plugin": "nil"})], 0),
         ],
     )
-    def test_cache_level(self, new_dir, parts, level):
+    def test_cache_level(self, new_dir, part_specs, level):
+        parts = [Part(name, data) for name, data in part_specs]
         info = ProjectInfo(application_name="test", cache_dir=new_dir)
         e = Executor(project_info=info, part_list=parts)
         assert e._overlay_manager.cache_level == level

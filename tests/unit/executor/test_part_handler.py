@@ -507,6 +507,20 @@ class TestPartHandling:
         assert err == "+ echo hello\n"
         assert run_builtin_mock.mock_calls == []
 
+        if step in {Step.STAGE, Step.PRIME}:
+            assert (
+                list(
+                    handler._run_step(
+                        step_info=step_info,
+                        scriptlet_name=scriptlet,
+                        work_dir=Path(),
+                        stdout=None,
+                        stderr=None,
+                    ).partitions_contents
+                )
+                == part_info.partitions
+            )
+
     # pylint: enable=too-many-arguments
 
     @pytest.mark.parametrize(
@@ -1209,6 +1223,10 @@ class TestFileFilter:
 
     _destdir = Path("destdir")
 
+    @staticmethod
+    def _partition() -> str:
+        return "default"
+
     @pytest.fixture(autouse=True)
     def setup_method_fixture(self, new_dir, partitions):
         (self._destdir / "dir1").mkdir(parents=True)
@@ -1222,7 +1240,7 @@ class TestFileFilter:
     def test_apply_file_filter_empty(self, new_dir, partitions):
         fileset = filesets.Fileset([])
         files, dirs = filesets.migratable_filesets(
-            fileset, self._destdir, "default", "default" if partitions else None
+            fileset, self._destdir, "default", self._partition()
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1238,7 +1256,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file1", "-dir1/file3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, self._destdir, "default", "default" if partitions else None
+            fileset, self._destdir, "default", self._partition()
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1254,7 +1272,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_dir(self, new_dir, partitions):
         fileset = filesets.Fileset(["-dir1", "-dir1/dir2"])
         files, dirs = filesets.migratable_filesets(
-            fileset, self._destdir, "default", "default" if partitions else None
+            fileset, self._destdir, "default", self._partition()
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1269,7 +1287,7 @@ class TestFileFilter:
     def test_apply_file_filter_remove_symlink(self, new_dir, partitions):
         fileset = filesets.Fileset(["-file4", "-dir3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, self._destdir, "default", "default" if partitions else None
+            fileset, self._destdir, "default", self._partition()
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1285,7 +1303,7 @@ class TestFileFilter:
     def test_apply_file_filter_keep_file(self, new_dir, partitions):
         fileset = filesets.Fileset(["dir1/file3"])
         files, dirs = filesets.migratable_filesets(
-            fileset, self._destdir, "default", "default" if partitions else None
+            fileset, self._destdir, "default", self._partition()
         )
         part_handler._apply_file_filter(
             filter_files=files, filter_dirs=dirs, destdir=self._destdir
@@ -1336,10 +1354,11 @@ class TestHelpers:
         [
             (
                 {},
-                {None: {"a": Path("a")}},
-                {None: {"b": Path("b")}},
+                {"default": {"a": Path("a")}},
+                {"default": {"b": Path("b")}},
                 {
-                    None: MigrationState(
+                    "default": MigrationState(
+                        partition="default",
                         files={Path("a")},
                         directories={Path("b")},
                     )

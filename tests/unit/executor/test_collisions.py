@@ -430,17 +430,12 @@ class TestCollisions:
 
 
 class TestCollisionsPartitionError:
-    def test_partitions_defined_but_not_enabled(self, tmpdir):
-        """Raise an error if partitions are defined but not enabled."""
+    def test_partitions_default_only_without_explicit_partitions(self, tmpdir):
+        """Default-only projects do not require the legacy feature toggle."""
         part = Part(
             name="part",
             data={},
             project_dirs=ProjectDirs(work_dir=tmpdir),
         )
 
-        with pytest.raises(errors.FeatureError) as raised:
-            check_for_stage_collisions(part_list=[part], partitions=["default"])
-
-        assert raised.value.brief == (
-            "Partitions specified but partitions feature is not enabled."
-        )
+        check_for_stage_collisions(part_list=[part], partitions=["default"])

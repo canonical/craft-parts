@@ -237,8 +237,7 @@ def validate_filesystem_mount(data: list[dict[str, Any]]) -> None:
 def validate_filesystem_mounts(filesystem_mounts: dict[str, Any] | None) -> None:
     """Validate the filesystems section.
 
-    If filesystems are defined then both partition and overlay features must
-    be enabled.
+    If filesystems are defined then the overlay feature must be enabled.
     A filesystem_mounts dict must only have a single "default" entry.
     The first entry in default must map the '/' mount.
 
@@ -247,13 +246,10 @@ def validate_filesystem_mounts(filesystem_mounts: dict[str, Any] | None) -> None
     if not filesystem_mounts:
         return
 
-    if (
-        not features.Features().enable_partitions
-        or not features.Features().enable_overlay
-    ):
+    if not features.Features().enable_overlay:
         raise errors.FilesystemMountError(
             brief="Missing features to use filesystems",
-            resolution="Enable both the partition and overlay features.",
+            resolution="Enable the overlay feature.",
         )
 
     if len(filesystem_mounts) > 1:

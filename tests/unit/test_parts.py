@@ -235,17 +235,28 @@ class TestPartSpecs:
 class TestPartPartitionUsage:
     """Test usage of partitions in parts."""
 
-    def test_part_invalid_partition_usage_no_error(self, partitions):
-        """Do not error for invalid partition usage when the feature is disabled."""
-        # if partitions were enabled, this would raise a ValueError
+    def test_part_invalid_partition_usage_raises(self, partitions):
+        """Invalid partition markers are rejected in the default-only path too."""
         part_data = {
             "organize": {"test": "(foo)"},
             "stage": ["(bar)/test"],
             "prime": ["(baz)"],
         }
 
-        Part("a", part_data, partitions=partitions)
-        Part("b", part_data, partitions=partitions)
+        error = re.escape(
+            "Invalid usage of partitions\n"
+            "  parts.a.organize\n"
+            "    unknown partition 'foo' in '(foo)'\n"
+            "  parts.a.stage\n"
+            "    unknown partition 'bar' in '(bar)/test'\n"
+            "  parts.a.prime\n"
+            "    unknown partition 'baz' in '(baz)'\n"
+            "    no path specified after partition in '(baz)'\n"
+            "Valid partitions: default\n"
+            "Correct the invalid partition usage and try again."
+        )
+        with pytest.raises(errors.PartitionUsageError, match=error):
+            Part("a", part_data, partitions=partitions)
 
 
 class TestPartData:
@@ -466,7 +477,7 @@ class TestPartData:
     def test_part_install_dirs(self, new_dir):
         p = Part("foo", {"organize": {"foo": "bar"}})
         assert p.part_install_dirs == {
-            None: Path(new_dir / "parts/foo/install"),
+            "default": Path(new_dir / "parts/foo/install"),
         }
 
     @pytest.mark.parametrize(
