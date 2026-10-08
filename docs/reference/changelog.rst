@@ -28,7 +28,7 @@ Bug fixes:
 
 - Fix performance regressions in fileset migration.
 
-For a complete list of commits, check out the `2.37.1`_ release on GitHub.
+For a complete list of commits, check out the `2.37.2`_ release on GitHub.
 
 .. _release-2.37.1:
 
