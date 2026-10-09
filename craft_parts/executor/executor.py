@@ -323,9 +323,7 @@ class Executor:
             packages.snaps.install_snaps(build_snaps)
 
     def _cut_build_slices(self) -> None:
-        build_slices: set[str] = set()
-        for part in self._part_list:
-            build_slices.update(part.spec.build_slices)
+        build_slices = parts.get_build_slices(part_list=self._part_list)
 
         state_file = self._build_slices_state_file()
         slices_dir = self._project_info.dirs.build_slices_dir
@@ -338,7 +336,7 @@ class Executor:
             return
 
         state = self._load_build_slices_state(state_file)
-        if state and state.slices == build_slices:
+        if state and state.slices == set(build_slices):
             # Nothing to do: slices already cut
             self._prepare_build_slices_root(slices_dir)
             self._validate_build_slices_root(slices_dir)

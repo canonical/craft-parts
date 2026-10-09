@@ -26,6 +26,7 @@ from craft_parts.infos import ProjectInfo, ProjectOptions, ProjectVarInfo
 from craft_parts.overlays import LayerHash, LayerStateManager
 from craft_parts.parts import Part, part_list_by_name, sort_parts
 from craft_parts.state_manager import StateManager, states
+from craft_parts.state_manager.state_manager import get_part_properties
 from craft_parts.steps import Step
 
 logger = logging.getLogger(__name__)
@@ -286,7 +287,7 @@ class Sequencer:
             self._add_action(part, step, reason=reason)
 
         state: states.StepState
-        part_properties = {**part.spec.marshal(), **part.plugin_properties.marshal()}
+        part_properties = get_part_properties(part, part_list=self._part_list)
 
         # create step state
 

@@ -42,7 +42,7 @@ class TestBuildState:
     def test_marshal_unmarshal(self):
         state_data = {
             "partition": "default",
-            "assets": {"build-packages": ["foo"]},
+            "assets": {"build-packages": ["foo"], "build-slices": ["bar_baz"]},
             "part-properties": {"plugin": "nil"},
             "project-options": {
                 "application_name": "",
@@ -76,7 +76,7 @@ class TestBuildStatePersist:
 
     def test_write(self, properties):
         state = BuildState(
-            assets={"build-packages": ["foo"]},
+            assets={"build-packages": ["foo"], "build-slices": ["bar_baz"]},
             part_properties=properties,
             project_options=ProjectOptions(target_arch="amd64"),
             files={Path("a")},
@@ -102,6 +102,7 @@ class TestBuildStateChanges:
             "build-attributes",
             "build-environment",
             "build-packages",
+            "build-slices",
             "disable-parallel",
             "organize",
             "override-build",
@@ -131,6 +132,7 @@ class TestBuildStateChanges:
             "build-attributes",
             "build-environment",
             "build-packages",
+            "build-slices",
             "disable-parallel",
             "organize",
             "override-build",

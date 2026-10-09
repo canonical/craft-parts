@@ -140,6 +140,8 @@ class SnapPackage:
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error
                     retry_count -= 1
+                    if retry_count == 0:
+                        raise
 
         return self._store_snap_info
 
