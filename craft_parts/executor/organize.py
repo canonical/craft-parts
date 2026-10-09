@@ -44,6 +44,52 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 
+def _check_not_nested_in_source(
+    *,
+    part_name: str,
+    key: str,
+    file_map: dict[str, str],
+    src_path: pathlib.Path,
+    dst_path: pathlib.Path,
+) -> None:
+    """Check that a directory is not organized into a path inside itself.
+
+    An explicit key moves the source directory to the destination and then
+    removes the source. If the destination is nested inside the source, that
+    removal also deletes the freshly written destination, leaving the part
+    empty without reporting an error.
+
+    This is always a mistake in the organize rules: to move the contents of a
+    directory into a subdirectory of itself, use a glob key, which nests each
+    match inside the destination instead.
+
+    :param part_name: The name of the part being organized.
+    :param key: The organize key (source pattern).
+    :param file_map: The organize file map.
+    :param src_path: The source path.
+    :param dst_path: The destination path the source would be moved to.
+
+    :raises FileOrganizeError: If the destination is inside the source.
+    """
+    if not dst_path.resolve().is_relative_to(src_path.resolve()):
+        return
+
+    message = (
+        f"trying to organize directory {key!r} to {file_map[key]!r} but the "
+        "destination is inside the source directory"
+    )
+    if "*" not in key:
+        glob_destination = file_map[key]
+        if not glob_destination.endswith("/"):
+            glob_destination = f"{glob_destination}/"
+        message = (
+            f"{message}; to move the contents of {key!r} into {file_map[key]!r}, "
+            f"use a glob key instead ({key.rstrip('/')}/*: {glob_destination})"
+        )
+
+    raise errors.FileOrganizeError(part_name=part_name, message=message)
+
+
 def _check_overlay_equivalence(
     *,
     part_name: str,
@@ -217,6 +263,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     if real_dst_path.exists() and real_dst_path.samefile(src_path):
                         # Trying to organize a directory to the same place, skipping
                         continue
+                    _check_not_nested_in_source(
+                        part_name=part_name,
+                        key=key,
+                        file_map=file_map,
+                        src_path=src_path,
+                        dst_path=real_dst_path,
+                    )
                     file_utils.link_or_copy_tree(src, real_dst_path)
                     if src_partition_pair.partition != BUILD_PARTITION:
                         shutil.rmtree(src)
@@ -226,12 +279,30 @@ def organize_files(  # noqa: PLR0912, PLR0915
                 # Organizing to the root of a partition in overwrite mode.
                 organize_to_overlay = dst_partition_pair.partition == OVERLAY_PARTITION
 
+                if dst_path.exists() and dst_path.samefile(src_path):
+                    # Preserve the existing behavior for anchored globs such as
+                    # "app/*: app/app/": once a previous match created the
+                    # destination directory, skipping that self-match lets the
+                    # remaining entries merge into it. This is not equivalent to
+                    # organizing "app" to "app/app", but changing it would
+                    # break projects that currently build.
+                    # Reorganizing should ignore the destination directory if
+                    # the source glob matches it again.
+                    continue
+
                 if (
                     dst_path in install_dir_map.values()
                     or organize_to_overlay
                     or (src_is_build_partition and dst_path.is_dir())
                 ):
                     real_dst_path = dst_path / src_path.name
+                    _check_not_nested_in_source(
+                        part_name=part_name,
+                        key=key,
+                        file_map=file_map,
+                        src_path=src_path,
+                        dst_path=real_dst_path,
+                    )
                     if not overwrite:
                         conflicts = file_utils.find_merge_conflicts(
                             src_path,
@@ -269,6 +340,17 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     if src_partition_pair.partition != BUILD_PARTITION:
                         shutil.rmtree(src)
                     continue
+
+                real_dst_path = (
+                    dst_path / src_path.name if dst_string.endswith("/") else dst_path
+                )
+                _check_not_nested_in_source(
+                    part_name=part_name,
+                    key=key,
+                    file_map=file_map,
+                    src_path=src_path,
+                    dst_path=real_dst_path,
+                )
 
             # Organize a "not dir" (file, character device, etc.) to a "not dir"
             if dst.is_file():
