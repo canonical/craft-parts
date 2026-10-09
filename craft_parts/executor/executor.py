@@ -24,7 +24,7 @@ from pathlib import Path
 
 from typing_extensions import Self
 
-from craft_parts import callbacks, overlays, packages, parts, plugins
+from craft_parts import callbacks, errors, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
@@ -341,6 +341,7 @@ class Executor:
         if state and state.slices == build_slices:
             # Nothing to do: slices already cut
             self._prepare_build_slices_root(slices_dir)
+            self._validate_build_slices_root(slices_dir)
             return
 
         logger.info("Cutting build-slices")
@@ -352,6 +353,7 @@ class Executor:
         slices_dir.mkdir(parents=True, exist_ok=False)
         chisel.cut_slices(slices=sorted(build_slices), target_dir=slices_dir)
         self._prepare_build_slices_root(slices_dir)
+        self._validate_build_slices_root(slices_dir)
 
         # Write the information of which slices we cut, for future runs.
         new_state = chisel.SlicesState(slices=build_slices)
@@ -361,6 +363,17 @@ class Executor:
         """Create mount points for virtual filesystems used during builds."""
         for mountpoint in ("dev", "proc", "sys"):
             (slices_dir / mountpoint).mkdir(parents=True, exist_ok=True)
+
+    def _validate_build_slices_root(self, slices_dir: Path) -> None:
+        """Validate that the build-slices filesystem contains essential tools.
+
+        '/bin/bash' must be available for craft-parts to run 'build.sh'. This means
+        bash_bins and base-files_bin must be included, directly or indirectly.
+
+        bash_bins provides '/usr/bin/bash' and base-files_bin symlinks '/bin' to '/usr/bin'.
+        """
+        if not (slices_dir / "bin" / "bash").is_file():
+            raise errors.BuildSlicesEnvironmentError
 
     def _build_slices_state_file(self) -> Path:
         return self._project_info.dirs.work_dir / "build_slices_state.yaml"

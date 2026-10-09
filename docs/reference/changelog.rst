@@ -28,8 +28,8 @@ New features:
 - Support ``craftctl default`` in ``override-build`` for parts that declare
   ``build-slices``. Other ``craftctl`` commands are not supported.
 
-- If any part declares ``build-slices``, Craft Parts will validate that all
-  required build slices are defined.
+- If any part declares ``build-slices``, Craft Parts will validate that the
+  resulting build environment contains ``/bin/bash``.
 
 Bug fixes:
 

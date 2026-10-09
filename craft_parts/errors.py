@@ -957,15 +957,14 @@ class UnsupportedBuildAttributesError(PartsError):
         )
 
 
-class MissingBuildSlicesError(PartsError):
-    """Essential build-slices are missing."""
+class BuildSlicesEnvironmentError(PartsError):
+    """The build-slices environment is missing essential files."""
 
-    def __init__(self, *, missing_slices: Iterable[str]) -> None:
-        brief = f"Required build slices missing: {humanize_list(missing_slices, 'and')}"
-
+    def __init__(self) -> None:
+        brief = "Build environment created from build-slices is missing '/bin/bash'."
         details = (
-            "These slices are required to run the build script in the build "
-            "environment used by parts that declare build slices."
+            "Adding both 'bash_bins' and 'base-files_bin' as build slices ensures "
+            "'/bin/bash' is available in the build environment."
         )
         resolution = (
             "Add the missing slices to the 'build-slices' key of one of the parts "
