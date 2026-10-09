@@ -955,3 +955,20 @@ class UnsupportedBuildAttributesError(PartsError):
             brief=message,
             resolution=f"Remove the {noun}, or use a different plugin.",
         )
+
+
+class BuildSlicesEnvironmentError(PartsError):
+    """The build-slices environment is missing essential files."""
+
+    def __init__(self) -> None:
+        brief = "Build environment created from build-slices is missing '/bin/bash'."
+        details = (
+            "Adding both 'bash_bins' and 'base-files_bin' as build slices ensures "
+            "'/bin/bash' is available in the build environment."
+        )
+        resolution = (
+            "Add the missing slices to the 'build-slices' key of one of the parts "
+            "that declare build slices or to the root-level 'build-slices' key."
+        )
+
+        super().__init__(brief=brief, details=details, resolution=resolution)

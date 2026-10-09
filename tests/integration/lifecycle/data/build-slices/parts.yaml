@@ -10,6 +10,7 @@ parts:
     build-slices:
       - bash_bins
       - base-files_base
+      - base-files_bin
     override-build: |
       # Make sure we can access $CRAFT_STAGE
       IFS= read -r dependency < "$CRAFT_STAGE/dependency"
