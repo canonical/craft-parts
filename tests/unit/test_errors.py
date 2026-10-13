@@ -418,6 +418,22 @@ def test_overlay_permission_error():
     assert err.resolution is None
 
 
+def test_build_slices_environment_error():
+    err = errors.BuildSlicesEnvironmentError()
+    assert (
+        err.brief
+        == "Build environment created from build-slices is missing '/bin/bash'."
+    )
+    assert (
+        err.details
+        == "Bash is required to run the build script in the build-slices environment."
+    )
+    assert err.resolution == (
+        "Add 'bash_bins' and 'base-files_base' to the 'build-slices' key of one of "
+        "the parts that declare build slices or to the root-level 'build-slices' key."
+    )
+
+
 class TestPartitionErrors:
     def test_partition_error(self):
         err = errors.PartitionError(

@@ -963,12 +963,11 @@ class BuildSlicesEnvironmentError(PartsError):
     def __init__(self) -> None:
         brief = "Build environment created from build-slices is missing '/bin/bash'."
         details = (
-            "Adding both 'bash_bins' and 'base-files_bin' as build slices ensures "
-            "'/bin/bash' is available in the build environment."
+            "Bash is required to run the build script in the build-slices environment."
         )
         resolution = (
-            "Add the missing slices to the 'build-slices' key of one of the parts "
-            "that declare build slices or to the root-level 'build-slices' key."
+            "Add 'bash_bins' and 'base-files_base' to the 'build-slices' key of one of "
+            "the parts that declare build slices or to the root-level 'build-slices' key."
         )
 
         super().__init__(brief=brief, details=details, resolution=resolution)
