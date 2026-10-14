@@ -369,6 +369,49 @@ class TestMockedApt:
             call.cache.Cache().close(),
         ]
 
+    def test_stage_cache_setup_error_when_cache_cannot_be_removed(self, tmpdir, mocker):
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+        (stage_cache / "etc" / "apt").mkdir(parents=True, exist_ok=True)
+
+        mocker.patch("craft_parts.packages.apt_cache.apt")
+        mocker.patch(
+            "craft_parts.packages.apt_cache.shutil.rmtree",
+            side_effect=PermissionError("Permission denied"),
+        )
+
+        with pytest.raises(errors.PackagesError) as raised:
+            with AptCache(stage_cache=stage_cache):
+                pass
+
+        assert raised.value.brief == "Cannot prepare the package cache."
+        assert raised.value.details == (
+            f"Failed to prepare the APT cache at {stage_cache}: Permission denied."
+        )
+        assert raised.value.resolution is not None
+        assert "sudo" in raised.value.resolution
+
+    def test_stage_cache_setup_error_when_cache_cannot_be_copied(self, tmpdir, mocker):
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+
+        mocker.patch("craft_parts.packages.apt_cache.apt")
+        mocker.patch(
+            "craft_parts.packages.apt_cache.shutil.copytree",
+            side_effect=PermissionError("Permission denied"),
+        )
+
+        with pytest.raises(errors.PackagesError) as raised:
+            with AptCache(stage_cache=stage_cache):
+                pass
+
+        assert raised.value.brief == "Cannot prepare the package cache."
+        assert raised.value.details == (
+            f"Failed to prepare the APT cache at {stage_cache}: Permission denied."
+        )
+        assert raised.value.resolution is not None
+        assert "sudo" in raised.value.resolution
+
     def test_host_cache_setup(self, mocker):
         fake_apt = mocker.patch("craft_parts.packages.apt_cache.apt")
 
