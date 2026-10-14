@@ -109,6 +109,22 @@ class FooPlugin(Plugin):
         return ["foo"]
 
 
+def test_execute_returns_stdout_when_stderr_is_present(part_info, new_dir):
+    exe = Path(new_dir, "mock_bin", "foo")
+    exe.parent.mkdir(exist_ok=True)
+    exe.write_text("printf 'stdout-value\\n'; printf 'stderr-value\\n' >&2")
+    exe.chmod(0o755)
+
+    properties = FooPluginProperties()
+    validator = FooPlugin.validator_class(
+        part_name=part_info.part_name,
+        env=f"PATH={str(exe.parent)}",
+        properties=properties,
+    )
+
+    assert validator._execute("foo").strip() == "stdout-value"
+
+
 def test_validation_happy(part_info, foo_exe):
     properties = FooPluginProperties()
     validator = FooPlugin.validator_class(
