@@ -1,0 +1,53 @@
+# Organize pattern used across multiple parts in the wimlib and git-cola snaps.
+# Each helper part (launchers, scriptlets, patching) dumps its local files
+# and then uses organize: {'*': '<subdir>/'} to namespace everything under a
+# dedicated directory, keeping the snap's root tidy.  The pattern appears
+# verbatim in both projects:
+#
+# Source (wimlib): https://github.com/brlin-tw/wimlib-snap/blob/6e1e55c552088438a0766c990af4346caf9e7f36/snap/snapcraft.yaml
+#   launchers part:  organize: {'*': 'bin/'}
+#   scriptlets part: organize: {'*': 'scriptlets/'}
+#   patching part:   organize: {'*': 'patching/'}
+#
+# Source (git-cola): https://github.com/brlin-tw/git-cola-snap/blob/2cce2fb311c3644c9addcc5014ba8907c33aaf1d/snap/snapcraft.yaml
+#   patching part:   organize: {'*': 'patching/'}
+#   launchers part:  organize: {'*': 'bin/'}
+
+description: >
+  Multiple helper parts each organize all of their files into a dedicated
+  subdirectory using the wildcard '*' source with a named destination.
+  This keeps the snap root uncluttered: launchers land in bin/, support
+  scripts in scripts/, and build-time patching files in patching/.
+  Because each part uses a distinct destination prefix there are no
+  conflicts during staging.
+
+parts:
+  launchers:
+    plugin: dump
+    source: src/launchers
+    organize:
+      '*': bin/
+
+  scripts:
+    plugin: dump
+    source: src/scripts
+    organize:
+      '*': scripts/
+
+setup_files:
+  - src/launchers/desktop-launch
+  - src/launchers/app-launch
+  - src/scripts/setup-env
+  - src/scripts/cleanup
+
+expected_prime_present:
+  - bin/desktop-launch
+  - bin/app-launch
+  - scripts/setup-env
+  - scripts/cleanup
+
+expected_prime_absent:
+  - desktop-launch
+  - app-launch
+  - setup-env
+  - cleanup
