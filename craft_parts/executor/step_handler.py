@@ -21,8 +21,10 @@ import functools
 import json
 import logging
 import selectors
+import shlex
 import socket
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 from typing import TextIO
 
@@ -388,6 +390,11 @@ class StepHandler:
             self._run_overlay_scriptlet(scriptlet, work_dir=work_dir)
             return
 
+        if step == Step.BUILD and self._part.has_build_slices:
+            # Runs build in a sliced chroot without a craftctl client.
+            self._run_build_slices_scriptlet(scriptlet, work_dir=work_dir)
+            return
+
         with tempfile.TemporaryDirectory() as tempdir:
             ctl_socket_path = Path(tempdir, "craftctl.socket")
             ctl_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -440,20 +447,87 @@ class StepHandler:
         :param work_dir: The directory where the script will be executed.
         :param scriptlet_name: The name of the scriptlet for error reporting.
         """
-        chroot_commands = self._plugin.get_overlay_chroot_commands()
-        indented_commands = (
-            "\n".join(f"    {cmd}" for cmd in chroot_commands) or "    :"
+        self._run_craftctl_shim(
+            scriptlet,
+            default_commands=self._plugin.get_overlay_chroot_commands(),
+            work_dir=work_dir,
+            scriptlet_name=scriptlet_name,
         )
 
+    def _run_build_slices_scriptlet(self, scriptlet: str, *, work_dir: Path) -> None:
+        """Execute an override-build scriptlet inside a build-slices root.
+
+        The sliced root doesn't contain the craftctl client, so ``craftctl default``
+        is implemented as a bash function running the plugin's build commands.
+
+        :param scriptlet: The scriptlet to run.
+        :param work_dir: The directory where the script will be executed.
+        """
+        self._run_craftctl_shim(
+            scriptlet,
+            default_commands=self._plugin.get_build_commands(),
+            work_dir=work_dir,
+            scriptlet_name="override-build",
+            environment=self._env,
+            default_cwd=self._part.part_build_subdir,
+            default_error_factory=lambda stderr: errors.PluginBuildError(
+                part_name=self._part.name,
+                plugin_name=self._part.plugin_name,
+                stderr=stderr,
+            ),
+        )
+
+    def _run_craftctl_shim(
+        self,
+        scriptlet: str,
+        *,
+        default_commands: list[str],
+        work_dir: Path,
+        scriptlet_name: str,
+        environment: str | None = None,
+        default_cwd: Path | None = None,
+        default_error_factory: Callable[[bytes | None], errors.UserExecutionError]
+        | None = None,
+    ) -> None:
+        """Execute a scriptlet with an injected ``craftctl`` bash function.
+
+        Only ``craftctl default`` is supported; other subcommands fail.
+
+        :param scriptlet: The scriptlet to run.
+        :param default_commands: The commands run by ``craftctl default``.
+        :param work_dir: The directory where the script will be executed.
+        :param scriptlet_name: The name of the scriptlet for error reporting.
+        :param environment: Optional shell environment to set before the scriptlet.
+        :param default_cwd: If set, run ``craftctl default`` in a subshell in this
+            directory, isolating its shell state from the scriptlet.
+        :param default_error_factory: If set, build this error when
+            ``craftctl default`` fails inside the shimmed commands.
+        """
+        default_failed_marker = "__CRAFTCTL_DEFAULT_FAILED__"
+
+        if default_cwd is not None:
+            # A subshell body keeps plugin cd/export/set from leaking into the
+            # scriptlet, matching the separate-script built-in build behavior.
+            body = [f"cd {shlex.quote(str(default_cwd))}", *default_commands]
+            indented_commands = (
+                "    (\n" + "\n".join(f"        {cmd}" for cmd in body) + "\n    )"
+            )
+        else:
+            body = list(default_commands)
+            indented_commands = "\n".join(f"    {cmd}" for cmd in body) or "    :"
+
         preamble = (
-            "__craftctl_default() {\n"
+            f"__craftctl_default() {{\n"
             f"{indented_commands}\n"
-            "}\n"
+            f"}}\n"
             "export -f __craftctl_default\n"
             "\n"
             "craftctl() {\n"
             '    if [ "$#" -eq 1 ] && [ "$1" = "default" ]; then\n'
-            "        __craftctl_default\n"
+            '        if ! bash -euo pipefail -c "__craftctl_default"; then\n'
+            f'            (set +x; echo "{default_failed_marker}" >&2)\n'
+            "            return 1\n"
+            "        fi\n"
             "    else\n"
             f'        echo "Error: craftctl ${{1-}} cannot be used in {scriptlet_name}" >&2\n'
             "        return 1\n"
@@ -462,7 +536,10 @@ class StepHandler:
             "export -f craftctl\n"
         )
 
-        script_content = "#!/bin/bash\nset -euo pipefail\nset -x\n"
+        script_content = "#!/bin/bash\nset -euo pipefail\n"
+        if environment is not None:
+            script_content += environment + "\n"
+        script_content += "set -x\n"
         script_content += preamble + scriptlet + "\n"
 
         try:
@@ -474,6 +551,15 @@ class StepHandler:
                 check=True,
             )
         except process.ProcessError as process_error:
+            if (
+                default_error_factory is not None
+                and process_error.result.stderr is not None
+                and default_failed_marker.encode() in process_error.result.stderr
+            ):
+                stderr = process_error.result.stderr.replace(
+                    f"{default_failed_marker}\n".encode(), b""
+                )
+                raise default_error_factory(stderr) from process_error
             raise errors.ScriptletRunError(
                 part_name=self._part.name,
                 scriptlet_name=scriptlet_name,

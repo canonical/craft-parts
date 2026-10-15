@@ -36,6 +36,7 @@ gyre
 hashlib
 html
 https
+infos
 ing
 interdependenc(y|ies)
 Intersphinx
