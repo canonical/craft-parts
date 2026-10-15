@@ -677,6 +677,23 @@ def test_organize_nested_directory_with_symlink_loop_errors_cleanly(new_dir):
         )
 
 
+def test_organize_through_self_referential_source_symlink_errors_cleanly(new_dir):
+    install_dir = Path(new_dir / "install")
+    install_dir.mkdir(parents=True, exist_ok=True)
+    (install_dir / "loop").symlink_to("loop")
+
+    with pytest.raises(
+        errors.FileOrganizeError, match=r".*could not resolve the source path"
+    ):
+        organize_files(
+            part_name="part-name",
+            file_map={"loop/main": "main"},
+            install_dir_map={None: install_dir},
+            overwrite=False,
+            default_partition="default",
+        )
+
+
 def test_organize_symlink_into_its_target_errors_cleanly(new_dir):
     organize_and_assert(
         tmp_path=new_dir,

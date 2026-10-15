@@ -631,7 +631,23 @@ def get_src_path(
     # Empty source paths refer to the install directory itself, so validate the
     # source path directly instead of its parent.
     src_parent = src_path if not src_inner_path else src_path.parent
-    if not src_parent.resolve().is_relative_to(base_dir):
+    try:
+        # Detect loops consistently across Python versions, then use resolve()
+        # to preserve its handling of paths with missing components.
+        _resolve_path(src_parent)
+        resolved_src_parent = src_parent.resolve()
+    except (OSError, RuntimeError) as err:
+        if isinstance(err, OSError) and err.errno != errno.ELOOP:
+            raise
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize from {src_string!r}, but could not resolve "
+                "the source path"
+            ),
+        ) from err
+
+    if not resolved_src_parent.is_relative_to(base_dir):
         raise errors.FileOrganizeError(
             part_name=part_name,
             message=(
