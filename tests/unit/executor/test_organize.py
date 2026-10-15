@@ -665,6 +665,24 @@ def test_organize_symlink_into_its_target_errors_cleanly(new_dir):
     )
 
 
+def test_organize_through_self_referential_destination_symlink_errors_cleanly(new_dir):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[],
+        setup_files=[Path("main")],
+        setup_symlinks=[("dest", "dest")],
+        organize_map={"main": "dest/sub/main"},
+        expected=errors.FileOrganizeError,
+        expected_message=(
+            r".*trying to organize 'main' to 'dest/sub/main', but could not "
+            r"resolve the destination path.*"
+        ),
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
 def test_glob_directory_into_own_root_remains_noop(new_dir):
     organize_and_assert(
         tmp_path=new_dir,

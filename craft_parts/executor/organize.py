@@ -25,6 +25,7 @@ represents how the file is going to be staged.
 from __future__ import annotations
 
 import contextlib
+import errno
 import os
 import pathlib
 import shutil
@@ -151,6 +152,44 @@ def _check_symlink_destination_not_nested_in_target(
     )
 
 
+def _check_destination_path_resolvable(
+    *,
+    part_name: str,
+    key: str,
+    file_map: dict[str, str],
+    dst_path: pathlib.Path,
+) -> None:
+    """Check that the destination path does not traverse a symlink loop.
+
+    :param part_name: The name of the part being organized.
+    :param key: The organize key (source pattern).
+    :param file_map: The organize file map.
+    :param dst_path: The destination path for the organize operation.
+
+    :raises FileOrganizeError: If the destination path cannot be resolved.
+    """
+    try:
+        dst_path.resolve()
+    except RuntimeError as err:
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize {key!r} to {file_map[key]!r}, but "
+                "could not resolve the destination path"
+            ),
+        ) from err
+    except OSError as err:
+        if err.errno != errno.ELOOP:
+            raise
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize {key!r} to {file_map[key]!r}, but "
+                "could not resolve the destination path"
+            ),
+        ) from err
+
+
 def _check_overlay_equivalence(
     *,
     part_name: str,
@@ -252,6 +291,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
             and (dst_path.parent / dst_path.readlink()) == dst_path
         ):
             dst_path.unlink()
+
+        _check_destination_path_resolvable(
+            part_name=part_name,
+            key=key,
+            file_map=file_map,
+            dst_path=dst_path,
+        )
 
         base = src.parent
         if "*" in str(src):
