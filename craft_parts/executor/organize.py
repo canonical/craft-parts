@@ -71,7 +71,19 @@ def _check_not_nested_in_source(
 
     :raises FileOrganizeError: If the destination is inside the source.
     """
-    if not dst_path.resolve().is_relative_to(src_path.resolve()):
+    try:
+        resolved_dst_path = dst_path.resolve()
+        resolved_src_path = src_path.resolve()
+    except RuntimeError as err:
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize directory {key!r} to {file_map[key]!r}, but "
+                "could not resolve the source or destination path"
+            ),
+        ) from err
+
+    if not resolved_dst_path.is_relative_to(resolved_src_path):
         return
 
     message = (

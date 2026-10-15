@@ -631,6 +631,22 @@ def test_glob_directory_to_nested_file_path_errors_cleanly(new_dir):
     )
 
 
+def test_organize_nested_directory_with_symlink_loop_errors_cleanly(new_dir):
+    install_dir = Path(new_dir / "install")
+    (install_dir / "app").mkdir(parents=True, exist_ok=True)
+    (install_dir / "app" / "main").touch()
+    (install_dir / "loop").symlink_to("loop")
+
+    with pytest.raises(errors.FileOrganizeError, match=r".*could not resolve.*"):
+        organize_files(
+            part_name="part-name",
+            file_map={"app": "loop/nested"},
+            install_dir_map={None: install_dir},
+            overwrite=False,
+            default_partition="default",
+        )
+
+
 def test_glob_destination_matching_source_glob_behavior(new_dir):
     """The destination of an anchored glob can itself match the source glob.
 
