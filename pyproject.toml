@@ -348,7 +348,12 @@ git_describe_command = [
 
 [tool.uv]
 constraint-dependencies = [
-  # Basic constraints to allow --resolution=lowest
+  # Basic constraints to allow --resolution=lowest.
+  #
+  # Libraries should avoid CVEs in direct and transitive dependencies by setting a
+  # minimum version in this section.
+  # This allows standalone builds to avoid CVEs while not placing undue constraints on
+  # downstream users of the library.
   "build>=0.7.0",
   "cffi>=1.15",
   "httplib2>=0.20.0",
