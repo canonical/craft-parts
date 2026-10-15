@@ -240,6 +240,36 @@ def randomize_globs(monkeypatch, request: pytest.FixtureRequest):
             },
             id="dir-into-itself",
         ),
+        # Organizing a directory to itself is a no-op, not an error. The
+        # nesting check reports equal source and destination paths as nested,
+        # so this pins the "organizing to the same place, skipping" return
+        # ahead of the check in organize_files.
+        pytest.param(
+            {
+                "setup_dirs": [Path("foodir")],
+                "setup_files": [Path("foodir/foo")],
+                "organize_map": {"foodir": "foodir"},
+                "expected": [(["foo"], "foodir")],
+            },
+            id="dir-into-itself-skipped",
+        ),
+        # A key that is already a glob gets no "use a glob key instead" hint,
+        # since suggesting "foodir/v?/*" for the glob key "foodir/v?" would
+        # not help.
+        pytest.param(
+            {
+                "setup_dirs": [Path("foodir"), Path("foodir/v1")],
+                "setup_files": [Path("foodir/v1/foo")],
+                "organize_map": {"foodir/v?": "foodir/v1/nested"},
+                "expected": errors.FileOrganizeError,
+                "expected_message": (
+                    r".*trying to organize directory 'foodir/v\?' to "
+                    r"'foodir/v1/nested' but the destination is inside the "
+                    r"source directory\.?$"
+                ),
+            },
+            id="glob-into-itself-no-glob-hint",
+        ),
         # The same, with the destination nested several levels deep.
         pytest.param(
             {
