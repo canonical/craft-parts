@@ -102,6 +102,55 @@ def _check_not_nested_in_source(
     raise errors.FileOrganizeError(part_name=part_name, message=message)
 
 
+def _check_symlink_destination_not_nested_in_target(
+    *,
+    part_name: str,
+    key: str,
+    file_map: dict[str, str],
+    src_path: pathlib.Path,
+    dst_path: pathlib.Path,
+) -> None:
+    """Check that organizing a symlink does not place it inside its target.
+
+    Moving a symlink preserves the link target. If the destination is nested
+    inside the resolved target directory, the relocated symlink points back to
+    one of its ancestors, creating a self-referential path.
+
+    :param part_name: The name of the part being organized.
+    :param key: The organize key (source pattern).
+    :param file_map: The organize file map.
+    :param src_path: The symlink source path.
+    :param dst_path: The destination path the symlink would be moved to.
+
+    :raises FileOrganizeError: If the destination is inside the symlink target.
+    """
+    if not src_path.is_symlink():
+        return
+
+    try:
+        resolved_src_path = src_path.resolve()
+        resolved_dst_parent = dst_path.parent.resolve()
+    except RuntimeError as err:
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize symlink {key!r} to {file_map[key]!r}, but "
+                "could not resolve the source or destination path"
+            ),
+        ) from err
+
+    if not resolved_dst_parent.is_relative_to(resolved_src_path):
+        return
+
+    raise errors.FileOrganizeError(
+        part_name=part_name,
+        message=(
+            f"trying to organize symlink {key!r} to {file_map[key]!r}, but the "
+            "destination is inside the symlink target"
+        ),
+    )
+
+
 def _check_overlay_equivalence(
     *,
     part_name: str,
@@ -366,6 +415,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
 
             # Organize a "not dir" (file, character device, etc.) to a "not dir"
             if dst.is_file():
+                _check_symlink_destination_not_nested_in_target(
+                    part_name=part_name,
+                    key=key,
+                    file_map=file_map,
+                    src_path=src_path,
+                    dst_path=pathlib.Path(dst),
+                )
                 if dst.absolute().as_posix() == os.path.normpath(src.absolute()):
                     # Trying to organize a file to the same place, skipping
                     continue
@@ -405,6 +461,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
             # Organize a "not dir" to a dir
             if dst.is_dir():
                 real_dst = dst / src.name
+                _check_symlink_destination_not_nested_in_target(
+                    part_name=part_name,
+                    key=key,
+                    file_map=file_map,
+                    src_path=src_path,
+                    dst_path=pathlib.Path(real_dst),
+                )
                 if real_dst.resolve() == src.resolve():
                     # Trying to organize a file to the same place, skipping
                     continue
@@ -440,6 +503,14 @@ def organize_files(  # noqa: PLR0912, PLR0915
                 dst.mkdir(parents=True, exist_ok=True)
             else:
                 dst.parent.mkdir(parents=True, exist_ok=True)
+
+            _check_symlink_destination_not_nested_in_target(
+                part_name=part_name,
+                key=key,
+                file_map=file_map,
+                src_path=src_path,
+                dst_path=pathlib.Path(dst),
+            )
 
             if src_partition_pair.partition == BUILD_PARTITION:
                 if src_path.is_dir():

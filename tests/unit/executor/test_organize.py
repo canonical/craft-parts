@@ -647,6 +647,24 @@ def test_organize_nested_directory_with_symlink_loop_errors_cleanly(new_dir):
         )
 
 
+def test_organize_symlink_into_its_target_errors_cleanly(new_dir):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[Path("app")],
+        setup_files=[Path("app/main")],
+        setup_symlinks=[("app-link", "app")],
+        organize_map={"app-link": "app-link/nested"},
+        expected=errors.FileOrganizeError,
+        expected_message=(
+            r".*trying to organize symlink 'app-link' to 'app-link/nested', but "
+            r"the destination is inside the symlink target.*"
+        ),
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
 def test_glob_directory_into_own_root_remains_noop(new_dir):
     organize_and_assert(
         tmp_path=new_dir,
