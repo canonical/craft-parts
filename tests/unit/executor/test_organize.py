@@ -24,7 +24,7 @@ from typing import Any, cast
 import pytest
 from craft_parts import errors
 from craft_parts.executor.organize import organize_files
-from craft_parts.utils.partition_utils import BUILD_PARTITION
+from craft_parts.utils.partition_utils import BUILD_PARTITION, OVERLAY_PARTITION
 
 
 @pytest.fixture(autouse=True, params=range(6))
@@ -662,6 +662,70 @@ def test_glob_directory_into_own_root_remains_noop(new_dir):
     )
 
 
+@pytest.mark.parametrize(
+    ("organize_map", "expected_message"),
+    [
+        pytest.param(
+            {"**/*": "."},
+            r".*trying to organize directory '\*\*/\*' to '\.' but "
+            r"the destination is inside the source directory.*",
+            id="glob-to-current-directory-errors",
+        ),
+        pytest.param(
+            {"*": ""},
+            r".*trying to organize directory '\*' to '' but "
+            r"the destination is inside the source directory.*",
+            id="glob-to-root-errors",
+        ),
+    ],
+)
+def test_glob_directory_to_nested_root_errors_cleanly(
+    new_dir, organize_map, expected_message
+):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[Path("app")],
+        setup_files=[Path("app/main")],
+        setup_symlinks=[],
+        organize_map=organize_map,
+        expected=errors.FileOrganizeError,
+        expected_message=expected_message,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
+@pytest.mark.parametrize(
+    ("organize_map", "expected"),
+    [
+        pytest.param(
+            {"*": "(overlay)/"},
+            [([], ""), (["app"], "../overlay"), (["main"], "../overlay/app")],
+            id="glob-to-overlay-root",
+        ),
+    ],
+)
+def test_glob_directory_to_overlay_root(
+    new_dir, enable_overlay_and_partitions_features, organize_map, expected
+):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[Path("app")],
+        setup_files=[Path("app/main")],
+        setup_symlinks=[],
+        organize_map=organize_map,
+        expected=expected,
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={
+            "default": Path(new_dir / "install"),
+            OVERLAY_PARTITION: Path(new_dir / "overlay"),
+        },
+    )
+
+
 def test_glob_destination_matching_source_glob_behavior(new_dir):
     """The destination of an anchored glob can itself match the source glob.
 
@@ -692,5 +756,24 @@ def test_glob_destination_matching_source_glob_behavior(new_dir):
         expected_message=None,
         expected_overwrite=None,
         overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=setup_dirs,
+        setup_files=setup_files,
+        setup_symlinks=[],
+        organize_map={"app/*": "app/app/"},
+        expected=[
+            (["app"], ""),
+            (
+                ["file.txt", "otherfile.txt"],
+                os.path.join("app", "app"),  # noqa: PTH118
+            ),
+        ],
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=True,
         install_dirs={None: Path(new_dir / "install")},
     )
