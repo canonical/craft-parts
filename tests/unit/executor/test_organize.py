@@ -647,6 +647,21 @@ def test_organize_nested_directory_with_symlink_loop_errors_cleanly(new_dir):
         )
 
 
+def test_glob_directory_into_own_root_remains_noop(new_dir):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[Path("foodir")],
+        setup_files=[Path("foodir/foo")],
+        setup_symlinks=[],
+        organize_map={"foodir/*": "foodir/"},
+        expected=[(["foodir"], ""), (["foo"], "foodir")],
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
 def test_glob_destination_matching_source_glob_behavior(new_dir):
     """The destination of an anchored glob can itself match the source glob.
 
