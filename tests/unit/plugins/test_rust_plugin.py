@@ -302,13 +302,14 @@ def test_validate_environment_should_have_rustup(
     validator = RustPlugin.validator_class(
         part_name="my-part", properties=properties, env=""
     )
-    # positive test
+    # positive test: succeeds because the 'rust-deps' part provisioned the Rust toolchain
     validator.validate_environment(part_dependencies=["rust-deps"])
-    # negative test
+    # negative test: fails because there is no 'rust-deps' part and rustup fails
     with pytest.raises(PluginEnvironmentValidationError):
         validator.validate_environment(part_dependencies=after)
 
 
+# this test name is misleading
 def test_validate_environment_should_not_have_rustup(
     fake_process: pytest_subprocess.FakeProcess, mock_validator
 ):
@@ -317,6 +318,7 @@ def test_validate_environment_should_not_have_rustup(
 
     fake_process.register(["cargo", "--version"], callback=exec_fail)
     fake_process.register(["rustc", "--version"], callback=exec_fail)
+    # this test doesn't care if rustup exists or not - it never checks
     fake_process.register(
         ["rustup", "dump-testament"],
         stdout="Rustup version renders as: 1.27.1 (2024-05-07)",
@@ -328,9 +330,37 @@ def test_validate_environment_should_not_have_rustup(
     validator = RustPlugin.validator_class(
         part_name="my-part", properties=properties, env=""
     )
-    # positive test
-    validator.validate_environment(part_dependencies=[])
-    validator.validate_environment(part_dependencies=["rust-deps"])
+    # negative test: fails because 'rust-deps' has already ran (part_dependencies is empty)
+    # but cargo and rustc don't exist
+    with pytest.raises(PluginEnvironmentValidationError):
+        validator.validate_environment(part_dependencies=[])
+
+
+@pytest.mark.parametrize("part_dependencies", [[], None])
+def test_validate_environment_rust_deps_pre_build(
+    part_dependencies, fake_process: pytest_subprocess.FakeProcess, mock_validator
+):
+    def exec_fail(x):
+        raise subprocess.CalledProcessError(127, x)
+
+    fake_process.register(
+        ["cargo", "--version"], stdout="cargo 1.84.0-nightly (69e595908 2024-11-16)"
+    )
+    fake_process.register(
+        ["rustc", "--version"], stdout="rustc 1.84.0-nightly (5ec7d6eee 2024-11-17)"
+    )
+    # this doesn't get called, but this ensures an error is raised if it does
+    fake_process.register(["rustup", "dump-testament"], callback=exec_fail)
+
+    properties = RustPlugin.properties_class.unmarshal(
+        {"source": ".", "after": ["rust-deps"]}
+    )
+    validator = RustPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    # positive test: succeeds because it's after a 'rust-deps' part which already
+    # set up the Rust toolchain (part_dependencies is empty)
+    validator.validate_environment(part_dependencies=part_dependencies)
 
 
 def test_get_out_of_source_build(part_info):

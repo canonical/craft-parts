@@ -202,7 +202,9 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :param part_dependencies: A list of the parts this part depends on.
         """
         options = cast(RustPluginProperties, self._options)
-        has_rust_deps = "rust-deps" in (part_dependencies or [])
+        has_rust_deps = "rust-deps" in (options.after or []) or "rust-deps" in (
+            part_dependencies or []
+        )
         if has_rust_deps or options.rust_channel == "none":
             if (
                 has_rust_deps
