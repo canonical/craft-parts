@@ -193,6 +193,27 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
     :param env: A string containing the build step environment setup.
     """
 
+    def _has_rust_deps(self, part_dependencies: list[str] | None = None) -> bool:
+        """Return True if a 'rust-deps' part is expected to provision rust."""
+        options = cast(RustPluginProperties, self._options)
+
+        # This happens in the prologue, before the 'rust-deps' part has run.
+        if "rust-deps" in (part_dependencies or []):
+            logger.info(
+                "Expecting the 'rust-deps' part to provision the Rust toolchain."
+            )
+            return True
+
+        # This happens after the 'rust-deps' part already ran and before the Rust plugin's build step.
+        if "rust-deps" in (options.after or []):
+            logger.info(
+                "Expecting the 'rust-deps' part to already have provisioned the Rust toolchain."
+            )
+            return True
+
+        logger.info("No 'rust-deps' part found.")
+        return False
+
     @override
     def validate_environment(
         self, *, part_dependencies: list[str] | None = None
@@ -202,34 +223,35 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         :param part_dependencies: A list of the parts this part depends on.
         """
         options = cast(RustPluginProperties, self._options)
-        has_rust_deps = "rust-deps" in (options.after or []) or "rust-deps" in (
-            part_dependencies or []
-        )
+
+        has_rust_deps = self._has_rust_deps(part_dependencies)
+
+        # True if the user specified a rust channel.
+        channel_specified = options.rust_channel and options.rust_channel != "none"
+
+        if has_rust_deps and channel_specified:
+            raise validator.errors.PluginEnvironmentValidationError(
+                part_name=self._part_name,
+                reason="rust-deps can not be used when rust-channel is also specified",
+            )
+
+        # True if the plugin isn't provisioning the Rust toolchain.
         if has_rust_deps or options.rust_channel == "none":
-            if (
-                has_rust_deps
-                and options.rust_channel
-                and options.rust_channel != "none"
-            ):
-                raise validator.errors.PluginEnvironmentValidationError(
-                    part_name=self._part_name,
-                    reason="rust-deps can not be used"
-                    "when rust-channel is also specified",
-                )
             for dependency in ["cargo", "rustc"]:
                 self.validate_dependency(
                     dependency=dependency,
                     plugin_name="rust",
                     part_dependencies=part_dependencies,
                 )
-            return
-        # Check if rustup is properly installed
-        self.validate_dependency(
-            dependency="rustup",
-            argument="dump-testament",
-            plugin_name="rust",
-            part_dependencies=part_dependencies,
-        )
+        # Otherwise, the Rust plugin needs rustup to provision the Rust toolchain.
+        else:
+            # Check if rustup is properly installed
+            self.validate_dependency(
+                dependency="rustup",
+                argument="dump-testament",
+                plugin_name="rust",
+                part_dependencies=part_dependencies,
+            )
 
 
 class RustPlugin(Plugin):
