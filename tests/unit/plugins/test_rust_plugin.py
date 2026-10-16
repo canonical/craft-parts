@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import logging
 import subprocess
 
 import pytest
@@ -283,63 +284,90 @@ def test_get_pull_commands_compat_with_exceptions(
     ]
 
 
-@pytest.mark.parametrize("after", [["something-else"], []])
-def test_validate_environment_should_have_rustup(
-    after, fake_process: pytest_subprocess.FakeProcess, mock_validator
+def test_validate_environment_plugin_managed(
+    fake_process: pytest_subprocess.FakeProcess,
+    mock_validator,
+    caplog: pytest.LogCaptureFixture,
 ):
-    def exec_fail(x):
-        raise subprocess.CalledProcessError(127, x)
-
-    fake_process.register(
-        ["cargo", "--version"], stdout="cargo 1.84.0-nightly (69e595908 2024-11-16)"
-    )
-    fake_process.register(
-        ["rustc", "--version"], stdout="rustc 1.84.0-nightly (5ec7d6eee 2024-11-17)"
-    )
-    fake_process.register(["rustup", "dump-testament"], callback=exec_fail)
-
-    properties = RustPlugin.properties_class.unmarshal({"source": ".", "after": after})
-    validator = RustPlugin.validator_class(
-        part_name="my-part", properties=properties, env=""
-    )
-    # positive test: succeeds because the 'rust-deps' part provisioned the Rust toolchain
-    validator.validate_environment(part_dependencies=["rust-deps"])
-    # negative test: fails because there is no 'rust-deps' part and rustup fails
-    with pytest.raises(PluginEnvironmentValidationError):
-        validator.validate_environment(part_dependencies=after)
-
-
-# this test name is misleading
-def test_validate_environment_should_not_have_rustup(
-    fake_process: pytest_subprocess.FakeProcess, mock_validator
-):
-    def exec_fail(x):
-        raise subprocess.CalledProcessError(127, x)
-
-    fake_process.register(["cargo", "--version"], callback=exec_fail)
-    fake_process.register(["rustc", "--version"], callback=exec_fail)
-    # this test doesn't care if rustup exists or not - it never checks
+    """Plugin-managed toolchain expects rustup to be present."""
+    caplog.set_level(logging.INFO)
     fake_process.register(
         ["rustup", "dump-testament"],
         stdout="Rustup version renders as: 1.27.1 (2024-05-07)",
     )
 
+    properties = RustPlugin.properties_class.unmarshal({"source": "."})
+    validator = RustPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+
+    validator.validate_environment()
+
+    assert "No 'rust-deps' part found." in caplog.text
+
+
+def test_validate_environment_plugin_managed_missing_rustup(
+    fake_process: pytest_subprocess.FakeProcess,
+    mock_validator,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Plugin-managed toolchain errors when rustup is missing."""
+    caplog.set_level(logging.INFO)
+
+    def exec_fail(x):
+        raise subprocess.CalledProcessError(127, x)
+
+    fake_process.register(["rustup", "dump-testament"], callback=exec_fail)
+
+    properties = RustPlugin.properties_class.unmarshal({"source": "."})
+    validator = RustPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+
+    with pytest.raises(PluginEnvironmentValidationError, match="'rustup' not found"):
+        validator.validate_environment()
+
+    assert "No 'rust-deps' part found." in caplog.text
+
+
+def test_validate_environment_rust_deps_prologue_missing_toolchain(
+    fake_process: pytest_subprocess.FakeProcess,
+    mock_validator,
+    caplog: pytest.LogCaptureFixture,
+):
+    """During the prologue, the Rust toolchain can be missing when the plugin expects 'rust-deps' to run."""
+    caplog.set_level(logging.INFO)
+
+    def exec_fail(x):
+        raise subprocess.CalledProcessError(127, x)
+
+    fake_process.register(["cargo", "--version"], callback=exec_fail)
+    fake_process.register(["rustc", "--version"], callback=exec_fail)
+
     properties = RustPlugin.properties_class.unmarshal(
         {"source": ".", "after": ["rust-deps"]}
     )
     validator = RustPlugin.validator_class(
         part_name="my-part", properties=properties, env=""
     )
-    # negative test: fails because 'rust-deps' has already ran (part_dependencies is empty)
-    # but cargo and rustc don't exist
-    with pytest.raises(PluginEnvironmentValidationError):
-        validator.validate_environment(part_dependencies=[])
+
+    validator.validate_environment(part_dependencies=["rust-deps"])
+
+    assert (
+        "Expecting the 'rust-deps' part to provision the Rust toolchain." in caplog.text
+    )
 
 
-@pytest.mark.parametrize("part_dependencies", [[], None])
+@pytest.mark.parametrize("part_dependencies", [None, []])
 def test_validate_environment_rust_deps_pre_build(
-    part_dependencies, fake_process: pytest_subprocess.FakeProcess, mock_validator
+    part_dependencies,
+    fake_process: pytest_subprocess.FakeProcess,
+    mock_validator,
+    caplog: pytest.LogCaptureFixture,
 ):
+    """After the rust-deps part runs, the Rust toolchain must be present."""
+    caplog.set_level(logging.INFO)
+
     def exec_fail(x):
         raise subprocess.CalledProcessError(127, x)
 
@@ -349,7 +377,7 @@ def test_validate_environment_rust_deps_pre_build(
     fake_process.register(
         ["rustc", "--version"], stdout="rustc 1.84.0-nightly (5ec7d6eee 2024-11-17)"
     )
-    # this doesn't get called, but this ensures an error is raised if it does
+    # This doesn't get called, so it errors to ensure it fails loudly if it does get called
     fake_process.register(["rustup", "dump-testament"], callback=exec_fail)
 
     properties = RustPlugin.properties_class.unmarshal(
@@ -358,18 +386,115 @@ def test_validate_environment_rust_deps_pre_build(
     validator = RustPlugin.validator_class(
         part_name="my-part", properties=properties, env=""
     )
-    # positive test: succeeds because it's after a 'rust-deps' part which already
-    # set up the Rust toolchain (part_dependencies is empty)
+
     validator.validate_environment(part_dependencies=part_dependencies)
 
+    assert (
+        "Expecting the 'rust-deps' part to already have provisioned the Rust toolchain."
+        in caplog.text
+    )
 
-def test_validate_environment_rust_deps_and_channel_conflict(mock_validator):
+
+@pytest.mark.parametrize("part_dependencies", [None, []])
+def test_validate_environment_rust_deps_pre_build_missing_toolchain(
+    part_dependencies,
+    fake_process: pytest_subprocess.FakeProcess,
+    mock_validator,
+    caplog: pytest.LogCaptureFixture,
+):
+    """After the rust-deps part runs, error when the Rust toolchain isn't present."""
+    caplog.set_level(logging.INFO)
+
+    def exec_fail(x):
+        raise subprocess.CalledProcessError(127, x)
+
+    fake_process.register(["cargo", "--version"], callback=exec_fail)
+    fake_process.register(["rustc", "--version"], callback=exec_fail)
+
+    properties = RustPlugin.properties_class.unmarshal(
+        {"source": ".", "after": ["rust-deps"]}
+    )
+    validator = RustPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+
+    with pytest.raises(PluginEnvironmentValidationError, match="'cargo' not found"):
+        validator.validate_environment(part_dependencies=part_dependencies)
+
+    assert (
+        "Expecting the 'rust-deps' part to already have provisioned the Rust toolchain."
+        in caplog.text
+    )
+
+
+def test_validate_environment_rust_channel_none_success(
+    fake_process: pytest_subprocess.FakeProcess,
+    mock_validator,
+    caplog: pytest.LogCaptureFixture,
+):
+    """When 'rust-channel' is 'none', the Rust toolchain must be present."""
+    caplog.set_level(logging.INFO)
+
+    def exec_fail(x):
+        raise subprocess.CalledProcessError(127, x)
+
+    fake_process.register(
+        ["cargo", "--version"], stdout="cargo 1.84.0-nightly (69e595908 2024-11-16)"
+    )
+    fake_process.register(
+        ["rustc", "--version"], stdout="rustc 1.84.0-nightly (5ec7d6eee 2024-11-17)"
+    )
+    fake_process.register(["rustup", "dump-testament"], callback=exec_fail)
+
+    properties = RustPlugin.properties_class.unmarshal(
+        {"source": ".", "rust-channel": "none"}
+    )
+    validator = RustPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    validator.validate_environment()
+
+    assert "No 'rust-deps' part found." in caplog.text
+
+
+def test_validate_environment_rust_channel_none_missing_toolchain(
+    fake_process: pytest_subprocess.FakeProcess,
+    mock_validator,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Error when 'rust-channel' is 'none' but the Rust toolchain is missing."""
+    caplog.set_level(logging.INFO)
+
+    def exec_fail(x):
+        raise subprocess.CalledProcessError(127, x)
+
+    fake_process.register(["cargo", "--version"], callback=exec_fail)
+    fake_process.register(["rustc", "--version"], callback=exec_fail)
+
+    properties = RustPlugin.properties_class.unmarshal(
+        {"source": ".", "rust-channel": "none"}
+    )
+    validator = RustPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    with pytest.raises(PluginEnvironmentValidationError, match="'cargo' not found"):
+        validator.validate_environment()
+
+    assert "No 'rust-deps' part found." in caplog.text
+
+
+def test_validate_environment_rust_deps_and_channel_conflict(
+    mock_validator, caplog: pytest.LogCaptureFixture
+):
+    """Error when 'rust-deps' and 'rust-channel' are both provided."""
+    caplog.set_level(logging.INFO)
     properties = RustPlugin.properties_class.unmarshal(
         {"source": ".", "after": ["rust-deps"], "rust-channel": "stable"}
     )
     validator = RustPlugin.validator_class(
         part_name="my-part", properties=properties, env=""
     )
+
     with pytest.raises(
         PluginEnvironmentValidationError,
         match="A 'rust-deps' part can not be used when the 'rust-channel' key is also specified",
