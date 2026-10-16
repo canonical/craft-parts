@@ -363,6 +363,25 @@ def test_validate_environment_rust_deps_pre_build(
     validator.validate_environment(part_dependencies=part_dependencies)
 
 
+def test_validate_environment_rust_deps_and_channel_conflict(mock_validator):
+    properties = RustPlugin.properties_class.unmarshal(
+        {"source": ".", "after": ["rust-deps"], "rust-channel": "stable"}
+    )
+    validator = RustPlugin.validator_class(
+        part_name="my-part", properties=properties, env=""
+    )
+    with pytest.raises(
+        PluginEnvironmentValidationError,
+        match="A 'rust-deps' part can not be used when the 'rust-channel' key is also specified",
+    ) as exc_info:
+        validator.validate_environment()
+
+    assert (
+        exc_info.value.resolution
+        == "Unset the 'rust-channel' key or remove the 'rust-deps' part."
+    )
+
+
 def test_get_out_of_source_build(part_info):
     properties = RustPlugin.properties_class.unmarshal({"source": "."})
     plugin = RustPlugin(properties=properties, part_info=part_info)

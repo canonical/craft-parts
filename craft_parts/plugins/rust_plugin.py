@@ -232,7 +232,8 @@ class RustPluginEnvironmentValidator(validator.PluginEnvironmentValidator):
         if has_rust_deps and channel_specified:
             raise validator.errors.PluginEnvironmentValidationError(
                 part_name=self._part_name,
-                reason="rust-deps can not be used when rust-channel is also specified",
+                reason="A 'rust-deps' part can not be used when the 'rust-channel' key is also specified",
+                resolution="Unset the 'rust-channel' key or remove the 'rust-deps' part.",
             )
 
         # True if the plugin isn't provisioning the Rust toolchain.
