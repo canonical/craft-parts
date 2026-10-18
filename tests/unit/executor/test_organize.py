@@ -504,7 +504,7 @@ def organize_and_assert(
     setup_build_dirs=None,
     setup_build_files=None,
     organize_map: dict[str, str],
-    expected: list[Any],
+    expected: list[Any] | type[Exception],
     expected_message,
     expected_overwrite,
     overwrite,
