@@ -38,6 +38,13 @@ Bug fixes:
   ``locales-all`` listed before ``postgresql`` is staged without also
   staging ``locales``.
 
+- A path-like source that does not exist now raises ``SourceNotFound``
+  (``"'...' not found"``) instead of ``InvalidSourceType`` (``"unable to
+  determine source type"``), so the error names the real problem. See
+  `canonical/snapcraft#6501`_.
+
+.. _canonical/snapcraft#6501: https://github.com/canonical/snapcraft/issues/6501
+
 
 .. _release-2.37.2:
 

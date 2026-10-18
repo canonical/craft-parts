@@ -229,4 +229,8 @@ def get_source_type_from_uri(
         return "local"
     if ignore_errors:
         return ""
+    if "/" in source and "://" not in source and not Path(source).exists():
+        # A path-like source that does not exist is a missing path, not an
+        # unknown source type (see canonical/snapcraft#6501).
+        raise errors.SourceNotFound(source)
     raise errors.InvalidSourceType(source)
