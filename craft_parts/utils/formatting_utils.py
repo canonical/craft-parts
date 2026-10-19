@@ -20,7 +20,7 @@ from collections.abc import Iterable
 
 
 def humanize_list(
-    items: Iterable[str], conjunction: str, item_format: str = "{!r}"
+    items: Iterable[str] | None, conjunction: str, item_format: str = "{!r}"
 ) -> str:
     """Format a list into a human-readable string.
 
@@ -29,10 +29,14 @@ def humanize_list(
         the rest of the list (e.g. 'and').
     :param item_format: Format string to use per item.
     """
-    if not items:
+    if items is None:
         return ""
 
     quoted_items = [item_format.format(item) for item in sorted(items)]
+    if len(quoted_items) == 0:
+        # Empty list, empty generators
+        return ""
+
     if len(quoted_items) == 1:
         return quoted_items[0]
 

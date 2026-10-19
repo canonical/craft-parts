@@ -63,8 +63,10 @@ _build_state_foo = textwrap.dedent(
       disable-parallel: False
       build-packages: []
       build-snaps: []
+      build-slices: []
       organize: {}
       build-attributes: []
+      build-environment: []
     project_options:
       target_arch: amd64
     assets: {}

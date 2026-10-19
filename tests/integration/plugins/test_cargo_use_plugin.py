@@ -20,7 +20,7 @@ import textwrap
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step, errors
-from py import path  # type: ignore[import-untyped]
+from py import path
 
 pytestmark = [pytest.mark.plugin]
 

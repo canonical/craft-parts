@@ -251,5 +251,5 @@ def _ensure_not_defined(
             if hook_point and hook.hook_point != hook_point:
                 continue
             raise errors.CallbackRegistrationError(
-                f"callback function {func.__name__!r} is already registered."
+                f"callback function {getattr(func, '__name__', '<anonymous>')!r} is already registered."
             )

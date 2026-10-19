@@ -137,6 +137,7 @@ class TestPartHandling(test_part_handler.TestPartHandling):
             project_options=self._part_info.project_options,
             assets={
                 "build-packages": ["pkg3"],
+                "build-slices": [],
                 "build-snaps": [],
                 "uname": "os-info",
                 "installed-packages": ["hello=2.10"],

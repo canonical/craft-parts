@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Allow redefinition in order to include parent tests below.
-# mypy: disable-error-code="no-redef"
-
 
 # Bring in all stage snaps tests
 # pylint: disable=wildcard-import,function-redefined,unused-import,unused-wildcard-import

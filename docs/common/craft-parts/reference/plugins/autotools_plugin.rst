@@ -22,23 +22,11 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.autotools_plugin
 
-autotools-bootstrap-parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. kitbash-field:: AutotoolsPluginProperties autotools_bootstrap_parameters
 
-**Type:** list of strings
-
-Bootstrap flags to pass to the build if a bootstrap file is found in
-the project. These can in some cases be seen by running ``./bootstrap
---help``.
-
-autotools-configure-parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-configure flags to pass to the build such as those shown by running
-``./configure --help``.
+.. kitbash-field:: AutotoolsPluginProperties autotools_configure_parameters
 
 
 Environment variables

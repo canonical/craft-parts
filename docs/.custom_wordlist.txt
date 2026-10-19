@@ -12,6 +12,7 @@ boolean
 Bundler
 Canonical('s)?
 Charmcraft
+chroot
 cjk
 CMake
 colcon
@@ -35,6 +36,7 @@ gyre
 hashlib
 html
 https
+infos
 ing
 interdependenc(y|ies)
 Intersphinx

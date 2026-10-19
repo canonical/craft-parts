@@ -26,7 +26,7 @@ from typing_extensions import override
 
 class FakePythonPluginProperties(PluginProperties, frozen=True):
     plugin: Literal["fakepy"] = "fakepy"
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class FakePythonPlugin(BasePythonPlugin):

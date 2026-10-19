@@ -17,38 +17,14 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.colcon_plugin
 
-colcon-cmake-args
-~~~~~~~~~~~~~~~~~
+.. kitbash-field:: ColconPluginProperties colcon_cmake_args
 
-**Type:** list of strings
+.. kitbash-field:: ColconPluginProperties colcon_packages
 
-Arguments to pass to cmake projects.
-Note that any arguments here which match colcon arguments
-need to be prefixed with a space.
-Arguments to pass to CMake projects.
-If an argument has the same name as a colcon argument, it
-must be prefixed with a space to avoid a collision.
-A space in an argument is made literal by wrapping the argument
-in quotation marks (").
+.. kitbash-field:: ColconPluginProperties colcon_packages_ignore
 
-
-colcon-packages
-~~~~~~~~~~~~~~~
-
-**Type:** string
-
-List of colcon packages to build.
-If not specified, all packages in the workspace will be built.
-If set to an empty list (``[]``), no packages will be built,
-which could be useful if you only want Debian packages in the snap.
-
-colcon-packages-ignore
-~~~~~~~~~~~~~~~~~~~~~~
-
-**Type:** string
-
-List of packages for colcon to ignore.
 
 Environment variables
 ---------------------

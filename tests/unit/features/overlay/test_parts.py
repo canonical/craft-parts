@@ -54,6 +54,7 @@ class TestPartSpecs:
             "stage-slices": [],
             "build-snaps": ["build-snap1", "build-snap2"],
             "build-packages": ["build-pkg1", "build-pkg2"],
+            "build-slices": [],
             "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
             "build-attributes": ["attr1", "attr2"],
             "organize": {"src1": "dest1", "src2": "dest2"},
@@ -88,11 +89,6 @@ class TestPartSpecs:
 
         new_data = spec.marshal()
         assert new_data == data_copy
-
-    def test_unmarshal_not_dict(self):
-        with pytest.raises(TypeError) as raised:
-            PartSpec.unmarshal(False)  # type: ignore[reportGeneralTypeIssues]
-        assert str(raised.value) == "part data is not a dictionary"
 
     def test_unmarshal_both_overlay_key(self):
         data = {
@@ -440,12 +436,6 @@ class TestPartUnmarshal:
             "- Extra inputs are not permitted in field 'b'"
         )
 
-    def test_part_spec_not_dict(self):
-        with pytest.raises(errors.PartSpecificationError) as raised:
-            Part("foo", False)  # type: ignore[reportGeneralTypeIssues]
-        assert raised.value.part_name == "foo"
-        assert raised.value.message == "part data is not a dictionary"
-
     def test_part_unmarshal_type_error(self):
         with pytest.raises(errors.PartSpecificationError) as raised:
             Part("foo", {"plugin": []})
@@ -568,7 +558,7 @@ class TestPartValidation:
 
     def test_part_validation_data_type(self):
         with pytest.raises(TypeError) as raised:
-            parts.validate_part("invalid data")  # type: ignore[reportGeneralTypeIssues]
+            parts.validate_part("invalid data")  # ty: ignore[invalid-argument-type]
 
         assert str(raised.value) == "value must be a dictionary"
 

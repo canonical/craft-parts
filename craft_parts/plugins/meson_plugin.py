@@ -20,6 +20,7 @@ import logging
 import shlex
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from . import validator
@@ -34,10 +35,18 @@ class MesonPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["meson"] = "meson"
 
-    meson_parameters: list[str] = []
+    meson_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to Meson.",
+    )
+    """The parameters to pass to Meson.
+
+    For the list of valid parameters, see the `Meson command reference
+    <https://mesonbuild.com/Commands.html#setup>`__ .
+    """
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class MesonPluginEnvironmentValidator(validator.PluginEnvironmentValidator):

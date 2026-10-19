@@ -34,6 +34,7 @@ def test_dirs(new_dir, partitions):
     assert set(dirs.stage_dirs.values()) == {dirs.stage_dir}
     assert dirs.prime_dir == new_dir / "prime"
     assert set(dirs.prime_dirs.values()) == {dirs.prime_dir}
+    assert dirs.build_slices_dir == new_dir / "build-slices"
 
 
 def test_dirs_work_dir(new_dir, partitions):
@@ -49,6 +50,7 @@ def test_dirs_work_dir(new_dir, partitions):
     assert set(dirs.stage_dirs.values()) == {dirs.stage_dir}
     assert dirs.prime_dir == new_dir / "foobar/prime"
     assert set(dirs.prime_dirs.values()) == {dirs.prime_dir}
+    assert dirs.build_slices_dir == new_dir / "foobar/build-slices"
 
 
 def test_dirs_work_dir_resolving(partitions):

@@ -1,5 +1,5 @@
 import sys
 
-import test_poetry  # type: ignore[import-not-found]
+import test_poetry
 
 sys.exit(test_poetry.main())

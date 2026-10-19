@@ -49,7 +49,7 @@ class FakeSnapd:
     def snap_details_func(
         self,
     ) -> Callable[[str], tuple[int, dict[str, Any]]] | None:
-        return self.request_handler.snap_details_func  # type: ignore[no-any-return]
+        return self.request_handler.snap_details_func
 
     @snap_details_func.setter
     def snap_details_func(self, value):
@@ -128,7 +128,7 @@ class _FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
         snap_name = parsed_url.path.split("/")[-1]
         details_func = self.snap_details_func
         if details_func:
-            status_code, params = details_func(snap_name)  # type: ignore[reportGeneralTypeIssues]
+            status_code, params = details_func(snap_name)
         else:
             for snap in self.snaps_result:
                 if snap["name"] == snap_name:

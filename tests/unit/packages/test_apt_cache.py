@@ -42,7 +42,7 @@ class TestAptStageCache:
 
         AptCache.configure_apt("test_stage_packages")
         with AptCache(stage_cache=stage_cache) as cache:
-            package_names = {"pciutils"}
+            package_names = ["pciutils"]
             filtered_names = {
                 "base-files",
                 "libc6",
@@ -192,10 +192,10 @@ class TestAptStageCache:
 
         with AptCache(stage_cache=stage_cache) as cache:
             cache.mark_packages(
-                {
+                [
                     "libnvinfer-dev=10.14.1",
                     "libnvinfer10=10.14.1",
-                }
+                ]
             )
 
         for pkg in pkg_mocks.values():
@@ -218,6 +218,67 @@ class TestAptStageCache:
                 cache.get_packages_marked_for_installation()
 
         assert raised.value.packages == ["mock"]
+
+    def test_fetch_archives_error_includes_uri(self, tmpdir, mocker):
+        class MockCandidate:
+            def __init__(self):
+                self.uri = "http://example.com/pool/mock_1.0_amd64.deb"
+
+            def fetch_binary(self, destdir, progress=None, allow_unauthenticated=None):
+                raise apt.package.FetchError(
+                    "The item '/root/.cache/mock_1.0_amd64.deb' could not be fetched: "
+                    "Connection failed [IP: 185.125.190.81 80]"
+                )
+
+        class MockPackage:
+            def __init__(self):
+                self.name = "mock"
+                self.candidate = MockCandidate()
+
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+        bad_pkg = cast(apt.package.Package, MockPackage())
+        mocker.patch("apt.cache.Cache.get_changes", return_value=[bad_pkg])
+
+        with AptCache(stage_cache=stage_cache) as cache:
+            with pytest.raises(errors.PackageFetchError) as raised:
+                cache.fetch_archives(Path(tmpdir, "debs"))
+
+        assert raised.value.url == "http://example.com/pool/mock_1.0_amd64.deb"
+        assert (
+            raised.value.brief
+            == "Failed to fetch package from http://example.com/pool/mock_1.0_amd64.deb."
+        )
+        assert raised.value.details == (
+            "The item '/root/.cache/mock_1.0_amd64.deb' could not be fetched: "
+            "Connection failed [IP: 185.125.190.81 80]"
+        )
+
+    def test_fetch_archives_error_without_uri(self, tmpdir, mocker):
+        class MockCandidate:
+            def __init__(self):
+                self.uri = None
+
+            def fetch_binary(self, destdir, progress=None, allow_unauthenticated=None):
+                raise apt.package.FetchError("download failed")
+
+        class MockPackage:
+            def __init__(self):
+                self.name = "mock"
+                self.candidate = MockCandidate()
+
+        stage_cache = Path(tmpdir, "cache")
+        stage_cache.mkdir(exist_ok=True, parents=True)
+        bad_pkg = cast(apt.package.Package, MockPackage())
+        mocker.patch("apt.cache.Cache.get_changes", return_value=[bad_pkg])
+
+        with AptCache(stage_cache=stage_cache) as cache:
+            with pytest.raises(errors.PackageFetchError) as raised:
+                cache.fetch_archives(Path(tmpdir, "debs"))
+
+        assert raised.value.url is None
+        assert raised.value.brief == "Failed to fetch package."
+        assert raised.value.details == "download failed"
 
     def test_marked_install_without_candidate(self, tmpdir, mocker):
         class MockPackage:

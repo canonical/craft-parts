@@ -29,7 +29,7 @@ from typing import (
 )
 from urllib import parse
 
-import requests_unixsocket  # type: ignore[import]
+import requests_unixsocket
 from requests import exceptions
 
 from . import errors
@@ -162,6 +162,8 @@ class SnapPackage:
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error
                     retry_count -= 1
+                    if retry_count == 0:
+                        raise
 
         return self._store_snap_info
 
@@ -397,7 +399,7 @@ def _get_local_snap_info(snap_name: str) -> dict[str, Any]:
     slug = f"snaps/{parse.quote(snap_name, safe='')}"
     url = get_snapd_socket_path_template().format(slug)
     try:
-        snap_info = requests_unixsocket.get(url)  # type: ignore[reportUnknownMemberType]
+        snap_info = requests_unixsocket.get(url)
     except exceptions.ConnectionError as err:
         raise errors.SnapdConnectionError(snap_name=snap_name, url=url) from err
     snap_info.raise_for_status()
@@ -409,7 +411,7 @@ def _get_store_snap_info(snap_name: str) -> dict[str, Any]:
     # we do a strict search either 1 result or a 404 will be returned.
     slug = f"find?{parse.urlencode({'name': snap_name})}"
     url = get_snapd_socket_path_template().format(slug)
-    snap_info = requests_unixsocket.get(url)  # type: ignore[reportUnknownMemberType]
+    snap_info = requests_unixsocket.get(url)
     snap_info.raise_for_status()
     return cast(dict[str, Any], snap_info.json()["result"][0])
 
@@ -422,7 +424,7 @@ def get_installed_snaps() -> list[str]:
     slug = "snaps"
     url = get_snapd_socket_path_template().format(slug)
     try:
-        snap_info = requests_unixsocket.get(url)  # type: ignore[reportUnknownMemberType]
+        snap_info = requests_unixsocket.get(url)
         snap_info.raise_for_status()
         local_snaps: list[dict[str, Any]] = snap_info.json()["result"]
     except exceptions.ConnectionError:

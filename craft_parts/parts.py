@@ -382,6 +382,18 @@ class PartSpec(BaseModel):
     Build packages must be listed by their name on the host system.
     """
 
+    build_slices: list[ChiselSliceStr] = Field(
+        default=[],
+        description="The Chisel slices to make available during the build.",
+        examples=["[python3.12_standard, gcc-12_bins]"],
+    )
+    """The Chisel slices to make available during the build step.
+    The slices from all parts are collected and cut into a single directory that
+    becomes the system root of the build step. Since slices and Debian packages
+    cannot be safely mixed in a single filesystem, ``build-slices`` is mutually
+    exclusive with ``build-packages`` and ``build-snaps`` in the same part.
+    """
+
     build_environment: list[dict[str, str]] = Field(
         default=[],
         description="The environment variables to define for the build step, as key-value pairs.",
@@ -626,6 +638,23 @@ class PartSpec(BaseModel):
             )
         return self
 
+    @field_validator("build_slices")
+    @classmethod
+    def validate_build_slices_feature(cls, item: _T_validate) -> _T_validate:
+        """Check if build-slices is specified when the feature is disabled."""
+        if item and not Features().enable_build_slices:
+            raise ValueError("The 'build-slices' key is not supported")
+        return item
+
+    @model_validator(mode="after")
+    def validate_build_slices_mutually_exclusive(self) -> Self:
+        """Check that build-slices is not mixed with build-packages/build-snaps."""
+        if self.build_slices and (self.build_packages or self.build_snaps):
+            raise ValueError(
+                "'build-slices' cannot be used with 'build-packages' or 'build-snaps'"
+            )
+        return self
+
     @model_validator(mode="after")
     def validate_stage_packages_stage_slices_mutually_exclusive(self) -> Self:
         """Check that stage-packages and stage-slices are not both defined."""
@@ -682,7 +711,7 @@ class PartSpec(BaseModel):
 
         :raise TypeError: If data is not a dictionary.
         """
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise TypeError("part data is not a dictionary")
 
         return PartSpec.model_validate(
@@ -767,6 +796,11 @@ class PartSpec(BaseModel):
                 return True
         return False
 
+    @property
+    def has_build_slices(self) -> bool:
+        """Return whether the part has build slices."""
+        return bool(self.build_slices)
+
 
 def _get_build_partition_usage_error(fileset_name: str, partition: str) -> str | None:
     """Return an error message if the build pseudo-partition is misused."""
@@ -826,7 +860,7 @@ class Part:
         stage_packages_slice_support: bool = True,
     ) -> None:
         self._partitions = partitions
-        if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if not isinstance(data, dict):
             raise errors.PartSpecificationError(
                 part_name=name, message="part data is not a dictionary"
             )
@@ -1069,6 +1103,11 @@ class Part:
     def has_chisel_as_build_snap(self) -> bool:
         """Return whether this part has chisel in its build-snaps."""
         return self.spec.has_chisel_as_build_snap
+
+    @property
+    def has_build_slices(self) -> bool:
+        """Return whether this part has build-slices."""
+        return self.spec.has_build_slices
 
     @property
     def default_partition(self) -> str:
@@ -1416,6 +1455,21 @@ def get_parts_with_overlay(*, part_list: list[Part]) -> list[Part]:
     return [p for p in part_list if p.has_overlay or p.organizes_to_overlay]
 
 
+def get_build_slices(*, part_list: list[Part]) -> list[str]:
+    """Obtain the consolidated list of required build slices.
+
+    Build slices are used in a shared root environment, so consolidate
+    slices from all parts.
+
+    :param part_list: A list of all parts in the project.
+
+    :return: The sorted list of build slices required by the project.
+    """
+    return sorted(
+        {build_slice for part in part_list for build_slice in part.spec.build_slices}
+    )
+
+
 def validate_part(data: dict[str, Any]) -> None:
     """Validate the given part data against common and plugin models.
 
@@ -1455,7 +1509,7 @@ def part_has_chisel_as_build_snap(data: dict[str, Any]) -> bool:
 
 
 def _get_part_spec(data: dict[str, Any]) -> PartSpec:
-    if not isinstance(data, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+    if not isinstance(data, dict):
         raise TypeError("value must be a dictionary")
 
     # copy the original data, we'll modify it

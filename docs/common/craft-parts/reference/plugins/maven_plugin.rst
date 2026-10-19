@@ -36,23 +36,11 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.maven_plugin
 
-maven-parameters
-~~~~~~~~~~~~~~~~
+.. kitbash-field:: MavenPluginProperties maven_parameters
 
-**Type:** list of strings
-
-Used to add additional parameters to the ``mvn package`` command line.
-
-
-maven-use-wrapper
-~~~~~~~~~~~~~~~~~
-
-**Type:** boolean
-
-Used to determine whether the build should use the Maven wrapper provided by the project
-at ``<project-root>/mvnw``. If turned on, the project command is replaced with ``./mvnw
-package``.
+.. kitbash-field:: MavenPluginProperties maven_use_wrapper
 
 
 Environment variables

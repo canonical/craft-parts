@@ -31,7 +31,7 @@ from pathlib import Path
 
 import yaml
 from typing_extensions import Any
-from xdg import BaseDirectory  # type: ignore[import]
+from xdg import BaseDirectory
 
 import craft_parts
 import craft_parts.errors

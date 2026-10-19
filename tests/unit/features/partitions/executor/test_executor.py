@@ -58,7 +58,7 @@ class TestExecutor:
             (install_dir / "part1-install-file").exists()
             for install_dir in p1.part_install_dirs.values()
         )
-        assert (
+        assert all(
             (install_dir / "part2-install-file").exists()
             for install_dir in p2.part_install_dirs.values()
         )
@@ -154,11 +154,11 @@ class TestExecutor:
 
         e.clean(Step.PULL, part_names=["p2"])
 
-        assert (
+        assert all(
             (install_dir / "part1-install-file").exists() is False
             for install_dir in p1.part_install_dirs.values()
         )
-        assert (
+        assert all(
             (install_dir / "part2-install-file").exists() is False
             for install_dir in p2.part_install_dirs.values()
         )

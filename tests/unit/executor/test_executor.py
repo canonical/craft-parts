@@ -13,11 +13,11 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import shutil
 from pathlib import Path
 
 import pytest
-from craft_parts import callbacks
+from craft_parts import callbacks, errors
 from craft_parts.actions import Action
 from craft_parts.executor import ExecutionContext, Executor
 from craft_parts.infos import ProjectInfo
@@ -211,6 +211,241 @@ class TestPackages:
         e.prologue()
 
         install.assert_not_called()
+
+    @pytest.fixture
+    def mock_cut_slices(self, mocker):
+        def _fake_cut(*, slices, target_dir):
+            bash = target_dir / "bin" / "bash"
+            bash.parent.mkdir(parents=True, exist_ok=True)
+            bash.touch()
+
+        return mocker.patch(
+            "craft_parts.packages.chisel.cut_slices", side_effect=_fake_cut
+        )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices(self, mock_cut_slices, new_dir, partitions):
+        """Happy path test for cutting slices with no previous state."""
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+        p2 = Part(
+            "bar",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg1_slice2"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+
+        e = Executor(project_info=info, part_list=[p1, p2])
+        e.prologue()
+
+        expected_slices = ["pkg1_slice1", "pkg1_slice2", "pkg2_slice1"]
+        slices_dir = info.dirs.build_slices_dir
+        mock_cut_slices.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+        assert (slices_dir / "dev").is_dir()
+        assert (slices_dir / "proc").is_dir()
+        assert (slices_dir / "sys").is_dir()
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_delete_previous(
+        self, mocker, mock_cut_slices, new_dir, partitions
+    ):
+        """Test that cutting slices deletes old slices if they exist."""
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+        slices_dir.mkdir(parents=True, exist_ok=False)
+
+        rmtree = mocker.spy(shutil, "rmtree")
+
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+
+        rmtree.assert_called_once_with(slices_dir)
+
+        expected_slices = ["pkg1_slice1", "pkg2_slice1"]
+        mock_cut_slices.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_no_slices(
+        self, mocker, mock_cut_slices, new_dir, partitions
+    ):
+        """Test that cutting slices deletes old slices if they exist, even if no build-slices are requested."""
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": []},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+        slices_dir.mkdir(parents=True, exist_ok=False)
+
+        rmtree = mocker.spy(shutil, "rmtree")
+
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+
+        rmtree.assert_called_once_with(slices_dir)
+        assert not mock_cut_slices.called
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_rerun_same_slices(
+        self, mock_cut_slices, new_dir, partitions
+    ):
+        """Test that cutting the same slices is a no-op."""
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+
+        # First run: must cut slices
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+        expected_slices = ["pkg1_slice1", "pkg2_slice1"]
+        mock_cut_slices.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+
+        # Second run: must *not* cut the same slices again
+        mock_cut_slices.reset_mock()
+        e = Executor(project_info=info, part_list=[p1])
+        e.prologue()
+        assert not mock_cut_slices.called
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_rerun_different_slices(
+        self, mocker, mock_cut_slices, new_dir, partitions
+    ):
+        """Test that cutting different slices removes the old ones."""
+        old_part = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1", "pkg2_slice1"]},
+            partitions=partitions,
+        )
+        new_part = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg3_slice3"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        slices_dir = info.dirs.build_slices_dir
+
+        # First run: must cut slices
+        e = Executor(project_info=info, part_list=[old_part])
+        e.prologue()
+        expected_slices = ["pkg1_slice1", "pkg2_slice1"]
+        mock_cut_slices.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+
+        # Second run with different slices: must remove old slices and cut new ones
+        rmtree = mocker.spy(shutil, "rmtree")
+        mock_cut_slices.reset_mock()
+        e = Executor(project_info=info, part_list=[new_part])
+        e.prologue()
+        expected_slices = ["pkg3_slice3"]
+        rmtree.assert_called_once_with(slices_dir)
+        mock_cut_slices.assert_called_once_with(
+            slices=expected_slices, target_dir=slices_dir
+        )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_cut_build_slices_missing_bash(self, mocker, new_dir, partitions):
+        """Error if cut build-slices do not provide /bin/bash."""
+        mocker.patch("craft_parts.packages.chisel.cut_slices")
+
+        p = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["pkg1_slice1"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+
+        e = Executor(project_info=info, part_list=[p])
+        with pytest.raises(errors.BuildSlicesEnvironmentError) as raised:
+            e.prologue()
+
+        assert raised.value.brief == (
+            "Build environment created from build-slices is missing '/bin/bash'."
+        )
+        assert raised.value.details == (
+            "Bash is required to run the build script in the build-slices environment."
+        )
+        assert raised.value.resolution == (
+            "Add 'bash_bins' and 'base-files_base' to the 'build-slices' key of one of "
+            "the parts that declare build slices or to the root-level 'build-slices' key."
+        )
+
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_verify_plugin_environment_skips_sliced_parts(
+        self, mocker, new_dir, partitions
+    ):
+        """Test that the plugin environment validation performed by the Executor is strictly done for non-sliced parts."""
+        normal = Part("normal", {"plugin": "nil"}, partitions=partitions)
+        sliced = Part(
+            "sliced",
+            {"plugin": "nil", "build-slices": ["base-files_base"]},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        executor = Executor(project_info=info, part_list=[normal, sliced])
+        plugin_class = mocker.MagicMock()
+        get_plugin_class = mocker.patch(
+            "craft_parts.executor.executor.plugins.get_plugin_class",
+            return_value=plugin_class,
+        )
+        mocker.patch(
+            "craft_parts.executor.executor.generate_step_environment",
+            return_value="build environment",
+        )
+
+        executor._verify_plugin_environment()
+
+        get_plugin_class.assert_called_once_with("nil")
+        plugin_class.assert_called_once()
+        plugin_class.validator_class.assert_called_once_with(
+            part_name="normal",
+            env="build environment",
+            properties=normal.plugin_properties,
+        )
+        plugin_class.validator_class.return_value.validate_environment.assert_called_once_with(
+            part_dependencies=normal.dependencies
+        )
 
 
 class TestExecutionContext:

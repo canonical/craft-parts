@@ -17,78 +17,21 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.ruby_plugin
 
-ruby-gems
-~~~~~~~~~
+.. kitbash-field:: RubyPluginProperties ruby_gems
 
-**Type:** list of strings
+.. kitbash-field:: RubyPluginProperties ruby_use_bundler
 
-The gems to install.
+.. kitbash-field:: RubyPluginProperties ruby_flavor
 
+.. kitbash-field:: RubyPluginProperties ruby_version
 
-ruby-use-bundler
-~~~~~~~~~~~~~~~~
+.. kitbash-field:: RubyPluginProperties ruby_shared
 
-**Type:** boolean
+.. kitbash-field:: RubyPluginProperties ruby_use_jemalloc
 
-**Default:** False
-
-Whether to use Bundler to build the gems.
-
-
-ruby-flavor
-~~~~~~~~~~~
-
-**Type:** string
-
-**Default:** None
-
-The Ruby interpreter to build and include. The supported interpreters are:
-
-- ``ruby``
-- ``jruby``
-- ``truffleruby``
-- ``mruby``
-
-
-ruby-version
-~~~~~~~~~~~~
-
-**Type:** string
-
-**Default:** None
-
-The version of the Ruby interpreter to build.
-
-
-ruby-shared
-~~~~~~~~~~~
-
-**Type:** boolean
-
-**Default:** False
-
-When set to ``true``, the plugin builds ``libruby.so``, a shared library that
-other binaries can link against.
-
-
-ruby-use-jemalloc
-~~~~~~~~~~~~~~~~~
-
-**Type:** boolean
-
-**Default:** False
-
-Whether to build Ruby with support for jemalloc.
-
-
-ruby-configure-options
-~~~~~~~~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Extra arguments to pass to the ``configure`` script when building the Ruby
-interpreter.
+.. kitbash-field:: RubyPluginProperties ruby_configure_options
 
 
 .. _ruby_self-contained_start:

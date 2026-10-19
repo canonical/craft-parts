@@ -138,6 +138,24 @@ class InvalidPartName(PartsError):  # noqa: N818
         super().__init__(brief=brief, resolution=resolution)
 
 
+class PartNameConflict(PartsError):  # noqa: N818
+    """A part name conflicts with another part name because one is nested inside the other.
+
+    :param part_name: The part name being processed.
+    :param conflicting_part_name: The conflicting part name.
+    """
+
+    def __init__(self, *, part_name: str, conflicting_part_name: str) -> None:
+        self.part_name = part_name
+        self.conflicting_part_name = conflicting_part_name
+        brief = f"Part {part_name!r} conflicts with {conflicting_part_name!r}."
+        resolution = (
+            "Review the parts definition and make sure part names do not conflict."
+        )
+
+        super().__init__(brief=brief, resolution=resolution)
+
+
 class InvalidArchitecture(PartsError):  # noqa: N818
     """The machine architecture is not supported.
 
@@ -551,12 +569,14 @@ class PluginEnvironmentValidationError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str, reason: str) -> None:
+    def __init__(
+        self, *, part_name: str, reason: str, resolution: str | None = None
+    ) -> None:
         self.part_name = part_name
         self.reason = reason
         brief = f"Environment validation failed for part {part_name!r}: {reason}."
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, resolution=resolution)
 
 
 class PluginPullError(PartsError):
@@ -822,7 +842,7 @@ class PartitionUsageError(PartitionError):
         super().__init__(
             brief=brief or "Invalid usage of partitions",
             details="\n".join(error_list) + valid_partitions,
-            resolution="Correct the invalid partition name(s) and try again.",
+            resolution="Correct the invalid partition usage and try again.",
         )
 
 
@@ -937,3 +957,19 @@ class UnsupportedBuildAttributesError(PartsError):
             brief=message,
             resolution=f"Remove the {noun}, or use a different plugin.",
         )
+
+
+class BuildSlicesEnvironmentError(PartsError):
+    """The build-slices environment is missing essential files."""
+
+    def __init__(self) -> None:
+        brief = "Build environment created from build-slices is missing '/bin/bash'."
+        details = (
+            "Bash is required to run the build script in the build-slices environment."
+        )
+        resolution = (
+            "Add 'bash_bins' and 'base-files_base' to the 'build-slices' key of one of "
+            "the parts that declare build slices or to the root-level 'build-slices' key."
+        )
+
+        super().__init__(brief=brief, details=details, resolution=resolution)

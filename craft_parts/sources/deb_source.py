@@ -32,7 +32,7 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 
-class DebSourceModel(BaseFileSourceModel, frozen=True):  # type: ignore[misc]
+class DebSourceModel(BaseFileSourceModel, frozen=True):
     """Pydantic model for deb file sources."""
 
     pattern = r"\.deb$"

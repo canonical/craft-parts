@@ -66,7 +66,7 @@ def get_model_config(
     )
 
 
-class BaseSourceModel(pydantic.BaseModel, frozen=True):  # type: ignore[misc]
+class BaseSourceModel(pydantic.BaseModel, frozen=True):
     """A base model for source types."""
 
     model_config = get_model_config()

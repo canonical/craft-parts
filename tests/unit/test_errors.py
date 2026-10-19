@@ -89,6 +89,18 @@ def test_invalid_part_name():
     assert err.resolution == "Review the parts definition and make sure it's correct."
 
 
+def test_part_name_conflict():
+    err = errors.PartNameConflict(part_name="foo/bar", conflicting_part_name="foo")
+    assert err.part_name == "foo/bar"
+    assert err.conflicting_part_name == "foo"
+    assert err.brief == "Part 'foo/bar' conflicts with 'foo'."
+    assert err.details is None
+    assert (
+        err.resolution
+        == "Review the parts definition and make sure part names do not conflict."
+    )
+
+
 def test_invalid_architecture():
     err = errors.InvalidArchitecture("m68k")
     assert err.arch_name == "m68k"
@@ -318,6 +330,21 @@ def test_plugin_environment_validation_error():
     assert err.resolution is None
 
 
+def test_plugin_environment_validation_error_with_resolution():
+    err = errors.PluginEnvironmentValidationError(
+        part_name="foo",
+        reason="compiler not found",
+        resolution="Install the compiler.",
+    )
+    assert err.part_name == "foo"
+    assert err.reason == "compiler not found"
+    assert err.brief == (
+        "Environment validation failed for part 'foo': compiler not found."
+    )
+    assert err.details is None
+    assert err.resolution == "Install the compiler."
+
+
 def test_plugin_build_error():
     err = errors.PluginBuildError(part_name="foo", plugin_name="go")
     assert err.part_name == "foo"
@@ -406,6 +433,22 @@ def test_overlay_permission_error():
     assert err.resolution is None
 
 
+def test_build_slices_environment_error():
+    err = errors.BuildSlicesEnvironmentError()
+    assert (
+        err.brief
+        == "Build environment created from build-slices is missing '/bin/bash'."
+    )
+    assert (
+        err.details
+        == "Bash is required to run the build script in the build-slices environment."
+    )
+    assert err.resolution == (
+        "Add 'bash_bins' and 'base-files_base' to the 'build-slices' key of one of "
+        "the parts that declare build slices or to the root-level 'build-slices' key."
+    )
+
+
 class TestPartitionErrors:
     def test_partition_error(self):
         err = errors.PartitionError(
@@ -431,7 +474,7 @@ class TestPartitionErrors:
             "    unknown partition 'foo' in '(foo)'\n"
             "Valid partitions: default, mypart, yourpart"
         )
-        assert err.resolution == "Correct the invalid partition name(s) and try again."
+        assert err.resolution == "Correct the invalid partition usage and try again."
 
     def test_invalid_partition_warning(self):
         err = errors.PartitionUsageWarning(

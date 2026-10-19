@@ -14,14 +14,9 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.meson_plugin
 
-meson_parameters
-~~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Parameters to configure the project. See the reference to the `setup command`_ for a
-list of valid options.
+.. kitbash-field:: MesonPluginProperties meson_parameters
 
 
 Dependencies
@@ -72,4 +67,3 @@ The declaration of the ``meson`` package as a ``build-package`` will also pull i
 
 .. _Meson: https://mesonbuild.com/
 .. _Ninja: https://ninja-build.org/
-.. _setup command: https://mesonbuild.com/Commands.html#setup

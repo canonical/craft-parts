@@ -20,6 +20,7 @@ import shlex
 from textwrap import dedent
 from typing import Literal
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts.plugins.base import Plugin
@@ -31,11 +32,33 @@ class PythonPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["python"] = "python"
 
-    python_requirements: list[str] = []
-    python_packages: list[str] = []
+    python_requirements: list[str] = pydantic.Field(
+        default=[],
+        description="List of paths to requirements files.",
+    )
+    """List of paths to requirements files.
+
+    Use this key when dependencies must be installed from one or more explicit
+    requirements files, such as ``requirements.txt``. The plugin does not
+    automatically select a requirements file from the source tree; each file
+    must be listed here.
+
+    A part does not need this key when its dependencies are already declared by
+    the project metadata used during package installation. For example, when
+    the source contains a ``setup.py`` or ``pyproject.toml`` file, the plugin
+    installs the project and pip resolves the dependencies declared by the
+    package itself. That metadata may also come from configuration files such
+    as ``setup.cfg``.
+    """
+
+    python_packages: list[str] = pydantic.Field(
+        default=[],
+        description="Additional Python packages to install with pip.",
+    )
+    """Additional Python packages to install with pip."""
 
     # part properties required by the plugin
-    source: str  # pyright: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class PythonPlugin(Plugin):
@@ -93,23 +116,23 @@ class PythonPlugin(Plugin):
 
         # First the requirements
         requirements = " ".join(
-            f"-r {req}" for req in self._options.python_requirements
+            f"-r {shlex.quote(req)}" for req in self._options.python_requirements
         )
-        pip_lines.append(f'REQUIREMENTS="{requirements}"')
+        pip_lines.append(f"REQUIREMENTS=({requirements})")
 
         # Then any extra packages
         packages = " ".join(shlex.quote(pkg) for pkg in self._options.python_packages)
-        pip_lines.append(f'PACKAGES="{packages}"')
+        pip_lines.append(f"PACKAGES=({packages})")
 
         # Then finally the project in the source itself, if it exists
         project = dedent("""\
           if [ -f setup.py -o -f pyproject.toml ]; then
-            PACKAGES="${PACKAGES} ."
+            PACKAGES+=(".")
           fi
         """)
         pip_lines.append(project)
 
-        pip_lines.append("pip install ${REQUIREMENTS} ${PACKAGES}")
+        pip_lines.append('pip install "${REQUIREMENTS[@]}" "${PACKAGES[@]}"')
 
         # Add a sitecustomize so that the bundled Python interpreter (if any) will
         # pick up the packages installed by pip here
