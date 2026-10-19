@@ -330,6 +330,21 @@ def test_plugin_environment_validation_error():
     assert err.resolution is None
 
 
+def test_plugin_environment_validation_error_with_resolution():
+    err = errors.PluginEnvironmentValidationError(
+        part_name="foo",
+        reason="compiler not found",
+        resolution="Install the compiler.",
+    )
+    assert err.part_name == "foo"
+    assert err.reason == "compiler not found"
+    assert err.brief == (
+        "Environment validation failed for part 'foo': compiler not found."
+    )
+    assert err.details is None
+    assert err.resolution == "Install the compiler."
+
+
 def test_plugin_build_error():
     err = errors.PluginBuildError(part_name="foo", plugin_name="go")
     assert err.part_name == "foo"
