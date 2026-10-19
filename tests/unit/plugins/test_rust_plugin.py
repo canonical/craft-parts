@@ -483,11 +483,8 @@ def test_validate_environment_rust_channel_none_missing_toolchain(
     assert "No 'rust-deps' part found." in caplog.text
 
 
-def test_validate_environment_rust_deps_and_channel_conflict(
-    mock_validator, caplog: pytest.LogCaptureFixture
-):
+def test_validate_environment_rust_deps_and_channel_conflict(mock_validator):
     """Error when 'rust-deps' and 'rust-channel' are both provided."""
-    caplog.set_level(logging.INFO)
     properties = RustPlugin.properties_class.unmarshal(
         {"source": ".", "after": ["rust-deps"], "rust-channel": "stable"}
     )
