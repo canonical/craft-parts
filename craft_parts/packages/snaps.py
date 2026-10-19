@@ -57,6 +57,11 @@ def _normalize_channel(channel: str) -> str:
     return channel
 
 
+def _get_channel_track(channel: str) -> str:
+    """Return the track from a channel."""
+    return channel.split("/", 1)[0]
+
+
 def _decode_subprocess_stderr(err: subprocess.CalledProcessError) -> str | None:
     stderr = err.stderr
     if stderr is None:
@@ -204,10 +209,27 @@ class SnapPackage:
         default_channel = cast(str, snap_store_info.get("channel", ""))
         return _normalize_channel(default_channel)
 
+    def _get_default_store_track(self) -> str:
+        """Return the default track from the store information."""
+        return _get_channel_track(self._get_default_store_channel())
+
+    def get_effective_channel(self) -> str:
+        """Return the channel resolved against the snap's default track."""
+        for risk in _CHANNEL_RISKS:
+            if self._original_channel == risk or self._original_channel.startswith(
+                f"{risk}/"
+            ):
+                default_track = self._get_default_store_track()
+                if default_track:
+                    return f"{default_track}/{self._original_channel}"
+                break
+
+        return self.channel
+
     def is_classic(self) -> bool:
         """Verify whether this snap is a classic snap."""
         store_channels = self._get_store_channels()
-        channel = self.channel or self._get_default_store_channel()
+        channel = self.get_effective_channel() or self._get_default_store_channel()
         try:
             return bool(store_channels[channel]["confinement"] == "classic")
         except KeyError:
@@ -223,13 +245,14 @@ class SnapPackage:
 
     def is_valid(self) -> bool:
         """Check if the snap is valid."""
-        if self.channel:
-            if self.installed and self.get_current_channel() == self.channel:
+        channel = self.get_effective_channel()
+        if channel:
+            if self.installed and self.get_current_channel() == channel:
                 return True
             if not self.in_store:
                 return False
             store_channels = self._get_store_channels()
-            return self.channel in store_channels
+            return channel in store_channels
 
         # No channel requested; the snap is valid if it is installed or
         # available in the store.
@@ -287,11 +310,18 @@ class SnapPackage:
 
     def refresh(self) -> None:
         """Refresh a snap onto a channel on the system."""
-        if not self.channel:
+        refresh_channel = self._original_channel or self.channel
+        if not refresh_channel:
             return
 
-        logger.debug("Refreshing snap: %s (channel %s)", self.name, self.channel)
-        snap_refresh_cmd = ["snap", "refresh", self.name, "--channel", self.channel]
+        logger.debug("Refreshing snap: %s (channel %s)", self.name, refresh_channel)
+        snap_refresh_cmd = [
+            "snap",
+            "refresh",
+            self.name,
+            "--channel",
+            refresh_channel,
+        ]
         with contextlib.suppress(errors.SnapUnavailable, KeyError):
             if self.is_classic():
                 snap_refresh_cmd.append("--classic")
@@ -343,11 +373,17 @@ def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
             if snap_pkg_channel != "stable" and snap_pkg_type == "base":
                 snap_pkg = SnapPackage(f"{snap_pkg.name}/latest/{snap_pkg_channel}")
 
-            target_channel = snap_pkg.channel or _normalize_channel(snap_pkg_channel)
+            target_channel = snap_pkg.get_effective_channel() or _normalize_channel(
+                snap_pkg_channel
+            )
             if not snap_pkg.installed:
                 snap_pkg.install()
             elif target_channel and snap_pkg.get_current_channel() != target_channel:
-                snap_pkg.channel = target_channel
+                # If the user didn't request a channel, refresh to the store's
+                # default channel; otherwise, refresh() uses the user-supplied
+                # channel and snapd resolves the default track.
+                if not snap_pkg.channel:
+                    snap_pkg.channel = target_channel
                 snap_pkg.refresh()
 
         local_snap_info = snap_pkg.get_local_snap_info()

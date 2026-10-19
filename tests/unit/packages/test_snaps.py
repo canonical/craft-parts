@@ -617,6 +617,22 @@ class TestSnapPackageLifecycle:
             snap_pkg.refresh()
         assert raised.value.details == "snap refresh failed"
 
+    def test_refresh_uses_original_risk_channel(self, fake_snapd, fake_snap_command):
+        fake_snapd.find_result = [
+            {
+                "fake-snap": {
+                    "channel": "2.x/stable",
+                    "channels": {"2.x/edge": {"confinement": "strict"}},
+                }
+            }
+        ]
+
+        snap_pkg = snaps.SnapPackage("fake-snap@edge")
+        snap_pkg.refresh()
+        assert fake_snap_command.calls == [
+            ["snap", "refresh", "fake-snap", "--channel", "edge"]
+        ]
+
     def test_install_snaps_returns_revision(self, fake_snapd):
         fake_snapd.find_result = [
             {
@@ -665,6 +681,58 @@ class TestSnapPackageLifecycle:
 
         assert fake_snap_command.calls == [
             ["snap", "refresh", "fake-snap", "--channel", "latest/stable"]
+        ]
+        assert installed_snaps == ["fake-snap=test-fake-snap-revision"]
+
+    def test_install_snaps_resolves_risk_against_default_track(
+        self, fake_snapd, fake_snap_command
+    ):
+        fake_snapd.find_result = [
+            {
+                "fake-snap": {
+                    "channel": "2.x/stable",
+                    "type": "app",
+                    "channels": {"2.x/edge": {"confinement": "strict"}},
+                }
+            }
+        ]
+        fake_snapd.snaps_result = [
+            {
+                "name": "fake-snap",
+                "channel": "2.x/edge",
+                "revision": "test-fake-snap-revision",
+            }
+        ]
+
+        installed_snaps = snaps.install_snaps(["fake-snap@edge"])
+
+        assert fake_snap_command.calls == []
+        assert installed_snaps == ["fake-snap=test-fake-snap-revision"]
+
+    def test_install_snaps_refreshes_risk_against_default_track(
+        self, fake_snapd, fake_snap_command
+    ):
+        fake_snapd.find_result = [
+            {
+                "fake-snap": {
+                    "channel": "2.x/stable",
+                    "type": "app",
+                    "channels": {"2.x/edge": {"confinement": "strict"}},
+                }
+            }
+        ]
+        fake_snapd.snaps_result = [
+            {
+                "name": "fake-snap",
+                "channel": "latest/edge",
+                "revision": "test-fake-snap-revision",
+            }
+        ]
+
+        installed_snaps = snaps.install_snaps(["fake-snap@edge"])
+
+        assert fake_snap_command.calls == [
+            ["snap", "refresh", "fake-snap", "--channel", "edge"]
         ]
         assert installed_snaps == ["fake-snap=test-fake-snap-revision"]
 
