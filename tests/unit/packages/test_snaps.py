@@ -323,7 +323,7 @@ class TestSnapPackageIsValid:
 
     def test_installed_stable(self):
         snap_pkg = snaps.SnapPackage("fake-snap")
-        snap_pkg.get_local_snap_info = lambda: {"channel": "stable"}
+        snap_pkg.get_local_snap_info = lambda: {"channel": "stable"}  # ty: ignore[invalid-assignment]
         assert snap_pkg.is_valid()
 
     def test_404(self, fake_snapd):

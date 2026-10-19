@@ -155,14 +155,19 @@ class SnapPackage:
                     self._store_snap_info = _get_store_snap_info(self.name)
                     break
                 except exceptions.HTTPError as http_error:
+                    response_status = (
+                        http_error.response.status_code
+                        if http_error.response is not None
+                        else None
+                    )
                     logger.debug(
-                        "The http error when checking the store for %s is %d "
+                        "The http error when checking the store for %s is %s "
                         "(retries left %d)",
                         self.name,
-                        http_error.response.status_code,
+                        response_status,
                         retry_count,
                     )
-                    if http_error.response.status_code == HTTPStatus.NOT_FOUND:
+                    if response_status == HTTPStatus.NOT_FOUND:
                         raise errors.SnapUnavailable(
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error
