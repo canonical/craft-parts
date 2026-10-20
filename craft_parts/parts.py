@@ -424,17 +424,18 @@ class PartSpec(BaseModel):
     organize_files: dict[str, str] = Field(
         default_factory=dict[str, str],
         alias="organize",
-        description="A map of files from the part's install directory to their destinations in the stage directory.",
+        description="A map from source paths or patterns to destination paths used to rearrange the part's install layout before staging.",
         examples=["{hello.py: bin/hello}"],
     )
-    """A map of files from the part's install directory to their destinations in the
-    stage directory.
+    """A map from source paths or patterns to destination paths.
 
     Each pair of source and destination paths is represented as a nested key of the form
     ``<source-path>: <destination-path>``.
 
-    At the end of the build step, the files at the source paths are copied to
-    their destination paths in the stage directory.
+    At the end of the build step, selected files are rearranged to their destination
+    paths before staging.
+
+    The later stage step migrates the resulting contents into the common stage area.
     """
 
     overlay_files: list[str] = Field(
