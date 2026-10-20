@@ -17,12 +17,14 @@
 """Base classes for source type handling."""
 
 import abc
+import ftplib
 import logging
 import shutil
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar
+from urllib.parse import unquote, urlsplit
 
 import pydantic
 import requests
@@ -295,20 +297,80 @@ class FileSourceHandler(SourceHandler):
         else:
             self._file = filepath
 
-        # check if we already have the source file cached
         file_cache = FileCache(self._cache_dir)
         if self.source_checksum:
             cache_file = file_cache.get(key=self.source_checksum)
             if cache_file:
-                # We make this copy as the provisioning logic can delete
-                # this file and we don't want that.
                 shutil.copy2(cache_file, self._file)
                 return self._file
 
-        # if not we download and store
         if url_utils.get_url_scheme(self.source) == "ftp":
-            raise NotImplementedError("ftp download not implemented")
+            self._download_ftp()
+        else:
+            self._download_http()
 
+        if self.source_checksum:
+            verify_checksum(
+                self.source_checksum,
+                self._file,
+                part_name=self._part_name,
+                source=self.source,
+            )
+            file_cache.cache(filename=str(self._file), key=self.source_checksum)
+
+        return self._file
+
+    def _download_ftp(self) -> None:
+        """Download a file from an FTP URL."""
+        parsed_url = urlsplit(self.source)
+
+        if not parsed_url.hostname or not parsed_url.path:
+            raise errors.NetworkRequestError(
+                message="Invalid FTP URL",
+                source=self.source,
+            )
+
+        username = (
+            unquote(parsed_url.username)
+            if parsed_url.username is not None
+            else "anonymous"
+        )
+        password = (
+            unquote(parsed_url.password)
+            if parsed_url.password is not None
+            else "anonymous@"
+        )
+
+        try:
+            with ftplib.FTP() as ftp:  # noqa: S321
+                ftp.connect(
+                    parsed_url.hostname,
+                    parsed_url.port or 21,
+                    timeout=3600,
+                )
+                ftp.login(username, password)
+
+                with self._file.open("wb") as output:
+                    ftp.retrbinary(
+                        f"RETR {unquote(parsed_url.path)}",
+                        output.write,
+                    )
+        except ftplib.error_perm as err:
+            if str(err).startswith("550"):
+                raise errors.SourceNotFound(source=self.source) from err
+
+            raise errors.NetworkRequestError(
+                message=f"FTP download failed: {err}",
+                source=self.source,
+            ) from err
+        except ftplib.all_errors as err:
+            raise errors.NetworkRequestError(
+                message=f"FTP download failed: {err}",
+                source=self.source,
+            ) from err
+
+    def _download_http(self) -> None:
+        """Download a file over HTTP or HTTPS."""
         try:
             request = requests.get(
                 self.source, stream=True, allow_redirects=True, timeout=3600
@@ -330,14 +392,3 @@ class FileSourceHandler(SourceHandler):
                 f"response={err.response!r})",
                 source=self.source,
             ) from err
-
-        # if source_checksum is defined cache the file for future reuse
-        if self.source_checksum:
-            verify_checksum(
-                self.source_checksum,
-                self._file,
-                part_name=self._part_name,
-                source=self.source,
-            )
-            file_cache.cache(filename=str(self._file), key=self.source_checksum)
-        return self._file
