@@ -19,6 +19,20 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+.. _release-2.37.3:
+
+2.37.3 (2026-10-23)
+-------------------
+
+Bug fixes:
+
+- A part's install directory doesn't get cleaned if the prior build failed
+  (`#1780 <https://github.com/canonical/craft-parts/issues/1780>`__).
+
+For a complete list of commits, check out the `2.37.3`_ release on GitHub.
+
+
 .. _release-2.37.2:
 
 2.37.2 (2026-10-08)
@@ -1913,6 +1927,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.37.3: https://github.com/canonical/craft-parts/releases/tag/2.37.3
 .. _2.37.2: https://github.com/canonical/craft-parts/releases/tag/2.37.2
 .. _2.37.1: https://github.com/canonical/craft-parts/releases/tag/2.37.1
 .. _2.37.0: https://github.com/canonical/craft-parts/releases/tag/2.37.0

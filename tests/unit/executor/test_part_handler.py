@@ -143,6 +143,45 @@ class TestPartHandling:
         assert self._mock_umount.mock_calls == []
         mock_chroot.assert_not_called()
 
+    @pytest.mark.parametrize("action_type", [ActionType.RUN, ActionType.RERUN])
+    def test_run_build_cleans_install_dir(
+        self, mocker: MockerFixture, action_type: ActionType
+    ) -> None:
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
+        mocker.patch("subprocess.check_output", return_value=b"os-info")
+        mocker.patch(
+            "craft_parts.packages.Repository.get_installed_packages", return_value=[]
+        )
+        mocker.patch("craft_parts.packages.snaps.get_installed_snaps", return_value=[])
+
+        leftover = self._part.part_install_dir / "leftover.txt"
+        leftover.parent.mkdir(parents=True, exist_ok=True)
+        leftover.touch()
+
+        self._handler.run_action(
+            Action(self._part.name, Step.BUILD, action_type=action_type)
+        )
+        assert not leftover.exists()
+
+    def test_run_build_update_preserves_install_dir(
+        self, mocker: MockerFixture
+    ) -> None:
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
+        mocker.patch("subprocess.check_output", return_value=b"os-info")
+        mocker.patch(
+            "craft_parts.packages.Repository.get_installed_packages", return_value=[]
+        )
+        mocker.patch("craft_parts.packages.snaps.get_installed_snaps", return_value=[])
+
+        leftover = self._part.part_install_dir / "leftover.txt"
+        leftover.parent.mkdir(parents=True, exist_ok=True)
+        leftover.touch()
+
+        self._handler._run_build(
+            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None, update=True
+        )
+        assert leftover.exists()
+
     @pytest.mark.usefixtures("enable_build_slices")
     def test_run_build_with_build_slices(self, mocker, new_dir, partitions):
         part = Part(
