@@ -43,7 +43,13 @@ Bug fixes:
 - When using the ``rust-deps`` part to provision the Rust toolchain,
   setting ``rust-channel: "none"`` is no longer required.
 
+- A path-like source that does not exist now raises ``SourceNotFound``
+  (``"'...' not found"``) instead of ``InvalidSourceType`` (``"unable to
+  determine source type"``), so the error names the real problem. See
+  `canonical/snapcraft#6501 <https://github.com/canonical/snapcraft/issues/6501>`__.
+
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
+
 
 
 .. _release-2.37.2:

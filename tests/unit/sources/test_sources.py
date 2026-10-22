@@ -142,6 +142,25 @@ def test_unknown_source_type_from_uri(source):
         sources.get_source_type_from_uri(source)
 
 
+def test_missing_path_like_source_raises_source_not_found():
+    """A path-like source that does not exist names the real problem.
+
+    Regression test for canonical/snapcraft#6501: a missing local path used
+    to raise InvalidSourceType, whose message ("unable to determine source
+    type") sent users looking for a source-type problem that did not exist.
+    """
+    with pytest.raises(errors.SourceNotFound) as raised:
+        sources.get_source_type_from_uri("snap/local")
+
+    err = raised.value
+    assert err.brief == "Failed to pull source: 'snap/local' not found."
+    assert err.resolution == "Make sure the source path is correct and accessible."
+
+
+def test_missing_path_like_source_ignore_errors():
+    assert sources.get_source_type_from_uri("snap/local", ignore_errors=True) == ""
+
+
 @pytest.mark.parametrize(
     ("source_type", "source_branch", "source_tag", "source_commit", "error"),
     [
