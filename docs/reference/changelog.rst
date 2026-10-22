@@ -46,11 +46,10 @@ Bug fixes:
 - A path-like source that does not exist now raises ``SourceNotFound``
   (``"'...' not found"``) instead of ``InvalidSourceType`` (``"unable to
   determine source type"``), so the error names the real problem. See
-  `canonical/snapcraft#6501`_.
+  `canonical/snapcraft#6501 <https://github.com/canonical/snapcraft/issues/6501>`__.
 
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
-.. _canonical/snapcraft#6501: https://github.com/canonical/snapcraft/issues/6501
 
 
 .. _release-2.37.2:
