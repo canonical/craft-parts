@@ -462,6 +462,9 @@ class PartHandler:
 
         :return: The build step state.
         """
+        if not update:
+            self._clean_build_outputs()
+
         self._make_dirs()
         self._unpack_stage_packages()
         self._unpack_stage_snaps()
@@ -1150,13 +1153,17 @@ class PartHandler:
         if part_level < self._overlay_manager.cache_level:
             _remove(self._part.dirs.overlay_packages_dir)
 
-    def _clean_build(self) -> None:
-        """Remove the current part's build step files and state."""
-        _remove(self._part.part_build_dir)
+    def _clean_build_outputs(self) -> None:
+        """Remove the current part's install and export directories."""
         for install_dir in self._part.part_install_dirs.values():
             _remove(install_dir)
 
         _remove(self._part.part_export_dir)
+
+    def _clean_build(self) -> None:
+        """Remove the current part's build step files and state."""
+        _remove(self._part.part_build_dir)
+        self._clean_build_outputs()
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
