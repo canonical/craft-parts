@@ -24,7 +24,7 @@ from typing import Any, cast
 import pytest
 from craft_parts import errors
 from craft_parts.executor.organize import organize_files
-from craft_parts.utils.partition_utils import BUILD_PARTITION
+from craft_parts.utils.partition_utils import BUILD_PARTITION, OVERLAY_PARTITION
 
 
 @pytest.fixture(autouse=True, params=range(6))
@@ -224,6 +224,106 @@ def randomize_globs(monkeypatch, request: pytest.FixtureRequest):
             "organize_map": {"**/bardir/*": "bardir/"},
             "expected": [(["bardir", "foodir"], ""), (["foo"], "bardir")],
         },
+        # Organizing a directory into a path inside itself is rejected. The move
+        # would remove the source, taking the just-written destination with it.
+        pytest.param(
+            {
+                "setup_dirs": [Path("foodir")],
+                "setup_files": [Path("foodir/foo")],
+                "organize_map": {"foodir": "foodir/nested"},
+                "expected": errors.FileOrganizeError,
+                "expected_message": (
+                    r".*trying to organize directory 'foodir' to 'foodir/nested' but "
+                    r"the destination is inside the source directory;.*"
+                    r"\(foodir/\*: foodir/nested/\).*"
+                ),
+            },
+            id="dir-into-itself",
+        ),
+        # Organizing a directory to itself is a no-op, not an error. The
+        # nesting check reports equal source and destination paths as nested,
+        # so this pins the "organizing to the same place, skipping" return
+        # ahead of the check in organize_files.
+        pytest.param(
+            {
+                "setup_dirs": [Path("foodir")],
+                "setup_files": [Path("foodir/foo")],
+                "organize_map": {"foodir": "foodir"},
+                "expected": [(["foo"], "foodir")],
+            },
+            id="dir-into-itself-skipped",
+        ),
+        # A key that is already a glob gets no "use a glob key instead" hint,
+        # since suggesting "foodir/v?/*" for the glob key "foodir/v?" would
+        # not help.
+        pytest.param(
+            {
+                "setup_dirs": [Path("foodir"), Path("foodir/v1")],
+                "setup_files": [Path("foodir/v1/foo")],
+                "organize_map": {"foodir/v?": "foodir/v1/nested"},
+                "expected": errors.FileOrganizeError,
+                "expected_message": (
+                    r".*trying to organize directory 'foodir/v\?' to "
+                    r"'foodir/v1/nested' but the destination is inside the "
+                    r"source directory\.?$"
+                ),
+            },
+            id="glob-into-itself-no-glob-hint",
+        ),
+        # The same, with the destination nested several levels deep.
+        pytest.param(
+            {
+                "setup_dirs": [Path("foodir")],
+                "setup_files": [Path("foodir/foo")],
+                "organize_map": {"foodir": "foodir/nested/deeper"},
+                "expected": errors.FileOrganizeError,
+                "expected_message": (
+                    r".*the destination is inside the source directory.*"
+                ),
+            },
+            id="dir-into-itself-deeply-nested",
+        ),
+        # Organizing into a pre-existing subdirectory of the source is also
+        # rejected, since the source removal would destroy it.
+        pytest.param(
+            {
+                "setup_dirs": [Path("foodir"), Path("foodir/subdir")],
+                "setup_files": [Path("foodir/foo"), Path("foodir/subdir/bar")],
+                "organize_map": {"foodir": "foodir/subdir"},
+                "expected": errors.FileOrganizeError,
+                "expected_message": (
+                    r".*the destination is inside the source directory.*"
+                ),
+            },
+            id="dir-into-existing-subdir",
+        ),
+        # A glob key achieves the same layout by nesting each match inside the
+        # destination, so it is not affected.
+        pytest.param(
+            {
+                "setup_dirs": [Path("foodir")],
+                "setup_files": [Path("foodir/foo")],
+                "organize_map": {"foodir/*": "foodir/nested/"},
+                "expected": [
+                    (["foodir"], ""),
+                    (["nested"], "foodir"),
+                    (["foo"], os.path.join("foodir", "nested")),  # noqa: PTH118
+                ],
+            },
+            id="glob-into-own-subdir",
+        ),
+        pytest.param(
+            {
+                "setup_dirs": [Path("app"), Path("app/app")],
+                "setup_files": [Path("app/file.txt"), Path("app/app/otherfile.txt")],
+                "organize_map": {"app/*": "app/app/"},
+                "expected": [
+                    (["app"], ""),
+                    (["file.txt", "otherfile.txt"], os.path.join("app", "app")),  # noqa: PTH118
+                ],
+            },
+            id="glob-into-existing-own-subdir-merges",
+        ),
     ],
 )
 def test_organize(new_dir, data):
@@ -404,7 +504,7 @@ def organize_and_assert(
     setup_build_dirs=None,
     setup_build_files=None,
     organize_map: dict[str, str],
-    expected: list[Any],
+    expected: list[Any] | type[Exception],
     expected_message,
     expected_overwrite,
     overwrite,
@@ -540,4 +640,223 @@ def test_organize_from_build(data, new_dir):
             None: Path(new_dir / "install"),
             BUILD_PARTITION: Path(new_dir / "build_dir"),
         },
+    )
+
+
+def test_glob_directory_to_nested_file_path_errors_cleanly(new_dir):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[Path("app")],
+        setup_files=[Path("app/main")],
+        setup_symlinks=[],
+        organize_map={"*": "app/app"},
+        expected=errors.FileOrganizeError,
+        expected_message=(
+            r".*trying to organize directory '\*' to 'app/app' but "
+            r"the destination is inside the source directory.*"
+        ),
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
+def test_organize_nested_directory_with_symlink_loop_errors_cleanly(new_dir):
+    install_dir = Path(new_dir / "install")
+    (install_dir / "app").mkdir(parents=True, exist_ok=True)
+    (install_dir / "app" / "main").touch()
+    (install_dir / "loop").symlink_to("loop")
+
+    with pytest.raises(errors.FileOrganizeError, match=r".*could not resolve.*"):
+        organize_files(
+            part_name="part-name",
+            file_map={"app": "loop/nested"},
+            install_dir_map={None: install_dir},
+            overwrite=False,
+            default_partition="default",
+        )
+
+
+def test_organize_through_self_referential_source_symlink_errors_cleanly(new_dir):
+    install_dir = Path(new_dir / "install")
+    install_dir.mkdir(parents=True, exist_ok=True)
+    (install_dir / "loop").symlink_to("loop")
+
+    with pytest.raises(
+        errors.FileOrganizeError, match=r".*could not resolve the source path"
+    ):
+        organize_files(
+            part_name="part-name",
+            file_map={"loop/main": "main"},
+            install_dir_map={None: install_dir},
+            overwrite=False,
+            default_partition="default",
+        )
+
+
+def test_organize_symlink_into_its_target_errors_cleanly(new_dir):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[Path("app")],
+        setup_files=[Path("app/main")],
+        setup_symlinks=[("app-link", "app")],
+        organize_map={"app-link": "app-link/nested"},
+        expected=errors.FileOrganizeError,
+        expected_message=(
+            r".*trying to organize symlink 'app-link' to 'app-link/nested', but "
+            r"the destination is inside the symlink target.*"
+        ),
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
+def test_organize_through_self_referential_destination_symlink_errors_cleanly(new_dir):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[],
+        setup_files=[Path("main")],
+        setup_symlinks=[("dest", "dest")],
+        organize_map={"main": "dest/sub/main"},
+        expected=errors.FileOrganizeError,
+        expected_message=(
+            r".*trying to organize 'main' to 'dest/sub/main', but could not "
+            r"resolve the destination path.*"
+        ),
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
+def test_glob_directory_into_own_root_remains_noop(new_dir):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[Path("foodir")],
+        setup_files=[Path("foodir/foo")],
+        setup_symlinks=[],
+        organize_map={"foodir/*": "foodir/"},
+        expected=[(["foodir"], ""), (["foo"], "foodir")],
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
+@pytest.mark.parametrize(
+    ("organize_map", "expected_message"),
+    [
+        pytest.param(
+            {"**/*": "."},
+            r".*trying to organize directory '\*\*/\*' to '\.' but "
+            r"the destination is inside the source directory.*",
+            id="glob-to-current-directory-errors",
+        ),
+        pytest.param(
+            {"*": ""},
+            r".*trying to organize directory '\*' to '' but "
+            r"the destination is inside the source directory.*",
+            id="glob-to-root-errors",
+        ),
+    ],
+)
+def test_glob_directory_to_nested_root_errors_cleanly(
+    new_dir, organize_map, expected_message
+):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[Path("app")],
+        setup_files=[Path("app/main")],
+        setup_symlinks=[],
+        organize_map=organize_map,
+        expected=errors.FileOrganizeError,
+        expected_message=expected_message,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+
+@pytest.mark.parametrize(
+    ("organize_map", "expected"),
+    [
+        pytest.param(
+            {"*": "(overlay)/"},
+            [([], ""), (["app"], "../overlay"), (["main"], "../overlay/app")],
+            id="glob-to-overlay-root",
+        ),
+    ],
+)
+def test_glob_directory_to_overlay_root(
+    new_dir, enable_overlay_and_partitions_features, organize_map, expected
+):
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=[Path("app")],
+        setup_files=[Path("app/main")],
+        setup_symlinks=[],
+        organize_map=organize_map,
+        expected=expected,
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={
+            "default": Path(new_dir / "install"),
+            OVERLAY_PARTITION: Path(new_dir / "overlay"),
+        },
+    )
+
+
+def test_glob_destination_matching_source_glob_behavior(new_dir):
+    """The destination of an anchored glob can itself match the source glob.
+
+    Organizing "app/app" with "app/*: app/app/" nests it at "app/app/app",
+    which the same glob then matches. That self-match must keep behaving as
+    before so the remaining entries still merge into "app/app" instead of
+    being nested again.
+    """
+    setup_dirs = [Path("app"), Path("app/app")]
+    setup_files = [
+        Path("app/file.txt"),
+        Path("app/app/otherfile.txt"),
+    ]
+
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=setup_dirs,
+        setup_files=setup_files,
+        setup_symlinks=[],
+        organize_map={"app/*": "app/app/"},
+        expected=[
+            (["app"], ""),
+            (
+                ["file.txt", "otherfile.txt"],
+                os.path.join("app", "app"),  # noqa: PTH118
+            ),
+        ],
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=False,
+        install_dirs={None: Path(new_dir / "install")},
+    )
+
+    organize_and_assert(
+        tmp_path=new_dir,
+        setup_dirs=setup_dirs,
+        setup_files=setup_files,
+        setup_symlinks=[],
+        organize_map={"app/*": "app/app/"},
+        expected=[
+            (["app"], ""),
+            (
+                ["file.txt", "otherfile.txt"],
+                os.path.join("app", "app"),  # noqa: PTH118
+            ),
+        ],
+        expected_message=None,
+        expected_overwrite=None,
+        overwrite=True,
+        install_dirs={None: Path(new_dir / "install")},
     )
