@@ -35,6 +35,9 @@ New features:
 
 Bug fixes:
 
+- Resolve snap risk channels against the snap's default track when refreshing
+  already-installed build snaps.
+
 - Stage packages are now marked in the order they are declared, making the
   resolution of alternative dependencies deterministic. For example,
   ``locales-all`` listed before ``postgresql`` is staged without also
