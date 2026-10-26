@@ -18,6 +18,7 @@ import textwrap
 from pathlib import Path
 from typing import Any
 
+import distro
 import pytest
 import yaml
 from craft_parts import LifecycleManager, Step
@@ -234,6 +235,19 @@ OVERLAY_MUST_NOT_COLLIDE_SCENARIOS = {
     },
 }
 
+_WHITEOUT_SCENARIOS = frozenset({"layer-hides-file", "layer-hides-dir"})
+
+
+def focal_needs_root_marks(scenario: str) -> list[pytest.MarkDecorator]:
+    """Return the marks to apply to a "must not collide" scenario."""
+    if (
+        scenario in _WHITEOUT_SCENARIOS
+        and distro.id() == "ubuntu"
+        and distro.version() == "20.04"
+    ):
+        return [pytest.mark.requires_root]
+    return []
+
 
 class TestCollisions:
     """Test collision scenarios."""
@@ -352,7 +366,11 @@ class TestCollisions:
         "mock_overlay_support_prerequisites", "add_overlay_feature"
     )
     @pytest.mark.parametrize(
-        "scenario", list(OVERLAY_MUST_NOT_COLLIDE_SCENARIOS.keys())
+        "scenario",
+        [
+            pytest.param(s, marks=focal_needs_root_marks(s))
+            for s in OVERLAY_MUST_NOT_COLLIDE_SCENARIOS
+        ],
     )
     def test_overlay_must_not_collide(self, new_dir, partitions, scenario):
         data = OVERLAY_MUST_NOT_COLLIDE_SCENARIOS[scenario]

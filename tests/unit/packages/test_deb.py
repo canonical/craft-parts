@@ -26,6 +26,7 @@ from unittest.mock import Mock, call
 import pytest
 import zstandard
 from craft_parts import ProjectInfo, callbacks, packages
+from craft_parts.infos import _get_host_architecture
 from craft_parts.packages import deb, errors
 from craft_parts.packages.deb import (
     Ubuntu,
@@ -195,13 +196,82 @@ class TestPackages:
         assert fake_apt_cache.mock_calls == [
             call(stage_cache=stage_cache_path, stage_cache_arch="amd64"),
             call().__enter__(),
-            call().__enter__().mark_packages({"fake-package"}),
+            call().__enter__().mark_packages(["fake-package"]),
             call().__enter__().unmark_packages({"filtered-pkg-1", "filtered-pkg-2"}),
             call().__enter__().fetch_archives(debs_path),
             call().__exit__(None, None, None),
         ]
 
         assert fetched_packages == ["fake-package=1.0"]
+
+    def test_fetch_stage_packages_marked_in_order(
+        self, mocker, tmpdir, fake_apt_cache, fake_deb_run
+    ):
+        """Stage packages are marked for install in the user's order.
+
+        The order in which packages are marked determines how apt resolves
+        alternative dependencies (e.g. "locales | locales-all"), so it must
+        match the order given by the user, without duplicates (GH#1751).
+        """
+        mocker.patch("os.geteuid", return_value=0)
+        fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = []
+
+        deb.Ubuntu.fetch_stage_packages(
+            cache_dir=tmpdir,
+            package_names=["z-package", "a-package", "z-package", "m-package"],
+            stage_packages_path=Path(tmpdir),
+            base="core",
+            arch="amd64",
+        )
+
+        apt_cache_mock = fake_apt_cache.return_value.__enter__.return_value
+        apt_cache_mock.mark_packages.assert_called_once_with(
+            ["z-package", "a-package", "m-package"]
+        )
+
+    @pytest.mark.slow
+    def test_fetch_stage_packages_alternative_dependency_order(
+        self, mocker, tmpdir, fake_deb_run
+    ):
+        """Stage packages in user order resolve alternative dependencies.
+
+        "postgresql" depends on "locales | locales-all", so the order in which
+        packages are marked determines whether "locales" is staged. Listing
+        "locales-all" first must satisfy the alternative dependency without
+        staging "locales" (GH#1751).
+        """
+        mocker.patch("os.geteuid", return_value=0)
+        marked_names = []
+
+        def fake_fetch_archives(apt_cache, download_path):
+            # Record what apt resolved instead of downloading the archives.
+            marked_names.extend(
+                name for name, _ in apt_cache.get_packages_marked_for_installation()
+            )
+            return []
+
+        mocker.patch.object(
+            deb.AptCache,
+            "fetch_archives",
+            autospec=True,
+            side_effect=fake_fetch_archives,
+        )
+        deb.Ubuntu.configure("test_stage_packages")
+
+        try:
+            deb.Ubuntu.fetch_stage_packages(
+                cache_dir=tmpdir,
+                package_names=["locales-all", "postgresql"],
+                stage_packages_path=Path(tmpdir, "stage"),
+                base="bare",
+                arch=_get_host_architecture(),
+            )
+        except errors.PackageNotFound:
+            pytest.skip("postgresql is not available on this base")
+
+        assert "locales-all" in marked_names
+        assert "postgresql" in marked_names
+        assert "locales" not in marked_names
 
     def test_fetch_virtual_stage_package(
         self, tmpdir, mocker, fake_apt_cache, fake_deb_run
@@ -287,7 +357,7 @@ class TestPackages:
         assert fake_apt_cache.mock_calls == [
             call(stage_cache=stage_cache_path, stage_cache_arch="amd64"),
             call().__enter__(),
-            call().__enter__().mark_packages(set(package_names)),
+            call().__enter__().mark_packages(list(package_names)),
             call()
             .__enter__()
             .unmark_packages(
@@ -927,7 +997,7 @@ class TestStagePackagesFilters:
         assert fake_apt_cache.mock_calls == [
             call(stage_cache=stage_cache_path, stage_cache_arch="amd64"),
             call().__enter__(),
-            call().__enter__().mark_packages({"fake-package"}),
+            call().__enter__().mark_packages(["fake-package"]),
             call()
             .__enter__()
             .unmark_packages({"base-pkg-1", "base-pkg-2", "base-pkg-3"}),

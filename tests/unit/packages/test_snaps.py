@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 from craft_parts.packages import errors, snaps
+from requests import Response, exceptions
 
 # pylint: disable=missing-class-docstring
 
@@ -612,6 +613,20 @@ class TestSnapPackageLifecycle:
 
         installed_snaps = snaps.install_snaps(["fake-base-snap"])
         assert installed_snaps == ["fake-base-snap=test-fake-base-snap-revision"]
+
+    def test_install_snaps_store_query_http_error(self, mocker):
+        response = Response()
+        response.status_code = 500
+        http_error = exceptions.HTTPError(response=response)
+        get_store_snap_info = mocker.patch(
+            "craft_parts.packages.snaps._get_store_snap_info",
+            side_effect=http_error,
+        )
+
+        with pytest.raises(exceptions.HTTPError):
+            snaps.install_snaps(["fake-snap"])
+
+        assert get_store_snap_info.call_count == 5
 
 
 class TestInstalledSnaps:

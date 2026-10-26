@@ -1453,6 +1453,21 @@ def get_parts_with_overlay(*, part_list: list[Part]) -> list[Part]:
     return [p for p in part_list if p.has_overlay or p.organizes_to_overlay]
 
 
+def get_build_slices(*, part_list: list[Part]) -> list[str]:
+    """Obtain the consolidated list of required build slices.
+
+    Build slices are used in a shared root environment, so consolidate
+    slices from all parts.
+
+    :param part_list: A list of all parts in the project.
+
+    :return: The sorted list of build slices required by the project.
+    """
+    return sorted(
+        {build_slice for part in part_list for build_slice in part.spec.build_slices}
+    )
+
+
 def validate_part(data: dict[str, Any]) -> None:
     """Validate the given part data against common and plugin models.
 

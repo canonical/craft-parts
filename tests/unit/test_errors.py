@@ -330,6 +330,21 @@ def test_plugin_environment_validation_error():
     assert err.resolution is None
 
 
+def test_plugin_environment_validation_error_with_resolution():
+    err = errors.PluginEnvironmentValidationError(
+        part_name="foo",
+        reason="compiler not found",
+        resolution="Install the compiler.",
+    )
+    assert err.part_name == "foo"
+    assert err.reason == "compiler not found"
+    assert err.brief == (
+        "Environment validation failed for part 'foo': compiler not found."
+    )
+    assert err.details is None
+    assert err.resolution == "Install the compiler."
+
+
 def test_plugin_build_error():
     err = errors.PluginBuildError(part_name="foo", plugin_name="go")
     assert err.part_name == "foo"
@@ -416,6 +431,22 @@ def test_overlay_permission_error():
     assert err.brief == "Using the overlay step requires superuser privileges."
     assert err.details is None
     assert err.resolution is None
+
+
+def test_build_slices_environment_error():
+    err = errors.BuildSlicesEnvironmentError()
+    assert (
+        err.brief
+        == "Build environment created from build-slices is missing '/bin/bash'."
+    )
+    assert (
+        err.details
+        == "Bash is required to run the build script in the build-slices environment."
+    )
+    assert err.resolution == (
+        "Add 'bash_bins' and 'base-files_base' to the 'build-slices' key of one of "
+        "the parts that declare build slices or to the root-level 'build-slices' key."
+    )
 
 
 class TestPartitionErrors:

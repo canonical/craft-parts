@@ -22,7 +22,7 @@ import contextlib
 import itertools
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from craft_parts import parts, sources, steps
 from craft_parts.features import Features
@@ -38,6 +38,24 @@ if TYPE_CHECKING:
     from craft_parts.state_manager import build_state, stage_state
 
 logger = logging.getLogger(__name__)
+
+
+def get_part_properties(part: Part, *, part_list: list[Part]) -> dict[str, Any]:
+    """Return effective part properties for state comparison and planning.
+
+    Build slices are tracked project-wide because all parts share a single sliced
+    root environment, so a change to any participant's slices invalidates the
+    build state of every part. The union is therefore applied unconditionally
+    and must match what :meth:`PartHandler._run_build` writes to the build state.
+    """
+    part_properties: dict[str, Any] = {
+        **part.spec.marshal(),
+        **part.plugin_properties.marshal(),
+    }
+
+    part_properties["build-slices"] = parts.get_build_slices(part_list=part_list)
+
+    return part_properties
 
 
 @dataclass(frozen=True)
@@ -380,7 +398,7 @@ class StateManager:
         # comparing it to those same properties and options in the current
         # state. If they've changed, then this step is dirty and needs to
         # run again.
-        part_properties = {**part.spec.marshal(), **part.plugin_properties.marshal()}
+        part_properties = get_part_properties(part, part_list=self._part_list)
         plugin_properties_to_check = _get_relevant_plugin_properties(part, step)
         properties = state.diff_properties_of_interest(
             part_properties, also_compare=plugin_properties_to_check

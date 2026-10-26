@@ -118,6 +118,20 @@ def test_sequencer_run_step(step, state_class, new_dir):
     }
 
 
+@pytest.mark.usefixtures("enable_build_slices")
+def test_sequencer_run_build_step_uses_shared_build_slices(new_dir):
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {"plugin": "nil", "build-slices": ["base-files_bin"]})
+    p2 = Part("p2", {"plugin": "nil", "build-slices": ["bash_bins"]})
+
+    seq = Sequencer(part_list=[p1, p2], project_info=info)
+    seq._run_step(p1, Step.BUILD)
+
+    stw = seq._sm._state_db.get(part_name="p1", step=Step.BUILD)
+    assert stw is not None
+    assert stw.state.part_properties["build-slices"] == ["base-files_bin", "bash_bins"]
+
+
 def test_sequencer_run_step_invalid(new_dir):
     info = ProjectInfo(arch="arm64", application_name="test", cache_dir=new_dir)
     p1 = Part("p1", {"stage": ["pkg"]})

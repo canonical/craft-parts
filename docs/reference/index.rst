@@ -1,17 +1,23 @@
+.. meta::
+    :description: The reference documentation for Craft Parts. These references describe the structure and function of the individual components in Craft Parts.
+
 .. _reference:
 
 Reference
 =========
 
-.. toctree::
-   :maxdepth: 1
+References describe the structure and function of the individual components in
+Craft Parts.
 
-   actions
-   exceptions
-   infos
-   lifecycle_manager
-   /common/craft-parts/reference/part_properties
-   parts_steps
-   plugins
-   reference
-   changelog
+.. toctree::
+    :hidden:
+
+    actions
+    exceptions
+    infos
+    lifecycle_manager
+    /common/craft-parts/reference/part_properties
+    parts_steps
+    plugins
+    reference
+    changelog
