@@ -8,7 +8,7 @@ on:
       - "release/*"
       - "renovate/*"
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 # Cancel existing jobs for this branch/PR
 concurrency:
