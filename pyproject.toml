@@ -56,7 +56,7 @@ dev = [
 dev-focal = ["python-apt~=2.0.0;sys_platform=='linux'"]
 dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
 dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
-dev-plucky = ["python-apt~=2.9.9;sys_platform=='linux'"]
+dev-plucky = ["python-apt~=2.9.0;sys_platform=='linux'"]
 dev-questing = ["python-apt~=3.0.0;sys_platform=='linux'"]
 dev-resolute = ["python-apt~=3.0.0;sys_platform=='linux'"]
 dev-stonking = ["python-apt~=3.0.0;sys_platform=='linux'"]
@@ -387,7 +387,7 @@ conflicts = [
 
 [[tool.uv.index]]
 name = "python-apt-wheels"
-url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"
+url = "https://lengau.github.io/python-apt-wheels/simple/"
 explicit = true
 
 [tool.uv.sources]
