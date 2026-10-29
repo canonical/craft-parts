@@ -26,9 +26,12 @@ lifecycle.
    /common/craft-parts/reference/plugins/maven_plugin.rst
    /common/craft-parts/reference/plugins/maven_use_plugin.rst
    /common/craft-parts/reference/plugins/meson_plugin.rst
+   /common/craft-parts/reference/plugins/mill_plugin.rst
    /common/craft-parts/reference/plugins/nil_plugin.rst
+   /common/craft-parts/reference/plugins/ninja_plugin.rst
    /common/craft-parts/reference/plugins/npm_plugin.rst
    /common/craft-parts/reference/plugins/npm_use_plugin.rst
+   /common/craft-parts/reference/plugins/pnpm_plugin.rst
    /common/craft-parts/reference/plugins/poetry_plugin.rst
    /common/craft-parts/reference/plugins/python_v2_plugin.rst
    /common/craft-parts/reference/plugins/python_plugin.rst
@@ -36,6 +39,7 @@ lifecycle.
    /common/craft-parts/reference/plugins/cargo_use_plugin.rst
    /common/craft-parts/reference/plugins/ruby_plugin.rst
    /common/craft-parts/reference/plugins/rust_plugin.rst
+   /common/craft-parts/reference/plugins/sbt_plugin.rst
    /common/craft-parts/reference/plugins/scons_plugin.rst
    /common/craft-parts/reference/plugins/uv_plugin.rst
 
