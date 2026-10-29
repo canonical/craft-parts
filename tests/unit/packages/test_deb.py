@@ -712,8 +712,6 @@ class TestBuildPackages:
 @pytest.mark.parametrize(
     ("source_type", "pkgs"),
     [
-        ("7z", {"p7zip-full"}),
-        ("7zip", {"p7zip-full"}),
         ("bzr", {"bzr"}),
         ("git", {"git"}),
         ("hg", {"mercurial"}),
@@ -729,6 +727,26 @@ class TestBuildPackages:
 )
 def test_packages_for_source_type(source_type, pkgs):
     assert deb.Ubuntu.get_packages_for_source_type(source_type) == pkgs
+
+
+@pytest.mark.parametrize("source_type", ["7z", "7zip"])
+@pytest.mark.parametrize(
+    ("version", "expected_pkg"),
+    [
+        ("20.04", "p7zip-full"),
+        ("22.04", "p7zip-full"),
+        ("24.04", "p7zip-full"),
+        ("25.04", "7zip"),
+        ("26.04", "7zip"),
+    ],
+)
+def test_packages_for_sevenzip(
+    mocker: MockerFixture, source_type: str, version: str, expected_pkg: str
+):
+    mocker.patch(
+        "craft_parts.utils.os_utils.OsRelease.version_id", return_value=version
+    )
+    assert deb.Ubuntu.get_packages_for_source_type(source_type) == {expected_pkg}
 
 
 @pytest.fixture
