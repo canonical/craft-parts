@@ -46,6 +46,9 @@ Bug fixes:
 - When using the ``rust-deps`` part to provision the Rust toolchain,
   setting ``rust-channel: "none"`` is no longer required.
 
+- Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
+  directories, such as ``-**/__pycache__`` in a large Python environment.
+
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
 
