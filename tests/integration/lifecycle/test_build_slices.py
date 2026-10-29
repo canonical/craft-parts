@@ -29,6 +29,11 @@ from craft_parts import Step
 DATA_DIR = Path(__file__).parent / "data/build-slices"
 
 
+def _get_uptime(proc_uptime: str) -> float:
+    """Return the uptime in seconds from the /proc/uptime string."""
+    return float(proc_uptime.split(maxsplit=1)[0])
+
+
 @pytest.mark.skipif(
     distro.id() == "ubuntu" and distro.version() == "20.04",
     reason="focal has no golang-go chisel slices",
@@ -48,15 +53,19 @@ def test_build_step_runs_in_build_slices_chroot(tmp_homedir_path):
         work_dir=tmp_homedir_path,
     )
 
+    start_uptime = _get_uptime(Path("/proc/uptime").read_text())
+
     with lifecycle.action_executor() as ctx:
         ctx.execute(lifecycle.plan(Step.PRIME))
 
-    assert (tmp_homedir_path / "prime/result").read_text() == "dependency\n"
-    assert (tmp_homedir_path / "prime/plugin-file").read_text() == "dump plugin\n"
+    prime = tmp_homedir_path / "prime"
+
+    assert (prime / "result").read_text() == "dependency\n"
+    assert (prime / "plugin-file").read_text() == "dump plugin\n"
     # craftctl default in override-build runs plugin commands, then user commands
-    assert (tmp_homedir_path / "prime/after-default").read_text() == "after-default\n"
+    assert (prime / "after-default").read_text() == "after-default\n"
     completed_process = subprocess.run(
-        [tmp_homedir_path / "prime/bin/hello"],
+        [prime / "bin/hello"],
         check=True,
         capture_output=True,
         text=True,
@@ -72,3 +81,14 @@ def test_build_step_runs_in_build_slices_chroot(tmp_homedir_path):
     # chroot: check that it's no longer mounted.
     chroot_work_dir = tmp_homedir_path / f"build-slices/{tmp_homedir_path}"
     assert not os.path.ismount(chroot_work_dir / "stage")
+
+    # Check that the /proc filesystem was correctly mounted by verifying that the
+    # 'uptime' inside the chroot is greater than the starting value
+    chroot_uptime = (prime / "uptime").read_text()
+    assert _get_uptime(chroot_uptime) > start_uptime
+
+    # Same for /sys via /sys/class/net/lo/flags, which should have 0x8 for a loopback interface
+    lo_flags = (prime / "lo_flags").read_text().strip()
+    # 0x8 is IFF_LOOPBACK
+    loopback = 0x8
+    assert int(lo_flags, 16) & loopback
