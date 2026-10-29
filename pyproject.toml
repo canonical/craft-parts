@@ -56,7 +56,7 @@ dev = [
 dev-focal = ["python-apt~=2.0.0;sys_platform=='linux'"]
 dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
 dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
-dev-plucky = ["python-apt~=2.9.9;sys_platform=='linux'"]
+dev-plucky = ["python-apt~=2.9.0;sys_platform=='linux'"]
 dev-questing = ["python-apt~=3.0.0;sys_platform=='linux'"]
 dev-resolute = ["python-apt~=3.0.0;sys_platform=='linux'"]
 dev-stonking = ["python-apt~=3.0.0;sys_platform=='linux'"]
@@ -350,6 +350,7 @@ git_describe_command = [
 constraint-dependencies = [
   # Basic constraints to allow --resolution=lowest
   "build>=0.7.0",
+  "certifi>=2026.10.19",
   "cffi>=1.15",
   "httplib2>=0.20.0",
   "iniconfig>=1.1.0",
@@ -369,7 +370,7 @@ constraint-dependencies = [
   "sphinx-basic-ng>=1.0.0b1",
   "starlette>=1.3.1",
   "tornado>=4.0",
-  "urllib3>=2.0",
+  "urllib3>=2.8.0",
   "webencodings>=0.4.0",
   "wheel>=0.38",
 ]
@@ -387,7 +388,7 @@ conflicts = [
 
 [[tool.uv.index]]
 name = "python-apt-wheels"
-url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"
+url = "https://lengau.github.io/python-apt-wheels/simple/"
 explicit = true
 
 [tool.uv.sources]
