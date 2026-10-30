@@ -289,7 +289,7 @@ endif
 endif
 
 .PHONY: install-build-snaps
-install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup install-gradle
+install-build-snaps: install-chisel install-go install-core20 install-dotnet install-rustup install-gradle install-zig
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
@@ -313,6 +313,15 @@ else ifeq ($(shell which snap),)
 	$(warning Cannot install rustup without snap. Install it yourself.)
 else
 	sudo snap install rustup --classic
+endif
+
+.PHONY: install-zig
+install-zig:
+ifneq ($(shell which zig),)
+else ifeq ($(shell which snap),)
+	$(warning Cannot install zig without snap. Install it yourself.)
+else
+	sudo snap install zig --classic --beta
 endif
 
 .PHONY: install-dotnet
