@@ -35,6 +35,9 @@ New features:
 
 Bug fixes:
 
+- Resolve snap risk channels against the snap's default track when refreshing
+  already-installed build snaps.
+
 - Organizing a directory to a path inside itself, such as ``app: app/app/``,
   now fails with an error instead of silently producing an empty part. Use a
   glob key like ``app/*: app/app/`` to move the contents of ``app`` into

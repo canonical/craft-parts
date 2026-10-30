@@ -246,12 +246,19 @@ class SnapInstallError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
+    def __init__(
+        self, *, snap_name: str, snap_channel: str, detail: str | None = None
+    ) -> None:
         self.snap_name = snap_name
         self.snap_channel = snap_channel
-        brief = f"Error installing snap {snap_name!r} from channel {snap_channel!r}."
+        if snap_channel:
+            brief = (
+                f"Error installing snap {snap_name!r} from channel {snap_channel!r}."
+            )
+        else:
+            brief = f"Error installing snap {snap_name!r} from the default channel."
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, details=detail)
 
 
 class SnapDownloadError(PackagesError):
@@ -261,12 +268,19 @@ class SnapDownloadError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
+    def __init__(
+        self, *, snap_name: str, snap_channel: str, detail: str | None = None
+    ) -> None:
         self.snap_name = snap_name
         self.snap_channel = snap_channel
-        brief = f"Error downloading snap {snap_name!r} from channel {snap_channel!r}."
+        if snap_channel:
+            brief = (
+                f"Error downloading snap {snap_name!r} from channel {snap_channel!r}."
+            )
+        else:
+            brief = f"Error downloading snap {snap_name!r} from the default channel."
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, details=detail)
 
 
 class SnapRefreshError(PackagesError):
@@ -276,12 +290,17 @@ class SnapRefreshError(PackagesError):
     :param snap_channel: The snap channel.
     """
 
-    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
+    def __init__(
+        self, *, snap_name: str, snap_channel: str, detail: str | None = None
+    ) -> None:
         self.snap_name = snap_name
         self.snap_channel = snap_channel
-        brief = f"Error refreshing snap {snap_name!r} to channel {snap_channel!r}."
+        if snap_channel:
+            brief = f"Error refreshing snap {snap_name!r} to channel {snap_channel!r}."
+        else:
+            brief = f"Error refreshing snap {snap_name!r} to the default channel."
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, details=detail)
 
 
 class SnapGetAssertionError(PackagesError):
