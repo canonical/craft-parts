@@ -33,6 +33,11 @@ New features:
 - If any part declares ``build-slices``, Craft Parts will validate that the
   resulting build environment contains ``/bin/bash``.
 
+- The Python plugin (v2) now rewrites the shebangs of pip-installed console
+  scripts to a runtime-valid interpreter path, instead of leaving the
+  build-time path that pip embeds. Applications can override the target
+  interpreter by subclassing the plugin.
+
 Bug fixes:
 
 - Organizing a directory to a path inside itself, such as ``app: app/app/``,
