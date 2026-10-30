@@ -50,6 +50,7 @@ from .ruby_plugin import RubyPlugin
 from .rust_plugin import RustPlugin
 from .scons_plugin import SConsPlugin
 from .uv_plugin import UvPlugin
+from .zig_plugin import ZigPlugin
 
 if TYPE_CHECKING:
     # import module to avoid circular imports in sphinx doc generation
@@ -98,6 +99,7 @@ class PluginGroup(enum.Enum):
         "rust": RustPlugin,
         "scons": SConsPlugin,
         "uv": UvPlugin,
+        "zig": ZigPlugin,
     }
     """The default set of plugins for most use cases.
 
