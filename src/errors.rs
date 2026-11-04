@@ -96,3 +96,42 @@ pub mod errors {
     #[pymodule_export]
     use self::PartsError;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_str_joining_optional() {
+        let err = PartsError {
+            brief: "A brief description".to_string(),
+            details: Some("Details".to_string()),
+            resolution: None,
+            doc_slug: None,
+        };
+
+        let actual = err.__str__();
+        let expected = "A brief description\nDetails";
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_repr_format() {
+        let err = PartsError {
+            brief: "A brief description".to_string(),
+            details: Some("Details".to_string()),
+            resolution: None,
+            doc_slug: None,
+        };
+
+        let expected = "PartsError(brief='A brief description', details='Details', resolution=None, doc_slug=None)";
+
+        Python::attach(|py| -> Result<()> {
+            let bound = Bound::new(py, err)?;
+            let actual = PartsError::__repr__(&bound)?;
+            assert_eq!(actual, expected);
+            Ok(())
+        })
+        .unwrap();
+    }
+}
