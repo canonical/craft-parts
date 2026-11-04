@@ -21,13 +21,44 @@ endif
 include common.mk
 
 .PHONY: format
-format: format-ruff format-codespell format-prettier format-shfmt format-tombi format-pre-commit  ## Run all automatic formatters
+format: format-ruff format-codespell format-prettier format-shfmt format-tombi format-pre-commit format-rust  ## Run all automatic formatters
 
 .PHONY: lint
 lint: lint-code lint-docs lint-twine lint-uv-lockfile  ## Run all linters
 
 .PHONY: lint-code
-lint-code: lint-ruff lint-ty lint-codespell lint-prettier lint-shfmt lint-shellcheck lint-tombi  ## Run code-specific linters
+lint-code: lint-ruff lint-ty lint-codespell lint-prettier lint-shfmt lint-shellcheck lint-tombi lint-rust  ## Run code-specific linters
+
+.PHONY: develop
+develop:  ## Build the Rust extension in-place (editable install)
+	uv run maturin develop --uv
+
+.PHONY: test-rust
+test-rust:  ## Run Rust unit tests
+	PY_LIBDIR=$$(uv run --no-sync python -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR"))')
+	LD_LIBRARY_PATH="$$PY_LIBDIR" cargo test
+
+.PHONY: format-rust
+format-rust:  ##- Format Rust code with rustfmt
+	cargo fmt
+
+.PHONY: lint-rust
+lint-rust:  ##- Lint Rust code with clippy and rustfmt
+	cargo clippy --all-targets -- --deny warnings
+	cargo fmt --check
+
+.PHONY: test
+test: test-rust  ## Run all tests
+	uv run pytest
+
+# Mirrors common.mk's setup recipe, then builds the Rust extension. uv's
+# editable install only drops a .pth at the source tree; it does not invoke
+# maturin to produce the in-tree .so, so the extension must be built
+# explicitly after sync. Keep prereqs + recipe in sync with common.mk's setup.
+.PHONY: setup
+setup: install-uv _setup-docs _setup-lint _setup-tests setup-precommit install-build-deps  ## Set up a development environment
+	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_DOCS_GROUPS)
+	$(MAKE) develop
 
 .PHONY: pack
 pack: pack-pip  ## Build all packages
@@ -306,6 +337,8 @@ endif
 .PHONY: install-lint-build-deps
 install-lint-build-deps:
 
+# The toolchain install is idempotent; the default profile bundles clippy +
+# rustfmt. Runs even when rustup pre-existed without a toolchain installed.
 .PHONY: install-rustup
 install-rustup:
 ifneq ($(shell which rustup),)
@@ -313,6 +346,9 @@ else ifeq ($(shell which snap),)
 	$(warning Cannot install rustup without snap. Install it yourself.)
 else
 	sudo snap install rustup --classic
+endif
+ifneq ($(shell which rustup),)
+	@rustup toolchain install stable
 endif
 
 .PHONY: install-dotnet

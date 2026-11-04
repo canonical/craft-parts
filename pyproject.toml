@@ -120,10 +120,6 @@ types = [
 requires = ["maturin~=1.16"]
 build-backend = "maturin"
 
-[tool.maturin]
-python-source = "."
-module-name = "craft_parts._rs"
-
 [tool.codespell]
 ignore-words-list = "buildd,crate,keyserver,comandos,ro,dedent,dedented"
 skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,./node_modules,./docs/_build,.direnv,.venv,venv,.vscode"
@@ -145,6 +141,10 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 88
+
+[tool.maturin]
+module-name = "craft_parts._rs"
+python-source = "."
 
 [tool.pytest.ini_options]
 addopts = "--ignore=tests/spread"
@@ -320,7 +320,7 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
   "F401",  # Allows unused imports in __init__ files.
 ]
 "*.pyi" = [
-  "PYI021", # "No docstrings in stubs", but it's necessary for LSP hover docs.
+  "PYI021",  # "No docstrings in stubs", but it's necessary for LSP hover docs.
 ]
 
 [tool.uv]
