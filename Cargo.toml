@@ -7,6 +7,15 @@ rust-version = "1.91"  # Latest version available from the Noble archives (rustc
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[workspace.dependencies]
+# pyo3 is always needed, but tests additionally need the "auto-initialize" feature.
+# To avoid having two disparate version specifications, it's instead specified here
+# just once and then retrieved via "workspace = true".
+pyo3 = { version = "0.30.1", features = ["anyhow"] }
+
 [dependencies]
 anyhow = "1.0.104"
-pyo3 = { version = "0.30.1", features = ["anyhow", "extension-module"] }
+pyo3 = { workspace = true }
+
+[dev-dependencies]
+pyo3 = { workspace = true, features = ["auto-initialize"] }
