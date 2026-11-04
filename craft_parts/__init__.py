@@ -35,7 +35,7 @@ from .steps import Step
 
 
 try:
-    from ._version import __version__
+    from ._rs import __version__
 except ImportError:  # pragma: no cover
     from importlib.metadata import version, PackageNotFoundError
 
