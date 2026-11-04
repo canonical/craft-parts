@@ -12,6 +12,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Rust",
 ]
 dependencies = [
   "PyYAML",
@@ -41,6 +42,7 @@ dev = [
   "distro>=1.9.0",
   "hypothesis",
   "jsonschema",
+  "maturin>=1.16.0",
   "pyfakefs~=6.1",
   "pytest~=9.0",
   "pytest-check",
@@ -115,8 +117,13 @@ types = [
 ]
 
 [build-system]
-requires = ["setuptools>=77.0", "setuptools_scm[toml]>=7.1"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin~=1.16"]
+build-backend = "maturin"
+
+[tool.maturin]
+python-source = "."
+module-name = "craft_parts._rs"
+features = ["pyo3/extension-module"]
 
 [tool.codespell]
 ignore-words-list = "buildd,crate,keyserver,comandos,ro,dedent,dedented"
@@ -313,37 +320,8 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
   "I001",  # isort leaves init files alone by default, this makes ruff ignore them too.
   "F401",  # Allows unused imports in __init__ files.
 ]
-
-# NOTE: Do not merge starbase's auto-find here, as we are intentionally adding two
-# packages using this manual description.
-[tool.setuptools.package-dir]
-"craft_parts" = "craft_parts"
-"craft_parts_docs" = "docs/common"
-
-[tool.setuptools_scm]
-write_to = "craft_parts/_version.py"
-# the version comes from the latest annotated git tag formatted as 'X.Y.Z'
-# version scheme:
-#   - X.Y.Z.post<commits since tag>+g<hash>.d<%Y%m%d>
-# parts of scheme:
-#   - X.Y.Z - most recent git tag
-#   - post<commits since tag>+g<hash> - present when current commit is not tagged
-#   - .d<%Y%m%d> - present when working dir is dirty
-# version scheme when no tags exist:
-#   - 0.0.post<total commits>+g<hash>
-version_scheme = "post-release"
-# deviations from the default 'git describe' command:
-# - only match annotated tags
-# - only match tags formatted as 'X.Y.Z'
-git_describe_command = [
-  "git",
-  "describe",
-  "--dirty",
-  "--long",
-  "--match",
-  "[0-9]*.[0-9]*.[0-9]*",
-  "--exclude",
-  "*[^0-9.]*",
+"*.pyi" = [
+  "PYI021", # "No docstrings in stubs", but it's necessary for LSP hover docs.
 ]
 
 [tool.uv]
