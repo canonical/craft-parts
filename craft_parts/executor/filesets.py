@@ -224,8 +224,15 @@ def migratable_filesets(
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
 
     files = include_files - exclude_files
-    for exclude_dir in exclude_dirs:
-        files = {x for x in files if not x.is_relative_to(exclude_dir)}
+    # Look up each file's parents in the exclude set rather than scanning
+    # all files once per excluded directory, which is quadratic and very
+    # slow for trees with many excluded dirs.
+    if exclude_dirs:
+        files = {
+            x
+            for x in files
+            if x not in exclude_dirs and exclude_dirs.isdisjoint(x.parents)
+        }
 
     # Separate dirs from files.
     dirs = {

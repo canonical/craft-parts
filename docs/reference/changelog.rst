@@ -40,6 +40,12 @@ New features:
 
 Bug fixes:
 
+- Organizing a directory to a path inside itself, such as ``app: app/app/``,
+  now fails with an error instead of silently producing an empty part. Use a
+  glob key like ``app/*: app/app/`` to move the contents of ``app`` into
+  ``app/app``. If ``app/app`` already exists, the glob behavior merges into it
+  instead of nesting it again.
+
 - Stage packages are now marked in the order they are declared, making the
   resolution of alternative dependencies deterministic. For example,
   ``locales-all`` listed before ``postgresql`` is staged without also
@@ -47,6 +53,9 @@ Bug fixes:
 
 - When using the ``rust-deps`` part to provision the Rust toolchain,
   setting ``rust-channel: "none"`` is no longer required.
+
+- Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
+  directories, such as ``-**/__pycache__`` in a large Python environment.
 
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
