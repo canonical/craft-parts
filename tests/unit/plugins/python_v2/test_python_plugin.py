@@ -26,17 +26,17 @@ _PIP_PYTHON = "/build/parts/p1/install/usr/bin/python3"
 _RUNTIME = "/usr/bin/python3"
 
 
-def _plain_shebang(interpreter: str, args: str = "") -> bytes:
+def _plain_shebang(interpreter: str, args: str = "") -> str:
     """A pip console script with a plain shebang."""
-    return f"#!{interpreter}{args}\nprint('hello')\n".encode()
+    return f"#!{interpreter}{args}\nprint('hello')\n"
 
 
-def _polyglot_shebang(interpreter: str) -> bytes:
+def _polyglot_shebang(interpreter: str) -> str:
     """A pip console script with the polyglot header used for long paths."""
     return (
-        b"#!/bin/sh\n"
-        + f"'''exec' {interpreter} \"$0\" \"$@\"\n".encode()
-        + b"' '''\n# -*- coding: utf-8 -*-\nprint('hello')\n"
+        "#!/bin/sh\n"
+        f"'''exec' {interpreter} \"$0\" \"$@\"\n"
+        "' '''\n# -*- coding: utf-8 -*-\nprint('hello')\n"
     )
 
 
@@ -65,21 +65,19 @@ def _run_plugin_rewrite(plugin: PythonPlugin, install_dir) -> None:
     )
 
 
-def _rewrite(
-    script_content: bytes, runtime_interpreter: str, part_info, work_dir
-) -> bytes:
+def _rewrite(script_content: str, runtime_interpreter: str, part_info, work_dir) -> str:
     """Run the plugin's rewrite command on a pip script and return the result."""
     install_dir = work_dir / "install"
     bin_dir = install_dir / "bin"
     bin_dir.mkdir(parents=True)
     script = bin_dir / "script"
-    script.write_bytes(script_content)
+    script.write_text(script_content)
     script.chmod(0o755)
 
     _run_plugin_rewrite(_make_plugin(part_info, runtime_interpreter), install_dir)
     # The rewrite must preserve the script's executable mode.
     assert script.stat().st_mode & 0o777 == 0o755
-    return script.read_bytes()
+    return script.read_text()
 
 
 def test_get_build_commands(new_dir):
@@ -152,7 +150,7 @@ def test_get_build_commands_custom_runtime_interpreter(part_info):
         pytest.param(
             _polyglot_shebang(_PIP_PYTHON),
             _RUNTIME,
-            b"#!/usr/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n",
+            "#!/usr/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n",
             id="polyglot",
         ),
         # Runtime interpreter paths with characters that are special to the
@@ -166,7 +164,7 @@ def test_get_build_commands_custom_runtime_interpreter(part_info):
         pytest.param(
             _polyglot_shebang(_PIP_PYTHON),
             "/snap/a&b/current/bin/python3",
-            b"#!/snap/a&b/current/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n",
+            "#!/snap/a&b/current/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n",
             id="ampersand-polyglot",
         ),
         pytest.param(
@@ -184,7 +182,7 @@ def test_get_build_commands_custom_runtime_interpreter(part_info):
         pytest.param(
             _polyglot_shebang(_PIP_PYTHON),
             "/opt/it's-here/bin/python3",
-            b"#!/opt/it's-here/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n",
+            "#!/opt/it's-here/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n",
             id="single-quote",
         ),
         pytest.param(
@@ -204,13 +202,13 @@ def test_rewrite_shebangs(part_info, new_path, content, runtime_interpreter, exp
     "content",
     [
         # A script that pip did not generate.
-        pytest.param(b"#!/bin/sh\necho hello\n", id="other-sh"),
+        pytest.param("#!/bin/sh\necho hello\n", id="other-sh"),
         # A polyglot that executes a different interpreter.
         pytest.param(_polyglot_shebang("/bin/something-else"), id="other-polyglot"),
         # An already-correct shebang.
         pytest.param(_plain_shebang(_RUNTIME), id="already-correct"),
         # A binary file.
-        pytest.param(b"\x7fELF\x00binary garbage\n", id="binary"),
+        pytest.param("\x7fELF\x00binary garbage\n", id="binary"),
     ],
 )
 def test_rewrite_shebangs_leaves_other_files_alone(part_info, new_path, content):
@@ -224,19 +222,19 @@ def test_rewrite_shebangs_scoped_to_bin_dir(part_info, new_path):
     bin_dir = install_dir / "bin"
     bin_dir.mkdir(parents=True)
     target = bin_dir / "plain"
-    target.write_bytes(_plain_shebang(_PIP_PYTHON))
+    target.write_text(_plain_shebang(_PIP_PYTHON))
     target.chmod(0o755)
     (bin_dir / "link").symlink_to("plain")
 
     data_dir = install_dir / "share"
     data_dir.mkdir()
-    (data_dir / "build-info").write_bytes(_plain_shebang(_PIP_PYTHON))
+    (data_dir / "build-info").write_text(_plain_shebang(_PIP_PYTHON))
 
     _run_plugin_rewrite(_make_plugin(part_info, _RUNTIME), install_dir)
 
-    assert target.read_bytes() == _plain_shebang(_RUNTIME)
+    assert target.read_text() == _plain_shebang(_RUNTIME)
     assert (bin_dir / "link").is_symlink()
-    assert (data_dir / "build-info").read_bytes() == _plain_shebang(_PIP_PYTHON)
+    assert (data_dir / "build-info").read_text() == _plain_shebang(_PIP_PYTHON)
 
 
 def test_rewrite_shebangs_no_bin_dir(part_info, new_path):
