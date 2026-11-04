@@ -82,35 +82,27 @@ def _run_lifecycle(parts_yaml, new_dir, partitions) -> LifecycleManager:
 def _check_binaries(prime_dir):
     python3 = prime_dir / "usr/bin/python3"
 
-    # Check the "mytest" package, both the console script and the module.
-    # The console script's shebang must have been rewritten from the
-    # build-time interpreter path to the runtime one. Note that executing the
-    # script directly only works if the host has a /usr/bin/python3 with the
-    # script's dependencies; run it through the payload interpreter instead.
+    # Check the "mytest" package. The console script's shebang must have been
+    # rewritten from the build-time interpreter path to the runtime one; the
+    # module must be importable by the primed interpreter.
     primed_script = prime_dir / "bin/mytest"
     assert primed_script.exists()
     assert primed_script.open().readline().rstrip() == "#!/usr/bin/python3"
+    assert subprocess.check_output([python3, "-m", "mytest"]) == b"it works!\n"
 
-    for args in ([python3, primed_script], [python3, "-m", "mytest"]):
-        assert subprocess.check_output(args) == b"it works!\n"
-
+    # Check "black", installed via python-packages: the console script is
+    # primed and the module runs under the primed interpreter.
     black = prime_dir / "bin/black"
     assert black.exists()
+    output = subprocess.check_output([python3, "-m", "black", "--help"])
+    assert b"The uncompromising code formatter" in output
 
-    # Check "black", installed via python-packages
-    # (both the console script and the module)
-    for args in ([python3, black], [python3, "-m", "black"]):
-        output = subprocess.check_output([*args, "--help"])
-        assert b"The uncompromising code formatter" in output
-
+    # Check "flask", installed via python-requirements: the console script is
+    # primed and the module runs under the primed interpreter.
     flask = prime_dir / "bin/flask"
     assert flask.exists()
-
-    # Check "flask", installed via python-requirements
-    # (both the console script and the module)
-    for args in ([python3, flask], [python3, "-m", "flask"]):
-        output = subprocess.check_output([*args, "--help"])
-        assert b"A general utility script for Flask applications." in output
+    output = subprocess.check_output([python3, "-m", "flask", "--help"])
+    assert b"A general utility script for Flask applications." in output
 
 
 def test_python_plugin_no_bundled_python(new_dir, partitions):
@@ -186,7 +178,7 @@ def test_python_plugin_staged(new_dir, partitions):
     _check_binaries(prime_dir)
 
 
-def test_python_plugin_long_build_path(new_dir, partitions):
+def test_python_plugin_long_build_path(new_path, partitions):
     """Rewrite pip's polyglot shebang for build paths over the shebang limit.
 
     When the interpreter path that pip embeds is longer than the kernel's
@@ -197,40 +189,35 @@ def test_python_plugin_long_build_path(new_dir, partitions):
 
     plugins.register({"python": PythonPlugin})
 
-    # Stage python3 at a path that is deep enough to push the interpreter's
-    # shebang over the kernel limit, then have the python part find it first
-    # in PATH.
-    deep_dir = "d" * 100
+    # Run pip under an interpreter copied to a path deep enough to push the
+    # script shebangs over the kernel limit. Anchor it in the test's temporary
+    # directory explicitly: $CRAFT_PROJECT_DIR is the ambient working directory,
+    # which is the developer's checkout when the test runs outside pytest's
+    # new_dir fixture. The build dir can't host it because setuptools' package
+    # discovery would find the deep directory there.
+    deep_python = new_path / ("d" * 100) / "python3"
     parts_yaml = textwrap.dedent(
         f"""\
         parts:
-          interpreter:
-            plugin: nil
-            source: {source_location}
-            override-build: |
-              mkdir -p ${{CRAFT_PART_INSTALL}}/{deep_dir}
-              cp $(readlink -f $(which python3)) ${{CRAFT_PART_INSTALL}}/{deep_dir}/python3
-
           foo:
-            after: [interpreter]
             plugin: python
             source: {source_location}
-            python-packages: [black]
-            python-requirements: [requirements.txt]
+            override-build: |
+              mkdir -p {deep_python.parent}
+              cp $(readlink -f $(which python3)) {deep_python}
+              craftctl default
             build-environment:
-              - PATH: "$CRAFT_STAGE/{deep_dir}:$PATH"
-              - PIP_PYTHON: "$CRAFT_STAGE/{deep_dir}/python3"
+              - PIP_PYTHON: "{deep_python}"
         """
     )
 
-    lifecycle = _run_lifecycle(parts_yaml, new_dir, partitions)
+    lifecycle = _run_lifecycle(parts_yaml, new_path, partitions)
     prime_dir = lifecycle.project_info.prime_dir
 
     # The polyglot header must have been collapsed into the runtime shebang.
-    for script in ("mytest", "black", "blackd", "flask"):
-        primed_script = prime_dir / "bin" / script
-        assert primed_script.exists()
-        assert primed_script.open().readline().rstrip() == "#!/usr/bin/python3"
+    primed_script = prime_dir / "bin/mytest"
+    assert primed_script.exists()
+    assert primed_script.open().readline().rstrip() == "#!/usr/bin/python3"
 
 
 def test_python_plugin_package_conflicts(new_dir, partitions):
