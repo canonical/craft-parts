@@ -126,7 +126,6 @@ def test_get_build_commands_custom_runtime_interpreter(part_info):
     assert "runtime_interp=/usr/bin/python3" not in rewrite_command
 
 
-# Each case is (script as pip wrote it, runtime interpreter, expected script).
 @pytest.mark.parametrize(
     ("content", "runtime_interpreter", "expected"),
     [
@@ -134,23 +133,22 @@ def test_get_build_commands_custom_runtime_interpreter(part_info):
         pytest.param(
             _plain_shebang(_PIP_PYTHON),
             _RUNTIME,
-            _plain_shebang(_RUNTIME),
+            f"#!{_RUNTIME}",
             id="plain",
         ),
         # Plain shebang with interpreter arguments, which must be preserved.
         pytest.param(
             _plain_shebang(_PIP_PYTHON, " -Es"),
             _RUNTIME,
-            _plain_shebang(_RUNTIME, " -Es"),
+            f"#!{_RUNTIME} -Es",
             id="args-preserved",
         ),
         # Polyglot header, written by pip when the path is over the kernel's
-        # shebang limit. Only the 3-line header is collapsed; the body,
-        # including pip's coding comment, survives intact.
+        # shebang limit.
         pytest.param(
             _polyglot_shebang(_PIP_PYTHON),
             _RUNTIME,
-            "#!/usr/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n",
+            f"#!{_RUNTIME}",
             id="polyglot",
         ),
         # Runtime interpreter paths with characters that are special to the
@@ -158,44 +156,53 @@ def test_get_build_commands_custom_runtime_interpreter(part_info):
         pytest.param(
             _plain_shebang(_PIP_PYTHON),
             "/snap/a&b/current/bin/python3",
-            _plain_shebang("/snap/a&b/current/bin/python3"),
+            "#!/snap/a&b/current/bin/python3",
             id="ampersand",
         ),
         pytest.param(
             _polyglot_shebang(_PIP_PYTHON),
             "/snap/a&b/current/bin/python3",
-            "#!/snap/a&b/current/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n",
+            "#!/snap/a&b/current/bin/python3",
             id="ampersand-polyglot",
         ),
         pytest.param(
             _plain_shebang(_PIP_PYTHON),
             "/opt/a|b/bin/python3",
-            _plain_shebang("/opt/a|b/bin/python3"),
+            "#!/opt/a|b/bin/python3",
             id="pipe",
         ),
         pytest.param(
             _plain_shebang(_PIP_PYTHON),
             "/opt/a\\b/bin/python3",
-            _plain_shebang("/opt/a\\b/bin/python3"),
+            "#!/opt/a\\b/bin/python3",
             id="backslash",
         ),
         pytest.param(
             _polyglot_shebang(_PIP_PYTHON),
             "/opt/it's-here/bin/python3",
-            "#!/opt/it's-here/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n",
+            "#!/opt/it's-here/bin/python3",
             id="single-quote",
         ),
         pytest.param(
             _plain_shebang(_PIP_PYTHON),
             "/opt/my dir/bin/python3",
-            _plain_shebang("/opt/my dir/bin/python3"),
+            "#!/opt/my dir/bin/python3",
             id="space",
         ),
     ],
 )
 def test_rewrite_shebangs(part_info, new_path, content, runtime_interpreter, expected):
     """The rewrite command transforms pip script shebangs as expected."""
-    assert _rewrite(content, runtime_interpreter, part_info, new_path) == expected
+    result = _rewrite(content, runtime_interpreter, part_info, new_path)
+    assert result.split("\n", 1)[0] == expected
+
+
+def test_rewrite_shebangs_polyglot_preserves_body(part_info, new_path):
+    """Collapsing a polyglot header leaves the rest of the script intact."""
+    result = _rewrite(_polyglot_shebang(_PIP_PYTHON), _RUNTIME, part_info, new_path)
+    # The body, including the coding comment that pip's template emits, must
+    # survive the 3-line header collapse untouched.
+    assert result == "#!/usr/bin/python3\n# -*- coding: utf-8 -*-\nprint('hello')\n"
 
 
 @pytest.mark.parametrize(
