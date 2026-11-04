@@ -278,7 +278,10 @@ def test_get_build_commands_quotes_package_arguments(new_dir, package):
     commands = python_plugin.get_build_commands()
 
     assert f"PACKAGES=('{package}')" in commands
-    assert 'pip install "${REQUIREMENTS[@]}" "${PACKAGES[@]}"' in commands
+    assert (
+        'pip --python "${PIP_PYTHON}" install "${REQUIREMENTS[@]}" "${PACKAGES[@]}"'
+        in commands
+    )
 
 
 def test_get_build_environment(new_dir):

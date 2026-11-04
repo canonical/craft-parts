@@ -155,7 +155,9 @@ class PythonPlugin(Plugin):
         """)
         pip_lines.append(project)
 
-        pip_lines.append('pip install "${REQUIREMENTS[@]}" "${PACKAGES[@]}"')
+        pip_lines.append(
+            'pip --python "${PIP_PYTHON}" install "${REQUIREMENTS[@]}" "${PACKAGES[@]}"'
+        )
 
         pip_lines.append(self._get_rewrite_shebangs_command())
 
