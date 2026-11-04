@@ -190,11 +190,7 @@ def test_python_plugin_long_build_path(new_path, partitions):
     plugins.register({"python": PythonPlugin})
 
     # Run pip under an interpreter copied to a path deep enough to push the
-    # script shebangs over the kernel limit. Anchor it in the test's temporary
-    # directory explicitly: $CRAFT_PROJECT_DIR is the ambient working directory,
-    # which is the developer's checkout when the test runs outside pytest's
-    # new_dir fixture. The build dir can't host it because setuptools' package
-    # discovery would find the deep directory there.
+    # script shebangs over the kernel limit.
     deep_python = new_path / ("d" * 100) / "python3"
     parts_yaml = textwrap.dedent(
         f"""\
