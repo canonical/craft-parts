@@ -206,10 +206,12 @@ def test_get_partition_compatible_filepath_non_partition(path, path_class):
     assert isinstance(actual_inner_path, path_class)
 
 
-ZIPPED_PARTITIONS = zip(
-    PARTITION_PATHS,
-    PARTITION_EXPECTED_PARTITIONS,
-    PARTITION_EXPECTED_INNER_PATHS,
+ZIPPED_PARTITIONS = list(
+    zip(
+        PARTITION_PATHS,
+        PARTITION_EXPECTED_PARTITIONS,
+        PARTITION_EXPECTED_INNER_PATHS,
+    )
 )
 
 
