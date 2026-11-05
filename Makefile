@@ -337,8 +337,8 @@ endif
 .PHONY: install-lint-build-deps
 install-lint-build-deps:
 
-# The toolchain install is idempotent; the default profile bundles clippy +
-# rustfmt. Runs even when rustup pre-existed without a toolchain installed.
+# Only rustup itself needs installing; rust-toolchain.toml pins the toolchain
+# version and rustup installs it (plus clippy/rustfmt) implicitly on first use.
 .PHONY: install-rustup
 install-rustup:
 ifneq ($(shell which rustup),)
@@ -346,9 +346,6 @@ else ifeq ($(shell which snap),)
 	$(warning Cannot install rustup without snap. Install it yourself.)
 else
 	sudo snap install rustup --classic
-endif
-ifneq ($(shell which rustup),)
-	@rustup toolchain install stable
 endif
 
 .PHONY: install-dotnet

@@ -42,7 +42,7 @@ dev = [
   "distro>=1.9.0",
   "hypothesis",
   "jsonschema",
-  "maturin>=1.16.0",
+  "maturin~=1.9.4",
   "pyfakefs~=6.1",
   "pytest~=9.0",
   "pytest-check",
@@ -117,7 +117,7 @@ types = [
 ]
 
 [build-system]
-requires = ["maturin~=1.16"]
+requires = ["maturin~=1.9.4"]
 build-backend = "maturin"
 
 [tool.codespell]

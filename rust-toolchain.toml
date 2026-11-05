@@ -1,0 +1,5 @@
+[toolchain]
+# Match the latest Rust toolchain available in the Ubuntu Noble archives
+# (rustc-1.91), so local builds use the same toolchain downstream packaging does.
+channel = "1.91"
+components = ["clippy", "rustfmt"]
