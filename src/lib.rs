@@ -17,12 +17,6 @@ mod rs {
     #[pymodule_export]
     use crate::errors::errors;
 
-    /// The package version, derived from `git describe` at compile time.
-    #[pyfunction(name = "_get_craft_parts_version")]
-    fn version() -> &'static str {
-        env!("CRAFT_PARTS_CARGO_VERSION")
-    }
-
     #[pymodule_init]
     fn init(m: &Bound<'_, PyModule>) -> Result<()> {
         use crate::register_submodules::RegisterSubmodules as _;
