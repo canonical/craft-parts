@@ -154,9 +154,31 @@ class MavenPlugin(JavaPlugin):
 
         return [
             *self._get_mvnw_validation_commands(options=options),
+            *self._get_maven_prefetch_commands(
+                maven_executable=self._maven_executable,
+                settings_path=settings_path,
+            ),
             " ".join(mvn_cmd + options.maven_parameters),
             *self._get_extra_maven_commands(settings_path),
             *self._get_java_post_build_commands(),
+        ]
+
+    def _get_maven_prefetch_commands(
+        self, *, maven_executable: str, settings_path: pathlib.Path
+    ) -> list[str]:
+        """Get the bash commands to prefetch Maven artifacts, retrying transient failures.
+
+        Prefetch failures are best-effort: the build itself will still be attempted,
+        so a non-retriable `go-offline` failure (e.g. an unresolvable dependency) is
+        surfaced with a clear error rather than masked as a network flake. Retrying
+        only the download step keeps transient Central outages from aborting
+        otherwise valid builds.
+        """
+        return [
+            "for i in 1 2 3; do ",
+            f"  {maven_executable} dependency:go-offline -s {settings_path} && break || sleep $((i * 5))",
+            "done",
+            "echo 'Prefetch complete (best-effort); proceeding to build'",
         ]
 
     def _get_mvnw_validation_commands(
