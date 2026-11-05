@@ -361,8 +361,14 @@ def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> Non
         snap_pkg.download(directory=directory)
 
 
-def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
+def install_snaps(
+    snaps_list: Sequence[str] | set[str], *, refresh: bool = False
+) -> list[str]:
     """Install snaps of the format <snap-name>[@<channel>].
+
+    :param snaps_list: The snaps to install.
+    :param refresh: Whether to refresh snaps that are already installed from a
+        channel other than the requested one.
 
     :return: a list of "name=revision" for the snaps installed.
     """
@@ -378,12 +384,17 @@ def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
             if snap_pkg_channel != "stable" and snap_pkg_type == "base":
                 snap_pkg = SnapPackage(f"{snap_pkg.name}/latest/{snap_pkg_channel}")
 
-            target_channel = snap_pkg.get_effective_channel() or _normalize_channel(
-                snap_pkg_channel
-            )
             if not snap_pkg.installed:
                 snap_pkg.install()
-            elif target_channel and snap_pkg.get_current_channel() != target_channel:
+            elif (
+                refresh
+                and snap_pkg.has_assertions()  # Keep locally installed snaps
+                and (
+                    target_channel := snap_pkg.get_effective_channel()
+                    or _normalize_channel(snap_pkg_channel)
+                )
+                and snap_pkg.get_current_channel() != target_channel
+            ):
                 # If the user didn't request a channel, refresh to the store's
                 # default channel; otherwise, refresh() uses the user-supplied
                 # channel and snapd resolves the default track.
