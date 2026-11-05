@@ -57,9 +57,22 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Install uv
+        run: sudo snap install --classic astral-uv
+
+      # Build with the same maturin the project pins, read from uv so the
+      # version is not duplicated here.
+      - name: Resolve locked maturin version
+        id: maturin
+        run: |
+          # "uv tree" prints "maturin vX.Y.Z"; strip the leading "maturin v".
+          version="$(uv tree --package maturin --depth 0 | awk 'NR==1 { sub(/^v/, "", $2); print $2 }')"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
       - name: Build CPython 3.10 and 3.11 wheels
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
+          maturin-version: v${{ steps.maturin.outputs.version }}
           target: ${{ matrix.target }}
           manylinux: auto
           args: --release --interpreter python3.10 python3.11 --out dist
@@ -67,6 +80,7 @@ jobs:
       - name: Build abi3 wheel (Python 3.12+)
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
+          maturin-version: v${{ steps.maturin.outputs.version }}
           target: ${{ matrix.target }}
           manylinux: auto
           # The abi3-py312 feature flag holds the 3.12 floor; building with the
