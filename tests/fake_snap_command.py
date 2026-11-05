@@ -32,6 +32,9 @@ class FakeSnapCommand:
         self.install_success = True
         self.refresh_success = True
         self.download_side_effect = None
+        self.install_stderr = b""
+        self.refresh_stderr = b""
+        self.download_stderr = b""
         self.fake_download = None
         self._email = "-"
 
@@ -83,10 +86,14 @@ class FakeSnapCommand:
         cmd, params = self._get_snap_cmd(cmd)
 
         if cmd == "install" and not self.install_success:
-            raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
+            raise subprocess.CalledProcessError(
+                returncode=1, cmd=cmd, stderr=self.install_stderr
+            )
 
         if cmd == "refresh" and not self.refresh_success:
-            raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
+            raise subprocess.CalledProcessError(
+                returncode=1, cmd=cmd, stderr=self.refresh_stderr
+            )
 
         if cmd == "whoami":
             return f"email: {self._email}".encode()
@@ -96,7 +103,9 @@ class FakeSnapCommand:
             and self.download_side_effect is not None
             and not self.download_side_effect.pop(0)
         ):
-            raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
+            raise subprocess.CalledProcessError(
+                returncode=1, cmd=cmd, stderr=self.download_stderr
+            )
 
         if cmd == "download":
             if self.fake_download:

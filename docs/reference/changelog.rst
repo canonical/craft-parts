@@ -35,6 +35,13 @@ New features:
 
 Bug fixes:
 
+- Already-installed snaps required to build a part are now refreshed when the
+  requested channel changes. This includes snaps declared in ``build-snaps`` and
+  snaps supplied by plugins or sources. Risk-only channels are resolved against
+  the snap's default track. Application-provided snaps, such as ``chisel`` when
+  slices are used, and locally installed snaps without store assertions are left
+  untouched if already installed.
+
 - Organizing a directory to a path inside itself, such as ``app: app/app/``,
   now fails with an error instead of silently producing an empty part. Use a
   glob key like ``app/*: app/app/`` to move the contents of ``app`` into
