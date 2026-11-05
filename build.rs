@@ -5,7 +5,13 @@ use std::process::Command;
 fn main() {
     // Files to watch mtime of and trigger a rerun of this script
     // if they have changed.
-    const RERUN_FILES: &[&str] = &[".git/HEAD", ".git/refs/tags", "src", "craft_parts"];
+    const RERUN_FILES: &[&str] = &[
+        ".git/HEAD",
+        ".git/refs/tags",
+        ".git/packed-refs",
+        "src",
+        "craft_parts",
+    ];
     for file in RERUN_FILES {
         println!("cargo:rerun-if-changed={file}");
     }
@@ -59,7 +65,11 @@ fn normalize_pep440(describe: &str) -> String {
     };
 
     if dirty {
-        version.push_str(".dirty");
+        if version.contains('+') {
+            version.push_str(".dirty");
+        } else {
+            version.push_str("+dirty");
+        }
     }
 
     version
