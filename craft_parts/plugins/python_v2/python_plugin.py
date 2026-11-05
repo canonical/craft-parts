@@ -17,6 +17,7 @@
 """Version 2 of the Python plugin."""
 
 import shlex
+from pathlib import Path
 from textwrap import dedent
 from typing import Literal
 
@@ -192,27 +193,10 @@ class PythonPlugin(Plugin):
         with the interpreter from :meth:`_get_runtime_python_interpreter`.
         """
         script_interpreter = shlex.quote(self._get_runtime_python_interpreter())
-        return dedent(f"""\
-          # Rewrite the build-time shebangs of the scripts installed by pip.
-          runtime_interp={script_interpreter}
-          # Escape the interpreter path for use as a sed replacement.
-          escaped_interp=${{runtime_interp//\\\\/\\\\\\\\}}
-          escaped_interp=${{escaped_interp//&/\\\\&}}
-          escaped_interp=${{escaped_interp//|/\\\\|}}
-          for script in "${{CRAFT_PART_INSTALL}}/bin"/*; do
-            [[ -f ${{script}} && ! -L ${{script}} ]] || continue
-            read -r shebang < "${{script}}" || continue
-            if [[ ${{shebang}} == "#!${{PIP_PYTHON}}"* ]]; then
-              sed -i "1 s|^#!${{PIP_PYTHON}}[^ ]*\\( .\\+\\)\\?$|#!${{escaped_interp}}\\1|" "${{script}}"
-            elif [[ ${{shebang}} == "#!/bin/sh" ]]; then
-              # Possibly pip's polyglot header for long interpreter paths; only
-              # rewrite it if the second line executes the pip interpreter.
-              if [[ $(sed -n 2p "${{script}}") == "'''exec' ${{PIP_PYTHON}} "* ]]; then
-                printf '#!%s\\n' "${{runtime_interp}}" > "${{script}}.tmp"
-                tail -n +4 "${{script}}" >> "${{script}}.tmp"
-                # Preserve the script's original mode instead of clobbering
-                cat "${{script}}.tmp" > "${{script}}" && rm "${{script}}.tmp"
-              fi
-            fi
-          done
-        """)
+        script_path = Path(__file__).parent / "shebang_rewrite.sh"
+        script_body = script_path.read_text(encoding="utf-8")
+        return (
+            f"# Rewrite the build-time shebangs of the scripts installed by pip.\n"
+            f"runtime_interp={script_interpreter}\n"
+            f"{script_body}"
+        )
