@@ -348,6 +348,12 @@ else
 	sudo snap install rustup --classic
 endif
 
+# Point builds at rustup's cargo and rustc (maturin and cargo honor the CARGO
+# and RUSTC env vars). This way, uv's isolated PEP 517 builds still get the
+# cargo/rustc versions decided by this directory's rust-toolchain.toml.
+export CARGO = $(shell rustup which cargo 2>/dev/null || which cargo 2>/dev/null || echo cargo)
+export RUSTC = $(shell rustup which rustc 2>/dev/null || which rustc 2>/dev/null || echo rustc)
+
 .PHONY: install-dotnet
 install-dotnet:
 ifeq ($(UBUNTU_CODENAME),focal)
