@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import ftplib
 from pathlib import Path
 from re import escape
 from typing import Any, Literal
@@ -186,6 +187,45 @@ class TestFileSourceHandler:
             raised.value.brief
             == "Failed to pull source: checksum mismatch for part 'foo'."
         )
+
+    def test_pull_ftp(self, mocker, new_dir):
+        self.set_source(
+            cache_dir=new_dir,
+            source="ftp://example.com/some_file",
+        )
+        Path("parts/foo/src").mkdir(parents=True)
+
+        ftp = mocker.MagicMock()
+        ftp_context = ftp.__enter__.return_value
+        ftp_context.retrbinary.side_effect = lambda command, callback: callback(
+            b"content"
+        )
+        mocker.patch("ftplib.FTP", return_value=ftp)
+
+        self.source.pull()
+
+        downloaded = Path(new_dir, "parts", "foo", "src", "some_file")
+        assert downloaded.is_file()
+        assert downloaded.read_bytes() == b"content"
+        ftp_context.login.assert_called_once_with("anonymous", "anonymous@")
+        ftp_context.retrbinary.assert_called_once()
+
+    def test_pull_ftp_not_found(self, mocker, new_dir):
+        self.set_source(
+            cache_dir=new_dir,
+            source="ftp://example.com/missing_file",
+        )
+        Path("parts/foo/src").mkdir(parents=True)
+
+        ftp = mocker.MagicMock()
+        ftp_context = ftp.__enter__.return_value
+        ftp_context.retrbinary.side_effect = ftplib.error_perm(  # noqa: S321
+            "550 File not found"
+        )
+        mocker.patch("ftplib.FTP", return_value=ftp)
+
+        with pytest.raises(errors.SourceNotFound):
+            self.source.pull()
 
     def test_pull_url(self, requests_mock, new_dir):
         self.source.source = "http://test.com/some_file"
