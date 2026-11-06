@@ -42,7 +42,7 @@ dev = [
   "distro>=1.9.0",
   "hypothesis",
   "jsonschema",
-  "maturin~=1.9.4",
+  "maturin~=1.12.1",
   "pyfakefs~=6.1",
   "pytest~=9.0",
   "pytest-check",
@@ -117,7 +117,7 @@ types = [
 ]
 
 [build-system]
-requires = ["maturin~=1.9.4"]
+requires = ["maturin~=1.12.1"]
 build-backend = "maturin"
 
 [tool.codespell]
@@ -143,6 +143,14 @@ ensure_newline_before_comments = true
 line_length = 88
 
 [tool.maturin]
+# Creates the "craft_parts_docs" package inside of craft-parts
+# Note that the "path" value is relative to `docs/common/`. See
+# `stage_craft_parts_docs` in `build.rs`.
+include = [
+  { path = "__init__.py", from = "out-dir", to = "craft_parts_docs" },
+  { path = "README.md", from = "out-dir", to = "craft_parts_docs" },
+  { path = "craft-parts/**/*", from = "out-dir", to = "craft_parts_docs" },
+]
 module-name = "craft_parts._rs"
 python-source = "."
 
