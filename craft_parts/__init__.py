@@ -16,6 +16,18 @@
 
 """Craft a project from several parts."""
 
+# The Rust extension is required. Import it first so a contributor who hasn't
+# built it gets an actionable error instead of a raw ModuleNotFoundError when a
+# submodule pulls it in.
+try:
+    from . import _rs as _rs
+except ImportError as exc:
+    raise ImportError(
+        "craft-parts requires its compiled Rust extension, which failed to "
+        "import. If you are working from a source checkout, build it with "
+        "'make develop' (uv run maturin develop --uv)."
+    ) from exc
+
 from . import plugins
 from .actions import Action, ActionProperties, ActionType
 from .dirs import ProjectDirs
@@ -32,17 +44,7 @@ from .parts import (
     validate_part,
 )
 from .steps import Step
-
-
-try:
-    from ._version import __version__
-except ImportError:  # pragma: no cover
-    from importlib.metadata import version, PackageNotFoundError
-
-    try:
-        __version__ = version("craft_parts")
-    except PackageNotFoundError:
-        __version__ = "dev"
+from ._rs import __version__
 
 
 __all__ = [

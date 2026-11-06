@@ -1,0 +1,21 @@
+[package]
+name = "craft-parts"
+version = "0.0.0"  # Placeholder, this is written by build.rs.
+edition = "2024"
+rust-version = "1.91"  # Latest version available from the Noble archives (rustc-1.91)
+
+[workspace.dependencies]
+# pyo3 is always needed, but tests additionally need the "auto-initialize" feature.
+# To avoid having two disparate version specifications, it's instead specified here
+# just once and then retrieved via "workspace = true".
+pyo3 = { version = "0.30.1", features = ["anyhow"] }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anyhow = "1.0.104"
+pyo3 = { workspace = true }
+
+[dev-dependencies]
+pyo3 = { workspace = true, features = ["auto-initialize"] }
