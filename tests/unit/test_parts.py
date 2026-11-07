@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
@@ -246,6 +247,56 @@ class TestPartPartitionUsage:
 
         Part("a", part_data, partitions=partitions)
         Part("b", part_data, partitions=partitions)
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestPartSourceLocation:
+    """Warn about sources outside the project directory."""
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            "..",
+            "../../../",
+            "../src",
+            "src/../../x",
+            "/opt/src",
+            "/opt/src.tar.gz",
+        ],
+    )
+    def test_source_outside_project(self, source, partitions):
+        with pytest.warns(errors.SourceOutsideProjectWarning) as warning:
+            Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)
+
+        assert len(warning) == 1
+        source_warning = warning.list[0].message
+        assert isinstance(source_warning, errors.SourceOutsideProjectWarning)
+        assert source_warning.part_name == "foo"
+        assert source_warning.source == source
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            None,
+            ".",
+            "./src",
+            "src",
+            "sub/../src",
+            "src.tar.gz",
+            "https://example.com/src.tar.gz",
+            "git://example.com/src.git",
+            "git@github.com:org/src.git",
+            "lp:src",
+        ],
+    )
+    def test_source_inside_project(self, source, partitions):
+        part_data = {"plugin": "nil"}
+        if source:
+            part_data["source"] = source
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", errors.SourceOutsideProjectWarning)
+            Part("foo", part_data, partitions=partitions)
 
 
 class TestPartData:
