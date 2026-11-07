@@ -33,6 +33,10 @@ New features:
 - If any part declares ``build-slices``, Craft Parts will validate that the
   resulting build environment contains ``/bin/bash``.
 
+- Warn when a part's ``source`` is an absolute path or a relative path that
+  leads out of the project directory, as these may not exist in a managed
+  build environment.
+
 Bug fixes:
 
 - Already-installed snaps required to build a part are now refreshed when the
