@@ -38,6 +38,10 @@ New features:
   build-time path that pip embeds. Applications can override the target
   interpreter by subclassing the plugin.
 
+- Warn when a part's ``source`` is an absolute path or a relative path that
+  leads out of the project directory, as these may not exist in a managed
+  build environment.
+
 Bug fixes:
 
 - Already-installed snaps required to build a part are now refreshed when the
