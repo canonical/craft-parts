@@ -24,7 +24,7 @@ from pathlib import Path
 
 from typing_extensions import Self
 
-from craft_parts import callbacks, overlays, packages, parts, plugins
+from craft_parts import callbacks, errors, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
 from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
@@ -302,9 +302,14 @@ class Executor:
         packages.Repository.install_packages(sorted(build_packages))
 
     def _install_build_snaps(self) -> None:
-        build_snaps: set[str] = set(self._extra_build_snaps or ())
+        # Snaps required by a part, including plugin and source-provided snaps,
+        # are refreshed on channel changes. Application extras only need to
+        # be present, so an existing install is left untouched.
+        required_build_snaps: set[str] = set()
         for handler in self._handler.values():
-            build_snaps.update(handler.build_snaps)
+            required_build_snaps.update(handler.build_snaps)
+        extra_build_snaps = set(self._extra_build_snaps or ()) - required_build_snaps
+        build_snaps = required_build_snaps | extra_build_snaps
 
         if not build_snaps:
             return
@@ -320,12 +325,13 @@ class Executor:
             )
         else:
             logger.info("Installing build-snaps")
-            packages.snaps.install_snaps(build_snaps)
+            if extra_build_snaps:
+                packages.snaps.install_snaps(extra_build_snaps)
+            if required_build_snaps:
+                packages.snaps.install_snaps(required_build_snaps, refresh=True)
 
     def _cut_build_slices(self) -> None:
-        build_slices: set[str] = set()
-        for part in self._part_list:
-            build_slices.update(part.spec.build_slices)
+        build_slices = parts.get_build_slices(part_list=self._part_list)
 
         state_file = self._build_slices_state_file()
         slices_dir = self._project_info.dirs.build_slices_dir
@@ -338,9 +344,10 @@ class Executor:
             return
 
         state = self._load_build_slices_state(state_file)
-        if state and state.slices == build_slices:
+        if state and state.slices == set(build_slices):
             # Nothing to do: slices already cut
             self._prepare_build_slices_root(slices_dir)
+            self._validate_build_slices_root(slices_dir)
             return
 
         logger.info("Cutting build-slices")
@@ -352,6 +359,7 @@ class Executor:
         slices_dir.mkdir(parents=True, exist_ok=False)
         chisel.cut_slices(slices=sorted(build_slices), target_dir=slices_dir)
         self._prepare_build_slices_root(slices_dir)
+        self._validate_build_slices_root(slices_dir)
 
         # Write the information of which slices we cut, for future runs.
         new_state = chisel.SlicesState(slices=build_slices)
@@ -361,6 +369,17 @@ class Executor:
         """Create mount points for virtual filesystems used during builds."""
         for mountpoint in ("dev", "proc", "sys"):
             (slices_dir / mountpoint).mkdir(parents=True, exist_ok=True)
+
+    def _validate_build_slices_root(self, slices_dir: Path) -> None:
+        """Validate that the build-slices filesystem contains essential tools.
+
+        '/bin/bash' must be available for craft-parts to run 'build.sh'. This means
+        bash_bins and base-files_bin must be included, directly or indirectly.
+
+        bash_bins provides '/usr/bin/bash' and base-files_bin symlinks '/bin' to '/usr/bin'.
+        """
+        if not (slices_dir / "bin" / "bash").is_file():
+            raise errors.BuildSlicesEnvironmentError
 
     def _build_slices_state_file(self) -> Path:
         return self._project_info.dirs.work_dir / "build_slices_state.yaml"

@@ -133,6 +133,12 @@ files would be organized to the same destination path.
 Directories
 -----------
 
+A directory can't be organized into a path inside itself. For example,
+``app: app/app/`` is rejected because removing the source directory would
+also remove its destination. Use ``app/*: app/app/`` instead to organize
+the directory's contents. If ``app/app`` already exists, matching entries
+merge into it without repeatedly nesting the destination.
+
 An explicit directory source is merged directly into its destination path. The
 source directory name itself isn't preserved under the destination.
 
