@@ -225,7 +225,7 @@ def test_python_get_handle_symlinks_commands(
         template.format(install_dir=new_dir / "parts" / "p1" / "install")
         for template in expected_template
     ]
-    python_plugin._should_remove_symlinks = lambda: should_remove_symlinks  # ty: ignore[invalid-assignment]
+    python_plugin._should_remove_symlinks = lambda: should_remove_symlinks
 
     assert python_plugin._get_handle_symlinks_commands() == expected
 
