@@ -494,13 +494,19 @@ class TestStepOutdated:
 
         assert sm.check_if_outdated(p1, Step.PULL) is None
         state_mtime = Path("parts/p1/state/pull").stat().st_mtime_ns
-        os.utime(Path("subdir/foo"), ns=(state_mtime + 1_000_000_000,) * 2)
+        os.utime(
+            Path("subdir/foo"),
+            ns=(state_mtime + 1_000_000_000, state_mtime + 1_000_000_000),
+        )
         report = sm.check_if_outdated(p1, Step.PULL)
         assert report is not None
         assert report.source_modified
         assert source_checks == 2
 
-        os.utime(Path("subdir/foo"), ns=(state_mtime - 1_000_000_000,) * 2)
+        os.utime(
+            Path("subdir/foo"),
+            ns=(state_mtime - 1_000_000_000, state_mtime - 1_000_000_000),
+        )
         with sm.cache_source_outdated():
             assert sm.check_if_outdated(p1, Step.PULL) is None
             assert sm.check_if_outdated(p1, Step.PULL) is None
@@ -529,7 +535,10 @@ class TestStepOutdated:
             Path("parts/p1/state/pull")
         )
         state_mtime = Path("parts/p1/state/pull").stat().st_mtime_ns
-        os.utime(Path("subdir/foo"), ns=(state_mtime + 1_000_000_000,) * 2)
+        os.utime(
+            Path("subdir/foo"),
+            ns=(state_mtime + 1_000_000_000, state_mtime + 1_000_000_000),
+        )
 
         source_checks = 0
         original_check = LocalSource.check_if_outdated
