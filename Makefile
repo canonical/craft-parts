@@ -20,6 +20,17 @@ endif
 
 include common.mk
 
+RUST_BUILD_PATH := $(HOME)/.cargo/bin:/snap/bin:$(PATH)
+
+# Prioritize rustup's cargo and rustc in PATH during setup, packaging, and rust-specific
+# targets so maturin and cargo metadata use rustup's toolchain rather than older distro
+# packages. Test targets intentionally omit this so pytest tests run against the
+# distro's own cargo version.
+RUST_BUILD_TARGETS := develop setup setup-tests setup-docs setup-lint setup-tics format-rust lint-rust test-rust
+$(RUST_BUILD_TARGETS): export PATH := $(RUST_BUILD_PATH)
+$(RUST_BUILD_TARGETS): export CARGO = $(shell rustup which cargo 2>/dev/null || which cargo 2>/dev/null || echo cargo)
+$(RUST_BUILD_TARGETS): export RUSTC = $(shell rustup which rustc 2>/dev/null || which rustc 2>/dev/null || echo rustc)
+
 .PHONY: format
 format: format-ruff format-codespell format-prettier format-shfmt format-tombi format-pre-commit format-rust  ## Run all automatic formatters
 
@@ -34,9 +45,9 @@ develop:  ## Build the Rust extension in-place (editable install)
 	uv run maturin develop --uv
 
 .PHONY: test-rust
-test-rust:  ## Run Rust unit tests
+test-rust: develop  ## Run Rust unit tests
 	PY_LIBDIR=$$(uv run --no-sync python -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR"))')
-	LD_LIBRARY_PATH="$$PY_LIBDIR" cargo test
+	LD_LIBRARY_PATH="$$PY_LIBDIR" uv run --no-sync cargo test
 
 .PHONY: format-rust
 format-rust:  ##- Format Rust code with rustfmt
@@ -44,21 +55,17 @@ format-rust:  ##- Format Rust code with rustfmt
 
 .PHONY: lint-rust
 lint-rust:  ##- Lint Rust code with clippy and rustfmt
-	cargo clippy --all-targets -- --deny warnings
-	cargo fmt --check
+	uv run --no-sync cargo clippy --all-targets -- --deny warnings
+	uv run --no-sync cargo fmt --check
 
 .PHONY: test
 test: test-rust  ## Run all tests
 	uv run pytest
 
-# Mirrors common.mk's setup recipe, then builds the Rust extension. uv's
-# editable install only drops a .pth at the source tree; it does not invoke
-# maturin to produce the in-tree .so, so the extension must be built
-# explicitly after sync. Keep prereqs + recipe in sync with common.mk's setup.
-.PHONY: setup
-setup: install-uv _setup-docs _setup-lint _setup-tests setup-precommit install-build-deps  ## Set up a development environment
-	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_DOCS_GROUPS)
-	$(MAKE) develop
+# Ensure all test targets build the extension via `develop` first without
+# mangling PATH for pytest.
+TEST_TARGETS := test test-fast test-slow test-coverage test-find-slow
+$(TEST_TARGETS): develop
 
 .PHONY: pack
 pack: pack-pip  ## Build all packages
@@ -72,6 +79,9 @@ endif
 
 # Find dependencies that need installing
 APT_PACKAGES :=
+ifeq ($(wildcard /usr/share/doc/build-essential/copyright),)
+APT_PACKAGES += build-essential
+endif
 ifeq ($(wildcard /usr/include/libxml2/libxml/xpath.h),)
 APT_PACKAGES += libxml2-dev
 endif
@@ -233,9 +243,6 @@ APT_PACKAGES += ruby-bundler
 endif
 # all the packages ruby-install wants to use to build mruby
 # https://github.com/postmodern/ruby-install/blob/master/share/ruby-install/mruby/dependencies.sh
-ifeq ($(wildcard /usr/share/doc/build-essential/copyright),)
-APT_PACKAGES += build-essential
-endif
 ifeq ($(wildcard /usr/share/doc/bison/copyright),)
 APT_PACKAGES += bison
 endif
@@ -350,12 +357,6 @@ endif
 	@if which rustup >/dev/null 2>&1; then \
 		rustup toolchain install; \
 	fi
-
-# Point builds at rustup's cargo and rustc (maturin and cargo honor the CARGO
-# and RUSTC env vars). This way, uv's isolated PEP 517 builds still get the
-# cargo/rustc versions decided by this directory's rust-toolchain.toml.
-export CARGO = $(shell rustup which cargo 2>/dev/null || which cargo 2>/dev/null || echo cargo)
-export RUSTC = $(shell rustup which rustc 2>/dev/null || which rustc 2>/dev/null || echo rustc)
 
 .PHONY: install-dotnet
 install-dotnet:
