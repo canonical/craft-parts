@@ -26,10 +26,11 @@ from typing_extensions import Self
 
 from craft_parts import callbacks, errors, overlays, packages, parts, plugins
 from craft_parts.actions import Action, ActionType
-from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
+from craft_parts.infos import PartInfo, ProjectInfo, ProjectOptions, StepInfo
 from craft_parts.overlays import LayerHash, OverlayManager
 from craft_parts.packages import chisel
 from craft_parts.parts import Part, sort_parts
+from craft_parts.state_manager import states
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 
@@ -111,6 +112,7 @@ class Executor:
 
         This method is called before executing lifecycle actions.
         """
+        self._clean_changed_partitions()
         self._install_build_packages()
         self._install_build_snaps()
         self._cut_build_slices()
@@ -261,6 +263,42 @@ class Executor:
 
         handler = self._create_part_handler(part)
         handler.run_action(action, stdout=stdout, stderr=stderr)
+
+    def _clean_changed_partitions(self) -> None:
+        """Clean parts that were built with a different list of partitions.
+
+        Files are organized into partitions during the build step, so this has
+        to happen for all parts before any of them runs again. Otherwise files
+        from parts that weren't cleaned yet can be in the way of the new layout,
+        for example where the new default partition was a regular one before.
+        """
+        if not self._project_info.partitions:
+            return
+
+        options = ProjectOptions.from_project_info(self._project_info)
+        cleaned = False
+        for part in self._part_list:
+            state = states.load_step_state(part, Step.BUILD)
+            if not state or "partitions" not in state.diff_project_options_of_interest(
+                options
+            ):
+                continue
+            logger.debug("partitions changed, clean part %s", part.name)
+            handler = self._create_part_handler(part)
+            for step in reversed([Step.BUILD, *Step.BUILD.next_steps()]):
+                handler.clean_step(step=step)
+            cleaned = True
+
+        if not cleaned:
+            return
+
+        # Directories left over from the old layout are empty now. Remove them,
+        # they would otherwise block the alias symlinks of the default partition.
+        partition_dir = self._project_info.partition_dir
+        if partition_dir and partition_dir.is_dir():
+            for path in partition_dir.glob("*/*"):
+                if path.is_dir() and not path.is_symlink():
+                    _remove_if_no_files(path)
 
     def _create_part_handler(
         self,
@@ -450,3 +488,10 @@ class ExecutionContext:
         :raises InvalidActionException: If the action parameters are invalid.
         """
         self._executor.execute(actions, stdout=stdout, stderr=stderr)
+
+
+def _remove_if_no_files(path: Path) -> None:
+    """Remove a directory tree if it only contains directories."""
+    if any(not p.is_dir() or p.is_symlink() for p in path.rglob("*")):
+        return
+    shutil.rmtree(path)

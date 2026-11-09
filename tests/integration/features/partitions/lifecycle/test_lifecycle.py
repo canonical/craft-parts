@@ -460,6 +460,12 @@ _partitions_changed_parts_yaml = textwrap.dedent(
           touch $CRAFT_PART_INSTALL/a $CRAFT_PART_INSTALL/b
         organize:
           b: (docs)/b
+      bar:
+        plugin: nil
+        override-build: |
+          touch $CRAFT_PART_INSTALL/c $CRAFT_PART_INSTALL/d
+        organize:
+          d: (docs)/d
     """
 )
 
@@ -471,6 +477,8 @@ _partitions_changed_parts_yaml = textwrap.dedent(
         (["default", "docs"], ["default", "docs", "extra"]),
         # the old default partition becomes a regular one
         (["docs", "foo"], ["bar", "docs"]),
+        # a regular partition becomes the default one
+        (["foo", "docs"], ["docs", "foo"]),
     ],
 )
 def test_partitions_changed(new_dir, old, new):
@@ -495,14 +503,14 @@ def test_partitions_removed_cleans_old_partition(new_dir):
     _run_lifecycle(_partitions_changed_parts_yaml, ["default", "docs"], work_dir)
     assert (work_dir / "partitions/docs/prime/b").exists()
 
-    parts_yaml = _partitions_changed_parts_yaml.replace("organize:", "").replace(
-        "b: (docs)/b", ""
-    )
+    parts_yaml = _partitions_changed_parts_yaml.replace("(docs)/", "(default)/")
     _run_lifecycle(parts_yaml, ["default"], work_dir)
 
     assert not (work_dir / "partitions/docs/prime/b").exists()
     assert not (work_dir / "partitions/docs/stage/b").exists()
+    assert not (work_dir / "partitions/docs/prime/d").exists()
     assert (work_dir / "prime/b").exists()
+    assert (work_dir / "prime/d").exists()
 
 
 def test_partitions_reordered_does_not_rebuild(new_dir):
