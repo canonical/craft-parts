@@ -72,6 +72,7 @@ class BuildState(StepState):
             "build-attributes",
             "build-environment",
             "build-packages",
+            "build-snaps",
             "build-slices",
             "disable-parallel",
             "organize",
