@@ -72,7 +72,7 @@ def test_uv_plugin(new_dir, partitions, uv_parts_simple):
     output = subprocess.getoutput(str(primed_script))
     assert output == "it works with uv too!"
 
-    pycache = list(prime_dir.glob("lib/python*/site-packages/__pycache__"))
+    pycache = list(prime_dir.glob("lib/python*/site-packages/mytestuv/__pycache__"))
     assert pycache != []
     assert all(path.is_dir() for path in pycache)
 
