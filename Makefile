@@ -337,8 +337,8 @@ endif
 .PHONY: install-lint-build-deps
 install-lint-build-deps:
 
-# Only rustup itself needs installing; rust-toolchain.toml pins the toolchain
-# version and rustup installs it (plus clippy/rustfmt) implicitly on first use.
+# rust-toolchain.toml pins the toolchain, and `rustup toolchain install`
+# reads it.
 .PHONY: install-rustup
 install-rustup:
 ifneq ($(shell which rustup),)
@@ -347,6 +347,9 @@ else ifeq ($(shell which snap),)
 else
 	sudo snap install rustup --classic
 endif
+	@if which rustup >/dev/null 2>&1; then \
+		rustup toolchain install; \
+	fi
 
 # Point builds at rustup's cargo and rustc (maturin and cargo honor the CARGO
 # and RUSTC env vars). This way, uv's isolated PEP 517 builds still get the
