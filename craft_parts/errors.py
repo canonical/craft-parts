@@ -569,12 +569,14 @@ class PluginEnvironmentValidationError(PartsError):
     :param part_name: The name of the part being processed.
     """
 
-    def __init__(self, *, part_name: str, reason: str) -> None:
+    def __init__(
+        self, *, part_name: str, reason: str, resolution: str | None = None
+    ) -> None:
         self.part_name = part_name
         self.reason = reason
         brief = f"Environment validation failed for part {part_name!r}: {reason}."
 
-        super().__init__(brief=brief)
+        super().__init__(brief=brief, resolution=resolution)
 
 
 class PluginPullError(PartsError):

@@ -144,29 +144,70 @@ def test_snap_unavailable():
 
 
 def test_snap_install_error():
-    err = errors.SnapInstallError(snap_name="word-salad", snap_channel="stable")
+    err = errors.SnapInstallError(
+        snap_name="word-salad", snap_channel="stable", detail="install failed"
+    )
     assert err.snap_name == "word-salad"
     assert err.snap_channel == "stable"
     assert err.brief == "Error installing snap 'word-salad' from channel 'stable'."
-    assert err.details is None
+    assert err.details == "install failed"
+    assert err.resolution is None
+
+
+def test_snap_install_error_default_channel():
+    err = errors.SnapInstallError(
+        snap_name="word-salad", snap_channel="", detail="install failed"
+    )
+    assert err.snap_name == "word-salad"
+    assert err.snap_channel == ""
+    assert err.brief == "Error installing snap 'word-salad' from the default channel."
+    assert err.details == "install failed"
     assert err.resolution is None
 
 
 def test_snap_download_error():
-    err = errors.SnapDownloadError(snap_name="word-salad", snap_channel="stable")
+    err = errors.SnapDownloadError(
+        snap_name="word-salad", snap_channel="stable", detail="download failed"
+    )
     assert err.snap_name == "word-salad"
     assert err.snap_channel == "stable"
     assert err.brief == "Error downloading snap 'word-salad' from channel 'stable'."
-    assert err.details is None
+    assert err.details == "download failed"
+    assert err.resolution is None
+
+
+def test_snap_download_error_default_channel():
+    err = errors.SnapDownloadError(
+        snap_name="word-salad", snap_channel="", detail="download failed"
+    )
+    assert err.snap_name == "word-salad"
+    assert err.snap_channel == ""
+    assert err.brief == (
+        "Error downloading snap 'word-salad' from the default channel."
+    )
+    assert err.details == "download failed"
     assert err.resolution is None
 
 
 def test_snap_refresh_error():
-    err = errors.SnapRefreshError(snap_name="word-salad", snap_channel="stable")
+    err = errors.SnapRefreshError(
+        snap_name="word-salad", snap_channel="stable", detail="refresh failed"
+    )
     assert err.snap_name == "word-salad"
     assert err.snap_channel == "stable"
     assert err.brief == "Error refreshing snap 'word-salad' to channel 'stable'."
-    assert err.details is None
+    assert err.details == "refresh failed"
+    assert err.resolution is None
+
+
+def test_snap_refresh_error_default_channel():
+    err = errors.SnapRefreshError(
+        snap_name="word-salad", snap_channel="", detail="refresh failed"
+    )
+    assert err.snap_name == "word-salad"
+    assert err.snap_channel == ""
+    assert err.brief == "Error refreshing snap 'word-salad' to the default channel."
+    assert err.details == "refresh failed"
     assert err.resolution is None
 
 

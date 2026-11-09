@@ -8,6 +8,7 @@ on:
       - "release/*"
       - "renovate/*"
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 # Cancel existing jobs for this branch/PR
 concurrency:
@@ -26,24 +27,20 @@ jobs:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       fast-test-python-versions: '["3.10", "3.12", "3.13", "3.14"]'
       slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       slow-test-python-versions: '["3.12"]'
       # We must always test on at least one EOL base to ensure that chisel behaves
       # correctly on said EOL base.
@@ -74,14 +71,12 @@ jobs:
     with:
       fast-test-platforms: ""
       slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: java
@@ -92,12 +87,12 @@ jobs:
     with:
       fast-test-platforms: ""
       slow-test-platforms: >
-        [
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: python
@@ -122,14 +117,12 @@ jobs:
     with:
       fast-test-platforms: ""
       slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       slow-test-python-versions: '["3.12"]'
       lowest-python-platform: '["focal"]'
       lowest-python-version: "3.10"
