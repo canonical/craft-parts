@@ -59,6 +59,9 @@ Bug fixes:
 - Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
   directories, such as ``-**/__pycache__`` in a large Python environment.
 
+- Changing the list of partitions now reruns the build step, and files left in
+  partitions from the previous build are cleaned up.
+
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
 

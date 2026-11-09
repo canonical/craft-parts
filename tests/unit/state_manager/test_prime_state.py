@@ -48,6 +48,7 @@ class TestPrimeState:
                 "target_arch": "amd64",
                 "project_vars": {},
                 "project_vars_part_name": None,
+                "partitions": None,
             },
             "files": {"a"},
             "directories": {"b"},
