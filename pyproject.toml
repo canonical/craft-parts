@@ -32,6 +32,9 @@ Homepage = "https://github.com/canonical/craft-parts"
 [project.scripts]
 craftctl = "craft_parts.ctl:main"
 
+[tool.ty.environment]
+python-version = "3.10"
+
 # Applications should avoid CVEs in optional, direct dependencies by setting a minimum
 # version in 'dependency-groups'.
 [dependency-groups]
@@ -102,6 +105,7 @@ lint = [
 ]
 tics = ["flake8", "pylint"]
 types = [
+  "tomli",  # ty can't find tomli in python>3.11 environments
   "types-Pillow",
   "types-PyYAML",
   "types-Pygments",  # Type checking
