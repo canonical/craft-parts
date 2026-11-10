@@ -16,6 +16,8 @@
 
 """Craft a project from several parts."""
 
+import importlib.metadata
+
 # The Rust extension is required. Import it first so a contributor who hasn't
 # built it gets an actionable error instead of a raw ModuleNotFoundError when a
 # submodule pulls it in.
@@ -44,7 +46,10 @@ from .parts import (
     validate_part,
 )
 from .steps import Step
-from ._rs import __version__
+
+# Read the version from the installed package metadata so it always matches
+# what pip reports verbatim.
+__version__ = importlib.metadata.version("craft-parts")
 
 
 __all__ = [

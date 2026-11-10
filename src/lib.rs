@@ -21,7 +21,6 @@ mod rs {
     fn init(m: &Bound<'_, PyModule>) -> Result<()> {
         use crate::register_submodules::RegisterSubmodules as _;
 
-        m.add("__version__", env!("CRAFT_PARTS_CARGO_VERSION"))?;
         m.register_submodules("craft_parts._rs")
     }
 }
