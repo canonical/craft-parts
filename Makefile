@@ -20,14 +20,20 @@ endif
 
 include common.mk
 
-RUST_BUILD_PATH := $(HOME)/.cargo/bin:/snap/bin:$(PATH)
-
 # Prioritize rustup's cargo and rustc in PATH during setup, packaging, and rust-specific
 # targets so maturin and cargo metadata use rustup's toolchain rather than older distro
 # packages. Test targets intentionally omit this so pytest tests run against the
 # distro's own cargo version.
+#
+# Under sudo (the requires-root CI jobs) HOME becomes /root, so rustup and cargo
+# would look for their toolchain and registry under /root and fail to write there.
+# Point CARGO_HOME/RUSTUP_HOME at the invoking user's directories in that case.
+RUST_USER_HOME := $(if $(SUDO_USER),$(shell eval echo "~$(SUDO_USER)"),$(HOME))
+RUST_BUILD_PATH := $(RUST_USER_HOME)/.cargo/bin:/snap/bin:$(PATH)
 RUST_BUILD_TARGETS := develop setup setup-tests setup-docs setup-lint setup-tics format-rust lint-rust test-rust
 $(RUST_BUILD_TARGETS): export PATH := $(RUST_BUILD_PATH)
+$(RUST_BUILD_TARGETS): export CARGO_HOME := $(RUST_USER_HOME)/.cargo
+$(RUST_BUILD_TARGETS): export RUSTUP_HOME := $(RUST_USER_HOME)/.rustup
 $(RUST_BUILD_TARGETS): export CARGO = $(shell rustup which cargo 2>/dev/null || which cargo 2>/dev/null || echo cargo)
 $(RUST_BUILD_TARGETS): export RUSTC = $(shell rustup which rustc 2>/dev/null || which rustc 2>/dev/null || echo rustc)
 
@@ -63,9 +69,31 @@ test: test-rust  ## Run all tests
 	uv run pytest
 
 # Ensure all test targets build the extension via `develop` first without
-# mangling PATH for pytest.
-TEST_TARGETS := test test-fast test-slow test-coverage test-find-slow
+# mangling PATH for pytest. test-coverage is excluded: it is overridden
+# below because common.mk's version re-syncs (rebuilding the extension),
+# which fails under sudo in the requires-root CI jobs.
+TEST_TARGETS := test test-fast test-slow test-find-slow
 $(TEST_TARGETS): develop
+
+# Duplicated from common.mk with `--no-sync` added: `uv run` otherwise
+# re-syncs the environment and needlessly rebuilds the Rust extension
+# mid-target. The extension is already built by the `develop` prerequisite;
+# coverage only needs to run against it. A rebuild here breaks the
+# requires-root CI jobs, which run this target under sudo where the distro's
+# cargo shadows rustup's and is too old for this crate's edition.
+.PHONY: test-coverage
+test-coverage: develop  ##- Generate coverage report
+ifeq ($(COVERAGE_SOURCE),)
+	uv run --no-sync coverage run --source $(PROJECT),tests -m pytest
+else
+	uv run --no-sync coverage run --source $(COVERAGE_SOURCE),tests -m pytest
+endif
+	uv run --no-sync coverage xml -o results/coverage.xml
+	# for backwards compatibility
+	# https://github.com/canonical/starflow/blob/3447d302cb7883cbb966ce0ec7e5b3dfd4bb3019/.github/workflows/test-python.yaml#L109
+	cp results/coverage.xml coverage.xml
+	uv run --no-sync coverage report -m
+	uv run --no-sync coverage html
 
 .PHONY: pack
 pack: pack-pip  ## Build all packages
