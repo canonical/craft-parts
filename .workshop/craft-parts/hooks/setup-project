@@ -1,0 +1,15 @@
+#!/bin/bash
+# Run the project's own "make setup" for uv sync and tooling.
+# setup-project runs as the "workshop" user in /project.
+set -euo pipefail
+
+# Tools that must see /project (non-classic snaps can't) are uv tools.
+# pre-commit needs setuptools to build its own dependencies.
+uv tool install --upgrade --with setuptools pre-commit
+uv tool install --upgrade ruff
+uv tool install --upgrade ty
+uv tool install --upgrade codespell
+
+# Project setup: uv sync of all dependency groups, docs tooling, pre-commit
+# hooks.
+make setup

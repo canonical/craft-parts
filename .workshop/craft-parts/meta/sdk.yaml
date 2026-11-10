@@ -1,0 +1,14 @@
+name: craft-parts
+version: "1.0"
+summary: In-project SDK with craft-parts build/test dependencies
+description: "Installs the system packages needed for craft-parts development and
+
+  testing: libxml2/libxslt headers, intltool, fuse-overlayfs, socat,
+
+  mmdebstrap, and the Python tooling used by plugin integration tests.
+
+  "
+plugs:
+  venv:
+    interface: mount
+    workshop-target: /opt/venv
