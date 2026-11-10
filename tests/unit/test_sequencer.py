@@ -22,6 +22,7 @@ from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part, PartSpec
 from craft_parts.plugins.make_plugin import MakePluginProperties
 from craft_parts.sequencer import Sequencer
+from craft_parts.sources.local_source import LocalSource
 from craft_parts.state_manager import states
 from craft_parts.steps import Step
 
@@ -47,6 +48,46 @@ def test_sequencer_plan(step, action, reason, rerun, mocker, new_dir):
     ]
     actions.append(Action(part_name="p1", step=step, action_type=action, reason=reason))
     assert seq._actions == actions
+
+
+def test_sequencer_plan_source_check_once_per_run(new_dir, monkeypatch):
+    info = ProjectInfo(application_name="test", cache_dir=new_dir)
+    p1 = Part("p1", {"source": "subdir"})
+    p2 = Part("p2", {"after": ["p1"]})
+    Path("subdir").mkdir()
+    Path("subdir/foo").write_text("content")
+
+    # p1 has pulled and built, and p2 has pulled but not built. Planning the
+    # build step traverses p1 twice: once in the main traversal and once to
+    # resolve p2's dependency on it. The source must be checked only on the
+    # first traversal, with the cached result reused for the second.
+    states.PullState(part_properties=p1.spec.marshal()).write(
+        Path("parts/p1/state/pull")
+    )
+    states.BuildState(part_properties=p1.spec.marshal()).write(
+        Path("parts/p1/state/build")
+    )
+    states.PullState(part_properties=p2.spec.marshal()).write(
+        Path("parts/p2/state/pull")
+    )
+
+    source_checks = 0
+    original_check = LocalSource.check_if_outdated
+
+    def count_source_checks(self, target, *, ignore_files=None):
+        nonlocal source_checks
+        source_checks += 1
+        return original_check(self, target, ignore_files=ignore_files)
+
+    monkeypatch.setattr(LocalSource, "check_if_outdated", count_source_checks)
+    seq = Sequencer(part_list=[p1, p2], project_info=info)
+
+    seq.plan(Step.BUILD, part_names=["p1", "p2"])
+    assert source_checks == 1
+
+    # The cache is scoped to a single planning run: a new plan re-checks.
+    seq.plan(Step.BUILD, part_names=["p1", "p2"])
+    assert source_checks == 2
 
 
 def test_sequencer_add_actions(new_dir):
