@@ -146,7 +146,6 @@ jobs:
     strategy:
       matrix:
         runner: [ubuntu-26.04, ubuntu-26.04-arm]
-        workshop: [dev, noble, jammy]
       fail-fast: false
     runs-on: ${{ matrix.runner }}
     permissions:
@@ -164,7 +163,10 @@ jobs:
             uv:cache
             go:mod-cache
       - name: Run lint
-        if: matrix.workshop == 'dev'
-        run: workshop run ${{ matrix.workshop }} -- lint
+        run: |
+          workshop run dev -- lint
       - name: Run fast tests
-        run: workshop run ${{ matrix.workshop }} -- test-fast
+        run: |
+          workshop run jammy -- test-fast
+          workshop run noble -- test-fast
+          workshop run dev -- test-fast
