@@ -1,6 +1,6 @@
 [package]
 name = "craft-parts"
-version = "0.0.0"  # Placeholder, this is written by build.rs.
+version = "2.37.2"  # Hand-maintained; must match the git tag at release (checked in CI).
 edition = "2024"
 rust-version = "1.91"  # Latest version available from the Noble archives (rustc-1.91)
 

@@ -10,10 +10,24 @@ on:
       - .github/workflows/release-publish.yaml
 
 jobs:
+  # On tag pushes, fail fast if the hand-maintained Cargo.toml version does
+  # not match the tag, before any wheels are built or published.
+  check-version:
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, amd64, medium, linux]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Assert tag matches Cargo.toml version
+        run: python3 tools/check_version.py
+
   # Build the full wheel matrix (all arches + abi3) and the sdist via the
   # reusable wheels workflow. This runs on every push to this file (for PRs) and
   # on release tags; only the tag path is published below.
   pypi-artifacts:
+    needs: ["check-version"]
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
