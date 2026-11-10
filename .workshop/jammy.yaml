@@ -5,6 +5,8 @@ sdks:
     channel: latest/stable
   - name: go
     channel: latest/stable
+  - name: actionlint
+    channel: latest/stable
   - name: project-craft-parts
 connections:
   - plug: craft-parts:venv
