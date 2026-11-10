@@ -59,30 +59,37 @@ impl PartsError {
         self.details.as_deref()
     }
 
-    fn __str__(&self) -> String {
-        let mut components = vec![self.brief.clone()];
-        if let Some(d) = &self.details {
-            components.push(d.clone());
+    fn __str__(slf: &Bound<'_, Self>) -> Result<String> {
+        // Read `details` through the Python object so that subclass property
+        // overrides (e.g. UserExecutionError.details) are honored. Must happen
+        // before borrowing the struct, since the property may run Python code.
+        let details = slf.getattr("details")?.extract::<Option<String>>()?;
+        let borrowed = slf.borrow();
+        let mut components = vec![borrowed.brief.clone()];
+        if let Some(d) = details {
+            components.push(d);
         }
-        if let Some(r) = &self.resolution {
+        if let Some(r) = &borrowed.resolution {
             components.push(r.clone());
         }
-        components.join("\n")
+        Ok(components.join("\n"))
     }
 
     fn __repr__(slf: &Bound<'_, Self>) -> Result<String> {
         let class_name = slf.get_type().name()?;
-        let borrowed = slf.borrow();
 
         let to_repr = |field: Option<String>| -> Result<String> {
             Ok(field.into_pyobject(slf.py())?.repr()?.to_str()?.into())
         };
 
+        let details = slf.getattr("details")?.extract::<Option<String>>()?;
+        let borrowed = slf.borrow();
+
         Ok(format!(
             "{}(brief={}, details={}, resolution={}, doc_slug={})",
             class_name,
             to_repr(Some(borrowed.brief.clone()))?,
-            to_repr(borrowed.details.clone())?,
+            to_repr(details)?,
             to_repr(borrowed.resolution.clone())?,
             to_repr(borrowed.doc_slug.clone())?,
         ))
@@ -110,9 +117,15 @@ mod tests {
             doc_slug: None,
         };
 
-        let actual = err.__str__();
         let expected = "A brief description\nDetails";
-        assert_eq!(actual, expected);
+
+        Python::attach(|py| -> Result<()> {
+            let bound = Bound::new(py, err)?;
+            let actual = PartsError::__str__(&bound)?;
+            assert_eq!(actual, expected);
+            Ok(())
+        })
+        .unwrap();
     }
 
     #[test]
