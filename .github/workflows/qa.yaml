@@ -142,3 +142,29 @@ jobs:
       setup-vars: NO_PYTHON=1
       test-command-prefix: sudo env "PATH=$PATH" ${UV_RESOLUTION:+UV_RESOLUTION=$UV_RESOLUTION}
       use-lxd: false
+  workshop-tests:
+    strategy:
+      matrix:
+        runner: [ubuntu-26.04, ubuntu-26.04-arm]
+        workshop: [dev, noble, jammy]
+      fail-fast: false
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Launch workshop
+        uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
+        with:
+          workshop: ${{ matrix.workshop }}
+          cache: |
+            uv:cache
+            go:mod-cache
+      - name: Run lint
+        if: matrix.workshop == 'dev'
+        run: workshop run ${{ matrix.workshop }} -- lint
+      - name: Run fast tests
+        run: workshop run ${{ matrix.workshop }} -- test-fast
