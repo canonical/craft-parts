@@ -50,6 +50,7 @@ class TestBuildState:
                 "target_arch": "amd64",
                 "project_vars": {},
                 "project_vars_part_name": None,
+                "partitions": None,
             },
             "files": {"a"},
             "directories": {"b"},
@@ -123,6 +124,33 @@ class TestBuildStateChanges:
     def test_project_option_changes(self, project_options):
         state = BuildState(project_options=project_options)
         assert state.diff_project_options_of_interest(ProjectOptions()) == set()
+
+    @pytest.mark.parametrize(
+        ("old", "new"),
+        [
+            (["default", "a"], ["default", "a", "b"]),
+            (["default", "a", "b"], ["default", "a"]),
+            (["default", "a"], ["default", "b"]),
+            (["a", "b"], ["b", "a"]),
+        ],
+    )
+    def test_partitions_changed(self, old, new):
+        state = BuildState(project_options=ProjectOptions(partitions=old))
+        other = ProjectOptions(partitions=new)
+        assert state.diff_project_options_of_interest(other) == {"partitions"}
+
+    def test_partitions_non_default_reordered(self):
+        state = BuildState(
+            project_options=ProjectOptions(partitions=["default", "a", "b"])
+        )
+        other = ProjectOptions(partitions=["default", "b", "a"])
+        assert state.diff_project_options_of_interest(other) == set()
+
+    def test_partitions_not_in_old_state(self):
+        # state files written before partitions were recorded
+        state = BuildState.unmarshal({"project-options": {"target_arch": "amd64"}})
+        other = ProjectOptions(target_arch="amd64", partitions=["default", "a"])
+        assert state.diff_project_options_of_interest(other) == set()
 
     def test_extra_property_changes(self, properties):
         augmented_properties = {**properties, "extra-property": "foo"}

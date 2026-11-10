@@ -92,4 +92,12 @@ class BuildState(StepState):
 
         :return: A dictionary containing project options of interest.
         """
-        return {"project_vars": project_options.project_vars.marshal("part_name")}
+        partitions = project_options.partitions
+        return {
+            "project_vars": project_options.project_vars.marshal("part_name"),
+            # Files are organized into partitions during the build step. Only the
+            # default partition and the set of the others change where files go.
+            "partitions": [partitions[0], *sorted(partitions[1:])]
+            if partitions
+            else None,
+        }

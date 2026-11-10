@@ -169,10 +169,16 @@ class StepState(MigrationState, ABC):
         :param other_project_options: The project options to compare to
            the project options stored in this state.
         """
-        return _get_differing_keys(
-            self.project_options_of_interest(self.project_options),
-            self.project_options_of_interest(other_project_options),
-        )
+        options = self.project_options_of_interest(self.project_options)
+        other_options = self.project_options_of_interest(other_project_options)
+
+        # States written before partitions were recorded don't have them, don't
+        # force a rebuild just because the state file is old.
+        if self.project_options.partitions is None:
+            options.pop("partitions", None)
+            other_options.pop("partitions", None)
+
+        return _get_differing_keys(options, other_options)
 
     @override
     @classmethod
