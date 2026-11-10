@@ -56,10 +56,14 @@ Bug fixes:
 - When using the ``rust-deps`` part to provision the Rust toolchain,
   setting ``rust-channel: "none"`` is no longer required.
 
+- A path-like source that does not exist now raises ``SourceNotFound``
+  instead of ``InvalidSourceType`` error.
+
 - Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
   directories, such as ``-**/__pycache__`` in a large Python environment.
 
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
+
 
 
 .. _release-2.37.2:
