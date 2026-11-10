@@ -102,6 +102,7 @@ lint = [
 ]
 tics = ["flake8", "pylint"]
 types = [
+  "tomli",  # ty can't find tomli in python>3.11 environments
   "types-Pillow",
   "types-PyYAML",
   "types-Pygments",  # Type checking

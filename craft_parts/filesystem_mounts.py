@@ -102,7 +102,7 @@ class FilesystemMount(
 ):
     """FilesystemMount defines the order in which devices should be mounted."""
 
-    def __iter__(self) -> Iterator[FilesystemMountItem]:  # ty: ignore[invalid-method-override]
+    def __iter__(self) -> Iterator[FilesystemMountItem]:  # ty: ignore[incompatible-method-override]
         return iter(self.root)
 
     def __reversed__(self) -> Iterator[FilesystemMountItem]:
@@ -181,7 +181,7 @@ class FilesystemMount(
 class FilesystemMounts(RootModel[SingleEntryDict[Literal["default"], FilesystemMount]]):
     """FilesystemMounts defines list of FilesystemMount."""
 
-    def __iter__(self) -> Iterator[Literal["default"]]:  # ty: ignore[invalid-method-override]
+    def __iter__(self) -> Iterator[Literal["default"]]:  # ty: ignore[incompatible-method-override]
         return iter(self.root)
 
     def __getitem__(self, item: Literal["default"]) -> FilesystemMount | None:

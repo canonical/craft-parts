@@ -456,4 +456,4 @@ class TestPluginNpmPlugin:
         part = Part("my-part", spec, plugin_properties=properties)
 
         assert part.spec.build_attributes == ["self-contained"]
-        assert part.plugin_properties.build_attributes == ["self-contained"]  # ty: ignore[unresolved-attribute]
+        assert part.plugin_properties.build_attributes == ["self-contained"]  # ty: ignore[missing-attribute]
