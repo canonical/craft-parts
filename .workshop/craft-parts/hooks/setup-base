@@ -55,4 +55,3 @@ while read -r change; do
     fi
 done </tmp/snap-changes
 rm -f /tmp/snap-changes
-rm -f /usr/local/bin/actionlint
