@@ -32,9 +32,6 @@ Homepage = "https://github.com/canonical/craft-parts"
 [project.scripts]
 craftctl = "craft_parts.ctl:main"
 
-[tool.ty.environment]
-python-version = "3.10"
-
 # Applications should avoid CVEs in optional, direct dependencies by setting a minimum
 # version in 'dependency-groups'.
 [dependency-groups]
@@ -352,6 +349,9 @@ git_describe_command = [
   "--exclude",
   "*[^0-9.]*",
 ]
+
+[tool.ty.environment]
+python-version = "3.10"
 
 [tool.uv]
 constraint-dependencies = [
