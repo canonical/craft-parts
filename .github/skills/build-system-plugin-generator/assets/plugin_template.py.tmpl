@@ -1,0 +1,90 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+"""The craft <BuildSystem> plugin."""
+
+import logging
+from typing import Literal, cast
+
+import pydantic
+from typing_extensions import override
+
+from . import validator
+from .base import Plugin
+from .properties import PluginProperties
+
+logger = logging.getLogger(__name__)
+
+
+class <BuildSystem>PluginProperties(PluginProperties, frozen=True):
+    """Part properties for the <BuildSystem> plugin."""
+
+    plugin: Literal["<plugin-key>"] = "<plugin-key>"
+
+    # Required for all source plugins in this project.
+    source: str  # pyright: ignore[reportGeneralTypeIssues]
+
+    # Example plugin properties. Replace with build-system specific options.
+    <prefix>_channel: str | None = None
+    <prefix>_parameters: list[str] = []
+
+    @pydantic.field_validator("<prefix>_channel")
+    @classmethod
+    def validate_<prefix>_channel(cls, value: str | None) -> str | None:
+        """Validate <prefix>-channel values."""
+        if value in (None, "stable", "beta", "nightly"):
+            return value
+        raise ValueError(f"Invalid <prefix>-channel: {value}")
+
+
+class <BuildSystem>PluginEnvironmentValidator(validator.PluginEnvironmentValidator):
+    """Validate build dependencies for the <BuildSystem> plugin."""
+
+    @override
+    def validate_environment(
+        self, *, part_dependencies: list[str] | None = None
+    ) -> None:
+        """Ensure required build tools are available."""
+        self.validate_dependency(
+            dependency="<build-tool-binary>",
+            plugin_name="<plugin-key>",
+            part_dependencies=part_dependencies,
+        )
+
+
+class <BuildSystem>Plugin(Plugin):
+    """A craft plugin for <BuildSystem> applications."""
+
+    properties_class = <BuildSystem>PluginProperties
+    validator_class = <BuildSystem>PluginEnvironmentValidator
+
+    @override
+    def get_build_snaps(self) -> set[str]:
+        return set()
+
+    @override
+    def get_build_packages(self) -> set[str]:
+        return {"git", "pkg-config"}
+
+    @override
+    def get_build_environment(self) -> dict[str, str]:
+        return {}
+
+    @override
+    def get_pull_commands(self) -> list[str]:
+        options = cast(<BuildSystem>PluginProperties, self._options)
+        if not options.<prefix>_channel:
+            return []
+        return [f"<build-tool> toolchain install {options.<prefix>_channel}"]
+
+    @override
+    def get_build_commands(self) -> list[str]:
+        options = cast(<BuildSystem>PluginProperties, self._options)
+
+        params = " ".join(options.<prefix>_parameters)
+        return [
+            f"<build-tool> build --release {params}".strip(),
+            f"install -D <artifact-path> {self._part_info.part_install_dir}/bin/<artifact-name>",
+        ]
+
+    @override
+    def get_out_of_source_build(self) -> bool:
+        return False
