@@ -25,6 +25,14 @@ from craft_parts.packages import base, deb
 from craft_parts.utils.deb_utils import has_slices
 
 
+@pytest.fixture(autouse=True)
+def fake_os_release(mocker):
+    mocker.patch("craft_parts.utils.os_utils.OsRelease.id", return_value="ubuntu")
+    mocker.patch(
+        "craft_parts.utils.os_utils.OsRelease.version_id", return_value="26.10"
+    )
+
+
 def test_is_list_of_slices():
     assert has_slices(["package1_slice1", "package1_slice2", "package2_slice2"])
     assert not has_slices(["package1", "package2"])
@@ -72,6 +80,7 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_process_run, mocker)
         [
             "chisel",
             "cut",
+            "--release=ubuntu-26.10",
             "--ignore=unmaintained",
             "--ignore=unstable",
             f"--root={install_dir}",
@@ -115,6 +124,7 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_process_run):
         [
             "chisel",
             "cut",
+            "--release=ubuntu-26.10",
             "--ignore=unmaintained",
             "--ignore=unstable",
             f"--root={install_dir}",
