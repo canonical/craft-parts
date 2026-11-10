@@ -1,0 +1,16 @@
+name: jammy
+base: ubuntu@22.04
+sdks:
+  - name: uv
+    channel: latest/stable
+  - name: go
+    channel: latest/stable
+  - name: project-craft-parts
+connections:
+  - plug: craft-parts:venv
+    slot: uv:venv
+actions:
+  setup: make setup
+  test-fast: make test-fast
+  test-slow: make test-slow
+  test: make test

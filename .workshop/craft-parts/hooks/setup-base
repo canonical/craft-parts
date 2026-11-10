@@ -1,0 +1,67 @@
+#!/bin/bash
+# Install the system packages and dev tools needed for craft-parts development
+# and testing. setup-base runs as root before /project is mounted.
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+# Kick off the classic snap install (--no-wait), matching the Makefile's own
+# tool source. tombi is classic, so it can see /project inside the container.
+# Non-classic tool snaps can't see /project (snap confinement), so ruff, ty,
+# codespell, shellcheck, shfmt and actionlint are installed via other means
+# below. Change IDs go to /tmp/snap-changes for the wait loop below.
+: >/tmp/snap-changes
+sudo snap install tombi --classic --no-wait >>/tmp/snap-changes
+
+# apt-get install shellcheck and shfmt while the tombi snap downloads; the
+# versions are older than the snaps but the Makefile accepts them.
+sudo apt-get update
+sudo apt-get install --yes --no-install-recommends \
+    build-essential \
+    libxml2-dev \
+    libxslt1-dev \
+    intltool \
+    fuse-overlayfs \
+    socat \
+    mmdebstrap \
+    python3-dev \
+    python3-venv \
+    7zip \
+    curl \
+    git \
+    rpm \
+    pkg-config \
+    automake \
+    autopoint \
+    cmake \
+    ninja-build \
+    meson \
+    libtool \
+    gperf \
+    help2man \
+    texinfo \
+    shellcheck \
+    shfmt
+
+# Wait for the tombi snap install; fail if it didn't complete.
+# Task output can include log/progress noise lines, so check the change
+# status in the "snap changes" table rather than task status columns.
+while read -r change; do
+    [ -n "$change" ] || continue
+    snap watch "$change"
+    status=$(snap changes | awk -v id="$change" '$1 == id { print $2 }')
+    if [ "$status" != "Done" ]; then
+        snap tasks "$change"
+        exit 1
+    fi
+done </tmp/snap-changes
+rm -f /tmp/snap-changes
+
+# actionlint isn't in apt or PyPI, so build it from source with the Go
+# toolchain from the "go" SDK (a classic snap, on PATH). This works on any
+# architecture the Go toolchain supports, including riscv64 which has no
+# release tarball.
+command -v go >/dev/null || {
+    echo "go is required but not installed" >&2
+    exit 1
+}
+GOBIN=/usr/local/bin go install github.com/rhysd/actionlint/cmd/actionlint@latest
