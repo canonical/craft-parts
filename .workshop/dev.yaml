@@ -7,6 +7,8 @@ sdks:
     channel: latest/stable
   - name: actionlint
     channel: latest/stable
+  - name: tombi
+    channel: latest/stable
   - name: prek
     channel: latest/stable
   - name: project-craft-parts
