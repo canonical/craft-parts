@@ -17,6 +17,7 @@
 """Definitions and helpers to handle filesets."""
 
 import os
+import stat
 from functools import lru_cache
 from pathlib import Path, PurePath
 
@@ -79,6 +80,23 @@ def _get_resolved_base(base_str: str) -> str:
     as ``_get_resolved_parent`` above.
     """
     return os.path.realpath(base_str)
+
+
+@lru_cache(maxsize=65536)
+def _get_resolved_parent_relpath(base_str: str, parent_relpath: str) -> str:
+    """Return resolved parent directory path relative to resolved base directory."""
+    return os.path.relpath(
+        _get_resolved_parent(base_str, parent_relpath),
+        _get_resolved_base(base_str),
+    )
+
+
+def _is_real_dir(path_str: str) -> bool:
+    """Return whether path_str is an existing non-symlink directory."""
+    try:
+        return stat.S_ISDIR(os.lstat(path_str).st_mode)
+    except OSError:
+        return False
 
 
 def _strip_base(base_str: str, path_str: str) -> str:
@@ -219,6 +237,7 @@ def migratable_filesets(
     # source tree (a replaced symlink parent changes realpath results).
     _get_resolved_parent.cache_clear()
     _get_resolved_base.cache_clear()
+    _get_resolved_parent_relpath.cache_clear()
 
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
@@ -235,11 +254,8 @@ def migratable_filesets(
         }
 
     # Separate dirs from files.
-    dirs = {
-        x
-        for x in files
-        if (p := _get_path(f"{srcdir}/{x}")).is_dir() and not p.is_symlink()
-    }
+    srcdir_str = str(srcdir)
+    dirs = {x for x in files if _is_real_dir(f"{srcdir_str}/{x}")}
 
     # Remove dirs from files.
     files = files - dirs
@@ -252,16 +268,17 @@ def migratable_filesets(
     # redundant Path objects, reducing both memory usage and processing time.
     # Do very careful performance and memory profiling when touching this loop.
     cwd = Path()
+    resolved_files: set[Path] = set()
     for _filename in files:
         filename = _get_resolved_relative_path(_filename, srcdir)
+        resolved_files.add(filename)
         dirname = _get_path(os.path.dirname(str(filename)))  # noqa: PTH120
-        while dirname != cwd:
+        while dirname != cwd and dirname not in dirs:
             dirs.add(dirname)
             dirname = _get_path(os.path.dirname(str(dirname)))  # noqa: PTH120
 
-    # Resolve parent paths for dirs and files.
+    # Resolve parent paths for dirs.
     resolved_dirs = {_get_resolved_relative_path(dirname, srcdir) for dirname in dirs}
-    resolved_files = {_get_resolved_relative_path(name, srcdir) for name in files}
 
     return resolved_files, resolved_dirs
 
@@ -424,6 +441,16 @@ def _get_resolved_relative_path(
         return _get_path(filename)
 
     base_key = os.path.abspath(str(base_directory))  # noqa: PTH100
+    parent_rel = _get_resolved_parent_relpath(base_key, parent_relpath)
+    if (
+        filename not in ("", ".", os.pardir)
+        and parent_rel != os.pardir
+        and not parent_rel.startswith(os.pardir + os.sep)
+    ):
+        if parent_rel == ".":
+            return _get_path(filename)
+        return _get_path(f"{parent_rel}/{filename}")
+
     rel = os.path.relpath(
         os.path.join(_get_resolved_parent(base_key, parent_relpath), filename),  # noqa: PTH118
         _get_resolved_base(base_key),
