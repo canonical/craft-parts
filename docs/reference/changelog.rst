@@ -67,6 +67,9 @@ Bug fixes:
 - Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
   directories, such as ``-**/__pycache__`` in a large Python environment.
 
+- Improve performance of stage collision checks across parts with large file
+  trees.
+
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
 .. _release-2.37.3:

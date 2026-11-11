@@ -428,6 +428,37 @@ class TestCollisions:
         """
         check_for_stage_collisions([part9, overlay_part5], partitions)
 
+    def test_collisions_same_size_and_different_size_files(self, tmpdir, partitions):
+        """Files with different sizes or same size with different content collide."""
+        project_dirs = ProjectDirs(work_dir=tmpdir, partitions=partitions)
+        p1 = Part("p1", {}, project_dirs=project_dirs, partitions=partitions)
+        p2 = Part("p2", {}, project_dirs=project_dirs, partitions=partitions)
+        for d in p1.part_install_dirs.values():
+            d.mkdir(parents=True)
+            (d / "empty").write_text("")
+            (d / "same_size_equal").write_text("abc")
+            (d / "same_size_diff").write_text("abc")
+            (d / "diff_size").write_text("short")
+            (d / ".pc").write_text("prefix=/a\n")
+        for d in p2.part_install_dirs.values():
+            d.mkdir(parents=True)
+            (d / "empty").write_text("")
+            (d / "same_size_equal").write_text("abc")
+            (d / "same_size_diff").write_text("xyz")
+            (d / "diff_size").write_text("longer_content")
+            (d / ".pc").write_text("prefix=/b\n")
+
+        with pytest.raises(errors.PartFilesConflict) as raised:
+            check_for_stage_collisions([p1, p2], partitions)
+
+        assert raised.value.other_part_name == "p1"
+        assert raised.value.part_name == "p2"
+        assert sorted(raised.value.conflicting_files) == [
+            Path(".pc"),
+            Path("diff_size"),
+            Path("same_size_diff"),
+        ]
+
 
 class TestCollisionsPartitionError:
     def test_partitions_defined_but_not_enabled(self, tmpdir):

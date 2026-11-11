@@ -17,7 +17,6 @@
 """Definitions and helpers to handle filesets."""
 
 import os
-import stat
 from functools import lru_cache
 from pathlib import Path, PurePath
 
@@ -89,14 +88,6 @@ def _get_resolved_parent_relpath(base_str: str, parent_relpath: str) -> str:
         _get_resolved_parent(base_str, parent_relpath),
         _get_resolved_base(base_str),
     )
-
-
-def _is_real_dir(path_str: str) -> bool:
-    """Return whether path_str is an existing non-symlink directory."""
-    try:
-        return stat.S_ISDIR(os.lstat(path_str).st_mode)
-    except OSError:
-        return False
 
 
 def _strip_base(base_str: str, path_str: str) -> str:
@@ -239,7 +230,7 @@ def migratable_filesets(
     _get_resolved_base.cache_clear()
     _get_resolved_parent_relpath.cache_clear()
 
-    include_files = _generate_include_set(srcdir, includes)
+    include_files, include_dirs = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
 
     files = include_files - exclude_files
@@ -254,8 +245,7 @@ def migratable_filesets(
         }
 
     # Separate dirs from files.
-    srcdir_str = str(srcdir)
-    dirs = {x for x in files if _is_real_dir(f"{srcdir_str}/{x}")}
+    dirs = files & include_dirs
 
     # Remove dirs from files.
     files = files - dirs
@@ -268,9 +258,10 @@ def migratable_filesets(
     # redundant Path objects, reducing both memory usage and processing time.
     # Do very careful performance and memory profiling when touching this loop.
     cwd = Path()
+    base_key = os.path.abspath(str(srcdir))  # noqa: PTH100
     resolved_files: set[Path] = set()
     for _filename in files:
-        filename = _get_resolved_relative_path(_filename, srcdir)
+        filename = _get_resolved_relative_path(_filename, srcdir, _base_key=base_key)
         resolved_files.add(filename)
         dirname = _get_path(os.path.dirname(str(filename)))  # noqa: PTH120
         while dirname != cwd and dirname not in dirs:
@@ -278,7 +269,10 @@ def migratable_filesets(
             dirname = _get_path(os.path.dirname(str(dirname)))  # noqa: PTH120
 
     # Resolve parent paths for dirs.
-    resolved_dirs = {_get_resolved_relative_path(dirname, srcdir) for dirname in dirs}
+    resolved_dirs = {
+        _get_resolved_relative_path(dirname, srcdir, _base_key=base_key)
+        for dirname in dirs
+    }
 
     return resolved_files, resolved_dirs
 
@@ -350,12 +344,14 @@ def _get_file_list(
     return processed_includes or ["*"], processed_excludes
 
 
-def _generate_include_set(directory: Path, includes: list[str]) -> set[PurePath]:
+def _generate_include_set(
+    directory: Path, includes: list[str]
+) -> tuple[set[PurePath], set[PurePath]]:
     """Obtain the list of files to include based on include file filter.
 
     :param directory: The path to the tree containing the files to filter.
 
-    :return: The set of files to include.
+    :return: A tuple of the set of files/dirs to include and the set of real dirs.
     """
     include_files: set[Path] = set()
 
@@ -371,26 +367,28 @@ def _generate_include_set(directory: Path, includes: list[str]) -> set[PurePath]
             include_files |= {directory / include}
 
     include_dirs = [x for x in include_files if x.is_dir() and not x.is_symlink()]
-    base_str = str(directory)
-    base_str = base_str if base_str.endswith(os.sep) else base_str + os.sep
+    dir_str = str(directory)
+    base_str = dir_str if dir_str.endswith(os.sep) else dir_str + os.sep
     relative_include_files = {
         _get_pure_path(_strip_base(base_str, str(x))) for x in include_files
+    }
+    relative_include_dirs = {
+        _get_pure_path(_strip_base(base_str, str(x))) for x in include_dirs
     }
 
     # Expand includeFiles, so that an exclude like '*/*.so' will still match
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            relative_include_files |= {
-                _get_pure_path(_strip_base(base_str, os.path.join(root, d)))  # noqa: PTH118
-                for d in dirs
-            }
-            relative_include_files |= {
-                _get_pure_path(_strip_base(base_str, os.path.join(root, f)))  # noqa: PTH118
-                for f in files
-            }
+            prefix = "" if root == dir_str else f"{_strip_base(base_str, root)}/"
+            for d in dirs:
+                rel_d = _get_pure_path(f"{prefix}{d}")
+                relative_include_files.add(rel_d)
+                if not os.path.islink(f"{root}/{d}"):  # noqa: PTH114
+                    relative_include_dirs.add(rel_d)
+            relative_include_files |= {_get_pure_path(f"{prefix}{f}") for f in files}
 
-    return relative_include_files
+    return relative_include_files, relative_include_dirs
 
 
 def _generate_exclude_set(
@@ -423,7 +421,10 @@ def _generate_exclude_set(
 
 
 def _get_resolved_relative_path(
-    relative_path: Path | PurePath, base_directory: Path
+    relative_path: Path | PurePath,
+    base_directory: Path,
+    *,
+    _base_key: str | None = None,
 ) -> Path:
     """Resolve path components against target base_directory.
 
@@ -440,7 +441,9 @@ def _get_resolved_relative_path(
     if parent_relpath in ("", "."):
         return _get_path(filename)
 
-    base_key = os.path.abspath(str(base_directory))  # noqa: PTH100
+    base_key = (
+        _base_key if _base_key is not None else os.path.abspath(str(base_directory))  # noqa: PTH100
+    )
     parent_rel = _get_resolved_parent_relpath(base_key, parent_relpath)
     if (
         filename not in ("", ".", os.pardir)
