@@ -17,8 +17,10 @@
 """Definitions and helpers to handle parts."""
 
 import logging
+import os
 import re
 import textwrap
+import urllib.parse
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -905,6 +907,34 @@ class Part:
         self._check_partition_feature()
         self._check_partition_usage()
         self._check_overlay_script_plugin_conflict()
+        self._check_source_location()
+
+    def _check_source_location(self) -> None:
+        """Warn if the part's source is a path outside the project directory.
+
+        Such paths often work in destructive mode but not in a managed build,
+        where only the project directory is available.
+        """
+        source = self.spec.source
+        if not source or urllib.parse.urlparse(source).scheme:
+            return
+        # scp-like git sources, such as git@github.com:org/repo.git
+        if re.match(r"^[\w.-]+@[\w.-]+:", source):
+            return
+
+        source_path = Path(source)
+        project_dir = self.dirs.project_dir
+        if not source_path.is_absolute():
+            normalized = Path(os.path.normpath(project_dir / source_path))
+            if normalized.is_relative_to(project_dir):
+                return
+
+        logger.warning(
+            "Source %r for part %r is outside the project directory and may not "
+            "exist when building in a managed environment.",
+            source,
+            self.name,
+        )
 
     def _check_overlay_script_plugin_conflict(self) -> None:
         """Check that overlay-script is not used with a plugin that uses overlay."""
