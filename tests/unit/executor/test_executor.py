@@ -19,7 +19,7 @@ from unittest.mock import call
 
 import pytest
 from craft_parts import callbacks, errors
-from craft_parts.actions import Action
+from craft_parts.actions import Action, ActionType
 from craft_parts.executor import ExecutionContext, Executor
 from craft_parts.infos import ProjectInfo
 from craft_parts.parts import Part
@@ -579,3 +579,91 @@ class TestExecutionContext:
         assert captured.out == "prologue custom\n"
         assert output_path.read_text() == "out\n"
         assert error_path.read_text() == "+ echo out\n+ echo err\nerr\n"
+
+    def test_stage_collisions_checked_once_per_stage_phase(
+        self, mocker, new_dir, partitions
+    ):
+        mock_check = mocker.patch(
+            "craft_parts.executor.executor.check_for_stage_collisions"
+        )
+        mocker.patch("craft_parts.executor.part_handler.PartHandler.run_action")
+
+        p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
+        p2 = Part("p2", {"plugin": "nil"}, partitions=partitions)
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        e = Executor(project_info=info, part_list=[p1, p2])
+
+        e.execute([Action("p1", Step.STAGE), Action("p2", Step.STAGE)])
+
+        assert mock_check.call_count == 1
+        mock_check.assert_called_with(part_list=[p1, p2], partitions=info.partitions)
+
+    def test_stage_collisions_not_checked_if_skipped(self, mocker, new_dir, partitions):
+        mock_check = mocker.patch(
+            "craft_parts.executor.executor.check_for_stage_collisions"
+        )
+        mocker.patch("craft_parts.executor.part_handler.PartHandler.run_action")
+
+        p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        e = Executor(project_info=info, part_list=[p1])
+
+        e.execute([Action("p1", Step.STAGE, action_type=ActionType.SKIP)])
+
+        mock_check.assert_not_called()
+
+    def test_stage_collisions_rechecked_after_build(self, mocker, new_dir, partitions):
+        mock_check = mocker.patch(
+            "craft_parts.executor.executor.check_for_stage_collisions"
+        )
+        mocker.patch("craft_parts.executor.part_handler.PartHandler.run_action")
+
+        p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
+        p2 = Part("p2", {"plugin": "nil"}, partitions=partitions)
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        e = Executor(project_info=info, part_list=[p1, p2])
+
+        e.execute([Action("p1", Step.STAGE), Action("p2", Step.STAGE)])
+        assert mock_check.call_count == 1
+
+        # A build action invalidates the previous stage collision check
+        e.execute([Action("p1", Step.BUILD)])
+
+        # Subsequent staging re-checks collisions
+        e.execute([Action("p1", Step.STAGE), Action("p2", Step.STAGE)])
+        assert mock_check.call_count == 2
+
+    def test_stage_collisions_rechecked_after_clean(self, mocker, new_dir, partitions):
+        mock_check = mocker.patch(
+            "craft_parts.executor.executor.check_for_stage_collisions"
+        )
+        mocker.patch("craft_parts.executor.part_handler.PartHandler.run_action")
+
+        p1 = Part("p1", {"plugin": "nil"}, partitions=partitions)
+        p2 = Part("p2", {"plugin": "nil"}, partitions=partitions)
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        e = Executor(project_info=info, part_list=[p1, p2])
+
+        e.execute([Action("p1", Step.STAGE), Action("p2", Step.STAGE)])
+        assert mock_check.call_count == 1
+
+        e.clean(Step.STAGE)
+
+        e.execute([Action("p1", Step.STAGE), Action("p2", Step.STAGE)])
+        assert mock_check.call_count == 2
