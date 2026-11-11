@@ -40,6 +40,9 @@ New features:
 
 Bug fixes:
 
+- The stage collision check is now executed only once per stage phase
+  instead of redundantly repeating across every part's stage action.
+
 - Already-installed snaps required to build a part are now refreshed when the
   requested channel changes. This includes snaps declared in ``build-snaps`` and
   snaps supplied by plugins or sources. Risk-only channels are resolved against

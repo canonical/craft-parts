@@ -85,6 +85,7 @@ class Executor:
         self._ignore_patterns = ignore_patterns
         self._use_host_sources = use_host_sources
         self._build_environment = build_environment
+        self._stage_collisions_checked = False
 
         # The cache layer level is set to the first part that doesn't organize
         # to the overlay coming after a part that organizes to the overlay.
@@ -111,6 +112,7 @@ class Executor:
 
         This method is called before executing lifecycle actions.
         """
+        self._stage_collisions_checked = False
         self._install_build_packages()
         self._install_build_snaps()
         self._cut_build_slices()
@@ -178,6 +180,7 @@ class Executor:
             specified, all parts will be cleaned and work directories
             will be removed.
         """
+        self._stage_collisions_checked = False
         selected_parts = parts.part_list_by_name(part_names, self._part_list)
 
         selected_steps = [initial_step, *initial_step.next_steps()]
@@ -254,13 +257,22 @@ class Executor:
                 )
             return
 
+        if action.step < Step.STAGE:
+            self._stage_collisions_checked = False
+
         if action.step == Step.STAGE:
-            check_for_stage_collisions(
-                part_list=self._part_list, partitions=self._project_info.partitions
-            )
+            self._check_stage_collisions()
 
         handler = self._create_part_handler(part)
         handler.run_action(action, stdout=stdout, stderr=stderr)
+
+    def _check_stage_collisions(self) -> None:
+        """Verify whether parts have conflicting files to stage."""
+        if not self._stage_collisions_checked:
+            check_for_stage_collisions(
+                part_list=self._part_list, partitions=self._project_info.partitions
+            )
+            self._stage_collisions_checked = True
 
     def _create_part_handler(
         self,
