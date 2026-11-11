@@ -178,6 +178,10 @@ jobs:
             go:mod-cache
       - name: Run lint
         run: |
+          # The lint environment must be set up after any uv-managed venv
+          # refresh; lint-docs relies on the docs dependency groups being
+          # synced (see starbase _setup-docs).
+          workshop run dev -- setup
           workshop run dev -- lint
       - name: Run fast tests
         run: |
