@@ -155,6 +155,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          depth: 0
       - name: Launch workshop dev
         uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
         with:
@@ -178,11 +179,8 @@ jobs:
             go:mod-cache
       - name: Run lint
         run: |
-          # The lint environment must be set up after any uv-managed venv
-          # refresh; lint-docs relies on the docs dependency groups being
-          # synced (see starbase _setup-docs).
           workshop run dev -- setup
-          workshop run dev -- lint
+          workshop run dev -- lint-code
       - name: Run fast tests
         run: |
           workshop run jammy -- test-fast
