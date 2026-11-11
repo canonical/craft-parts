@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+
 import pytest
 from craft_parts import errors
 from craft_parts.executor import Fileset, filesets
@@ -137,6 +139,27 @@ def test_filesets_includes_without_relative_paths():
         )
     assert raised.value.name == "test"
     assert raised.value.message == "path '/abs/include' must be relative."
+
+
+def test_migratable_filesets_expands_included_directory(tmp_path):
+    source = tmp_path / "install"
+    directory = source / "usr/lib/nested"
+    directory.mkdir(parents=True)
+    (directory / "file").write_text("contents")
+    (source / "usr/lib/linked").symlink_to("nested", target_is_directory=True)
+
+    files, directories = filesets.migratable_filesets(
+        Fileset(["usr/lib"]),
+        source,
+        default_partition="default",
+    )
+
+    assert files == {Path("usr/lib/nested/file"), Path("usr/lib/linked")}
+    assert directories == {
+        Path("usr"),
+        Path("usr/lib"),
+        Path("usr/lib/nested"),
+    }
 
 
 def test_filesets_excludes_without_relative_paths():
