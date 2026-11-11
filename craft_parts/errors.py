@@ -868,27 +868,6 @@ class PartitionUsageWarning(PartitionError, Warning):  # noqa: N818
         Warning.__init__(self)
 
 
-class SourceOutsideProjectWarning(PartsError, Warning):  # noqa: N818
-    """A part's source is a path outside the project directory.
-
-    :param part_name: The name of the part.
-    :param source: The source as given in the part.
-    """
-
-    def __init__(self, *, part_name: str, source: str) -> None:
-        self.part_name = part_name
-        self.source = source
-        super().__init__(
-            brief=f"Source {source!r} for part {part_name!r} is outside the project directory.",
-            details=(
-                "Absolute paths and paths that lead out of the project directory "
-                "may not exist when building in a managed environment."
-            ),
-            resolution="Move the source into the project directory.",
-        )
-        Warning.__init__(self)
-
-
 class PartitionNotFound(PartitionUsageError):  # noqa: N818
     """A partition has been specified that does not exist.
 

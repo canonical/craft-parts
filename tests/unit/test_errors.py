@@ -449,20 +449,6 @@ def test_build_slices_environment_error():
     )
 
 
-def test_source_outside_project_warning():
-    err = errors.SourceOutsideProjectWarning(part_name="foo", source="../src")
-    assert err.part_name == "foo"
-    assert err.source == "../src"
-    assert (
-        err.brief == "Source '../src' for part 'foo' is outside the project directory."
-    )
-    assert err.details == (
-        "Absolute paths and paths that lead out of the project directory "
-        "may not exist when building in a managed environment."
-    )
-    assert err.resolution == "Move the source into the project directory."
-
-
 class TestPartitionErrors:
     def test_partition_error(self):
         err = errors.PartitionError(

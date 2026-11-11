@@ -929,9 +929,11 @@ class Part:
             if normalized.is_relative_to(project_dir):
                 return
 
-        warnings.warn(
-            errors.SourceOutsideProjectWarning(part_name=self.name, source=source),
-            stacklevel=1,
+        logger.warning(
+            "Source %r for part %r is outside the project directory and may not "
+            "exist when building in a managed environment.",
+            source,
+            self.name,
         )
 
     def _check_overlay_script_plugin_conflict(self) -> None:
