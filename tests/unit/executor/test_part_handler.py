@@ -682,6 +682,109 @@ class TestPartHandling:
         assert output_path.read_text() == "hello\n"
         assert error_path.read_text() == "+ echo hello\n+ echo goodbye\ngoodbye\n"
 
+    def test_run_stage_with_override_stage(self, new_dir, partitions, mocker):
+        default_partition = partitions[0] if partitions is not None else "default"
+        mock_step_contents = StepContents(stage=True, partitions=partitions)
+        mock_step_contents.partitions_contents[default_partition] = (
+            StagePartitionContents(
+                files={Path("file")},
+                dirs={Path("dir")},
+                backstage_files={Path("back_file")},
+                backstage_dirs={Path("back_dir")},
+            )
+        )
+        partitions_migration_contents = {}
+        if partitions is not None:
+            for p in partitions[1:]:
+                mock_step_contents.partitions_contents[p] = StagePartitionContents(
+                    files=set(),
+                    dirs=set(),
+                )
+                partitions_migration_contents[p] = MigrationContents(
+                    files=set(),
+                    directories=set(),
+                )
+        p1 = Part(
+            "p1",
+            {"plugin": "nil", "override-stage": "craftctl default"},
+            partitions=partitions,
+        )
+        part_info = PartInfo(self._project_info, p1)
+        step_info = StepInfo(part_info, step=Step.STAGE)
+        ovmgr = OverlayManager(
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+        mocker.patch(
+            "craft_parts.executor.step_handler.StepHandler.run_scriptlet",
+            return_value=mock_step_contents,
+        )
+
+        state = handler._run_stage(step_info, stdout=None, stderr=None)
+        assert state == states.StageState(
+            partition=default_partition,
+            part_properties=p1.spec.marshal(),
+            project_options=part_info.project_options,
+            files={Path("file")},
+            directories={Path("dir")},
+            partitions_contents=partitions_migration_contents,
+            backstage_files={Path("back_file")},
+            backstage_directories={Path("back_dir")},
+            overlay_hash="6554e32fa718d54160d0511b36f81458e4cb2357",
+        )
+
+    def test_run_prime_with_override_prime(self, new_dir, partitions, mocker):
+        default_partition = partitions[0] if partitions is not None else "default"
+        mock_step_contents = StepContents(partitions=partitions)
+        mock_step_contents.partitions_contents[default_partition] = (
+            StepPartitionContents(
+                files={Path("file")},
+                dirs={Path("dir")},
+            )
+        )
+        partitions_migration_contents = {}
+        if partitions is not None:
+            for p in partitions[1:]:
+                mock_step_contents.partitions_contents[p] = StepPartitionContents(
+                    files=set(),
+                    dirs=set(),
+                )
+                partitions_migration_contents[p] = MigrationContents(
+                    files=set(),
+                    directories=set(),
+                )
+        p1 = Part(
+            "p1",
+            {"plugin": "nil", "override-prime": "craftctl default"},
+            partitions=partitions,
+        )
+        part_info = PartInfo(self._project_info, p1)
+        step_info = StepInfo(part_info, step=Step.PRIME)
+        ovmgr = OverlayManager(
+            project_info=self._project_info,
+            part_list=[self._part],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+        mocker.patch(
+            "craft_parts.executor.step_handler.StepHandler.run_scriptlet",
+            return_value=mock_step_contents,
+        )
+
+        state = handler._run_prime(step_info, stdout=None, stderr=None)
+        assert state.partition == default_partition
+        assert state.files == {Path("file")}
+        assert state.directories == {Path("dir")}
+        assert state.partitions_contents == partitions_migration_contents
+
 
 @pytest.mark.usefixtures("new_dir")
 class TestPartUpdateHandler:
@@ -906,6 +1009,46 @@ class TestPartCleanHandler:
         pytest_check.is_false(Path(test_dir, "foo.txt").is_file())
         pytest_check.is_false(Path(test_dir, "bar").is_dir())
         pytest_check.is_false(Path(f"parts/foo/state/{state_file}").is_file())
+
+    def test_clean_step_removes_override_primed_files(self, new_dir, partitions):
+        """Cleaning prime step removes files tracked by override-prime."""
+        p1 = Part(
+            "p1",
+            {
+                "plugin": "nil",
+                "override-build": ': > "$CRAFT_PART_INSTALL/bar.txt"\ncraftctl default',
+                "override-stage": "craftctl default",
+                "override-prime": "craftctl default",
+            },
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[p1],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+        part_info = PartInfo(info, p1)
+        handler = PartHandler(
+            p1,
+            part_info=part_info,
+            part_list=[p1],
+            overlay_manager=ovmgr,
+        )
+        handler._make_dirs()
+        for step in [Step.PULL, Step.BUILD, Step.STAGE, Step.PRIME]:
+            handler.run_action(Action("p1", step))
+
+        assert Path("prime/bar.txt").is_file()
+        assert Path("parts/p1/state/prime").is_file()
+
+        handler.clean_step(Step.PRIME)
+
+        assert not Path("prime/bar.txt").exists()
+        assert not Path("parts/p1/state/prime").exists()
 
 
 @pytest.mark.usefixtures("new_dir")
@@ -1667,3 +1810,113 @@ class TestDirs:
             export BAR="bar value"
 
             content""")
+
+
+class TestOverrideAliasedPartitions:
+    """Override scriptlets with an aliased default partition.
+
+    Kept out of TestPartHandling so the feature test suites that inherit it
+    do not run these with their own features already enabled.
+    """
+
+    def test_run_prime_override_aliased_partitions(
+        self, new_dir, mocker, enable_partitions_feature
+    ):
+        aliased_partitions = ["alpha", "beta"]
+        mock_step_contents = StepContents(partitions=aliased_partitions)
+        mock_step_contents.partitions_contents["alpha"] = StepPartitionContents(
+            files={Path("file_a")},
+            dirs={Path("dir_a")},
+        )
+        mock_step_contents.partitions_contents["beta"] = StepPartitionContents(
+            files={Path("file_b")},
+            dirs={Path("dir_b")},
+        )
+        dirs = ProjectDirs(partitions=aliased_partitions)
+        project_info = ProjectInfo(
+            project_dirs=dirs,
+            application_name="test",
+            cache_dir=new_dir,
+            strict_mode=False,
+            partitions=aliased_partitions,
+        )
+        p1 = Part(
+            "p1",
+            {"plugin": "nil", "override-prime": "craftctl default"},
+            partitions=aliased_partitions,
+        )
+        part_info = PartInfo(project_info, p1)
+        step_info = StepInfo(part_info, step=Step.PRIME)
+        ovmgr = OverlayManager(
+            project_info=project_info,
+            part_list=[p1],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+        mocker.patch(
+            "craft_parts.executor.step_handler.StepHandler.run_scriptlet",
+            return_value=mock_step_contents,
+        )
+
+        state = handler._run_prime(step_info, stdout=None, stderr=None)
+        assert state.partition == "alpha"
+        assert state.files == {Path("file_a")}
+        assert state.directories == {Path("dir_a")}
+        assert state.partitions_contents["beta"] == MigrationContents(
+            files={Path("file_b")},
+            directories={Path("dir_b")},
+        )
+
+    def test_override_without_craftctl_default_aliased_partitions(
+        self, new_dir, enable_partitions_feature
+    ):
+        """Override scriptlet that never calls craftctl default gives empty state and no crash with aliased partitions."""
+        aliased_partitions = ["alpha", "beta"]
+        dirs = ProjectDirs(partitions=aliased_partitions)
+        project_info = ProjectInfo(
+            project_dirs=dirs,
+            application_name="test",
+            cache_dir=new_dir,
+            strict_mode=False,
+            partitions=aliased_partitions,
+        )
+        p1 = Part(
+            "p1",
+            {
+                "plugin": "nil",
+                "override-stage": "echo 'custom stage'",
+                "override-prime": "echo 'custom prime'",
+            },
+            partitions=aliased_partitions,
+        )
+        part_info = PartInfo(project_info, p1)
+        ovmgr = OverlayManager(
+            project_info=project_info,
+            part_list=[p1],
+            base_layer_dir=None,
+            cache_level=0,
+        )
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+
+        stage_step_info = StepInfo(part_info, step=Step.STAGE)
+        stage_state = handler._run_stage(stage_step_info, stdout=None, stderr=None)
+        assert isinstance(stage_state, states.StageState)
+        assert stage_state.partition == "alpha"
+        assert stage_state.files == set()
+        assert stage_state.directories == set()
+        assert stage_state.backstage_files == set()
+        assert stage_state.backstage_directories == set()
+        assert stage_state.partitions_contents["beta"].files == set()
+
+        prime_step_info = StepInfo(part_info, step=Step.PRIME)
+        prime_state = handler._run_prime(prime_step_info, stdout=None, stderr=None)
+        assert isinstance(prime_state, states.PrimeState)
+        assert prime_state.partition == "alpha"
+        assert prime_state.files == set()
+        assert prime_state.directories == set()
+        assert prime_state.partitions_contents["beta"].files == set()

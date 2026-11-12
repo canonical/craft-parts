@@ -59,6 +59,61 @@ class FooPlugin(plugins.Plugin):
         return ["hello"]
 
 
+class TestStepContents:
+    """Verify StepContents functionality."""
+
+    def test_update_step_partition_contents(self):
+        c1 = StepContents()
+        c1.partitions_contents[DEFAULT_PARTITION] = StepPartitionContents(
+            files={Path("f1")}, dirs={Path("d1")}
+        )
+        c2 = StepContents()
+        c2.partitions_contents[DEFAULT_PARTITION] = StepPartitionContents(
+            files={Path("f2")}, dirs={Path("d2")}
+        )
+        c1.update(c2)
+        assert c1.partitions_contents[DEFAULT_PARTITION].files == {
+            Path("f1"),
+            Path("f2"),
+        }
+        assert c1.partitions_contents[DEFAULT_PARTITION].dirs == {
+            Path("d1"),
+            Path("d2"),
+        }
+
+    def test_update_stage_partition_contents(self):
+        c1 = StepContents(stage=True)
+        c1.partitions_contents[DEFAULT_PARTITION] = StagePartitionContents(
+            files={Path("f1")},
+            dirs={Path("d1")},
+            backstage_files={Path("bf1")},
+            backstage_dirs={Path("bd1")},
+        )
+        c2 = StepContents(stage=True)
+        c2.partitions_contents[DEFAULT_PARTITION] = StagePartitionContents(
+            files={Path("f2")},
+            dirs={Path("d2")},
+            backstage_files={Path("bf2")},
+            backstage_dirs={Path("bd2")},
+        )
+        c1.update(c2)
+        pcontents = c1.partitions_contents[DEFAULT_PARTITION]
+        assert isinstance(pcontents, StagePartitionContents)
+        assert pcontents.files == {Path("f1"), Path("f2")}
+        assert pcontents.dirs == {Path("d1"), Path("d2")}
+        assert pcontents.backstage_files == {Path("bf1"), Path("bf2")}
+        assert pcontents.backstage_dirs == {Path("bd1"), Path("bd2")}
+
+    def test_update_adds_new_partitions(self):
+        c1 = StepContents(partitions=["p1"])
+        c1.partitions_contents["p1"] = StepPartitionContents(files={Path("f1")})
+        c2 = StepContents(partitions=["p2"])
+        c2.partitions_contents["p2"] = StepPartitionContents(files={Path("f2")})
+        c1.update(c2)
+        assert c1.partitions_contents["p1"].files == {Path("f1")}
+        assert c1.partitions_contents["p2"].files == {Path("f2")}
+
+
 def _step_handler_for_step(
     step: Step,
     cache_dir: Path,
@@ -395,6 +450,129 @@ class TestStepHandlerRunScriptlet:
             )
         assert raised.value.stderr is not None
         assert raised.value.stderr.endswith(b"\nuh-oh\n+ false\n")
+
+    def test_run_scriptlet_override_prime_craftctl_default(self, new_dir, mocker):
+        sh = _step_handler_for_step(
+            Step.PRIME,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
+        prime_dir = self._dirs.prime_dir
+        prime_dir.mkdir(parents=True, exist_ok=True)
+        (prime_dir / "primed.txt").touch()
+
+        mock_contents = StepContents()
+        mock_contents.partitions_contents[DEFAULT_PARTITION] = StepPartitionContents(
+            files={Path("primed.txt")}
+        )
+        mocker.patch.object(sh, "_builtin_prime", return_value=mock_contents)
+
+        result = sh.run_scriptlet(
+            "craftctl default",
+            scriptlet_name="override-prime",
+            step=Step.PRIME,
+            work_dir=prime_dir,
+        )
+        assert result.partitions_contents[DEFAULT_PARTITION].files == {
+            Path("primed.txt")
+        }
+
+    def test_run_scriptlet_override_prime_filters_deleted_files(self, new_dir, mocker):
+        sh = _step_handler_for_step(
+            Step.PRIME,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
+        prime_dir = self._dirs.prime_dir
+        prime_dir.mkdir(parents=True, exist_ok=True)
+        (prime_dir / "keep.txt").touch()
+
+        mock_contents = StepContents()
+        mock_contents.partitions_contents[DEFAULT_PARTITION] = StepPartitionContents(
+            files={Path("keep.txt"), Path("deleted.txt")},
+            dirs={Path("keep_dir"), Path("deleted_dir")},
+        )
+        (prime_dir / "keep_dir").mkdir()
+        mocker.patch.object(sh, "_builtin_prime", return_value=mock_contents)
+
+        result = sh.run_scriptlet(
+            "craftctl default",
+            scriptlet_name="override-prime",
+            step=Step.PRIME,
+            work_dir=prime_dir,
+        )
+        assert result.partitions_contents[DEFAULT_PARTITION].files == {Path("keep.txt")}
+        assert result.partitions_contents[DEFAULT_PARTITION].dirs == {Path("keep_dir")}
+
+    def test_run_scriptlet_override_prime_preserves_symlinks(self, new_dir, mocker):
+        sh = _step_handler_for_step(
+            Step.PRIME,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
+        prime_dir = self._dirs.prime_dir
+        prime_dir.mkdir(parents=True, exist_ok=True)
+        (prime_dir / "broken_file_link").symlink_to("nonexistent_file")
+        (prime_dir / "broken_dir_link").symlink_to("nonexistent_dir")
+
+        mock_contents = StepContents()
+        mock_contents.partitions_contents[DEFAULT_PARTITION] = StepPartitionContents(
+            files={Path("broken_file_link")},
+            dirs={Path("broken_dir_link")},
+        )
+        mocker.patch.object(sh, "_builtin_prime", return_value=mock_contents)
+
+        result = sh.run_scriptlet(
+            "craftctl default",
+            scriptlet_name="override-prime",
+            step=Step.PRIME,
+            work_dir=prime_dir,
+        )
+        pcontents = result.partitions_contents[DEFAULT_PARTITION]
+        assert pcontents.files == {Path("broken_file_link")}
+        assert pcontents.dirs == {Path("broken_dir_link")}
+
+    def test_run_scriptlet_override_stage_craftctl_default(self, new_dir, mocker):
+        sh = _step_handler_for_step(
+            Step.STAGE,
+            cache_dir=new_dir,
+            part_info=self._part_info,
+            part=self._part,
+            dirs=self._dirs,
+        )
+        stage_dir = self._dirs.stage_dir
+        stage_dir.mkdir(parents=True, exist_ok=True)
+        (stage_dir / "staged.txt").touch()
+
+        backstage_dir = self._part.backstage_dir
+        backstage_dir.mkdir(parents=True, exist_ok=True)
+        (backstage_dir / "back.txt").touch()
+
+        mock_contents = StepContents(stage=True)
+        mock_contents.partitions_contents[DEFAULT_PARTITION] = StagePartitionContents(
+            files={Path("staged.txt")},
+            dirs=set(),
+            backstage_files={Path("back.txt")},
+            backstage_dirs=set(),
+        )
+        mocker.patch.object(sh, "_builtin_stage", return_value=mock_contents)
+
+        result = sh.run_scriptlet(
+            "craftctl default",
+            scriptlet_name="override-stage",
+            step=Step.STAGE,
+            work_dir=stage_dir,
+        )
+        pcontents = result.partitions_contents[DEFAULT_PARTITION]
+        assert isinstance(pcontents, StagePartitionContents)
+        assert pcontents.files == {Path("staged.txt")}
+        assert pcontents.backstage_files == {Path("back.txt")}
 
 
 class OverlayChrootPlugin(plugins.Plugin):
