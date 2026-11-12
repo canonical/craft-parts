@@ -17,8 +17,7 @@ import re
 
 
 def test_version(project_main_module):
-    """The version is hand-maintained in Cargo.toml and must be valid semver."""
+    """The version is hand-maintained in Cargo.toml and must be of the form X.Y.Z."""
     version = project_main_module.__version__
 
-    # match on 'X.Y.Z', optionally with a semver prerelease (e.g. 'X.Y.Z-rc.1')
-    assert re.fullmatch(r"\d+\.\d+\.\d+(-[0-9a-zA-Z.-]+)?", version)
+    assert re.fullmatch(r"\d+\.\d+\.\d+", version)
