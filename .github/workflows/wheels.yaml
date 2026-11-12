@@ -1,0 +1,122 @@
+# Builds the Rust extension wheels for every supported architecture.
+#
+# Produces three wheels per architecture: version-specific CPython 3.10 and
+# 3.11 wheels, plus a single abi3 wheel with a Python 3.12 floor (the abi3-py312
+# feature flag pins the floor; pyo3 requires >= 3.12 to subclass PyException
+# under abi3). Everything cross-compiles from a GitHub-hosted ARM runner via
+# manylinux-cross images, so no self-hosted runners are needed.
+name: Wheels
+
+on:
+  # Called by release-publish.yaml on tags.
+  workflow_call:
+  # Also gate PRs and branch pushes directly (build-only; nothing is published).
+  pull_request:
+  push:
+    branches:
+      - "main"
+      - "feature/*"
+      - "hotfix/*"
+      - "release/*"
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build wheels (${{ matrix.target }})
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        # On pull requests, smoke-test one native arch (fast) and one exotic,
+        # big-endian arch (QEMU) as a sanity check. Branch pushes and tag
+        # builds (via workflow_call) build the full set.
+        target: ${{ github.event_name == 'pull_request' &&
+          fromJson('["aarch64-unknown-linux-gnu", "s390x-unknown-linux-gnu"]') ||
+          fromJson('[
+          "x86_64-unknown-linux-gnu",
+          "aarch64-unknown-linux-gnu",
+          "armv7-unknown-linux-gnueabihf",
+          "powerpc64le-unknown-linux-gnu",
+          "s390x-unknown-linux-gnu",
+          "riscv64gc-unknown-linux-gnu"
+          ]') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        run: sudo snap install --classic astral-uv
+
+      # Build with the same maturin the project pins, read from uv so the
+      # version is not duplicated here.
+      - name: Resolve locked maturin version
+        id: maturin
+        run: |
+          # "uv tree" prints "maturin vX.Y.Z"; strip the leading "maturin v".
+          version="$(uv tree --package maturin --depth 0 | awk 'NR==1 { sub(/^v/, "", $2); print $2 }')"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Build CPython 3.10 and 3.11 wheels
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          maturin-version: v${{ steps.maturin.outputs.version }}
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: --release --interpreter python3.10 python3.11 --out dist
+
+      - name: Build abi3 wheel (Python 3.12+)
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          maturin-version: v${{ steps.maturin.outputs.version }}
+          target: ${{ matrix.target }}
+          manylinux: auto
+          # The abi3-py312 feature flag holds the 3.12 floor; building with the
+          # 3.12 interpreter yields a cp312-abi3 wheel that serves 3.12+.
+          args: --release --features pyo3/abi3-py312 --interpreter python3.12 --out dist
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wheel-${{ matrix.target }}
+          path: dist/
+
+  collect:
+    name: Collect wheels and sdist
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download all wheels
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: wheel-*
+          path: dist/
+          merge-multiple: true
+
+      - name: Install uv
+        run: sudo snap install --classic astral-uv
+
+      - name: Build sdist
+        run: uv build --sdist --out-dir dist
+
+      - name: Check packages
+        run: uvx twine check dist/*
+
+      - name: Upload pypi artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pypi-artifacts
+          path: dist/

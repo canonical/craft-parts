@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import override
 
+from craft_parts._rs.errors import PartsError
 from craft_parts.utils.formatting_utils import humanize_list
 
 if TYPE_CHECKING:
@@ -33,49 +34,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from pydantic_core import ErrorDetails
-
-
-class PartsError(Exception):
-    """Unexpected error.
-
-    :param brief: Brief description of error.
-    :param details: Detailed information.
-    :param resolution: Recommendation, if any.
-    :param doc_slug:
-        Reusable documentation slug for consumers adopting
-        the Craft Parts documentation.
-    """
-
-    def __init__(
-        self,
-        brief: str,
-        details: str | None = None,
-        resolution: str | None = None,
-        doc_slug: str | None = None,
-    ) -> None:
-        self.brief = brief
-        self._details = details
-        self.resolution = resolution
-        self.doc_slug = doc_slug
-
-    def __str__(self) -> str:
-        components = [self.brief]
-
-        if self.details:
-            components.append(self.details)
-
-        if self.resolution:
-            components.append(self.resolution)
-
-        return "\n".join(components)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(brief={self.brief!r}, details={self.details!r}, resolution={self.resolution!r}, doc_slug={self.doc_slug!r})"
-
-    @property
-    def details(self) -> str | None:
-        """Further details on the error."""
-        return self._details
 
 
 class FeatureError(PartsError):
