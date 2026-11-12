@@ -1,14 +1,7 @@
 #!/usr/bin/env python3
 """Assert that a version tag matches the version in Cargo.toml.
 
-Usage:
-  - CI:             check_version.py          (reads the tag from GITHUB_REF)
-  - pre-push hook:  check_version.py          (reads PRE_COMMIT_LOCAL_BRANCH)
-  - manual:         check_version.py X.Y.Z
-
-The release tag is the single source of truth for the published version;
-this check ensures the hand-maintained Cargo.toml version agrees with it
-before artifacts are built and published.
+Used in CI when new tags are pushed.
 """
 
 import os
@@ -20,16 +13,8 @@ CARGO_TOML = Path(__file__).resolve().parent.parent / "Cargo.toml"
 
 
 def main() -> int:
-    """Check that a version tag matches the Cargo.toml package version.
-
-    Without arguments, the tag comes from GITHUB_REF (CI) or
-    PRE_COMMIT_LOCAL_BRANCH (pre-commit pre-push hook); a push containing no
-    version tag passes. With an argument, that tag is checked directly.
-    """
-    if len(sys.argv) > 1:
-        return 0 if check(sys.argv[1]) else 1
-
-    ref = os.getenv("GITHUB_REF") or os.getenv("PRE_COMMIT_LOCAL_BRANCH", "")
+    """Check that a version tag matches the Cargo.toml package version."""
+    ref = os.getenv("GITHUB_REF", "")
     tag = ref.removeprefix("refs/tags/")
     if not re.fullmatch(r"\d+\.\d+\.\d+", tag):
         print(f"✓ no version tag in pushed ref {ref!r}")
