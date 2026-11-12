@@ -86,6 +86,43 @@ class StepContents:
             partition: StepPartitionContents() for partition in partitions
         }
 
+    def update(self, other: "StepContents") -> None:
+        """Merge contents from another StepContents."""
+        for partition, other_contents in other.partitions_contents.items():
+            current = self.partitions_contents.get(partition)
+            if current is None:
+                self.partitions_contents[partition] = other_contents
+            elif isinstance(current, StagePartitionContents) and isinstance(
+                other_contents, StagePartitionContents
+            ):
+                self.partitions_contents[partition] = StagePartitionContents(
+                    files=current.files | other_contents.files,
+                    dirs=current.dirs | other_contents.dirs,
+                    backstage_files=current.backstage_files
+                    | other_contents.backstage_files,
+                    backstage_dirs=current.backstage_dirs
+                    | other_contents.backstage_dirs,
+                )
+            elif isinstance(current, StagePartitionContents):
+                self.partitions_contents[partition] = StagePartitionContents(
+                    files=current.files | other_contents.files,
+                    dirs=current.dirs | other_contents.dirs,
+                    backstage_files=current.backstage_files,
+                    backstage_dirs=current.backstage_dirs,
+                )
+            elif isinstance(other_contents, StagePartitionContents):
+                self.partitions_contents[partition] = StagePartitionContents(
+                    files=current.files | other_contents.files,
+                    dirs=current.dirs | other_contents.dirs,
+                    backstage_files=other_contents.backstage_files,
+                    backstage_dirs=other_contents.backstage_dirs,
+                )
+            else:
+                self.partitions_contents[partition] = StepPartitionContents(
+                    files=current.files | other_contents.files,
+                    dirs=current.dirs | other_contents.dirs,
+                )
+
 
 class StepHandler:
     """Executes built-in or user-specified step commands.
@@ -119,6 +156,9 @@ class StepHandler:
         self._stdout = stdout
         self._stderr = stderr
         self._partitions = partitions
+        self._scriptlet_contents = StepContents(
+            partitions=partitions, stage=step_info.step == Step.STAGE
+        )
 
     def run_builtin(self) -> StepContents:
         """Run the built-in commands for the current step."""
@@ -376,7 +416,7 @@ class StepHandler:
         scriptlet_name: str,
         step: Step,
         work_dir: Path,
-    ) -> None:
+    ) -> StepContents:
         """Execute a scriptlet.
 
         :param scriptlet: the scriptlet to run.
@@ -388,12 +428,12 @@ class StepHandler:
             # override-overlay runs in chroot where craftctl binary is
             # unavailable; use the bash function injection approach
             self._run_overlay_scriptlet(scriptlet, work_dir=work_dir)
-            return
+            return self._scriptlet_contents
 
         if step == Step.BUILD and self._part.has_build_slices:
             # Runs build in a sliced chroot without a craftctl client.
             self._run_build_slices_scriptlet(scriptlet, work_dir=work_dir)
-            return
+            return self._scriptlet_contents
 
         with tempfile.TemporaryDirectory() as tempdir:
             ctl_socket_path = Path(tempdir, "craftctl.socket")
@@ -429,6 +469,8 @@ class StepHandler:
                 ) from process_error
             finally:
                 ctl_socket.close()
+
+        return self._filter_existing_contents(self._scriptlet_contents, step=step)
 
     def _run_overlay_scriptlet(
         self,
@@ -641,7 +683,8 @@ class StepHandler:
                 raise invalid_control_api_call(
                     message=f"invalid arguments to command {cmd_name!r}",
                 )
-            self._execute_builtin_handler(step)
+            result = self._execute_builtin_handler(step)
+            self._scriptlet_contents.update(result)
         elif cmd_name == "set":
             if len(cmd_args) != 1:
                 raise invalid_control_api_call(
@@ -687,17 +730,80 @@ class StepHandler:
 
         return retval
 
-    def _execute_builtin_handler(self, step: Step) -> None:
+    def _execute_builtin_handler(self, step: Step) -> StepContents:
         if step == Step.PULL:
-            self._builtin_pull()
-        elif step == Step.OVERLAY:
-            self._builtin_overlay()
-        elif step == Step.BUILD:
-            self._builtin_build()
-        elif step == Step.STAGE:
-            self._builtin_stage()
-        elif step == Step.PRIME:
-            self._builtin_prime()
+            return self._builtin_pull()
+        if step == Step.OVERLAY:
+            return self._builtin_overlay()
+        if step == Step.BUILD:
+            return self._builtin_build()
+        if step == Step.STAGE:
+            return self._builtin_stage()
+        if step == Step.PRIME:
+            return self._builtin_prime()
+        return StepContents(partitions=self._partitions, stage=step == Step.STAGE)
+
+    def _filter_existing_contents(
+        self, contents: StepContents, *, step: Step
+    ) -> StepContents:
+        """Filter out paths that no longer exist on disk after scriptlet execution."""
+        if step not in (Step.STAGE, Step.PRIME):
+            return contents
+
+        filtered = StepContents(partitions=self._partitions, stage=step == Step.STAGE)
+        for partition, pcontents in contents.partitions_contents.items():
+            if self._partitions and partition not in self._partitions:
+                continue
+
+            if step == Step.STAGE:
+                destdir = (
+                    self._part.dirs.get_stage_dir(partition)
+                    if self._partitions
+                    else self._part.stage_dir
+                )
+            else:
+                destdir = (
+                    self._part.dirs.get_prime_dir(partition)
+                    if self._partitions
+                    else self._part.prime_dir
+                )
+
+            existing_files = {
+                f
+                for f in pcontents.files
+                if (destdir / f).is_symlink() or (destdir / f).exists()
+            }
+            existing_dirs = {
+                d
+                for d in pcontents.dirs
+                if (destdir / d).is_symlink() or (destdir / d).is_dir()
+            }
+
+            if isinstance(pcontents, StagePartitionContents):
+                backstage_dir = self._part.backstage_dir
+                existing_backstage_files = {
+                    f
+                    for f in pcontents.backstage_files
+                    if (backstage_dir / f).is_symlink() or (backstage_dir / f).exists()
+                }
+                existing_backstage_dirs = {
+                    d
+                    for d in pcontents.backstage_dirs
+                    if (backstage_dir / d).is_symlink() or (backstage_dir / d).is_dir()
+                }
+                filtered.partitions_contents[partition] = StagePartitionContents(
+                    files=existing_files,
+                    dirs=existing_dirs,
+                    backstage_files=existing_backstage_files,
+                    backstage_dirs=existing_backstage_dirs,
+                )
+            else:
+                filtered.partitions_contents[partition] = StepPartitionContents(
+                    files=existing_files,
+                    dirs=existing_dirs,
+                )
+
+        return filtered
 
 
 def _create_and_run_script(

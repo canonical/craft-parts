@@ -67,6 +67,11 @@ Bug fixes:
 - Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
   directories, such as ``-**/__pycache__`` in a large Python environment.
 
+- Track staged and primed files in step state when using ``craftctl default``
+  in ``override-stage`` or ``override-prime``. This ensures downstream fixups
+  that rely on tracked files (such as Snapcraft's patchelf and Rockcraft's
+  Python fixups) apply to override parts as expected.
+
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
 .. _release-2.37.3:
