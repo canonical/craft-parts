@@ -1,0 +1,36 @@
+# Organize pattern from the craft-parts documentation for the Dump plugin
+# (section "To include a remote third-party pre-compiled archive from a URL").
+# Destination paths that end with a slash name a *directory*: craft-parts places
+# the source file inside that directory, preserving its original filename.
+# The same trailing-slash style appears in the snapcrafters/ffmpeg snap at
+# https://github.com/snapcrafters/ffmpeg/blob/master/snap/snapcraft.yaml
+# where individual wrapper scripts are organized into bin/.
+#
+# Source: https://github.com/canonical/craft-parts/blob/main/docs/common/craft-parts/how-to/include_files.rst
+
+description: >
+  When the destination in an organize mapping ends with a slash, craft-parts
+  treats it as a directory and places the source file inside it, keeping the
+  original filename.  This differs from an explicit destination path, which
+  renames the file.  Here, both ffmpeg and ffprobe are moved into usr/bin/
+  while retaining their names.
+
+parts:
+  ffmpeg-part:
+    plugin: dump
+    source: src
+    organize:
+      ffprobe: usr/bin/
+      ffmpeg: usr/bin/
+
+setup_files:
+  - src/ffmpeg
+  - src/ffprobe
+
+expected_prime_present:
+  - usr/bin/ffmpeg
+  - usr/bin/ffprobe
+
+expected_prime_absent:
+  - ffmpeg
+  - ffprobe

@@ -1,0 +1,45 @@
+# Organize pattern from the OpenTTD snap on GitHub.
+# Each of the three game-asset parts downloads a ZIP archive that contains
+# exactly one file (or a small set of files with a shared prefix) and
+# organizes the content straight into the baseset directory of the game.
+# The glob 'opengfx-*.tar' matches the single tarball that was extracted
+# from the downloaded ZIP, moving it into the correct game data path.
+#
+# Source: https://github.com/diddlesnaps/openttd/blob/aa025fc5b6b7f22054282e99832ff4f639b1c845/snap/snapcraft.yaml
+#   opengfx part:
+#     organize:
+#       opengfx-*.tar: usr/games/openttd/baseset/
+#   opensfx part:
+#     organize:
+#       opensfx-*: usr/games/openttd/baseset/
+
+description: >
+  Glob patterns that match a small, known set of files and place them into a
+  specific game-data directory.  This pattern is used by the OpenTTD snap to
+  install each asset pack (graphics, sound, music) into the correct baseset
+  location inside the game's data tree.
+
+parts:
+  opengfx:
+    plugin: dump
+    source: src/opengfx
+    organize:
+      opengfx-*.tar: usr/games/openttd/baseset/
+
+  opensfx:
+    plugin: dump
+    source: src/opensfx
+    organize:
+      opensfx-*: usr/games/openttd/baseset/
+
+setup_files:
+  - src/opengfx/opengfx-7.1.tar
+  - src/opensfx/opensfx-1.0.3-all.zip
+
+expected_prime_present:
+  - usr/games/openttd/baseset/opengfx-7.1.tar
+  - usr/games/openttd/baseset/opensfx-1.0.3-all.zip
+
+expected_prime_absent:
+  - opengfx-7.1.tar
+  - opensfx-1.0.3-all.zip
