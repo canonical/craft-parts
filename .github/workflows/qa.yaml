@@ -183,6 +183,9 @@ jobs:
           workshop run dev -- lint-code
       - name: Run fast tests
         run: |
+          # Each workshop uses its own UV_PROJECT_ENVIRONMENT (/opt/venv),
+          # so the shared /project mount does not need re-syncing between
+          # runs; the launch-time setup already synced each workshop's venv.
           workshop run jammy -- test-fast
           workshop run noble -- test-fast
           workshop run dev -- test-fast

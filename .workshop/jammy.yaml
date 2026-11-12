@@ -16,7 +16,7 @@ connections:
   - plug: craft-parts:venv
     slot: uv:venv
 actions:
-  setup: make setup
-  test-fast: make test-fast
-  test-slow: make test-slow
-  test: make test
+  setup: env UV_PROJECT_ENVIRONMENT=/opt/venv make setup
+  test-fast: env UV_PROJECT_ENVIRONMENT=/opt/venv make test-fast
+  test-slow: env UV_PROJECT_ENVIRONMENT=/opt/venv make test-slow
+  test: env UV_PROJECT_ENVIRONMENT=/opt/venv make test
