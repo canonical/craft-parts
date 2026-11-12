@@ -34,3 +34,11 @@ sudo apt-get install --yes --no-install-recommends \
     texinfo \
     shellcheck \
     shfmt
+
+# Keep the uv project venv outside /project: workshops sharing one project
+# mount each need their own Python version and dependency groups. /opt/venv
+# is the uv:venv mount slot target. Login shells (workshop exec/run/shell,
+# hooks via sudo --login) source this; non-login shells do not.
+cat >/etc/profile.d/uv-project.sh <<'EOF'
+export UV_PROJECT_ENVIRONMENT=/opt/venv
+EOF
