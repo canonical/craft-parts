@@ -19,4 +19,6 @@ actions:
   setup: make setup
   test-fast: make test-fast
   test-slow: make test-slow
+  test-root: sudo env PATH="$PATH" UV_PROJECT_ENVIRONMENT=/opt/venv uv run pytest
+    -m requires_root -p no:cacheprovider --cache-dir=/tmp/pytest-root
   test: make test
