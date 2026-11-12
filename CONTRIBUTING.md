@@ -76,16 +76,48 @@ git remote add upstream https://github.com/canonical/craft-parts
 git fetch upstream
 ```
 
-Inside the project directory, set up the virtual development environment and install all
-dependencies, linters, and testers:
+Craft Parts uses [Workshop](https://ubuntu.com/workshop) to handle development
+environments. The default `dev` workshop is based on Ubuntu 26.04 and provides
+the tools from that Ubuntu release as well as linting and autoformatting. To
+launch the dev workshop, run:
 
 ```bash
-make setup
-make lint
-make test
+workshop launch dev
+```
+
+After this, you can lint the code with `workshop run dev -- lint-code` or the
+documentation with `workshop run dev -- lint-docs`. Auto-formatting is available
+with `workshop run dev -- format`.
+
+Finally, there are four testing actions. To run only fast tests:
+
+```bash
+workshop run dev -- test-fast
+```
+
+To run only slow tests (requires internet access):
+
+```bash
+workshop run dev -- test-slow
+```
+
+To run all tests that don't require root access (the sum of `test-fast` and
+`test-slow`):
+
+```bash
+workshop run dev -- test
+```
+
+And to run tests that do require root access:
+
+```bash
+workshop run dev -- test-root
 ```
 
 If all linting and testing completes without errors, your local environment is ready.
+
+All four test actions are available in the `jammy` and `noble` workshops as well,
+allowing you to test on these older Ubuntu LTS releases before committing.
 
 ## Contribute a change
 

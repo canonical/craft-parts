@@ -24,7 +24,6 @@ actions:
   test: make test
   test-root: sudo env PATH="$PATH" uv run pytest
     -m requires_root -p no:cacheprovider --cache-dir=/tmp/pytest-root
-  lint: make lint
   lint-code: make lint-code
   lint-docs: make lint-docs
   format: make format
