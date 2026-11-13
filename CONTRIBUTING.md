@@ -76,10 +76,15 @@ git remote add upstream https://github.com/canonical/craft-parts
 git fetch upstream
 ```
 
-Craft Parts uses [Workshop](https://ubuntu.com/workshop) to handle development
-environments. The default `dev` workshop is based on Ubuntu 26.04 and provides
-the tools from that Ubuntu release as well as linting and autoformatting. To
-launch the dev workshop, run:
+Craft Parts development environments are handled with
+[Workshop](https://ubuntu.com/workshop), which you can install by running:
+
+```bash
+sudo snap install workshop --classic
+```
+
+The default `dev` workshop is based on Ubuntu 26.04 LTS and adds some additional tools
+for linting and formatting. To launch the `dev` workshop, run:
 
 ```bash
 workshop launch dev
