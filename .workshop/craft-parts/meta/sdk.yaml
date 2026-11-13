@@ -1,0 +1,9 @@
+name: craft-parts
+version: "0.1"
+summary: In-project SDK with craft-parts build/test dependencies
+description: |
+  SDK for craft-parts development.
+plugs:
+  venv:
+    interface: mount
+    workshop-target: /opt/venv

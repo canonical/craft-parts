@@ -142,3 +142,50 @@ jobs:
       setup-vars: NO_PYTHON=1
       test-command-prefix: sudo env "PATH=$PATH" ${UV_RESOLUTION:+UV_RESOLUTION=$UV_RESOLUTION}
       use-lxd: false
+  workshop-tests:
+    strategy:
+      matrix:
+        runner: [ubuntu-26.04, ubuntu-26.04-arm]
+      fail-fast: false
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          depth: 0
+      - name: Launch workshop dev
+        uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
+        with:
+          workshop: dev
+          cache: |
+            uv:cache
+            go:mod-cache
+      - name: Launch workshop jammy
+        uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
+        with:
+          workshop: jammy
+          cache: |
+            uv:cache
+            go:mod-cache
+      - name: Launch workshop noble
+        uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
+        with:
+          workshop: noble
+          cache: |
+            uv:cache
+            go:mod-cache
+      - name: Run lint
+        run: |
+          workshop run dev -- setup
+          workshop run dev -- lint-code
+      - name: Run fast tests
+        run: |
+          # Each workshop uses its own UV_PROJECT_ENVIRONMENT (/opt/venv),
+          # so the shared /project mount does not need re-syncing between
+          # runs; the launch-time setup already synced each workshop's venv.
+          workshop run jammy -- test-fast
+          workshop run noble -- test-fast
+          workshop run dev -- test-fast

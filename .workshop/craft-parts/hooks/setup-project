@@ -1,0 +1,18 @@
+#!/bin/bash
+# Run the project's own "make setup" for uv sync and tooling.
+# setup-project runs as the "workshop" user in /project.
+set -euo pipefail
+
+# Keep the virtualenv outside /project: multiple workshops share the same
+# project mount, and each needs its own Python version and dependency
+# groups (e.g. dev-jammy's python-apt). /opt/venv is the uv:venv mount.
+export UV_PROJECT_ENVIRONMENT=/opt/venv
+
+# Tools that must see /project (non-classic snaps can't) are uv tools.
+# pre-commit hooks are run by the prek SDK.
+uv tool install --upgrade ruff
+uv tool install --upgrade ty
+uv tool install --upgrade codespell
+
+# Project setup: uv sync of all dependency groups and docs tooling.
+make setup

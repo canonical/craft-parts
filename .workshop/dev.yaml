@@ -1,0 +1,29 @@
+name: dev
+base: ubuntu@26.04
+sdks:
+  - name: uv
+    channel: latest/stable
+  - name: go
+    channel: latest/stable
+  - name: actionlint
+    channel: latest/stable
+  - name: tombi
+    channel: latest/stable
+  - name: prek
+    channel: latest/stable
+  - name: node
+    channel: latest/stable
+  - name: project-craft-parts
+connections:
+  - plug: craft-parts:venv
+    slot: uv:venv
+actions:
+  setup: make setup
+  test-fast: make test-fast
+  test-slow: make test-slow
+  test: make test
+  test-root: sudo env PATH="$PATH" UV_PROJECT_ENVIRONMENT=/opt/venv uv run pytest
+    -m requires_root -p no:cacheprovider --cache-dir=/tmp/pytest-root
+  lint-code: make lint-code
+  lint-docs: make lint-docs
+  format: make format
