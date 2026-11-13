@@ -490,7 +490,7 @@ class GitSource(SourceHandler):
 
         # Ignore the type, the regex already asserts that it will be a 3-piece tuple
         # but type checkers believe this is `tuple[int, ...]`
-        return tuple(int(component) for component in components)  # ty: ignore[invalid-return-type]
+        return tuple(int(component) for component in components)  # ty: ignore[invalid-explicit-return]
 
 
 class ShallowFetchError(Exception):
