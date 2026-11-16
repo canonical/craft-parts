@@ -79,37 +79,30 @@ def _run_lifecycle(parts_yaml, new_dir, partitions) -> LifecycleManager:
     return lf
 
 
-def _check_binaries(prime_dir, expected_prefix):
+def _check_binaries(prime_dir):
     python3 = prime_dir / "usr/bin/python3"
 
-    # Check the "mytest" package, both the console script and the module
+    # Check the "mytest" package. The console script's shebang must have been
+    # rewritten from the build-time interpreter path to the runtime one; the
+    # module must be importable by the primed interpreter.
     primed_script = prime_dir / "bin/mytest"
     assert primed_script.exists()
-    assert (
-        primed_script.open().readline().rstrip()
-        == f"#!{expected_prefix}/usr/bin/python3"
-    )
+    assert primed_script.open().readline().rstrip() == "#!/usr/bin/python3"
+    assert subprocess.check_output([python3, "-m", "mytest"]) == b"it works!\n"
 
-    for args in ([primed_script], [python3, "-m", "mytest"]):
-        assert subprocess.check_output(args) == b"it works!\n"
-
+    # Check "black", installed via python-packages: the console script is
+    # primed and the module runs under the primed interpreter.
     black = prime_dir / "bin/black"
     assert black.exists()
+    output = subprocess.check_output([python3, "-m", "black", "--help"])
+    assert b"The uncompromising code formatter" in output
 
-    # Check "black", installed via python-packages
-    # (both the console script and the module)
-    for args in ([black], [python3, "-m", "black"]):
-        output = subprocess.check_output([*args, "--help"])
-        assert b"The uncompromising code formatter" in output
-
+    # Check "flask", installed via python-requirements: the console script is
+    # primed and the module runs under the primed interpreter.
     flask = prime_dir / "bin/flask"
     assert flask.exists()
-
-    # Check "flask", installed via python-requirements
-    # (both the console script and the module)
-    for args in ([flask], [python3, "-m", "flask"]):
-        output = subprocess.check_output([*args, "--help"])
-        assert b"A general utility script for Flask applications." in output
+    output = subprocess.check_output([python3, "-m", "flask", "--help"])
+    assert b"A general utility script for Flask applications." in output
 
 
 def test_python_plugin_no_bundled_python(new_dir, partitions):
@@ -151,9 +144,8 @@ def test_python_plugin_bundled_in_part(new_dir, partitions):
 
     lifecycle = _run_lifecycle(parts_yaml, new_dir, partitions)
     prime_dir = lifecycle.project_info.prime_dir
-    part_install = new_dir / "parts/foo/install"
 
-    _check_binaries(prime_dir, part_install)
+    _check_binaries(prime_dir)
 
 
 def test_python_plugin_staged(new_dir, partitions):
@@ -182,9 +174,46 @@ def test_python_plugin_staged(new_dir, partitions):
 
     lifecycle = _run_lifecycle(parts_yaml, new_dir, partitions)
     prime_dir = lifecycle.project_info.prime_dir
-    stage_dir = new_dir / "stage"
 
-    _check_binaries(prime_dir, stage_dir)
+    _check_binaries(prime_dir)
+
+
+def test_python_plugin_long_build_path(new_path, partitions):
+    """Rewrite pip's polyglot shebang for build paths over the shebang limit.
+
+    When the interpreter path that pip embeds is longer than the kernel's
+    ~127-byte shebang limit, pip writes a 3-line ``#!/bin/sh`` polyglot header
+    instead of a plain ``#!`` line. The rewrite must collapse the whole header.
+    """
+    source_location = Path(__file__).parent / "test_python"
+
+    plugins.register({"python": PythonPlugin})
+
+    # Run pip under an interpreter copied to a path deep enough to push the
+    # script shebangs over the kernel limit.
+    deep_python = new_path / ("d" * 100) / "python3"
+    parts_yaml = textwrap.dedent(
+        f"""\
+        parts:
+          foo:
+            plugin: python
+            source: {source_location}
+            override-build: |
+              mkdir -p {deep_python.parent}
+              cp $(readlink -f $(which python3)) {deep_python}
+              craftctl default
+            build-environment:
+              - PIP_PYTHON: "{deep_python}"
+        """
+    )
+
+    lifecycle = _run_lifecycle(parts_yaml, new_path, partitions)
+    prime_dir = lifecycle.project_info.prime_dir
+
+    # The polyglot header must have been collapsed into the runtime shebang.
+    primed_script = prime_dir / "bin/mytest"
+    assert primed_script.exists()
+    assert primed_script.open().readline().rstrip() == "#!/usr/bin/python3"
 
 
 def test_python_plugin_package_conflicts(new_dir, partitions):

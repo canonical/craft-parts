@@ -19,7 +19,7 @@
 import logging
 import os
 import shutil
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
@@ -48,6 +48,7 @@ from craft_parts.state_manager import (
     states,
 )
 from craft_parts.state_manager.stage_state import StageState
+from craft_parts.state_manager.state_manager import get_part_properties
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
 from craft_parts.utils.partition_utils import BUILD_PARTITION, DEFAULT_PARTITION
@@ -539,6 +540,7 @@ class PartHandler:
         assets = {
             "build-packages": self.build_packages,
             "build-snaps": self.build_snaps,
+            "build-slices": self._part.spec.build_slices,
         }
         assets.update(_get_machine_manifest())
 
@@ -548,8 +550,12 @@ class PartHandler:
         # filesystem if overlay contents change.
         overlay_hash = self._compute_layer_hash(all_parts=True)
 
+        build_part_properties = get_part_properties(
+            self._part, part_list=self._part_list
+        )
+
         return states.BuildState(
-            part_properties=self._part_properties,
+            part_properties=build_part_properties,
             project_options=step_info.project_options,
             assets=assets,
             overlay_hash=overlay_hash.hex(),
@@ -1656,7 +1662,7 @@ def _consolidate_states(
 @contextmanager
 def _conditional_layer_mount(
     overlay_manager: OverlayManager, *, top_part: Part, condition: bool
-) -> Iterator[None]:
+) -> Generator[None]:
     """Conditionally execute the enclosed code block with the overlay mounted."""
     if condition:
         with overlays.LayerMount(overlay_manager, top_part=top_part):

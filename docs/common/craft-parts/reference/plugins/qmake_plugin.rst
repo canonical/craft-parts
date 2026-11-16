@@ -15,37 +15,14 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.qmake_plugin
 
-qmake-parameters
-~~~~~~~~~~~~~~~~
+.. kitbash-field:: QmakePluginProperties qmake_parameters
 
-**Type:** list of strings
+.. kitbash-field:: QmakePluginProperties qmake_project_file
 
-Parameters to configure the project using common qmake semantics.
-
-
-qmake-project-file
-~~~~~~~~~~~~~~~~~~
-
-**Type:** string
-
-The qmake project file to use. This is usually only needed if qmake can not determine
-what project file to use on its own.
-If ``source-subdir`` is set and the value already starts with that prefix, the path is
-resolved relative to the source directory. Otherwise it is resolved relative to the
-source subdirectory.
-
-
-.. _qmake-major-version:
-
-qmake-major-version
-~~~~~~~~~~~~~~~~~~~
-
-**Type:** int
-
-**Default:** 5
-
-Sets the Qt major version. The default is Qt 5, set to 6 for Qt 6 projects.
+.. kitbash-field:: QmakePluginProperties qmake_major_version
+    :label: qmake-major-version
 
 
 Environment variables

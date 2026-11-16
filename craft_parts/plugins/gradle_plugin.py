@@ -23,6 +23,7 @@ from textwrap import dedent
 from typing import Literal, cast
 from urllib.parse import urlparse
 
+import pydantic
 from pydantic import model_validator
 from typing_extensions import Self, override
 
@@ -34,28 +35,48 @@ from .properties import PluginProperties
 
 
 class GradlePluginProperties(PluginProperties, frozen=True):
-    """The part properties used by the gradle plugin.
-
-    - gradle_init_script:
-      (string)
-      The path to init script to run before build script is executed.
-    - gradle_parameters:
-      (list of strings)
-      Extra arguments to pass along to Gradle task execution.
-    - gradle_task:
-      (string)
-      The task to run to build the project.
-    - gradle_use_daemon:
-      (boolean)
-      Whether to use the Gradle daemon during the build.
-    """
+    """The part properties used by the gradle plugin."""
 
     plugin: Literal["gradle"] = "gradle"
 
-    gradle_init_script: str = ""
-    gradle_parameters: list[str] = []
-    gradle_task: str = "build"
-    gradle_use_daemon: bool = False
+    gradle_init_script: str = pydantic.Field(
+        default="",
+        description="The path to the initialization script to run before the build script is run.",
+    )
+    """The path to the `initialization script
+    <https://docs.gradle.org/current/userguide/init_scripts.html>`__ to run before the
+    build script is run.
+
+    The command run is ``gradle --init-script <gradle-init-script>``.
+    """
+
+    gradle_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The extra arguments to pass to Gradle.",
+    )
+    """The extra arguments to pass to Gradle.
+    """
+
+    gradle_task: str = pydantic.Field(
+        default="build",
+        description="The Gradle task to run during build.",
+    )
+    """The `Gradle task
+    <https://docs.gradle.org/current/userguide/more_about_tasks.html>`__ to run during
+    build.
+
+    Defaults to ``build``.
+    """
+
+    gradle_use_daemon: bool = pydantic.Field(
+        default=False,
+        description="Whether to use the Gradle daemon during build.",
+    )
+    """Whether to use the `Gradle daemon
+    <https://docs.gradle.org/current/userguide/gradle_daemon.html>`_ during build.
+
+    Defaults to ``false``.
+    """
 
     # part properties required by the plugin
     source: str

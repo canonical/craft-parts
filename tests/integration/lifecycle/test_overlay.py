@@ -18,6 +18,7 @@ import textwrap
 from pathlib import Path
 
 import craft_parts
+import distro
 import pytest
 import yaml
 from craft_parts import Action, ActionType, Step
@@ -852,6 +853,10 @@ class TestOverlaySpecScenarios:
 
 @pytest.mark.slow
 @pytest.mark.requires_root
+@pytest.mark.skipif(
+    distro.id() == "ubuntu" and distro.version() == "20.04",
+    reason="focal's mmdebstrap lacks --format=dir",
+)
 class TestOverrideOverlayScriptWithMmdebstrap:
     """Validate override-overlay using mmdebstrap in pytest temp directory."""
 

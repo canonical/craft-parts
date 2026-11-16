@@ -18,6 +18,7 @@
 
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from .base import Plugin
@@ -29,7 +30,12 @@ class MakePluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["make"] = "make"
 
-    make_parameters: list[str] = []
+    make_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The options to pass to Make.",
+    )
+    """The options to pass to Make.
+    """
 
     # part properties required by the plugin
     source: str

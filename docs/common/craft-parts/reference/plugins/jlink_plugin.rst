@@ -12,40 +12,15 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.jlink_plugin
 
-jlink-modules
-~~~~~~~~~~~~~
+.. kitbash-field:: JLinkPluginProperties jlink_modules
 
-**Type:** list of strings
+.. kitbash-field:: JLinkPluginProperties jlink_jars
 
-The exhaustive list of modules to include in the OpenJDK image. If set, this key
-overrides all other keys for this plugin.
+.. kitbash-field:: JLinkPluginProperties jlink_extra_modules
 
-
-jlink-jars
-~~~~~~~~~~
-
-**Type:** list of strings
-
-List of paths to your application's JAR files. If not specified, the plugin will find
-all JAR files in the staging area.
-
-
-jlink-extra-modules
-~~~~~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Additional modules to include in the OpenJDK image.
-
-
-jlink-multi-release
-~~~~~~~~~~~~~~~~~~~
-**Type:** int or string
-
-**Default:** "base"
-
-OpenJDK release version to use for multi-release JARs.
+.. kitbash-field:: JLinkPluginProperties jlink_multi_release
 
 
 Dependencies

@@ -38,6 +38,7 @@ def properties() -> dict[str, Any]:
         "stage-packages": ["stage-pkg1", "stage-pkg2"],
         "build-snaps": ["build-snap1", "build-snap2"],
         "build-packages": ["build-pkg1", "build-pkg2"],
+        "build-slices": ["base-files_base", "bash_bins"],
         "build-environment": [{"ENV1": "on"}, {"ENV2": "off"}],
         "build-attributes": ["attr1", "attr2"],
         "organize": {"src1": "dest1", "src2": "dest2"},
