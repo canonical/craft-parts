@@ -12,8 +12,8 @@ headings and main text.
 
 Replace the instructions with suitable descriptions.
 
-After writing the page, add it to the appropriate language or technology
-group in the :ref:`plugins` reference index.
+After writing the page, link to it from the appropriate group in the :ref:`plugins`
+reference, and add it to the toctree at the bottom of that page.
 
 
 <Name> plugin
