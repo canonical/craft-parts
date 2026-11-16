@@ -17,6 +17,7 @@ connections:
     slot: uv:venv
 actions:
   setup: make setup
+  clean: rm -rf /opt/venv/* /opt/venv/.[!.]* 2>/dev/null; make clean && make setup
   test-fast: make test-fast
   test-slow: make test-slow
   test-root: sudo env PATH="$PATH" UV_PROJECT_ENVIRONMENT=/opt/venv uv run pytest

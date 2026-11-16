@@ -19,6 +19,7 @@ connections:
     slot: uv:venv
 actions:
   setup: make setup
+  clean: rm -rf /opt/venv/* /opt/venv/.[!.]* 2>/dev/null; make clean && make setup
   test-fast: make test-fast
   test-slow: make test-slow
   test: make test
