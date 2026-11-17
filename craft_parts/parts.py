@@ -1144,7 +1144,9 @@ class Part:
             warning_list.extend(partition_warnings)
             error_list.extend(partition_errors)
 
-        if warning_list:
+        # Partition misuse warnings only make sense if the application uses
+        # partitions; otherwise paths like "default/foo" are regular paths.
+        if warning_list and Features().enable_partitions:
             warnings.warn(
                 errors.PartitionUsageWarning(warning_list=warning_list), stacklevel=1
             )

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
@@ -256,6 +257,18 @@ class TestPartPartitionUsage:
             "Correct the invalid partition usage and try again."
         )
         with pytest.raises(errors.PartitionUsageError, match=error):
+            Part("a", part_data, partitions=partitions)
+
+    def test_part_partition_misuse_no_warning(self, partitions):
+        """Don't warn about partition misuse if partitions aren't enabled."""
+        part_data = {
+            "organize": {"test": "default/foo"},
+            "stage": ["default/foo"],
+            "prime": ["default/foo"],
+        }
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", errors.PartitionUsageWarning)
             Part("a", part_data, partitions=partitions)
 
 

@@ -100,7 +100,7 @@ def _basic_environment_for_part(part: Part, *, step_info: StepInfo) -> dict[str,
     part_environment = _get_step_environment(step_info)
     paths = [part.part_install_dir, part.stage_dir]
 
-    if Features().enable_overlay:
+    if Features().enable_partitions and Features().enable_overlay:
         part_environment.update(
             _get_step_overlay_environment_for_partitions(part, step_info.partitions)
         )
@@ -179,7 +179,8 @@ def _get_global_environment(info: ProjectInfo) -> dict[str, str]:
     if Features().enable_overlay:
         global_environment["CRAFT_OVERLAY"] = str(info.overlay_mount_dir)
 
-    global_environment.update(_get_environment_for_partitions(info))
+    if Features().enable_partitions:
+        global_environment.update(_get_environment_for_partitions(info))
 
     global_environment["CRAFT_STAGE"] = str(info.stage_dir)
     global_environment["CRAFT_PRIME"] = str(info.prime_dir)

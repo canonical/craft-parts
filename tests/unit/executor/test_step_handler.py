@@ -157,23 +157,19 @@ class TestStepHandlerBuiltins:
         environment_script_path = Path(new_dir / "parts/p1/run/environment.sh")
         deb = _get_host_architecture()
         triplet = _DEB_TO_TRIPLET[deb]
-        default_partition = (
-            partitions[0] if partitions is not None else DEFAULT_PARTITION
-        )
-        partition_script_lines = [
-            f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
-            f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
-        ]
-
         if partitions is not None:
+            default_partition = partitions[0]
+            partition_script_lines = []
             if default_partition != DEFAULT_PARTITION:
-                partition_script_lines += [
-                    f'export CRAFT_{default_partition.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/stage"',
-                    f'export CRAFT_{default_partition.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/prime"',
+                partition_script_lines = [
+                    f'export CRAFT_DEFAULT_STAGE="{new_dir}/stage"',
+                    f'export CRAFT_DEFAULT_PRIME="{new_dir}/prime"',
                 ]
 
-            partition_script_lines += list(
-                itertools.chain.from_iterable(
+            partition_script_lines += [
+                f'export CRAFT_{default_partition.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/stage"',
+                f'export CRAFT_{default_partition.upper().translate({ord("-"): "_", ord("/"): "_"})}_PRIME="{new_dir}/prime"',
+                *itertools.chain.from_iterable(
                     zip(
                         [
                             f'export CRAFT_{p.upper().translate({ord("-"): "_", ord("/"): "_"})}_STAGE="{new_dir}/partitions/{p}/stage"'
@@ -184,8 +180,10 @@ class TestStepHandlerBuiltins:
                             for p in partitions[1:]
                         ],
                     )
-                )
-            )
+                ),
+            ]
+        else:
+            partition_script_lines = []
 
         expected_script = "\n".join(
             (
