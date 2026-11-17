@@ -67,6 +67,11 @@ Bug fixes:
 - Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
   directories, such as ``-**/__pycache__`` in a large Python environment.
 
+- When a snap store query through snapd fails, wait for snapd to be ready
+  before retrying the query. This reduces transient failures to install
+  build snaps, such as while snapd is restarting shortly after a build
+  instance is created.
+
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
 .. _release-2.37.3:
@@ -143,15 +148,6 @@ Bug fixes:
 
 - Add ``build-environment`` values to the build state to rebuild parts when the
   environment declaration changes.
-  
-- Fix transient build failures when installing build snaps. A failed store
-  query through snapd (for example while snapd is restarting shortly after a
-  build instance is created) caused the snap installation to be silently
-  skipped, so the build only failed later, with a confusing
-  ``'<command>' not found`` error during plugin environment validation (for
-  example the ``uv`` plugin with ``build-snaps: [astral-uv]``). Store queries
-  are now retried with a delay between attempts, and installation is
-  attempted even if the query still fails.
 
 - The JSON schema for parts now includes the regex pattern for the ``stage``, ``prime``,
   ``build-slices``, and ``stage-slices`` keys.
