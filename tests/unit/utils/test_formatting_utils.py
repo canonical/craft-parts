@@ -23,6 +23,7 @@ from craft_parts.utils import formatting_utils
     [
         (None, ""),
         ([], ""),
+        ((i for i in []), ""),
         (["foo"], "'foo'"),
         (["foo", "bar"], "'bar' & 'foo'"),
         ([3, 2, 1], "1, 2, & 3"),

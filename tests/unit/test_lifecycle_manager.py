@@ -325,11 +325,13 @@ class TestLifecycleManager:
             )
         ]
 
-    def test_executor_creation_stage_slices_triggers_chisel(self, new_dir, mocker):
-        """A part using stage-slices should add chisel as a build snap."""
+    @pytest.mark.parametrize("part_key", ["build-slices", "stage-slices"])
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_executor_creation_slices_triggers_chisel(self, new_dir, mocker, part_key):
+        """A part using stage-slices or build-slices should add chisel as a build snap."""
         mock_executor = mocker.patch("craft_parts.executor.Executor")
 
-        data = {"parts": {"foo": {"plugin": "nil", "stage-slices": ["pkg1_bin"]}}}
+        data = {"parts": {"foo": {"plugin": "nil", part_key: ["pkg1_bin"]}}}
 
         lifecycle_manager.LifecycleManager(
             data,

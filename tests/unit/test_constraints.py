@@ -18,9 +18,52 @@ import re
 
 import pydantic
 import pytest
-from craft_parts.constraints import MESSAGE_INVALID_CHISEL_SLICE, ChiselSliceStr
+from craft_parts.constraints import (
+    CHISEL_SLICE_PATTERN,
+    MESSAGE_INVALID_CHISEL_SLICE,
+    ChiselSliceStr,
+    RelativePathStr,
+)
 
 _slice_type_adapter = pydantic.TypeAdapter(ChiselSliceStr)
+_relative_path_type_adapter = pydantic.TypeAdapter(RelativePathStr)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("file.txt", id="simple"),
+        pytest.param("relative/path", id="nested"),
+        pytest.param("a", id="single-character"),
+    ],
+)
+def test_relative_path_str_valid(path):
+    """Test that valid relative paths are accepted."""
+    assert _relative_path_type_adapter.validate_python(path) == path
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        pytest.param("", id="empty-string"),
+        pytest.param("/absolute/path", id="absolute-path"),
+        pytest.param("/", id="root"),
+    ],
+)
+def test_relative_path_str_invalid(path):
+    """Test that invalid relative paths are rejected."""
+    with pytest.raises(pydantic.ValidationError):
+        _relative_path_type_adapter.validate_python(path)
+
+
+def test_relative_path_str_json_schema():
+    """Ensure the JSON schema is correct."""
+    schema = _relative_path_type_adapter.json_schema()
+
+    assert schema["type"] == "string"
+    assert schema["description"] == "relative path"
+    assert schema["pattern"] == r"^[^\/].*"
+    assert schema["minLength"] == 1
 
 
 @pytest.mark.parametrize(
@@ -67,3 +110,12 @@ def test_chisel_slice_str_invalid(slice_name):
         pydantic.ValidationError, match=re.escape(MESSAGE_INVALID_CHISEL_SLICE)
     ):
         _slice_type_adapter.validate_python(slice_name)
+
+
+def test_chisel_slice_str_json_schema():
+    """Ensure the JSON schema is correct."""
+    schema = _slice_type_adapter.json_schema()
+
+    assert schema["type"] == "string"
+    assert schema["description"] == "Chisel slice reference"
+    assert schema["pattern"] == CHISEL_SLICE_PATTERN

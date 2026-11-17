@@ -119,7 +119,7 @@ def test_application_plugin_happy(
     assert error_path.read_text() == "+ echo hello application plugin\n"
 
     mock_install_packages.assert_called_once_with(["build_package"])
-    mock_install_snaps.assert_called_once_with({"build_snap"})
+    mock_install_snaps.assert_called_once_with({"build_snap"}, refresh=True)
 
     # make sure parts data was not changed
     assert parts == old_parts

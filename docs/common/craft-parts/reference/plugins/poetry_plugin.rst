@@ -14,32 +14,13 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.poetry_plugin
 
-poetry-export-extra-args:
-~~~~~~~~~~~~~~~~~~~~~~~~~
+.. kitbash-field:: PoetryPluginProperties poetry_export_extra_args
 
-**Type:** list of strings
+.. kitbash-field:: PoetryPluginProperties poetry_pip_extra_args
 
-Extra arguments to pass at the end of the poetry `export command
-<https://python-poetry.org/docs/cli/#export>`_.
-
-
-poetry-pip-extra-args:
-~~~~~~~~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Extra arguments to pass to ``pip install`` when installing dependencies.
-
-
-poetry-with:
-~~~~~~~~~~~~
-
-**Type:** list of strings
-
-`Dependency groups
-<https://python-poetry.org/docs/managing-dependencies#dependency-groups>`_ to include.
-By default, only the main dependencies are included.
+.. kitbash-field:: PoetryPluginProperties poetry_with
 
 
 .. _craft_parts_poetry_plugin-environment_variables:

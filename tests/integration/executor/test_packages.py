@@ -30,7 +30,7 @@ def test_cut_build_slices(new_homedir_path, partitions):
     # changed in 24.04).
     first_part = Part(
         "foo",
-        {"plugin": "nil", "build-slices": ["bash_bins", "base-files_bin"]},
+        {"plugin": "nil", "build-slices": ["bash_bins", "base-files_bin", "sed_bins"]},
         partitions=partitions,
     )
 
@@ -40,23 +40,26 @@ def test_cut_build_slices(new_homedir_path, partitions):
     slices_dir = info.dirs.build_slices_dir
     assert not slices_dir.exists()
 
-    # Cut bash_bins and check the files
+    # Cut sed_bins and check the files
     e = Executor(project_info=info, part_list=[first_part])
     e.prologue()
 
     assert slices_dir.exists()
-    bash = slices_dir / "bin/bash"
-    assert bash.is_file()
+    sed = slices_dir / "bin/sed"
+    assert sed.is_file()
 
-    # Cut a different set of build-slices and check that bash is no longer there
+    # Cut a different set of build-slices and check that sed is no longer there
     second_part = Part(
         "foo",
-        {"plugin": "nil", "build-slices": ["hello_bins", "base-files_bin"]},
+        {
+            "plugin": "nil",
+            "build-slices": ["bash_bins", "base-files_bin", "hello_bins"],
+        },
         partitions=partitions,
     )
     e = Executor(project_info=info, part_list=[second_part])
     e.prologue()
 
-    assert not bash.is_file()
+    assert not sed.is_file()
     hello = slices_dir / "usr/bin/hello"
     assert hello.is_file()

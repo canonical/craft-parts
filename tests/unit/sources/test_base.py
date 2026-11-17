@@ -77,7 +77,7 @@ class TestSourceHandler:
             "abstract methods? '?pull'?$"
         )
         with pytest.raises(TypeError, match=expected):
-            FaultySource(
+            FaultySource(  # ty: ignore[abstract-class-instantiation]
                 source=".",
                 part_src_dir=Path(),
                 cache_dir=Path(),
@@ -309,9 +309,9 @@ class TestFileSourceHandler:
             r"implementation for)? abstract methods? '?provision'?$"
         )
         with pytest.raises(TypeError, match=expected):
-            FaultyFileSource(
-                source=None,  # ty: ignore[invalid-argument-type]
-                part_src_dir=None,  # ty: ignore[invalid-argument-type]
+            FaultyFileSource(  # ty: ignore[abstract-class-instantiation]
+                source="src",
+                part_src_dir=Path(),
                 cache_dir=Path(),
                 project_dirs=self._dirs,
             )

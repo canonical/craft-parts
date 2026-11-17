@@ -20,8 +20,107 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
-Unreleased
-----------
+.. _release-2.38.0:
+
+2.38.0 (YYYY-MM-DD)
+-------------------
+
+New features:
+
+- Support ``craftctl default`` in ``override-build`` for parts that declare
+  ``build-slices``. Other ``craftctl`` commands are not supported.
+
+- If any part declares ``build-slices``, Craft Parts will validate that the
+  resulting build environment contains ``/bin/bash``.
+
+- The Python plugin (v2) now rewrites the shebangs of pip-installed console
+  scripts to a runtime-valid interpreter path, instead of leaving the
+  build-time path that pip embeds. Applications can override the target
+  interpreter by subclassing the plugin.
+
+Bug fixes:
+
+- Already-installed snaps required to build a part are now refreshed when the
+  requested channel changes. This includes snaps declared in ``build-snaps`` and
+  snaps supplied by plugins or sources. Risk-only channels are resolved against
+  the snap's default track. Application-provided snaps, such as ``chisel`` when
+  slices are used, and locally installed snaps without store assertions are left
+  untouched if already installed.
+
+- Organizing a directory to a path inside itself, such as ``app: app/app/``,
+  now fails with an error instead of silently producing an empty part. Use a
+  glob key like ``app/*: app/app/`` to move the contents of ``app`` into
+  ``app/app``. If ``app/app`` already exists, the glob behavior merges into it
+  instead of nesting it again.
+
+- Stage packages are now marked in the order they are declared, making the
+  resolution of alternative dependencies deterministic. For example,
+  ``locales-all`` listed before ``postgresql`` is staged without also
+  staging ``locales``.
+
+- When using the ``rust-deps`` part to provision the Rust toolchain,
+  setting ``rust-channel: "none"`` is no longer required.
+
+- A path-like source that does not exist now raises ``SourceNotFound``
+  instead of ``InvalidSourceType`` error.
+
+- Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
+  directories, such as ``-**/__pycache__`` in a large Python environment.
+
+For a complete list of commits, check out the `2.38.0`_ release on GitHub.
+
+.. _release-2.37.3:
+
+2.37.3 (2026-11-10)
+-------------------
+
+Bug fixes:
+
+- Pass the host's release to Chisel with ``--release`` when cutting slices, as
+  Chisel can no longer infer it on Ubuntu 26.10 and newer, which don't ship
+  ``/etc/lsb-release``.
+
+For a complete list of commits, check out the `2.37.3`_ release on GitHub.
+
+.. _release-2.37.2:
+
+2.37.2 (2026-10-08)
+-------------------
+
+Bug fixes:
+
+- Fix performance regressions in fileset migration.
+
+For a complete list of commits, check out the `2.37.2`_ release on GitHub.
+
+
+.. _release-2.35.2:
+
+2.35.2 (2026-10-08)
+-------------------
+
+- Fix performance regressions in fileset migration.
+
+For a complete list of commits, check out the `2.35.2`_ release on GitHub.
+
+
+.. _release-2.37.1:
+
+2.37.1 (2026-09-25)
+-------------------
+
+Bug fixes:
+
+- Update a log message about resetting Features from Warning to Debug.
+
+- Installs the chisel snap if any build-slices are declared.
+
+For a complete list of commits, check out the `2.37.1`_ release on GitHub.
+
+.. _release-2.37.0:
+
+2.37.0 (2026-09-23)
+-------------------
 
 New features:
 
@@ -33,6 +132,9 @@ New features:
 - Craft Parts now always ignores Ubuntu's phased updates when installing
   build packages or fetching stage packages, so the latest available version
   of each package is used.
+
+- Support for ``build-slices``, where a set of Chisel slices defines the root system
+  where the part's Build step is executed.
 
 Bug fixes:
 
@@ -51,6 +153,22 @@ Bug fixes:
   are now retried with a delay between attempts, and installation is
   attempted even if the query still fails.
 
+- The JSON schema for parts now includes the regex pattern for the ``stage``, ``prime``,
+  ``build-slices``, and ``stage-slices`` keys.
+
+- Fix a line continuation issue in a ``tar`` call done by the ``npm`` plugin.
+
+- Fix a Permission denied error when accessing a non-existing ``/etc/apt/sources.list``.
+
+- Fix quoting of ``python-packages`` names on the ``python`` plugin v2.
+
+- Fix the schema for paths and slice keys.
+
+Documentation changes:
+
+- Update ``rustc`` and ``cargo`` provisioning in the reference docs for the ``rust`` plugin.
+
+For a complete list of commits, check out the `2.37.0`_ release on GitHub.
 
 .. _release-2.36.0:
 
@@ -1878,7 +1996,13 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.38.0: https://github.com/canonical/craft-parts/releases/tag/2.38.0
+.. _2.37.3: https://github.com/canonical/craft-parts/releases/tag/2.37.3
+.. _2.37.2: https://github.com/canonical/craft-parts/releases/tag/2.37.2
+.. _2.37.1: https://github.com/canonical/craft-parts/releases/tag/2.37.1
+.. _2.37.0: https://github.com/canonical/craft-parts/releases/tag/2.37.0
 .. _2.36.0: https://github.com/canonical/craft-parts/releases/tag/2.36.0
+.. _2.35.2: https://github.com/canonical/craft-parts/releases/tag/2.35.2
 .. _2.35.1: https://github.com/canonical/craft-parts/releases/tag/2.35.1
 .. _2.35.0: https://github.com/canonical/craft-parts/releases/tag/2.35.0
 .. _2.34.1: https://github.com/canonical/craft-parts/releases/tag/2.34.1

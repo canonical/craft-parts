@@ -46,6 +46,34 @@ _CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
 logger = logging.getLogger(__name__)
 
 
+def _normalize_channel(channel: str) -> str:
+    if not channel:
+        return ""
+
+    if any(
+        channel == risk or channel.startswith(f"{risk}/") for risk in _CHANNEL_RISKS
+    ):
+        return f"latest/{channel}"
+
+    return channel
+
+
+def _get_channel_track(channel: str) -> str:
+    """Return the track from a channel."""
+    return channel.split("/", 1)[0]
+
+
+def _decode_subprocess_stderr(err: subprocess.CalledProcessError) -> str | None:
+    stderr = err.stderr
+    if stderr is None:
+        return None
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode(errors="replace")
+
+    stderr = stderr.strip()
+    return stderr or None
+
+
 class SnapPackage:
     """SnapPackage acts as a mediator to install or refresh a snap.
 
@@ -78,8 +106,7 @@ class SnapPackage:
         """Lifecycle handler for a snap of the format <snap-name>@<channel> or <snap-name>/<channel>."""
         self.name, self.channel = _get_parsed_snap(snap)
         self._original_channel = self.channel
-        if not self.channel or self.channel == "stable":
-            self.channel = "latest/stable"
+        self.channel = _normalize_channel(self.channel)
 
         # This store information from a local request
         self._local_snap_info: dict[str, Any] | None = None
@@ -129,18 +156,25 @@ class SnapPackage:
                     self._store_snap_info = _get_store_snap_info(self.name)
                     break
                 except exceptions.HTTPError as http_error:
+                    response_status = (
+                        http_error.response.status_code
+                        if http_error.response is not None
+                        else None
+                    )
                     logger.debug(
-                        "The http error when checking the store for %s is %d "
+                        "The http error when checking the store for %s is %s "
                         "(retries left %d)",
                         self.name,
-                        http_error.response.status_code,
+                        response_status,
                         retry_count,
                     )
-                    if http_error.response.status_code == HTTPStatus.NOT_FOUND:
+                    if response_status == HTTPStatus.NOT_FOUND:
                         raise errors.SnapUnavailable(
                             snap_name=self.name, snap_channel=self.channel
                         ) from http_error
                     retry_count -= 1
+                    if retry_count == 0:
+                        raise
                     # Wait before retrying: snapd may be briefly unable to
                     # service requests, e.g. while restarting shortly after
                     # a build instance is created (SNAPDENG-36387).
@@ -161,9 +195,10 @@ class SnapPackage:
         if self.installed:
             local_snap_info = self.get_local_snap_info()
             if local_snap_info:
-                current_channel = local_snap_info["channel"]
-                if any(current_channel.startswith(risk) for risk in _CHANNEL_RISKS):
-                    current_channel = f"latest/{current_channel}"
+                current_channel = _normalize_channel(
+                    local_snap_info.get("tracking-channel")
+                    or local_snap_info.get("channel", "")
+                )
         return current_channel
 
     def has_assertions(self) -> bool:
@@ -175,11 +210,38 @@ class SnapPackage:
             return False
         return not local_snap_info["revision"].startswith("x")
 
+    def _get_default_store_channel(self) -> str:
+        """Return the default channel from the store information."""
+        snap_store_info = self.get_store_snap_info()
+        if not snap_store_info or not self.in_store:
+            return ""
+
+        default_channel = cast(str, snap_store_info.get("channel", ""))
+        return _normalize_channel(default_channel)
+
+    def _get_default_store_track(self) -> str:
+        """Return the default track from the store information."""
+        return _get_channel_track(self._get_default_store_channel())
+
+    def get_effective_channel(self) -> str:
+        """Return the channel resolved against the snap's default track."""
+        for risk in _CHANNEL_RISKS:
+            if self._original_channel == risk or self._original_channel.startswith(
+                f"{risk}/"
+            ):
+                default_track = self._get_default_store_track()
+                if default_track:
+                    return f"{default_track}/{self._original_channel}"
+                break
+
+        return self.channel
+
     def is_classic(self) -> bool:
         """Verify whether this snap is a classic snap."""
         store_channels = self._get_store_channels()
+        channel = self.get_effective_channel() or self._get_default_store_channel()
         try:
-            return bool(store_channels[self.channel]["confinement"] == "classic")
+            return bool(store_channels[channel]["confinement"] == "classic")
         except KeyError:
             # We have seen some KeyError issues when running tests that are
             # hard to debug as they only occur there, logging in debug mode
@@ -193,17 +255,18 @@ class SnapPackage:
 
     def is_valid(self) -> bool:
         """Check if the snap is valid."""
-        local_snap_info = self.get_local_snap_info()
-        if (
-            local_snap_info
-            and self.installed
-            and local_snap_info["channel"] == self.channel
-        ):
-            return True
-        if not self.in_store:
-            return False
-        store_channels = self._get_store_channels()
-        return self.channel in store_channels
+        channel = self.get_effective_channel()
+        if channel:
+            if self.installed and self.get_current_channel() == channel:
+                return True
+            if not self.in_store:
+                return False
+            store_channels = self._get_store_channels()
+            return channel in store_channels
+
+        # No channel requested; the snap is valid if it is installed or
+        # available in the store.
+        return self.installed or self.in_store
 
     def download(self, *, directory: str | pathlib.Path | None = None) -> None:
         """Download a given snap."""
@@ -219,11 +282,13 @@ class SnapPackage:
                 cwd=directory,
                 check=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapDownloadError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_channel=self.channel,
+                detail=_decode_subprocess_stderr(err),
             ) from err
 
     def install(self) -> None:
@@ -241,11 +306,13 @@ class SnapPackage:
                 snap_install_cmd,
                 check=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapInstallError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_channel=self.channel,
+                detail=_decode_subprocess_stderr(err),
             ) from err
 
         # Now that the snap is installed, invalidate the data we had on it.
@@ -253,8 +320,18 @@ class SnapPackage:
 
     def refresh(self) -> None:
         """Refresh a snap onto a channel on the system."""
-        logger.debug("Refreshing snap: %s (channel %s)", self.name, self.channel)
-        snap_refresh_cmd = ["snap", "refresh", self.name, "--channel", self.channel]
+        refresh_channel = self._original_channel or self.channel
+        if not refresh_channel:
+            return
+
+        logger.debug("Refreshing snap: %s (channel %s)", self.name, refresh_channel)
+        snap_refresh_cmd = [
+            "snap",
+            "refresh",
+            self.name,
+            "--channel",
+            refresh_channel,
+        ]
         with contextlib.suppress(errors.SnapUnavailable, KeyError):
             if self.is_classic():
                 snap_refresh_cmd.append("--classic")
@@ -264,11 +341,13 @@ class SnapPackage:
                 snap_refresh_cmd,
                 check=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError as err:
             raise errors.SnapRefreshError(
-                snap_name=self.name, snap_channel=self.channel
+                snap_name=self.name,
+                snap_channel=self.channel,
+                detail=_decode_subprocess_stderr(err),
             ) from err
 
         # Now that the snap is refreshed, invalidate the data we had on it.
@@ -287,8 +366,14 @@ def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> Non
         snap_pkg.download(directory=directory)
 
 
-def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
+def install_snaps(
+    snaps_list: Sequence[str] | set[str], *, refresh: bool = False
+) -> list[str]:
     """Install snaps of the format <snap-name>[@<channel>].
+
+    :param snaps_list: The snaps to install.
+    :param refresh: Whether to refresh snaps that are already installed from a
+        channel other than the requested one.
 
     :return: a list of "name=revision" for the snaps installed.
     """
@@ -304,13 +389,23 @@ def install_snaps(snaps_list: Sequence[str] | set[str]) -> list[str]:
             if snap_pkg_channel != "stable" and snap_pkg_type == "base":
                 snap_pkg = SnapPackage(f"{snap_pkg.name}/latest/{snap_pkg_channel}")
 
-        # Attempt the install even if the store query failed (store_snap_info
-        # is None): 'snap install' does its own store lookup and fails loudly
-        # if the snap is genuinely unavailable. Skipping the install here
-        # would only surface much later, as a confusing "command not found"
-        # error when the part's build environment is validated.
-        if not snap_pkg.installed:
-            snap_pkg.install()
+            if not snap_pkg.installed:
+                snap_pkg.install()
+            elif (
+                refresh
+                and snap_pkg.has_assertions()  # Keep locally installed snaps
+                and (
+                    target_channel := snap_pkg.get_effective_channel()
+                    or _normalize_channel(snap_pkg_channel)
+                )
+                and snap_pkg.get_current_channel() != target_channel
+            ):
+                # If the user didn't request a channel, refresh to the store's
+                # default channel; otherwise, refresh() uses the user-supplied
+                # channel and snapd resolves the default track.
+                if not snap_pkg.channel:
+                    snap_pkg.channel = target_channel
+                snap_pkg.refresh()
 
         local_snap_info = snap_pkg.get_local_snap_info()
         if local_snap_info:
