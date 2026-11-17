@@ -22,7 +22,7 @@ Changelog
 
 .. _release-2.38.0:
 
-2.38.0 (YYYY-MM-DD)
+2.38.0 (2026-11-17)
 -------------------
 
 New features:
@@ -38,7 +38,17 @@ New features:
   build-time path that pip embeds. Applications can override the target
   interpreter by subclassing the plugin.
 
+- Changes to a part's ``build-slices`` now invalidate its build step, as the
+  value is tracked in the part's build state.
+
 Bug fixes:
+
+- Fail fast when the snap store retries are exhausted while fetching snaps
+  declared in ``build-snaps``.
+
+- The Colcon plugin no longer requires the ``colcon`` metapackage, which is
+  unavailable on some Ubuntu releases. The ``python3-colcon-core`` package
+  provides the executable and verbs the plugin uses.
 
 - Already-installed snaps required to build a part are now refreshed when the
   requested channel changes. This includes snaps declared in ``build-snaps`` and
