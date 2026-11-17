@@ -46,9 +46,9 @@ Bug fixes:
 - Fail fast when the snap store retries are exhausted while fetching snaps
   declared in ``build-snaps``.
 
-- The Colcon plugin no longer requires the ``colcon`` metapackage, which is
-  unavailable on some Ubuntu releases. The ``python3-colcon-core`` package
-  provides the executable and verbs the plugin uses.
+- The Colcon plugin no longer requires the ``colcon`` :vale-ignore:`metapackage`,
+  which is unavailable on some Ubuntu releases. The ``python3-colcon-core`` 
+  package provides the executable and verbs the plugin uses.
 
 - Already-installed snaps required to build a part are now refreshed when the
   requested channel changes. This includes snaps declared in ``build-snaps`` and
