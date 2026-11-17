@@ -39,6 +39,9 @@ DEFAULT_PARTITION = "default"
 OVERLAY_PARTITION = "overlay"  # Pseudo-partition targeting the overlay
 BUILD_PARTITION = "build"  # Pseudo-partition pointing to the part build directory
 
+# Pseudo-partitions that can be used in organize even if partitions are disabled
+ORGANIZE_PSEUDO_PARTITIONS = (OVERLAY_PARTITION, BUILD_PARTITION)
+
 
 def normalize_partition_names(partitions: Sequence[str] | None) -> list[str]:
     """Return the canonical partition list for a project."""

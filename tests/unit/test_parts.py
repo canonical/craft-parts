@@ -236,28 +236,35 @@ class TestPartSpecs:
 class TestPartPartitionUsage:
     """Test usage of partitions in parts."""
 
-    def test_part_invalid_partition_usage_raises(self, partitions):
-        """Invalid partition markers are rejected in the default-only path too."""
+    def test_part_parenthesised_paths_deprecated(self, partitions, caplog):
+        """Parenthesised paths are regular paths, but are deprecated."""
         part_data = {
-            "organize": {"test": "(foo)"},
-            "stage": ["(bar)/test"],
+            "organize": {"(src)/foo": "(foo)", "(build)/bar": "(overlay)/bar"},
+            "stage": ["(bar)/test", "-(default)/x"],
             "prime": ["(baz)"],
         }
 
-        error = re.escape(
-            "Invalid usage of partitions\n"
-            "  parts.a.organize\n"
-            "    unknown partition 'foo' in '(foo)'\n"
-            "  parts.a.stage\n"
-            "    unknown partition 'bar' in '(bar)/test'\n"
-            "  parts.a.prime\n"
-            "    unknown partition 'baz' in '(baz)'\n"
-            "    no path specified after partition in '(baz)'\n"
-            "Valid partitions: default\n"
-            "Correct the invalid partition usage and try again."
-        )
-        with pytest.raises(errors.PartitionUsageError, match=error):
-            Part("a", part_data, partitions=partitions)
+        Part("a", part_data, partitions=partitions)
+
+        assert caplog.messages == [
+            (
+                "Part 'a' uses paths starting with a directory name in parentheses. "
+                "These paths are deprecated and won't be supported in a future "
+                "version: organize: '(src)/foo', organize: '(foo)', "
+                "stage: '(bar)/test', stage: '-(default)/x', prime: '(baz)'"
+            )
+        ]
+
+    def test_part_no_parenthesised_paths_no_warning(self, partitions, caplog):
+        """Don't warn about paths without parenthesised names."""
+        part_data = {
+            "organize": {"foo": "bar(baz)", "(build)/qux": "quux"},
+            "stage": ["foo/(bar)"],
+        }
+
+        Part("a", part_data, partitions=partitions)
+
+        assert caplog.messages == []
 
     def test_part_partition_misuse_no_warning(self, partitions):
         """Don't warn about partition misuse if partitions aren't enabled."""

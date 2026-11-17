@@ -48,11 +48,16 @@ from craft_parts.utils.deb_utils import has_debs, has_slices
 from craft_parts.utils.partition_utils import (
     BUILD_PARTITION,
     DEFAULT_PARTITION,
+    ORGANIZE_PSEUDO_PARTITIONS,
     OVERLAY_PARTITION,
     get_partition_dir_map,
     normalize_partition_names,
 )
-from craft_parts.utils.path_utils import get_partition_and_path
+from craft_parts.utils.path_utils import (
+    get_partition_and_path,
+    get_user_partition_and_path,
+    is_parenthesised_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -811,6 +816,14 @@ class PartSpec(BaseModel):
         return bool(self.build_slices)
 
 
+def _is_organize_pseudo_partition(path: str) -> bool:
+    """Check whether an organize path starts with (build) or (overlay)."""
+    partition, _ = get_user_partition_and_path(
+        path, DEFAULT_PARTITION, special_partitions=ORGANIZE_PSEUDO_PARTITIONS
+    )
+    return partition in ORGANIZE_PSEUDO_PARTITIONS
+
+
 def _get_build_partition_usage_error(fileset_name: str, partition: str) -> str | None:
     """Return an error message if the build pseudo-partition is misused."""
     if partition != BUILD_PARTITION:
@@ -1128,6 +1141,10 @@ class Part:
         :raises PartitionError: If partitions are not used properly in a fileset.
         :raises PartitionWarning: If a fileset entry is misusing a partition.
         """
+        if not Features().enable_partitions:
+            self._warn_parenthesised_paths()
+            return
+
         error_list: list[str] = []
         warning_list: list[str] = []
 
@@ -1144,9 +1161,7 @@ class Part:
             warning_list.extend(partition_warnings)
             error_list.extend(partition_errors)
 
-        # Partition misuse warnings only make sense if the application uses
-        # partitions; otherwise paths like "default/foo" are regular paths.
-        if warning_list and Features().enable_partitions:
+        if warning_list:
             warnings.warn(
                 errors.PartitionUsageWarning(warning_list=warning_list), stacklevel=1
             )
@@ -1155,6 +1170,37 @@ class Part:
             raise errors.PartitionUsageError(
                 error_list=error_list,
                 partitions=self._partitions,
+            )
+
+    def _warn_parenthesised_paths(self) -> None:
+        """Warn about paths that start with a parenthesised directory name.
+
+        If partitions are not enabled, these are regular paths. Warn that they
+        are deprecated, because parenthesised names are reserved for partitions.
+        The (build) and (overlay) pseudo-partitions in organize are not paths.
+        """
+        organize_files = self.spec.organize_files
+        deprecated = [
+            f"{name}: {path!r}"
+            for name, paths, special in [
+                ("organize", list(organize_files), True),
+                ("organize", list(organize_files.values()), True),
+                ("stage", self.spec.stage_files, False),
+                ("prime", self.spec.prime_files, False),
+                ("overlay", self.spec.overlay_files, False),
+            ]
+            for path in paths
+            if is_parenthesised_path(path)
+            and not (special and _is_organize_pseudo_partition(path))
+        ]
+
+        if deprecated:
+            logger.warning(
+                "Part %r uses paths starting with a directory name in parentheses. "
+                "These paths are deprecated and won't be supported in a future "
+                "version: %s",
+                self.name,
+                ", ".join(deprecated),
             )
 
     def _check_partitions_in_filepaths(

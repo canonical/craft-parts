@@ -124,7 +124,8 @@ class Fileset:
         self._validate_entries(entries)
         self._default_partition = default_partition
         self._list: list[str] = [
-            normalize_entry(entry, self._default_partition) for entry in entries
+            normalize_entry(entry, self._default_partition, user_entry=True)
+            for entry in entries
         ]
 
     def __repr__(self) -> str:
@@ -419,19 +420,33 @@ def _get_resolved_relative_path(
     return _get_path(rel)
 
 
-def normalize_entry(entry: str, default_partition: str) -> str:
+def normalize_entry(
+    entry: str, default_partition: str, *, user_entry: bool = False
+) -> str:
     """Normalize an entry to begin with a partition.
 
     `foo` will be normalized to `(default)/foo`.
 
     :param entry: Entry to normalize.
+    :param default_partition: The name of the default partition.
+    :param user_entry: Whether the entry comes from the project. If the
+        partitions feature is not enabled, a leading parenthesised name in a
+        user entry is a regular path component, so `(etc)/foo` is normalized
+        to `(default)/(etc)/foo`.
 
     :returns: Normalized entry.
     """
     # split file into an optional prefix (a hyphen character) and the file
     prefix, file = _split_entry(entry)
 
-    partition, inner_path = path_utils.get_partition_and_path(file, default_partition)
+    if user_entry:
+        partition, inner_path = path_utils.get_user_partition_and_path(
+            file, default_partition
+        )
+    else:
+        partition, inner_path = path_utils.get_partition_and_path(
+            file, default_partition
+        )
 
     if partition:
         return f"{prefix}({partition})/{inner_path}"

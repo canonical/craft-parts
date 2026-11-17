@@ -23,6 +23,8 @@ from craft_parts.utils.path_utils import (
     _has_partition,
     _split_partition_and_inner_path,
     get_partition_and_path,
+    get_user_partition_and_path,
+    is_parenthesised_path,
 )
 
 PATH_CLASSES = [Path, PurePosixPath]
@@ -215,6 +217,84 @@ def test_get_partition_compatible_filepath_partition(partition_paths, path_class
     assert actual_partition == expected_partition
     assert actual_inner_path == path_class(expected_inner_path)
     assert isinstance(actual_inner_path, path_class)
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_partition", "expected_inner_path"),
+    [
+        ("foo", "default", "foo"),
+        ("(etc)/foo", "default", "(etc)/foo"),
+        ("(default)/foo", "default", "(default)/foo"),
+        ("(build)/foo", "default", "(build)/foo"),
+        ("(overlay)/foo", "default", "(overlay)/foo"),
+    ],
+)
+@pytest.mark.parametrize("path_class", PATH_CLASSES)
+def test_get_user_partition_and_path_literal(
+    path, expected_partition, expected_inner_path, path_class
+):
+    """Parenthesised names are regular path components without partitions."""
+    actual_partition, actual_inner_path = get_user_partition_and_path(
+        path_class(path), "default"
+    )
+
+    assert actual_partition == expected_partition
+    assert actual_inner_path == path_class(expected_inner_path)
+    assert isinstance(actual_inner_path, path_class)
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_partition", "expected_inner_path"),
+    [
+        ("(etc)/foo", "default", "(etc)/foo"),
+        ("(build)/foo", "build", "foo"),
+        ("(overlay)/foo", "overlay", "foo"),
+    ],
+)
+def test_get_user_partition_and_path_special(
+    path, expected_partition, expected_inner_path
+):
+    """Special pseudo-partitions are parsed even without partitions."""
+    assert get_user_partition_and_path(
+        path, "default", special_partitions=("build", "overlay")
+    ) == (expected_partition, expected_inner_path)
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.parametrize(
+    ("path", "expected_partition", "expected_inner_path"),
+    [
+        ("foo", "default", "foo"),
+        ("(etc)/foo", "etc", "foo"),
+        ("(default)/foo", "default", "foo"),
+    ],
+)
+def test_get_user_partition_and_path_partitions_enabled(
+    path, expected_partition, expected_inner_path
+):
+    """Parenthesised names are partitions if partitions are enabled."""
+    assert get_user_partition_and_path(path, "default") == (
+        expected_partition,
+        expected_inner_path,
+    )
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("(etc)", True),
+        ("(etc)/foo", True),
+        ("-(etc)/foo", True),
+        ("(Not A Partition!)/foo", True),
+        ("foo", False),
+        ("foo/(etc)", False),
+        ("(etc)foo", False),
+        ("(etc/foo)bar", False),
+        ("", False),
+    ],
+)
+def test_is_parenthesised_path(path, expected):
+    assert is_parenthesised_path(path) is expected
 
 
 def test_split_partition_and_inner_path_error():

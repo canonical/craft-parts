@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+
 import pytest
 from craft_parts import errors
 from craft_parts.executor import Fileset, filesets
@@ -156,6 +158,31 @@ def test_filesets_excludes_without_relative_paths():
         )
     assert raised.value.name == "test"
     assert raised.value.message == "path '/abs/exclude' must be relative."
+
+
+def test_fileset_parenthesised_paths_literal(new_dir):
+    """Parenthesised names are regular paths if partitions are not enabled."""
+    fs = Fileset(["(etc)/foo", "(default)/bar", "-(default)/bar/baz"])
+    assert fs.entries == [
+        "(default)/(etc)/foo",
+        "(default)/(default)/bar",
+        "-(default)/(default)/bar/baz",
+    ]
+
+    install_dir = Path("install")
+    for path in ["(etc)/foo", "(default)/bar/baz", "(default)/bar/qux", "other"]:
+        (install_dir / path).parent.mkdir(parents=True, exist_ok=True)
+        (install_dir / path).touch()
+
+    files, _ = filesets.migratable_filesets(fs, install_dir, "default", "default")
+    assert files == {Path("(etc)/foo"), Path("(default)/bar/qux")}
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_fileset_parenthesised_paths_partitions_enabled():
+    """Parenthesised names are partitions if partitions are enabled."""
+    fs = Fileset(["(etc)/foo", "(default)/bar"])
+    assert fs.entries == ["(etc)/foo", "(default)/bar"]
 
 
 # migratable_filesets tested in tests/unit/executor/test_step_handler.py

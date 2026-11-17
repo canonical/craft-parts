@@ -860,3 +860,26 @@ def test_glob_destination_matching_source_glob_behavior(new_dir):
         overwrite=True,
         install_dirs={"default": Path(new_dir / "install")},
     )
+
+
+def test_organize_parenthesised_paths_literal(new_dir):
+    """Parenthesised names are regular paths if partitions are not enabled."""
+    install_dir = Path(new_dir / "install")
+    build_dir = Path(new_dir / "build")
+    (install_dir / "(etc)").mkdir(parents=True)
+    (install_dir / "(etc)/foo").write_text("foo")
+    build_dir.mkdir()
+    (build_dir / "bar").write_text("bar")
+
+    organize_files(
+        part_name="part-name",
+        file_map={"(etc)/foo": "(default)/foo", "(build)/bar": "bar"},
+        install_dir_map={"default": install_dir, BUILD_PARTITION: build_dir},
+        overwrite=False,
+        default_partition="default",
+    )
+
+    assert not (install_dir / "(etc)/foo").exists()
+    assert (install_dir / "(default)/foo").read_text() == "foo"
+    assert (install_dir / "bar").read_text() == "bar"
+    assert (build_dir / "bar").exists()

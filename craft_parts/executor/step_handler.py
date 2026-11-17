@@ -220,7 +220,7 @@ class StepHandler:
 
         backstage_files, backstage_dirs = filesets.migratable_filesets(
             Fileset(
-                [f"({self._step_info.default_partition})/*"],
+                ["*"],
                 name="backstage",
                 default_partition=self._step_info.default_partition,
             ),

@@ -39,6 +39,7 @@ from craft_parts.utils import file_utils, path_utils
 from craft_parts.utils.partition_utils import (
     BUILD_PARTITION,
     DEFAULT_PARTITION,
+    ORGANIZE_PSEUDO_PARTITIONS,
     OVERLAY_PARTITION,
 )
 
@@ -295,7 +296,9 @@ def organize_files(  # noqa: PLR0912, PLR0915
         the default partition.
     """
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
-        src_partition_pair = path_utils.get_partition_and_path(key, default_partition)
+        src_partition_pair = path_utils.get_user_partition_and_path(
+            key, default_partition, special_partitions=ORGANIZE_PSEUDO_PARTITIONS
+        )
         src = get_src_path(
             src_partition_pair,
             part_name,
@@ -306,8 +309,10 @@ def organize_files(  # noqa: PLR0912, PLR0915
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
-        dst_partition_pair = path_utils.get_partition_and_path(
-            file_map[key].lstrip("/"), default_partition
+        dst_partition_pair = path_utils.get_user_partition_and_path(
+            file_map[key].lstrip("/"),
+            default_partition,
+            special_partitions=ORGANIZE_PSEUDO_PARTITIONS,
         )
         dst, dst_string = get_dst_path(
             dst_partition_pair,
