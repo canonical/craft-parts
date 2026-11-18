@@ -19,7 +19,14 @@
 
 import distro
 
-_DEB_BASED_PLATFORM = ["ubuntu", "debian", "elementary OS", "elementary", "neon"]
+_DEB_BASED_PLATFORM = [
+    "ubuntu",
+    "debian",
+    "elementary OS",
+    "elementary",
+    "neon",
+    "elementary_os",
+]
 _YUM_BASED_PLATFORM = ["centos"]
 _DNF_BASED_PLATFORM = ["almalinux"]
 
@@ -31,7 +38,7 @@ def _check(distro_name: str | None, platform_distros: list[str]) -> bool:
     return "unknown" on error.
     """
     if not distro_name:
-        distro_name = distro.id() or "unknown"
+        distro_name = distro.LinuxDistribution().id() or "unknown"
     return distro_name in platform_distros
 
 

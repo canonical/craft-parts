@@ -154,9 +154,7 @@ def _host_compatible_chroot(path: Path) -> None:
     # This could cause an issue if /etc/os-release is removed at any point.
     host_id = distro.id()
     host_version = distro.version()
-    chroot_ld = distro.LinuxDistribution(
-        os_release_file=str(path / "etc/os-release"), include_lsb=False
-    )
+    chroot_ld = distro.LinuxDistribution(root_dir=str(path), include_lsb=False)
     chroot_id = chroot_ld.id()
     chroot_version = chroot_ld.version()
 
