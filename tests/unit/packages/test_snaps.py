@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import subprocess
 from pathlib import Path
 
 import pytest
+import requests
 from craft_parts.packages import errors, snaps
 from requests import Response, exceptions
 
@@ -892,6 +894,8 @@ class TestSnapPackageLifecycle:
         assert installed_snaps == ["fake-base-snap=test-fake-base-snap-revision"]
 
     def test_install_snaps_store_query_http_error(self, mocker):
+        mocker.patch("craft_parts.packages.snaps.time.sleep")
+        mocker.patch("craft_parts.packages.snaps._wait_for_snapd_ready")
         response = Response()
         response.status_code = 500
         http_error = exceptions.HTTPError(response=response)
@@ -904,6 +908,102 @@ class TestSnapPackageLifecycle:
             snaps.install_snaps(["fake-snap"])
 
         assert get_store_snap_info.call_count == 5
+
+
+class TestStoreQueryRetries:
+    """Store queries through snapd wait for snapd to be ready between retries."""
+
+    @staticmethod
+    def _transient_error():
+        response = requests.Response()
+        response.status_code = 500
+        return requests.exceptions.HTTPError(response=response)
+
+    def test_get_store_snap_info_retries_transient_errors(self, mocker):
+        """Transient HTTP errors are retried after waiting for snapd."""
+        fake_sleep = mocker.patch("craft_parts.packages.snaps.time.sleep")
+        fake_wait = mocker.patch("craft_parts.packages.snaps._wait_for_snapd_ready")
+        store_info = {"channel": "stable", "type": "app"}
+        mocker.patch(
+            "craft_parts.packages.snaps._get_store_snap_info",
+            side_effect=[self._transient_error(), self._transient_error(), store_info],
+        )
+        snap_pkg = snaps.SnapPackage("fake-snap")
+        assert snap_pkg.get_store_snap_info() == store_info
+        assert fake_sleep.call_count == 2
+        assert fake_wait.call_count == 2
+
+    def test_get_store_snap_info_gives_up_after_retries(self, mocker):
+        """After exhausting all attempts the last error is raised."""
+        mocker.patch("craft_parts.packages.snaps.time.sleep")
+        fake_wait = mocker.patch("craft_parts.packages.snaps._wait_for_snapd_ready")
+        mocker.patch(
+            "craft_parts.packages.snaps._get_store_snap_info",
+            side_effect=self._transient_error(),
+        )
+        snap_pkg = snaps.SnapPackage("fake-snap")
+        with pytest.raises(requests.exceptions.HTTPError):
+            snap_pkg.get_store_snap_info()
+        # No wait after the final attempt.
+        assert fake_wait.call_count == 4
+
+
+class TestWaitForSnapdReady:
+    WAIT_CMD = ["snap", "wait", "system", "seed.loaded"]
+
+    @staticmethod
+    def _not_ready():
+        return subprocess.CalledProcessError(
+            returncode=1, cmd="snap", stderr=b"daemon is stopping"
+        )
+
+    def test_ready(self, mocker):
+        fake_run = mocker.patch("craft_parts.packages.snaps.subprocess.run")
+        fake_sleep = mocker.patch("craft_parts.packages.snaps.time.sleep")
+
+        snaps._wait_for_snapd_ready()
+
+        assert fake_run.call_count == 1
+        assert fake_run.call_args.args[0] == self.WAIT_CMD
+        fake_sleep.assert_not_called()
+
+    def test_retries_until_ready(self, mocker):
+        fake_run = mocker.patch(
+            "craft_parts.packages.snaps.subprocess.run",
+            side_effect=[self._not_ready(), self._not_ready(), None],
+        )
+        fake_sleep = mocker.patch("craft_parts.packages.snaps.time.sleep")
+
+        snaps._wait_for_snapd_ready()
+
+        assert fake_run.call_count == 3
+        assert fake_sleep.call_count == 2
+
+    def test_gives_up_after_timeout(self, mocker):
+        # Each check of the clock advances it by 4 seconds: attempts at 4, 8, 12.
+        clock = iter(range(0, 100, 4))
+        mocker.patch(
+            "craft_parts.packages.snaps.time.monotonic", side_effect=lambda: next(clock)
+        )
+        fake_run = mocker.patch(
+            "craft_parts.packages.snaps.subprocess.run", side_effect=self._not_ready()
+        )
+        mocker.patch("craft_parts.packages.snaps.time.sleep")
+
+        snaps._wait_for_snapd_ready(timeout=15)  # does not raise
+
+        assert fake_run.call_count == 3
+
+    def test_gives_up_if_snap_wait_hangs(self, mocker):
+        fake_run = mocker.patch(
+            "craft_parts.packages.snaps.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(cmd="snap", timeout=15),
+        )
+
+        snaps._wait_for_snapd_ready(timeout=15)  # does not raise
+
+        assert fake_run.call_count == 1
+        assert 0 < fake_run.call_args.kwargs["timeout"] <= 15
 
 
 class TestInstalledSnaps:
