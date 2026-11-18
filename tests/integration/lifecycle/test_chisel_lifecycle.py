@@ -38,9 +38,7 @@ def _current_release_supported() -> bool:
     """Whether Chisel supports the current running OS release."""
     release_id = distro.id()
     release_version = distro.version()
-    return (
-        release_id == "ubuntu" and release_version in SUPPORTED_UBUNTU_VERSIONS
-    )
+    return release_id == "ubuntu" and release_version in SUPPORTED_UBUNTU_VERSIONS
 
 
 @pytest.mark.skipif(

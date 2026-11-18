@@ -14,13 +14,9 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.scons_plugin
 
-scons-parameters
-~~~~~~~~~~~~~~~~
-
-**Type:** list of strings
-
-Parameters to pass to SCons for building and installation.
+.. kitbash-field:: SConsPluginProperties scons_parameters
 
 
 Environment variables

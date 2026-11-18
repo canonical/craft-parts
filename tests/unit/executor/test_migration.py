@@ -35,6 +35,38 @@ from craft_parts.steps import Step
 class TestFileMigration:
     """Verify different migration scenarios."""
 
+    def test_migratable_filesets_rereadsymlinked_parent_swap(self, partitions):
+        """Swapping a symlink parent must be visible to the next call."""
+        install_dir = Path("install")
+        real1 = install_dir / "real1"
+        real2 = install_dir / "real2"
+        install_dir.mkdir()
+        real1.mkdir()
+        real2.mkdir()
+        Path(real1, "foo").touch()
+        Path(real2, "foo").touch()
+        parent = install_dir / "parent"
+        parent.symlink_to(real1.name, target_is_directory=True)
+
+        files, _dirs = filesets.migratable_filesets(
+            Fileset(["parent/*"]),
+            install_dir,
+            default_partition="default",
+            partition="default" if partitions else None,
+        )
+        assert files == {Path("real1/foo")}
+
+        parent.unlink()
+        parent.symlink_to(real2.name, target_is_directory=True)
+
+        files, _dirs = filesets.migratable_filesets(
+            Fileset(["parent/*"]),
+            install_dir,
+            default_partition="default",
+            partition="default" if partitions else None,
+        )
+        assert files == {Path("real2/foo")}
+
     def test_migrate_files_already_exists(self, partitions):
         install_dir = Path("install")
         stage_dir = Path("stage")

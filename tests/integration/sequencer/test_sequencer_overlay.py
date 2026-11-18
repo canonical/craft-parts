@@ -62,6 +62,8 @@ _build_state_foo = textwrap.dedent(
       stage-packages: []
       disable-parallel: False
       build-packages: []
+      build-snaps: []
+      build-slices: []
       organize: {}
       build-attributes: []
       build-environment: []

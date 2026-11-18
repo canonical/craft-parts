@@ -35,7 +35,9 @@ def target_func_error(content: str) -> int:
     raise RuntimeError("bummer")
 
 
-def _write_os_release(path: Path, release_id: str = "ubuntu", version: str = "24.04") -> None:
+def _write_os_release(
+    path: Path, release_id: str = "ubuntu", version: str = "24.04"
+) -> None:
     path.write_text(
         textwrap.dedent(
             f"""\
@@ -319,7 +321,9 @@ class TestChroot:
         new_root = Path(new_dir, "dir1")
         etc_dir = new_root / "etc"
         etc_dir.mkdir(parents=True)
-        _write_os_release(etc_dir / "os-release", release_id=release_id, version=version)
+        _write_os_release(
+            etc_dir / "os-release", release_id=release_id, version=version
+        )
         mocker.patch("craft_parts.overlays.chroot.distro.id", return_value="ubuntu")
         mocker.patch("craft_parts.overlays.chroot.distro.version", return_value="24.04")
 

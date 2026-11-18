@@ -34,7 +34,7 @@ if sys.version_info >= (3, 11):
     import tomllib
 else:
     # Python 3.10 compatibility
-    import tomli as tomllib  # ty: ignore[unresolved-import]
+    import tomli as tomllib
 
 CARGO_TOML_TEMPLATE = """\
 [source.craft-parts]

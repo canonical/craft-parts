@@ -26,12 +26,9 @@ from craft_parts.plugins.colcon_plugin import ColconPlugin
 
 
 def is_ubuntu_jammy_or_focal() -> bool:
-    try:
-        return distro.id() == "ubuntu" and (
-            distro.version() == "22.04" or distro.version() == "20.04"
-        )
-    except Exception:
-        return False
+    return distro.id() == "ubuntu" and (
+        distro.version() == "22.04" or distro.version() == "20.04"
+    )
 
 
 pytestmark = [

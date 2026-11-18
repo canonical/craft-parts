@@ -25,30 +25,13 @@ Keys
 
 This plugin provides the following unique keys.
 
+.. py:currentmodule:: craft_parts.plugins.ant_plugin
 
-ant-build-targets
-~~~~~~~~~~~~~~~~~
+.. kitbash-field:: AntPluginProperties ant_build_targets
 
-**Type:** list of strings
+.. kitbash-field:: AntPluginProperties ant_build_file
 
-The ant targets to build. These are directly passed to the ``ant`` command line.
-
-
-ant-build-file
-~~~~~~~~~~~~~~
-
-**Type:** str
-
-The name of the main XML build file. Defaults to ``build.xml``.
-
-
-ant-properties
-~~~~~~~~~~~~~~
-
-**Type:** dict of strings to strings
-
-A series of key: value pairs that are passed to ``ant`` as properties using the
-``-D{key}={value}`` notation.
+.. kitbash-field:: AntPluginProperties ant_properties
 
 
 Environment variables

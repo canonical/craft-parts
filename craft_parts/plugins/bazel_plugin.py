@@ -18,6 +18,7 @@
 
 from typing import Literal, cast
 
+import pydantic
 from typing_extensions import override
 
 from craft_parts.constraints import UniqueList
@@ -32,8 +33,19 @@ class BazelPluginProperties(PluginProperties, frozen=True):
 
     plugin: Literal["bazel"] = "bazel"
 
-    bazel_targets: list[str] = ["//..."]
-    bazel_parameters: list[str] = []
+    bazel_targets: list[str] = pydantic.Field(
+        default=["//..."],
+        description="The targets to build.",
+    )
+    """The targets to build. By default, all targets are built.
+    """
+
+    bazel_parameters: list[str] = pydantic.Field(
+        default=[],
+        description="The parameters to pass to Bazel.",
+    )
+    """The parameters to pass to Bazel.
+    """
 
     # part properties required by the plugin
     source: str

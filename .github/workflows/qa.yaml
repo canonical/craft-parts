@@ -8,6 +8,7 @@ on:
       - "release/*"
       - "renovate/*"
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 # Cancel existing jobs for this branch/PR
 concurrency:
@@ -26,24 +27,20 @@ jobs:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     with:
       fast-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       fast-test-python-versions: '["3.10", "3.12", "3.13", "3.14"]'
       slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       slow-test-python-versions: '["3.12"]'
       # We must always test on at least one EOL base to ensure that chisel behaves
       # correctly on said EOL base.
@@ -74,14 +71,12 @@ jobs:
     with:
       fast-test-platforms: ""
       slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: java
@@ -92,12 +87,12 @@ jobs:
     with:
       fast-test-platforms: ""
       slow-test-platforms: >
-        [
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       slow-test-python-versions: '["3.12"]'
       lowest-python-version: ""
       pytest-markers: python
@@ -122,14 +117,12 @@ jobs:
     with:
       fast-test-platforms: ""
       slow-test-platforms: >
-        [
-          "ubuntu-22.04",
-          "ubuntu-22.04-arm",
-          "ubuntu-24.04",
-          "ubuntu-24.04-arm",
-          ["noble", "s390x", "edge"],
-          ["noble", "ppc64el", "edge"],
-        ]
+        ${{ format(
+          '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
+          contains(github.event.pull_request.labels.*.name, 'PR: Run manual tests') &&
+            ', ["noble", "s390x", "edge"], ["noble", "ppc64el", "edge"]' ||
+            ''
+        ) }}
       slow-test-python-versions: '["3.12"]'
       lowest-python-platform: '["focal"]'
       lowest-python-version: "3.10"
@@ -143,7 +136,56 @@ jobs:
       fast-test-python-versions: '["3.12"]'
       slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
       slow-test-python-versions: '["3.12"]'
-      lowest-python-version: ""
+      lowest-python-platform: '["amd64", "focal"]'
+      lowest-python-version: "3.10"
       pytest-markers: requires_root
-      test-command-prefix: sudo env "PATH=$PATH"
+      setup-vars: NO_PYTHON=1
+      test-command-prefix: sudo env "PATH=$PATH" ${UV_RESOLUTION:+UV_RESOLUTION=$UV_RESOLUTION}
       use-lxd: false
+  workshop-tests:
+    strategy:
+      matrix:
+        runner: [ubuntu-26.04, ubuntu-26.04-arm]
+      fail-fast: false
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          depth: 0
+      - name: Launch workshop dev
+        uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
+        with:
+          workshop: dev
+          cache: |
+            uv:cache
+            go:mod-cache
+      - name: Launch workshop jammy
+        uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
+        with:
+          workshop: jammy
+          cache: |
+            uv:cache
+            go:mod-cache
+      - name: Launch workshop noble
+        uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
+        with:
+          workshop: noble
+          cache: |
+            uv:cache
+            go:mod-cache
+      - name: Run lint
+        run: |
+          workshop run dev -- setup
+          workshop run dev -- lint-code
+      - name: Run fast tests
+        run: |
+          # Each workshop uses its own UV_PROJECT_ENVIRONMENT (/opt/venv),
+          # so the shared /project mount does not need re-syncing between
+          # runs; the launch-time setup already synced each workshop's venv.
+          workshop run jammy -- test-fast
+          workshop run noble -- test-fast
+          workshop run dev -- test-fast

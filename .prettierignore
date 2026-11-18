@@ -1,5 +1,5 @@
 # Files from the Starter Pack
-docs/.sphinx
+docs/_dev
 
 # Copilot instructions and skills, which come from copilot collections.
 .github/instructions

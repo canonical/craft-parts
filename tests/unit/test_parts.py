@@ -758,6 +758,26 @@ class TestPartHelpers:
         p = parts.get_parts_with_overlay(part_list=[p1, p2, p3, p4, p5])
         assert p == []
 
+    @pytest.mark.usefixtures("enable_build_slices")
+    def test_get_build_slices(self, partitions):
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-slices": ["base-files_base", "bash_bins"]},
+            partitions=partitions,
+        )
+        p2 = Part(
+            "bar",
+            {"plugin": "nil", "build-slices": ["bash_bins", "hello_bins"]},
+            partitions=partitions,
+        )
+        p3 = Part("baz", {"plugin": "nil"}, partitions=partitions)
+
+        assert parts.get_build_slices(part_list=[p1, p2, p3]) == [
+            "base-files_base",
+            "bash_bins",
+            "hello_bins",
+        ]
+
 
 class TestPartValidation:
     """Part validation considering plugin-specific attributes."""
