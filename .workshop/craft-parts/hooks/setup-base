@@ -1,0 +1,44 @@
+#!/bin/bash
+# Install the system packages and dev tools needed for craft-parts development
+# and testing. setup-base runs as root before /project is mounted.
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+# Non-classic tool snaps can't see /project (snap confinement), so ruff, ty,
+# codespell, shellcheck and shfmt are installed via other means. tombi and
+# actionlint come from their SDKs.
+sudo apt-get update
+sudo apt-get install --yes --no-install-recommends \
+    build-essential \
+    libxml2-dev \
+    libxslt1-dev \
+    intltool \
+    fuse-overlayfs \
+    socat \
+    mmdebstrap \
+    python3-dev \
+    python3-venv \
+    7zip \
+    curl \
+    git \
+    rpm \
+    pkg-config \
+    automake \
+    autopoint \
+    cmake \
+    ninja-build \
+    meson \
+    libtool \
+    gperf \
+    help2man \
+    texinfo \
+    shellcheck \
+    shfmt
+
+# Keep the uv project venv outside /project: workshops sharing one project
+# mount each need their own Python version and dependency groups. /opt/venv
+# is the uv:venv mount slot target. Login shells (workshop exec/run/shell,
+# hooks via sudo --login) source this; non-login shells do not.
+cat >/etc/profile.d/uv-project.sh <<'EOF'
+export UV_PROJECT_ENVIRONMENT=/opt/venv
+EOF
