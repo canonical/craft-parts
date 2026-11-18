@@ -928,6 +928,7 @@ class Ubuntu(BaseRepository):
         install_path: pathlib.Path,
         stage_packages: list[str] | None = None,
         track_stage_packages: bool = False,
+        arch: str | None = None,
     ) -> None:
         """Unpack stage packages to install_path."""
         if stage_packages is None:
@@ -935,7 +936,7 @@ class Ubuntu(BaseRepository):
         # Assumes that the list is all slices or all packages, but not a mix.
         if deb_utils.has_slices(stage_packages):
             cls._unpack_stage_slices(
-                stage_packages=stage_packages, install_path=install_path
+                stage_packages=stage_packages, install_path=install_path, arch=arch
             )
         else:
             cls._unpack_stage_debs(
@@ -975,14 +976,19 @@ class Ubuntu(BaseRepository):
 
     @classmethod
     def _unpack_stage_slices(
-        cls, *, stage_packages: list[str], install_path: pathlib.Path
+        cls,
+        *,
+        stage_packages: list[str],
+        install_path: pathlib.Path,
+        arch: str | None = None,
     ) -> None:
         """Cut Chisel slices into a destination path.
 
         :param stage_packages: The list of names of slices to cut.
         :param install_path: The destination directory.
+        :param arch: The architecture to cut the slices for.
         """
-        chisel.cut_slices(slices=stage_packages, target_dir=install_path)
+        chisel.cut_slices(slices=stage_packages, target_dir=install_path, arch=arch)
 
         normalize(install_path, repository=cls)
 

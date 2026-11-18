@@ -74,16 +74,22 @@ class SlicesState(BaseModel):
         return cls.unmarshal(data)
 
 
-def cut_slices(slices: list[str], target_dir: pathlib.Path) -> None:
+def cut_slices(
+    slices: list[str], target_dir: pathlib.Path, arch: str | None = None
+) -> None:
     """Cut Chisel slices into a destination path.
 
     :param slices: The list of names of slices to cut.
     :param target_dir: The destination directory.
+    :param arch: The architecture to cut the slices for. If not set, Chisel
+        uses the host architecture.
     """
     # Pass the release explicitly instead of letting Chisel infer it from
     # /etc/lsb-release, which is no longer shipped from Ubuntu 26.10 onwards.
     os_release = os_utils.OsRelease()
     release = f"{os_release.id()}-{os_release.version_id()}"
+
+    arch_args = [f"--arch={arch}"] if arch else []
 
     output_stream = StringIO()
     handler = logging.StreamHandler(stream=output_stream)
@@ -94,6 +100,7 @@ def cut_slices(slices: list[str], target_dir: pathlib.Path) -> None:
                 "chisel",
                 "cut",
                 f"--release={release}",
+                *arch_args,
                 "--ignore=unmaintained",
                 "--ignore=unstable",
                 f"--root={target_dir}",
