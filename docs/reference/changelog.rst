@@ -22,7 +22,7 @@ Changelog
 
 .. _release-2.38.0:
 
-2.38.0 (YYYY-MM-DD)
+2.38.0 (2026-11-17)
 -------------------
 
 New features:
@@ -37,7 +37,22 @@ New features:
 - If any part declares ``build-slices``, Craft Parts will validate that the
   resulting build environment contains ``/bin/bash``.
 
+- The Python plugin (v2) now rewrites the shebangs of pip-installed console
+  scripts to a runtime-valid interpreter path, instead of leaving the
+  build-time path that pip embeds. Applications can override the target
+  interpreter by subclassing the plugin.
+
+- Changes to a part's ``build-slices`` now invalidate its build step, as the
+  value is tracked in the part's build state.
+
 Bug fixes:
+
+- Fail fast when the snap store retries are exhausted while fetching snaps
+  declared in ``build-snaps``.
+
+- The Colcon plugin no longer requires the ``colcon`` :vale-ignore:`metapackage`,
+  which is unavailable on some Ubuntu releases. The ``python3-colcon-core``
+  package provides the executable and verbs the plugin uses.
 
 - Already-installed snaps required to build a part are now refreshed when the
   requested channel changes. This includes snaps declared in ``build-snaps`` and
@@ -68,7 +83,18 @@ Bug fixes:
 
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
+.. _release-2.37.3:
 
+2.37.3 (2026-11-10)
+-------------------
+
+Bug fixes:
+
+- Pass the host's release to Chisel with ``--release`` when cutting slices, as
+  Chisel can no longer infer it on Ubuntu 26.10 and newer, which don't ship
+  ``/etc/lsb-release``.
+
+For a complete list of commits, check out the `2.37.3`_ release on GitHub.
 
 .. _release-2.37.2:
 
@@ -1976,6 +2002,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _Poetry: https://python-poetry.org
 
 .. _2.38.0: https://github.com/canonical/craft-parts/releases/tag/2.38.0
+.. _2.37.3: https://github.com/canonical/craft-parts/releases/tag/2.37.3
 .. _2.37.2: https://github.com/canonical/craft-parts/releases/tag/2.37.2
 .. _2.37.1: https://github.com/canonical/craft-parts/releases/tag/2.37.1
 .. _2.37.0: https://github.com/canonical/craft-parts/releases/tag/2.37.0
