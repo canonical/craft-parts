@@ -24,7 +24,7 @@ jobs:
   filter:
     runs-on: ubuntu-slim
     outputs:
-      source-files: ${{ steps.filter.outputs.source-files }}
+      source-files: ${{ steps.filter.outputs['source-files'] }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -43,12 +43,12 @@ jobs:
     uses: canonical/starflow/.github/workflows/lint-python.yaml@main
     needs: filter
     with:
-      source-files: ${{ needs.filter.outputs.source-files }}
+      source-files: ${{ needs.filter.outputs['source-files'] }}
   test-common:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     needs: filter
     with:
-      source-files: ${{ needs.filter.outputs.source-files }}
+      source-files: ${{ needs.filter.outputs['source-files'] }}
       fast-test-platforms: >
         ${{ format(
           '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
