@@ -36,6 +36,7 @@ from craft_parts.plugins.plugins import (
     PythonPlugin,
     QmakePlugin,
     RustPlugin,
+    ZigPlugin,
     get_registered_plugins,
     set_plugin_group,
     unregister_all,
@@ -67,6 +68,7 @@ class TestGetPlugin:
             ("python", PythonPlugin, {"source": "."}),
             ("qmake", QmakePlugin, {"source": "."}),
             ("rust", RustPlugin, {"source": "."}),
+            ("zig", ZigPlugin, {"source": "."}),
         ],
     )
     def test_get_plugin(self, new_dir, name, plugin_class, data):

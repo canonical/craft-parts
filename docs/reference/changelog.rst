@@ -42,6 +42,10 @@ For a complete list of commits, check out the `2.38.1`_ release on GitHub.
 
 New features:
 
+- Add :ref:`craft_parts_zig_plugin` to build projects that use the Zig build
+  system. It installs Zig from the ``zig`` snap, or uses a compiler provided by a
+  ``zig-deps`` part. It requires Zig 0.11.0 or later.
+
 - Support ``craftctl default`` in ``override-build`` for parts that declare
   ``build-slices``. Other ``craftctl`` commands are not supported.
 
