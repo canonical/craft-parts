@@ -21,6 +21,7 @@ import logging
 import pathlib
 import subprocess
 import sys
+import time
 from collections.abc import Sequence
 from http import HTTPStatus
 from typing import (
@@ -42,6 +43,8 @@ _STORE_ASSERTION = [
 # pylint: enable=line-too-long
 
 _CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
+_SNAPD_READY_TIMEOUT = 15.0
+_SNAPD_READY_POLL_INTERVAL = 0.5
 logger = logging.getLogger(__name__)
 
 
@@ -174,6 +177,11 @@ class SnapPackage:
                     retry_count -= 1
                     if retry_count == 0:
                         raise
+                    # snapd may be briefly unable to service requests, e.g.
+                    # while restarting shortly after a build instance is
+                    # created (SNAPDENG-36387), so wait for it before retrying.
+                    time.sleep(_SNAPD_READY_POLL_INTERVAL)
+                    _wait_for_snapd_ready()
 
         return self._store_snap_info
 
@@ -347,6 +355,36 @@ class SnapPackage:
 
         # Now that the snap is refreshed, invalidate the data we had on it.
         self._is_installed = None
+
+
+def _wait_for_snapd_ready(timeout: float = _SNAPD_READY_TIMEOUT) -> None:
+    """Wait for snapd to be ready, giving up silently after ``timeout`` seconds.
+
+    Runs ``snap wait system seed.loaded`` until it succeeds. It fails fast while
+    snapd is restarting, so it is retried after a short delay. If snapd is still
+    not ready when the timeout expires, this returns anyway and the caller's
+    next request reports the failure.
+    """
+    deadline = time.monotonic() + timeout
+    while (remaining := deadline - time.monotonic()) > 0:
+        try:
+            subprocess.run(
+                ["snap", "wait", "system", "seed.loaded"],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                timeout=remaining,
+            )
+        except subprocess.TimeoutExpired:  # noqa: PERF203
+            break
+        except subprocess.CalledProcessError as err:
+            logger.debug(
+                "snapd not ready yet: %s", _decode_subprocess_stderr(err) or err
+            )
+            time.sleep(_SNAPD_READY_POLL_INTERVAL)
+        else:
+            return
+    logger.debug("Timed out waiting for snapd to be ready after %ss", timeout)
 
 
 def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> None:
