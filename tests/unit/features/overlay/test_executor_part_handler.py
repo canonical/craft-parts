@@ -838,6 +838,129 @@ class TestOverlayMigration:
         assert not (prime_dir / build_file).exists()
         assert (prime_dir / overlay_file).exists()
 
+    def _setup_staged_dir_parts(
+        self, new_dir, partitions: list[str] | None, prime: list[str]
+    ) -> tuple[Part, PartHandler, Part, PartHandler]:
+        """Set up a part that stages "foo/" and an overlay part writing into it."""
+        cache_dir = Path(new_dir, "cache")
+        base_dir = Path(new_dir, "base")
+        cache_dir.mkdir()
+        (base_dir / "foo").mkdir(parents=True)
+
+        p1 = Part("lib-part", {"plugin": "nil", "prime": prime}, partitions=partitions)
+        p2 = Part(
+            "overlay-part",
+            {"plugin": "nil", "after": ["lib-part"], "overlay-script": "exit 0"},
+            partitions=partitions,
+        )
+        info = ProjectInfo(application_name="test", cache_dir=cache_dir)
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[p1, p2],
+            base_layer_dir=base_dir,
+            cache_level=0,
+        )
+        handlers = [
+            PartHandler(
+                p,
+                part_info=PartInfo(info, p),
+                part_list=[p1, p2],
+                overlay_manager=ovmgr,
+            )
+            for p in (p1, p2)
+        ]
+        for handler in handlers:
+            handler._make_dirs()
+
+        # the overlay only adds entries to dirs that are already staged by lib-part
+        (p1.part_install_dir / "foo/sub").mkdir(parents=True)
+        (p2.part_layer_dir / "foo/sub").mkdir(parents=True)
+        (p2.part_layer_dir / "foo/foo").write_text("data")
+        (p2.part_layer_dir / "foo/bar").symlink_to("foo")
+        (p2.part_layer_dir / "foo/sub/link").symlink_to("../foo")
+
+        return p1, handlers[0], p2, handlers[1]
+
+    def test_migrate_overlay_into_dir_staged_by_another_part(self, new_dir, partitions):
+        """Overlay files under a dir staged by another part, but not primed (#1825)."""
+        p1, p1_handler, p2, p2_handler = self._setup_staged_dir_parts(
+            new_dir, partitions, prime=["-foo"]
+        )
+
+        p1_handler.run_action(Action("", Step.STAGE))
+        p2_handler.run_action(Action("", Step.STAGE))
+        stage_state = states.load_overlay_migration_state(
+            p2.overlay_dirs[None], Step.STAGE
+        )
+        assert stage_state is not None
+        assert stage_state.directories == set()
+
+        p1_handler.run_action(Action("", Step.PRIME))
+        p2_handler.run_action(Action("", Step.PRIME))
+
+        prime_dir = p2.prime_dir
+        assert (prime_dir / "foo/foo").read_text() == "data"
+        assert (prime_dir / "foo/bar").readlink() == Path("foo")
+        assert (prime_dir / "foo/sub/link").readlink() == Path("../foo")
+
+        prime_state = states.load_overlay_migration_state(
+            p2.overlay_dirs[None], Step.PRIME
+        )
+        assert prime_state is not None
+        assert {Path("foo"), Path("foo/sub")} <= prime_state.directories
+
+        # the overlay owns the parent dirs it created in prime, so cleaning removes them
+        p2_handler.clean_step(Step.PRIME)
+        assert not (prime_dir / "foo").exists()
+
+    def test_migrate_overlay_into_dir_primed_by_another_part(self, new_dir, partitions):
+        """Parent dirs already in prime are left to the part that primed them."""
+        p1, p1_handler, p2, p2_handler = self._setup_staged_dir_parts(
+            new_dir, partitions, prime=["*"]
+        )
+
+        p1_handler.run_action(Action("", Step.STAGE))
+        p2_handler.run_action(Action("", Step.STAGE))
+        p1_handler.run_action(Action("", Step.PRIME))
+        p2_handler.run_action(Action("", Step.PRIME))
+
+        prime_dir = p2.prime_dir
+        assert (prime_dir / "foo/bar").readlink() == Path("foo")
+
+        prime_state = states.load_overlay_migration_state(
+            p2.overlay_dirs[None], Step.PRIME
+        )
+        assert prime_state is not None
+        assert Path("foo") not in prime_state.directories
+
+        p2_handler.clean_step(Step.PRIME)
+        assert (prime_dir / "foo").is_dir()
+        assert not (prime_dir / "foo/bar").exists()
+
+    def test_migrate_overlay_before_part_that_primes_the_dir(self, new_dir, partitions):
+        """Parent dirs the overlay created are kept if another part primes them later."""
+        p1, p1_handler, p2, p2_handler = self._setup_staged_dir_parts(
+            new_dir, partitions, prime=["*"]
+        )
+
+        p1_handler.run_action(Action("", Step.STAGE))
+        p2_handler.run_action(Action("", Step.STAGE))
+        p2_handler.run_action(Action("", Step.PRIME))
+        p1_handler.run_action(Action("", Step.PRIME))
+
+        prime_dir = p2.prime_dir
+        assert (prime_dir / "foo/bar").readlink() == Path("foo")
+        assert (prime_dir / "foo/sub").is_dir()
+
+        # lib-part also primed foo/ and foo/sub/, so the overlay leaves them alone
+        p2_handler.clean_step(Step.PRIME)
+        assert (prime_dir / "foo/sub").is_dir()
+        assert not (prime_dir / "foo/bar").exists()
+        assert not (prime_dir / "foo/sub/link").exists()
+
+        p1_handler.clean_step(Step.PRIME)
+        assert not (prime_dir / "foo").exists()
+
 
 def _run_step_migration(handler: PartHandler, step: Step) -> None:
     if step > Step.STAGE:

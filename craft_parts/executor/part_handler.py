@@ -1035,11 +1035,21 @@ class PartHandler:
                 )
                 continue
 
+            stage_dir = self._part.dirs.get_stage_dir(partition)
+            prime_dir = self._part.dirs.get_prime_dir(partition)
+
+            # The stage overlay migration state doesn't list directories that
+            # already existed in stage, so also migrate missing parent dirs.
+            files = stage_overlay_migration_state.files
+            dirs = stage_overlay_migration_state.directories | _missing_parent_dirs(
+                files, srcdir=stage_dir, destdir=prime_dir
+            )
+
             migrated_files, migrated_dirs = migration.migrate_files(
-                files=stage_overlay_migration_state.files,
-                dirs=stage_overlay_migration_state.directories,
-                srcdir=self._part.dirs.get_stage_dir(partition),
-                destdir=self._part.dirs.get_prime_dir(partition),
+                files=files,
+                dirs=dirs,
+                srcdir=stage_dir,
+                destdir=prime_dir,
                 permissions=self._part.spec.permissions,
             )
 
@@ -1462,6 +1472,31 @@ class PartHandler:
             os.chdir(current_dir)
 
         return "\n".join(env_list)
+
+
+def _missing_parent_dirs(
+    files: Iterable[Path], *, srcdir: Path, destdir: Path
+) -> set[Path]:
+    """Get the parent directories of files that exist in srcdir but not in destdir.
+
+    Directories under a symlink in srcdir are left out.
+
+    :param files: The files to check, relative to srcdir and destdir.
+    :param srcdir: The directory the files are migrated from.
+    :param destdir: The directory the files are migrated to.
+
+    :returns: The set of missing parent directories, relative to destdir.
+    """
+    parents = {parent for file in files for parent in file.parents} - {Path()}
+    # don't turn a symlinked dir in srcdir into a real dir in destdir
+    symlinks = {parent for parent in parents if (srcdir / parent).is_symlink()}
+    return {
+        parent
+        for parent in parents
+        if not symlinks.intersection((parent, *parent.parents))
+        and not os.path.lexists(destdir / parent)
+        and (srcdir / parent).is_dir()
+    }
 
 
 def _remove(filename: Path) -> None:
