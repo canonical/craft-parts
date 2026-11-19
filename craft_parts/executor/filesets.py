@@ -20,7 +20,7 @@ import os
 from functools import lru_cache
 from pathlib import Path, PurePath
 
-from craft_parts import errors, features
+from craft_parts import errors
 from craft_parts.utils import path_utils
 from craft_parts.utils.partition_utils import DEFAULT_PARTITION
 
@@ -111,9 +111,9 @@ class Fileset:
     ) -> None:
         """Initialize a fileset.
 
-        If the partition feature is enabled, files in the default partition are
-        normalized to begin with `(default)/`. For example, ["foo", "(default)/bar"]
-        is normalized to ["(default)/foo", "(default)/bar"].
+        Files in the default partition are normalized to begin with `(default)/`.
+        For example, ["foo", "(default)/bar"] is normalized to
+        ["(default)/foo", "(default)/bar"].
 
         :param entries: List of filepaths represented as strings.
         :param name: Name of the fileset.
@@ -124,7 +124,8 @@ class Fileset:
         self._validate_entries(entries)
         self._default_partition = default_partition
         self._list: list[str] = [
-            normalize_entry(entry, self._default_partition) for entry in entries
+            normalize_entry(entry, self._default_partition, user_entry=True)
+            for entry in entries
         ]
 
     def __repr__(self) -> str:
@@ -279,21 +280,11 @@ def _get_file_list(
 
     :return: A tuple containing the include and exclude lists.
 
-    :raises FeatureError: If the partition feature is enabled but no partition is
-        provided or if a partition is provided but the partition feature is not enabled.
+    :raises FeatureError: If no partition is provided.
     """
-    if features.Features().enable_partitions and not partition:
+    if not partition:
         raise errors.FeatureError(
-            message=(
-                "A partition must be provided if the partition feature is enabled."
-            )
-        )
-
-    if not features.Features().enable_partitions and partition:
-        raise errors.FeatureError(
-            message=(
-                "The partition feature must be enabled if a partition is provided."
-            )
+            message="A partition must be provided when filtering partition filesets."
         )
 
     includes: list[str] = []
@@ -306,10 +297,6 @@ def _get_file_list(
             includes.append(item[1:])
         else:
             includes.append(item)
-
-    # short circuit if no partition was provided
-    if not partition:
-        return includes or ["*"], excludes
 
     # only include files for the partition
     processed_includes: list[str] = []
@@ -433,20 +420,33 @@ def _get_resolved_relative_path(
     return _get_path(rel)
 
 
-def normalize_entry(entry: str, default_partition: str) -> str:
-    """Normalize an entry to begin with a partition, if partitions are enabled.
+def normalize_entry(
+    entry: str, default_partition: str, *, user_entry: bool = False
+) -> str:
+    """Normalize an entry to begin with a partition.
 
-    If partitions are enabled, `foo` will be normalized to `(default)/foo`.
-    If partitions are not enabled, `foo` will be left as `foo`.
+    `foo` will be normalized to `(default)/foo`.
 
     :param entry: Entry to normalize.
+    :param default_partition: The name of the default partition.
+    :param user_entry: Whether the entry comes from the project. If the
+        partitions feature is not enabled, a leading parenthesised name in a
+        user entry is a regular path component, so `(etc)/foo` is normalized
+        to `(default)/(etc)/foo`.
 
     :returns: Normalized entry.
     """
     # split file into an optional prefix (a hyphen character) and the file
     prefix, file = _split_entry(entry)
 
-    partition, inner_path = path_utils.get_partition_and_path(file, default_partition)
+    if user_entry:
+        partition, inner_path = path_utils.get_user_partition_and_path(
+            file, default_partition
+        )
+    else:
+        partition, inner_path = path_utils.get_partition_and_path(
+            file, default_partition
+        )
 
     if partition:
         return f"{prefix}({partition})/{inner_path}"
