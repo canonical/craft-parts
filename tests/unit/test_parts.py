@@ -319,19 +319,24 @@ class TestPartSourceLocation:
         assert caplog.records == []
 
     @pytest.mark.parametrize(
-        ("source", "warns"),
+        ("prefix", "source", "warns"),
         [
-            ("/snap/snapcraft/current/share/snapcraft/extensions/desktop", False),
-            ("/snap/snapcraft/current", False),
-            ("/snap/snapcraft/current/../../other/src", True),
-            ("/snap/snapcraft/currently", True),
-            ("/snap/other/current/src", True),
+            ("/snap/snapcraft/current", "/snap/snapcraft/current/share/x", False),
+            ("/snap/snapcraft/current", "/snap/snapcraft/current/lib/x", True),
+            ("/snap/snapcraft/current", "/snap/snapcraft/current", True),
+            ("/snap/snapcraft/current", "/snap/snapcraft/current/share/../../o", True),
+            ("/snap/snapcraft/current", "/snap/snapcraft/currently/share/x", True),
+            ("/snap/snapcraft/current", "/snap/other/current/share/x", True),
+            ("/usr", "/usr/share/snapcraft/extensions/x", False),
+            ("/usr", "/usr/src/linux", True),
+            ("/usr", "/usr/local/src/x", True),
         ],
     )
     def test_source_application_prefix(
-        self, source, warns, partitions, caplog, monkeypatch
+        self, prefix, source, warns, partitions, caplog, monkeypatch
     ):
-        monkeypatch.setattr(sys, "prefix", "/snap/snapcraft/current")
+        """Only the application's data directory is skipped, not its whole prefix."""
+        monkeypatch.setattr(sys, "prefix", prefix)
         caplog.set_level(logging.WARNING, logger="craft_parts")
 
         Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)

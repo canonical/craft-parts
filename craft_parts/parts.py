@@ -929,9 +929,9 @@ class Part:
         normalized = Path(os.path.normpath(project_dir / source))
         if normalized.is_relative_to(project_dir):
             return
-        # files shipped with the application, such as snapcraft's extension
+        # data files shipped with the application, such as snapcraft's extension
         # sources, are also available in a managed environment
-        if normalized.is_relative_to(sys.prefix):
+        if normalized.is_relative_to(Path(sys.prefix, "share")):
             return
 
         logger.warning(
