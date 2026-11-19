@@ -76,16 +76,23 @@ git remote add upstream https://github.com/canonical/craft-parts
 git fetch upstream
 ```
 
-Inside the project directory, set up the virtual development environment and install all
-dependencies, linters, and testers:
+Craft Parts development environments are handled with
+[Workshop](https://ubuntu.com/workshop), which you can install by running:
 
 ```bash
-make setup
-make lint
-make test
+sudo snap install workshop --classic
 ```
 
-If all linting and testing completes without errors, your local environment is ready.
+The default `dev` workshop is based on Ubuntu 26.04 LTS and adds some additional tools
+for linting and formatting. To launch the `dev` workshop, run:
+
+```bash
+workshop launch dev
+```
+
+After this, you can lint the code with `workshop run dev -- lint-code` or the
+documentation with `workshop run dev -- lint-docs`. Auto-formatting is available
+with `workshop run dev -- format`.
 
 ## Contribute a change
 
@@ -138,7 +145,7 @@ If you're making a change to a current release, run:
 ```bash
 git fetch upstream
 git checkout -b <new-branch-name> upstream/hotfix/<current-release>
-make setup
+workshop run dev setup
 ```
 
 If you're contributing to multiple releases or the next major release, run:
@@ -147,7 +154,7 @@ If you're contributing to multiple releases or the next major release, run:
 git checkout main
 git pull upstream main
 git checkout -b <new-branch-name>
-make setup
+workshop run dev setup
 ```
 
 The new branch name should be brief, at no more than 80 characters. Format your branch
@@ -213,35 +220,37 @@ during the review process.
 For low-complexity changes that require basic testing, run the fast tests:
 
 ```bash
-make test-fast
+workshop run dev -- test-fast
 ```
 
 For complex work, run the full test suite:
 
 ```bash
-make test
+workshop run dev -- test
 ```
 
 Running all tests can take a very long time, in some cases an hour.
+
+The test actions are also available in the `jammy` and `noble` workshops,
+allowing you to test on older Ubuntu LTS releases before committing.
 
 When iterating and testing, it's a good practice to clean the local temporary files that
 the tests generate:
 
 ```bash
-make clean
+workshop run dev -- clean
 ```
 
 In rare instances, tests can fail in unpredictable ways, regardless of the state of your
 code. In such cases, it's best to delete your virtual environment and start over:
 
 ```bash
-rm -rf .venv
-make clean
-make setup
+workshop run dev -- clean
+workshop run dev -- setup
 ```
 
-There are also special tests that are feature-specific. Run `make help` to view all of
-them.
+There are also special tests that are feature-specific. Run `workshop exec dev -- make
+help` to view all of them.
 
 ### Document the change
 
