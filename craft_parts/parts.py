@@ -19,6 +19,7 @@
 import logging
 import os
 import re
+import sys
 import textwrap
 import urllib.parse
 import warnings
@@ -927,6 +928,10 @@ class Part:
         project_dir = self.dirs.project_dir
         normalized = Path(os.path.normpath(project_dir / source))
         if normalized.is_relative_to(project_dir):
+            return
+        # files shipped with the application, such as snapcraft's extension
+        # sources, are also available in a managed environment
+        if normalized.is_relative_to(sys.prefix):
             return
 
         logger.warning(

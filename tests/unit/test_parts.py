@@ -16,6 +16,7 @@
 
 import logging
 import re
+import sys
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
@@ -307,6 +308,35 @@ class TestPartSourceLocation:
         Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)
 
         assert caplog.records == []
+
+    def test_source_in_application_install(self, partitions, caplog):
+        """Files shipped with the application, like extension sources, are fine."""
+        caplog.set_level(logging.WARNING, logger="craft_parts")
+        source = str(Path(sys.prefix, "share", "app", "extensions", "chain"))
+
+        Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)
+
+        assert caplog.records == []
+
+    @pytest.mark.parametrize(
+        ("source", "warns"),
+        [
+            ("/snap/snapcraft/current/share/snapcraft/extensions/desktop", False),
+            ("/snap/snapcraft/current", False),
+            ("/snap/snapcraft/current/../../other/src", True),
+            ("/snap/snapcraft/currently", True),
+            ("/snap/other/current/src", True),
+        ],
+    )
+    def test_source_application_prefix(
+        self, source, warns, partitions, caplog, monkeypatch
+    ):
+        monkeypatch.setattr(sys, "prefix", "/snap/snapcraft/current")
+        caplog.set_level(logging.WARNING, logger="craft_parts")
+
+        Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)
+
+        assert bool(caplog.records) == warns
 
 
 class TestPartData:
