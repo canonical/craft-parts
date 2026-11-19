@@ -21,11 +21,34 @@ permissions:
   pull-requests: read
 
 jobs:
+  filter:
+    runs-on: ubuntu-slim
+    outputs:
+      source-files: ${{ steps.filter.outputs['source-files'] }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
+          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
+          filters: |
+            source-files:
+              - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
   lint:
     uses: canonical/starflow/.github/workflows/lint-python.yaml@main
+    needs: filter
+    with:
+      source-files: ${{ needs.filter.outputs['source-files'] }}
   test-common:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    needs: filter
     with:
+      source-files: ${{ needs.filter.outputs['source-files'] }}
       fast-test-platforms: >
         ${{ format(
           '["ubuntu-22.04", "ubuntu-22.04-arm", "ubuntu-24.04", "ubuntu-24.04-arm"{0}]',
@@ -51,7 +74,9 @@ jobs:
       use-lxd: false
   test-flaky:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    needs: filter
     with:
+      source-files: ${{ needs.filter.outputs.source-files }}
       fast-test-platforms: ""
       slow-test-platforms: >
         [
@@ -68,7 +93,9 @@ jobs:
       use-lxd: false
   test-java-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    needs: filter
     with:
+      source-files: ${{ needs.filter.outputs.source-files }}
       fast-test-platforms: ""
       slow-test-platforms: >
         ${{ format(
@@ -84,7 +111,9 @@ jobs:
       use-lxd: false
   test-python-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    needs: filter
     with:
+      source-files: ${{ needs.filter.outputs.source-files }}
       fast-test-platforms: ""
       slow-test-platforms: >
         ${{ format(
@@ -100,7 +129,9 @@ jobs:
       use-lxd: false
   test-python-plugins-jammy:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    needs: filter
     with:
+      source-files: ${{ needs.filter.outputs.source-files }}
       fast-test-platforms: ""
       slow-test-platforms: >
         [
@@ -114,7 +145,9 @@ jobs:
       use-lxd: false
   test-other-plugins:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    needs: filter
     with:
+      source-files: ${{ needs.filter.outputs.source-files }}
       fast-test-platforms: ""
       slow-test-platforms: >
         ${{ format(
@@ -131,7 +164,9 @@ jobs:
       use-lxd: false
   test-requires-root:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    needs: filter
     with:
+      source-files: ${{ needs.filter.outputs.source-files }}
       fast-test-platforms: '["ubuntu-24.04"]'
       fast-test-python-versions: '["3.12"]'
       slow-test-platforms: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
