@@ -22,7 +22,14 @@ from craft_parts.packages.deb import Ubuntu
 from craft_parts.packages.dnf import DNFRepository
 from craft_parts.packages.yum import YUMRepository
 
-_deb_distros = {"ubuntu", "debian", "elementary OS", "elementary", "neon"}
+_deb_distros = {
+    "ubuntu",
+    "debian",
+    "elementary OS",
+    "elementary",
+    "neon",
+    "elementary_os",
+}
 _yum_distros = {"centos"}
 _dnf_distros = {"almalinux"}
 _all_distros = [
@@ -34,6 +41,7 @@ _all_distros = [
     "elementary OS",
     "elementary",
     "neon",
+    "elementary_os",
     "opensuse",
 ]
 
@@ -49,12 +57,17 @@ def test_is_deb_based():
 
 def test_is_deb_based_default(mocker):
     for distro in _all_distros:
-        mocker.patch("craft_parts.packages.platform.distro.id", return_value=distro)
+        mocker.patch(
+            "craft_parts.packages.platform.distro.LinuxDistribution.id",
+            return_value=distro,
+        )
         assert platform.is_deb_based() == (distro in _deb_distros)
 
 
 def test_is_deb_based_error(mocker):
-    mocker.patch("craft_parts.packages.platform.distro.id", return_value="")
+    mocker.patch(
+        "craft_parts.packages.platform.distro.LinuxDistribution.id", return_value=""
+    )
     assert platform.is_deb_based() is False
 
 
@@ -69,12 +82,17 @@ def test_is_yum_based():
 
 def test_is_yum_based_default(mocker):
     for distro in _all_distros:
-        mocker.patch("craft_parts.packages.platform.distro.id", return_value=distro)
+        mocker.patch(
+            "craft_parts.packages.platform.distro.LinuxDistribution.id",
+            return_value=distro,
+        )
         assert platform.is_yum_based() == (distro in _yum_distros)
 
 
 def test_is_yum_based_error(mocker):
-    mocker.patch("craft_parts.packages.platform.distro.id", return_value="")
+    mocker.patch(
+        "craft_parts.packages.platform.distro.LinuxDistribution.id", return_value=""
+    )
     assert platform.is_yum_based() is False
 
 
@@ -89,13 +107,25 @@ def test_is_dnf_based():
 
 def test_is_dnf_based_default(mocker):
     for distro in _all_distros:
-        mocker.patch("craft_parts.packages.platform.distro.id", return_value=distro)
+        mocker.patch(
+            "craft_parts.packages.platform.distro.LinuxDistribution.id",
+            return_value=distro,
+        )
         assert platform.is_dnf_based() == (distro in _dnf_distros)
 
 
 def test_is_dnf_based_error(mocker):
-    mocker.patch("craft_parts.packages.platform.distro.id", return_value="")
+    mocker.patch(
+        "craft_parts.packages.platform.distro.LinuxDistribution.id", return_value=""
+    )
     assert platform.is_dnf_based() is False
+
+
+def test_platform_detection_uncached_after_chroot(mocker):
+    mocker.patch.object(platform.distro, "id", return_value="debian")
+    mocker.patch.object(platform.distro.LinuxDistribution, "id", return_value="centos")
+    assert not platform.is_deb_based()
+    assert platform.is_yum_based()
 
 
 @pytest.mark.parametrize(
@@ -108,5 +138,7 @@ def test_is_dnf_based_error(mocker):
     ],
 )
 def test_get_repository_for_platform(mocker, distro, repo):
-    mocker.patch("craft_parts.packages.platform.distro.id", return_value=distro)
+    mocker.patch(
+        "craft_parts.packages.platform.distro.LinuxDistribution.id", return_value=distro
+    )
     assert packages._get_repository_for_platform() == repo
