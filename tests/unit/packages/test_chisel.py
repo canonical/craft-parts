@@ -94,8 +94,38 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_process_run, mocker)
     spied_normalize.assert_called_once_with(install_dir, repository=deb.Ubuntu)
 
 
+def test_unpack_stage_slices_arch(tmp_path, fake_apt_cache, fake_process_run):
+    stage_dir = tmp_path / "stage"
+    stage_dir.mkdir()
+
+    install_dir = tmp_path / "install"
+    install_dir.mkdir()
+
+    deb.Ubuntu.unpack_stage_packages(
+        stage_packages_path=stage_dir,
+        install_path=install_dir,
+        stage_packages=["package1_slice1"],
+        arch="arm64",
+    )
+
+    fake_process_run.assert_called_once_with(
+        [
+            "chisel",
+            "cut",
+            "--release=ubuntu-26.10",
+            "--arch=arm64",
+            "--ignore=unmaintained",
+            "--ignore=unstable",
+            f"--root={install_dir}",
+            "package1_slice1",
+        ],
+        base.logger.debug,
+    )
+
+
 @pytest.mark.slow
-def test_chisel_pull_build(new_dir, fake_apt_cache, fake_process_run):
+@pytest.mark.parametrize("arch", ["", "riscv64"])
+def test_chisel_pull_build(new_dir, fake_apt_cache, fake_process_run, arch):
     """Test the combination of 'pulling' and 'building' chisel slices."""
     _parts_yaml = textwrap.dedent(
         """\
@@ -109,7 +139,11 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_process_run):
     parts = yaml.safe_load(_parts_yaml)
 
     lf = craft_parts.LifecycleManager(
-        parts, application_name="test_slice", cache_dir=new_dir, work_dir=new_dir
+        parts,
+        application_name="test_slice",
+        cache_dir=new_dir,
+        work_dir=new_dir,
+        arch=arch,
     )
 
     actions = lf.plan(Step.BUILD)
@@ -125,6 +159,7 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_process_run):
             "chisel",
             "cut",
             "--release=ubuntu-26.10",
+            f"--arch={lf.project_info.target_arch}",
             "--ignore=unmaintained",
             "--ignore=unstable",
             f"--root={install_dir}",

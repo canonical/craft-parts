@@ -35,6 +35,18 @@ Bug fixes:
 For a complete list of commits, check out the `2.38.1`_ release on GitHub.
 
 
+.. _release-2.38.1:
+
+2.38.1 (unreleased)
+-------------------
+
+Bug fixes:
+
+- When cross-compiling, cut Chisel slices for the target architecture instead
+  of the host architecture.
+
+For a complete list of commits, check out the `2.38.1`_ release on GitHub.
+
 .. _release-2.38.0:
 
 2.38.0 (2026-11-17)

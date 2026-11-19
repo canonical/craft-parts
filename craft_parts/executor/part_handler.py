@@ -1418,6 +1418,7 @@ class PartHandler:
             install_path=Path(self._part.part_install_dir),
             stage_packages=pulled_packages,
             track_stage_packages=self._track_stage_packages,
+            arch=self._part_info.target_arch,
         )
 
     def _unpack_stage_snaps(self) -> None:
