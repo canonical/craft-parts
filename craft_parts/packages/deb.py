@@ -778,7 +778,7 @@ class Ubuntu(BaseRepository):
 
         marked_package_names = {name for name, _ in marked}
 
-        if install_required:
+        if install_required and marked_package_names:
             cls._install_packages(package_names, include_recommends=include_recommends)
         else:
             logger.debug(
