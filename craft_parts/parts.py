@@ -922,12 +922,12 @@ class Part:
         if re.match(r"^[\w.-]+@[\w.-]+:", source):
             return
 
-        source_path = Path(source)
+        # absolute paths inside the project are fine, such as a source using
+        # $CRAFT_PROJECT_DIR, which is expanded before the part is created
         project_dir = self.dirs.project_dir
-        if not source_path.is_absolute():
-            normalized = Path(os.path.normpath(project_dir / source_path))
-            if normalized.is_relative_to(project_dir):
-                return
+        normalized = Path(os.path.normpath(project_dir / source))
+        if normalized.is_relative_to(project_dir):
+            return
 
         logger.warning(
             "Source %r for part %r is outside the project directory and may not "

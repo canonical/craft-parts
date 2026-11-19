@@ -299,6 +299,15 @@ class TestPartSourceLocation:
 
         assert caplog.records == []
 
+    @pytest.mark.parametrize("subdir", ["", "src"])
+    def test_absolute_source_inside_project(self, subdir, partitions, caplog):
+        caplog.set_level(logging.WARNING, logger="craft_parts")
+        source = str(Path().resolve() / subdir)
+
+        Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)
+
+        assert caplog.records == []
+
 
 class TestPartData:
     """Test basic part creation and representation."""
