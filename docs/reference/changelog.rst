@@ -92,6 +92,11 @@ Bug fixes:
 - Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
   directories, such as ``-**/__pycache__`` in a large Python environment.
 
+Documentation:
+
+- Group the plugins in the :ref:`plugins` reference by the kind of sources they
+  build.
+
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
 .. _release-2.37.3:
@@ -725,7 +730,7 @@ New features:
 Bug fixes:
 
 - The ``--recurse-submodules`` link in the ``source-submodules`` docstring
-  no longer produces a linkcheck error.
+  no longer produces a ``linkcheck`` error.
 - ``CRAFT_DEFAULT_*`` environment variables are set when the default partition
   is aliased.
 
