@@ -67,8 +67,12 @@ APT_PACKAGES += mmdebstrap
 endif
 
 # Dependencies for sources
-ifeq ($(wildcard /usr/share/doc/p7zip-full/copyright),)
+ifeq ($(wildcard /usr/share/doc/p7zip-full/copyright /usr/share/doc/7zip/copyright),)
+ifneq ($(filter $(VERSION_CODENAME),focal jammy),)
 APT_PACKAGES += p7zip-full
+else
+APT_PACKAGES += 7zip
+endif
 endif
 ifeq ($(wildcard /usr/share/doc/curl/copyright),)
 APT_PACKAGES += curl
@@ -208,12 +212,15 @@ endif
 ifeq ($(wildcard /usr/share/doc/bison/copyright),)
 APT_PACKAGES += bison
 endif
-# We'll check for any dotnet SDK, but install dotnet 8 since that version is common to
-# 22.04 -> 25.10 (and possibly 26.04).
+# We'll check for any dotnet SDK, but install dotnet 10 by default (dotnet 8 on older releases).
 # On focal, we'll get the snap instead.
 ifeq ($(wildcard /usr/share/doc/dotnet-sdk-*/copyright),)
 ifneq ($(UBUNTU_CODENAME),focal)
+ifneq ($(filter $(VERSION_CODENAME),jammy noble oracular plucky questing),)
 APT_PACKAGES += dotnet-sdk-8.0
+else
+APT_PACKAGES += dotnet-sdk-10.0
+endif
 endif
 endif
 ifeq ($(wildcard /usr/share/doc/gcc/copyright),)

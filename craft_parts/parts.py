@@ -316,7 +316,8 @@ class PartSpec(BaseModel):
     * ``<snap-name>@<track>/<risk>``
     * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If an entry specifies no track or risk, ``latest/stable`` is used.
+    If an entry specifies no track or risk, the channel is left unspecified
+    and the snap's default channel is used.
 
     The ``/`` character may also be used to separate the snap name from the
     track, but this is deprecated in favor of the ``@`` character.
@@ -363,7 +364,8 @@ class PartSpec(BaseModel):
     * ``<snap-name>@<track>/<risk>``
     * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If an entry specifies no track or risk, ``latest/stable`` is used.
+    If an entry specifies no track or risk, the channel is left unspecified
+    and the snap's default channel is used.
 
     The ``/`` character may also be used to separate the snap name from the
     track, but this is deprecated in favor of the ``@`` character.
