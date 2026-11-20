@@ -151,6 +151,7 @@ include = [
   { path = "__init__.py", from = "out-dir", to = "craft_parts_docs" },
   { path = "README.md", from = "out-dir", to = "craft_parts_docs" },
   { path = "craft-parts/**/*", from = "out-dir", to = "craft_parts_docs" },
+  "craft_parts/**/*.sh",
 ]
 module-name = "craft_parts._rs"
 python-source = "."
