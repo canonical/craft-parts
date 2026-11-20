@@ -27,10 +27,8 @@ from craft_parts.utils.deb_utils import has_slices
 
 @pytest.fixture(autouse=True)
 def fake_os_release(mocker):
-    mocker.patch("craft_parts.utils.os_utils.OsRelease.id", return_value="ubuntu")
-    mocker.patch(
-        "craft_parts.utils.os_utils.OsRelease.version_id", return_value="26.10"
-    )
+    mocker.patch("craft_parts.packages.chisel.distro.id", return_value="ubuntu")
+    mocker.patch("craft_parts.packages.chisel.distro.version", return_value="26.10")
 
 
 def test_is_list_of_slices():

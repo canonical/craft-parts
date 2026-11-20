@@ -22,6 +22,7 @@ import subprocess
 from io import StringIO
 from typing import Any
 
+import distro
 import yaml
 from pydantic import BaseModel
 
@@ -82,8 +83,7 @@ def cut_slices(slices: list[str], target_dir: pathlib.Path) -> None:
     """
     # Pass the release explicitly instead of letting Chisel infer it from
     # /etc/lsb-release, which is no longer shipped from Ubuntu 26.10 onwards.
-    os_release = os_utils.OsRelease()
-    release = f"{os_release.id()}-{os_release.version_id()}"
+    release = f"{distro.id()}-{distro.version()}"
 
     output_stream = StringIO()
     handler = logging.StreamHandler(stream=output_stream)
