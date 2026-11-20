@@ -364,7 +364,7 @@ def _read_chisel_manifest(manifest_path: pathlib.Path) -> list[dict[str, Any]]:
     """Read a chisel manifest.wall, returning parsed JSON entries.
 
     Chisel uses a zstd-compressed NDJSON manifest.wall file.
-    See https://documentation.ubuntu.com/chisel/latest/reference/manifest/ for
+    See https://ubuntu.com/chisel/docs/latest/reference/manifest/ for
     more information.
 
     :param manifest_path: Path to the chisel manifest.
