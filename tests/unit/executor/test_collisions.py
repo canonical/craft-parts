@@ -18,7 +18,12 @@ from pathlib import Path
 import pytest
 from craft_parts import errors
 from craft_parts.dirs import ProjectDirs
-from craft_parts.executor.collisions import check_for_stage_collisions
+from craft_parts.executor import collisions, filesets
+from craft_parts.executor.collisions import (
+    StageCandidateCache,
+    check_for_stage_collisions,
+)
+from craft_parts.features import Features
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions
 
@@ -184,7 +189,158 @@ class TestCollisions:
 
     def test_no_collisions(self, part1, part2, partitions):
         """No exception is expected as there are no collisions."""
-        check_for_stage_collisions([part1, part2], partitions)
+        check_for_stage_collisions(
+            [part1, part2], partitions, candidate_cache=StageCandidateCache()
+        )
+
+    def test_stage_candidate_cache_reuses_and_invalidates_install_contents(
+        self, tmpdir, partitions, mocker
+    ):
+        part = Part(
+            name="cached",
+            data={},
+            project_dirs=ProjectDirs(work_dir=tmpdir, partitions=partitions),
+            partitions=partitions,
+        )
+        for install_dir in part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            (install_dir / "first").write_text("first")
+
+        partition = next(iter(part.part_install_dirs))
+        cache = StageCandidateCache()
+        migratable = mocker.spy(filesets, "migratable_filesets")
+
+        first = cache.get_install_candidate(part, partition)
+        part.spec.permissions.append(Permissions(path="first", mode="755"))
+        second = cache.get_install_candidate(part, partition)
+
+        assert first is not None
+        assert second is not None
+        assert first.contents == second.contents
+        assert second.permissions == part.spec.permissions
+        migratable.assert_called_once()
+
+        (part.part_install_dirs[partition] / "second").write_text("second")
+        cache.invalidate(part)
+        updated = cache.get_install_candidate(part, partition)
+
+        assert updated is not None
+        assert Path("second") in updated.contents
+        assert migratable.call_count == 2
+
+    def test_collision_validation_rechecks_changed_configuration(self, tmpdir, mocker):
+        # Managed directly (rather than via the shared `partitions` fixture) so this
+        # test exercises a fixed 3-partition configuration whether or not the
+        # partitions feature is already enabled by an enclosing test suite.
+        partitions_already_enabled = Features().enable_partitions
+        if not partitions_already_enabled:
+            Features.reset()
+            Features(enable_partitions=True)
+        try:
+            partitions = ["default", "mypart", "yourpart"]
+            project_dirs = ProjectDirs(work_dir=tmpdir, partitions=partitions)
+            part_list = [
+                Part(
+                    name,
+                    {"plugin": "nil"},
+                    project_dirs=project_dirs,
+                    partitions=partitions,
+                )
+                for name in ("p1", "p2")
+            ]
+            for part in part_list:
+                for install_dir in part.part_install_dirs.values():
+                    install_dir.mkdir(parents=True)
+                    (install_dir / f"{part.name}.txt").write_text(part.name)
+
+            pair_checks = mocker.spy(collisions, "_check_candidate_pairs")
+            cache = StageCandidateCache()
+            check_for_stage_collisions(
+                part_list, partitions, candidate_cache=cache, reuse_validation=True
+            )
+            check_for_stage_collisions(
+                part_list, partitions, candidate_cache=cache, reuse_validation=True
+            )
+            assert pair_checks.call_count == len(partitions)
+
+            for install_dir in part_list[0].part_install_dirs.values():
+                (install_dir / "new.txt").write_text("new")
+            part_list[0].spec.stage_files.append("new.txt")
+            check_for_stage_collisions(
+                part_list, partitions, candidate_cache=cache, reuse_validation=True
+            )
+            assert pair_checks.call_count == 2 * len(partitions)
+
+            part_list[0].spec.permissions.append(Permissions(path="p1.txt", mode="755"))
+            check_for_stage_collisions(
+                part_list, partitions, candidate_cache=cache, reuse_validation=True
+            )
+            assert pair_checks.call_count == 3 * len(partitions)
+
+            part_list[0].spec.permissions[0].mode = "700"
+            check_for_stage_collisions(
+                part_list, partitions, candidate_cache=cache, reuse_validation=True
+            )
+            assert pair_checks.call_count == 4 * len(partitions)
+
+            check_for_stage_collisions(
+                part_list,
+                partitions[:-1],
+                candidate_cache=cache,
+                reuse_validation=True,
+            )
+            assert pair_checks.call_count == 4 * len(partitions) + len(partitions) - 1
+
+            check_for_stage_collisions(
+                list(reversed(part_list)),
+                partitions[:-1],
+                candidate_cache=cache,
+                reuse_validation=True,
+            )
+            assert pair_checks.call_count == 4 * len(partitions) + 2 * (
+                len(partitions) - 1
+            )
+        finally:
+            if not partitions_already_enabled:
+                Features.reset()
+
+    def test_incremental_validation_detects_changed_symlink_target(
+        self, tmpdir, partitions
+    ):
+        project_dirs = ProjectDirs(work_dir=tmpdir, partitions=partitions)
+        part_list = [
+            Part(
+                name,
+                {"plugin": "nil"},
+                project_dirs=project_dirs,
+                partitions=partitions,
+            )
+            for name in ("p1", "p2")
+        ]
+        for part in part_list:
+            for install_dir in part.part_install_dirs.values():
+                install_dir.mkdir(parents=True)
+                (install_dir / "link").symlink_to("first")
+
+        cache = StageCandidateCache()
+        check_for_stage_collisions(
+            part_list, partitions, candidate_cache=cache, reuse_validation=True
+        )
+
+        partition = next(iter(part_list[1].part_install_dirs))
+        link = part_list[1].part_install_dirs[partition] / "link"
+        link.unlink()
+        link.symlink_to("second")
+        cache.invalidate(part_list[1])
+
+        with pytest.raises(errors.PartFilesConflict) as raised:
+            check_for_stage_collisions(
+                part_list, partitions, candidate_cache=cache, reuse_validation=True
+            )
+
+        assert raised.value.part_name == "p2"
+        assert raised.value.other_part_name == "p1"
+        assert raised.value.conflicting_files == [Path("link")]
 
     def test_no_collisions_between_two_parts_pc_files(self, part0, part1, partitions):
         """Pkg-config files have different prefixes (this is ok)."""
@@ -193,7 +349,11 @@ class TestCollisions:
     def test_collisions_between_two_parts(self, part1, part2, part3, partitions):
         """Files have different contents."""
         with pytest.raises(errors.PartFilesConflict) as raised:
-            check_for_stage_collisions([part1, part2, part3], partitions)
+            check_for_stage_collisions(
+                [part1, part2, part3],
+                partitions,
+                candidate_cache=StageCandidateCache(),
+            )
 
         assert raised.value.other_part_name == "part2"
         assert raised.value.part_name == "part3"
@@ -202,7 +362,9 @@ class TestCollisions:
     def test_collisions_checks_symlinks(self, part5, part6, partitions):
         """Symlinks point to different targets."""
         with pytest.raises(errors.PartFilesConflict) as raised:
-            check_for_stage_collisions([part5, part6], partitions)
+            check_for_stage_collisions(
+                [part5, part6], partitions, candidate_cache=StageCandidateCache()
+            )
 
         assert raised.value.other_part_name == "part5"
         assert raised.value.part_name == "part6"
@@ -291,7 +453,9 @@ class TestCollisions:
         )
 
         with pytest.raises(errors.PartFilesConflict) as raised:
-            check_for_stage_collisions([p1, p2], partitions)
+            check_for_stage_collisions(
+                [p1, p2], partitions, candidate_cache=StageCandidateCache()
+            )
 
         # Even though both parts define Permissions for file "1", they are compatible.
         # Therefore, only "2" should be marked as conflicting.
@@ -386,7 +550,11 @@ class TestCollisions:
     ):
         """Files have different contents."""
         with pytest.raises(errors.OverlayStageConflict):
-            check_for_stage_collisions([overlay_part0, overlay_part1], partitions)
+            check_for_stage_collisions(
+                [overlay_part0, overlay_part1],
+                partitions,
+                candidate_cache=StageCandidateCache(),
+            )
 
     @pytest.mark.usefixtures("add_overlay_feature")
     def test_collisions_symlinks(self, part8, overlay_part3, partitions):

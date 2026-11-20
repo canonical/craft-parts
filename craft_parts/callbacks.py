@@ -56,6 +56,7 @@ class CallbackHook(Generic[_T_cb_co]):
     function: _T_cb_co
     step_list: list[Step] | None
     hook_point: HookPoint | None
+    may_mutate_filesystem: bool = True
 
 
 _STAGE_PACKAGE_FILTERS: list[CallbackHook[FilterCallback]] = []
@@ -115,31 +116,55 @@ def register_epilogue(func: ExecutionCallback) -> None:
 
 
 def register_pre_step(
-    func: StepCallback, *, step_list: list[Step] | None = None
+    func: StepCallback,
+    *,
+    step_list: list[Step] | None = None,
+    may_mutate_filesystem: bool = True,
 ) -> None:
     """Register a pre-step callback function.
 
     :param func: The callback function to run.
     :param step_list: The steps before which the callback function should run.
         If not specified, the callback function will be executed before all steps.
+    :param may_mutate_filesystem: Whether the callback may change files used by
+        stage collision validation.
     """
-    register_step(func, step_list=step_list, hook_point=HookPoint.PRE_STEP)
+    register_step(
+        func,
+        step_list=step_list,
+        hook_point=HookPoint.PRE_STEP,
+        may_mutate_filesystem=may_mutate_filesystem,
+    )
 
 
 def register_post_step(
-    func: StepCallback, *, step_list: list[Step] | None = None
+    func: StepCallback,
+    *,
+    step_list: list[Step] | None = None,
+    may_mutate_filesystem: bool = True,
 ) -> None:
     """Register a post-step callback function.
 
     :param func: The callback function to run.
     :param step_list: The steps after which the callback function should run.
         If not specified, the callback function will be executed after all steps.
+    :param may_mutate_filesystem: Whether the callback may change files used by
+        stage collision validation.
     """
-    register_step(func, step_list=step_list, hook_point=HookPoint.POST_STEP)
+    register_step(
+        func,
+        step_list=step_list,
+        hook_point=HookPoint.POST_STEP,
+        may_mutate_filesystem=may_mutate_filesystem,
+    )
 
 
 def register_step(
-    func: StepCallback, *, step_list: list[Step] | None, hook_point: HookPoint
+    func: StepCallback,
+    *,
+    step_list: list[Step] | None,
+    hook_point: HookPoint,
+    may_mutate_filesystem: bool = True,
 ) -> None:
     """Register a step callback function.
 
@@ -147,9 +172,11 @@ def register_step(
     :param step_list: The steps for which the callback function should run.
         If not specified, the callback function will be executed in all steps.
     :param hook_point: The point during step execution this callback is attached to.
+    :param may_mutate_filesystem: Whether the callback may change files used by
+        stage collision validation.
     """
     _ensure_not_defined(func, _STEP_HOOKS, hook_point=hook_point)
-    _STEP_HOOKS.append(CallbackHook(func, step_list, hook_point))
+    _STEP_HOOKS.append(CallbackHook(func, step_list, hook_point, may_mutate_filesystem))
 
 
 def unregister_all() -> None:
@@ -218,6 +245,14 @@ def run_post_step(step_info: StepInfo) -> None:
     :param step_info: the step information to be sent to the callback functions.
     """
     return _run_step(step_info=step_info, hook_point=HookPoint.POST_STEP)
+
+
+def step_callbacks_may_mutate_filesystem(step: Step) -> bool:
+    """Return whether a callback for ``step`` may mutate filesystem inputs."""
+    return any(
+        hook.may_mutate_filesystem and (not hook.step_list or step in hook.step_list)
+        for hook in _STEP_HOOKS
+    )
 
 
 def run_step(step_info: StepInfo, hook_point: HookPoint) -> None:
