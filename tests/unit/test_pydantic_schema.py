@@ -24,10 +24,14 @@ from craft_parts import pydantic_schema
 from craft_parts.plugins import plugins
 from craft_parts.sources import errors as source_errors
 
+# These need a plugin-specific key to validate, so they get an explicit entry below.
+PLUGINS_WITH_REQUIRED_KEYS = {"fpc"}
+
 VALID_PLUGIN_DATAS = [
     *(
         pytest.param({"plugin": plugin}, id=f"plugin_{plugin}")
         for plugin in plugins.get_registered_plugins()
+        if plugin not in PLUGINS_WITH_REQUIRED_KEYS
     ),
     {
         "plugin": "ant",
@@ -40,6 +44,7 @@ VALID_PLUGIN_DATAS = [
         "autotools-configure-parameters": ["magic"],
         "autotools-bootstrap-parameters": ["shoelaces"],
     },
+    {"plugin": "fpc", "fpc-programs": ["src/hello.pas"]},
     {"plugin": "rust", "rust-features": ["abc", "def"]},
 ]
 VALID_SOURCE_DATAS = [
