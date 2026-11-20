@@ -10,40 +10,35 @@ on:
       - .github/workflows/release-publish.yaml
 
 jobs:
-  source-wheel:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on: [self-hosted, medium, linux]
+  # On tag pushes, fail fast if the hand-maintained Cargo.toml version does
+  # not match the tag, before any wheels are built or published.
+  check-version:
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, amd64, medium, linux]
     permissions:
       contents: read
     steps:
-      - name: Install uv
-        run: |
-          sudo snap install --classic astral-uv
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Fetch tag annotations
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |
-          # Note: we fetch the tags here instead of using actions/checkout's "fetch-tags"
-          # because of https://github.com/actions/checkout/issues/1467
-          git fetch --force --tags --depth 1
-          git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'
-      - name: Build packages
-        run: |
-          uv build
-          uvx twine check dist/*
-      - name: Upload pypi packages artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: pypi-packages
-          path: dist/
+      - name: Assert tag matches Cargo.toml version
+        run: python3 tools/check_version.py
+
+  # Build the full wheel matrix (all arches + abi3) and the sdist via the
+  # reusable wheels workflow. This runs on every push to this file (for PRs) and
+  # on release tags; only the tag path is published below.
+  pypi-artifacts:
+    needs: ["check-version"]
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    permissions:
+      contents: read
+    uses: ./.github/workflows/wheels.yaml
   # NOTE: This PyPI publishing job is often unnecessary for most applications
   # that use starbase. Please ensure this job is excluded from merges/PRs
   # originating from starbase unless explicitly required for a specific app.
   pypi:
-    needs: ["source-wheel"]
+    needs: ["pypi-artifacts"]
     runs-on: [self-hosted, amd64, medium, linux]
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
@@ -52,7 +47,7 @@ jobs:
       - name: Get packages
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: pypi-packages
+          name: pypi-artifacts
           path: dist/
       - name: Publish to pypi
         # Only actually push to pypi when we're on a tag.
@@ -62,7 +57,7 @@ jobs:
         # https://docs.pypi.org/trusted-publishers/adding-a-publisher/#github-actions
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
   github-release:
-    needs: ["source-wheel"]
+    needs: ["pypi-artifacts"]
     runs-on: [self-hosted, medium, linux]
     permissions:
       contents: write
@@ -70,7 +65,7 @@ jobs:
       - name: Get pypi artifacts
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: pypi-packages
+          name: pypi-artifacts
       - name: Release
         # Only actually publish the Github release when we're on a tag.
         if: ${{ startsWith(github.ref, 'refs/tags/') }}

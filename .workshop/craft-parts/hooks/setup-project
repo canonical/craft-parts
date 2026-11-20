@@ -8,6 +8,10 @@ set -euo pipefail
 # groups (e.g. dev-jammy's python-apt). /opt/venv is the uv:venv mount.
 export UV_PROJECT_ENVIRONMENT=/opt/venv
 
+# Keep compiled Cargo build artifacts outside /project so multiple workshops
+# with different glibc versions do not collide.
+export CARGO_TARGET_DIR=/home/workshop/.cargo/target
+
 # Tools that must see /project (non-classic snaps can't) are uv tools.
 # pre-commit hooks are run by the prek SDK.
 uv tool install --upgrade ruff
