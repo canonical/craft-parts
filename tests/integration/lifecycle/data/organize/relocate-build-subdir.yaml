@@ -1,0 +1,47 @@
+# Organize pattern from the OpenJDK snap on GitHub.
+# After building the JDK, the build system leaves both a 'jdk' image directory
+# and a 'docs' directory at the top of the install tree.  The organize rule
+# 'docs: jdk/docs' moves the documentation directory *inside* the JDK
+# subtree so that the entire JDK (including its API docs) lives under a
+# single 'jdk/' prefix in the snap.
+#
+# Source: https://github.com/jgneff/openjdk/blob/924d24a52dc781aeab05b9d5daa908a85dfbd962/snap/snapcraft.yaml
+#   jdk part:
+#     organize:
+#       docs: jdk/docs
+
+description: >
+  Embed a sibling directory produced during the build phase into a named
+  subdirectory of another top-level directory.  The OpenJDK snap uses this to
+  move the 'docs' output directory inside the 'jdk/' subtree so both the JDK
+  binaries and the API documentation live under a single prefix.
+
+parts:
+  jdk:
+    plugin: dump
+    source: src
+    organize:
+      docs: jdk/docs
+
+setup_dirs:
+  - src/jdk/bin
+  - src/jdk/lib
+  - src/docs
+
+setup_files:
+  - src/jdk/bin/java
+  - src/jdk/bin/javac
+  - src/jdk/lib/libjvm.so
+  - src/docs/index.html
+  - src/docs/api.html
+
+expected_prime_present:
+  - jdk/bin/java
+  - jdk/bin/javac
+  - jdk/lib/libjvm.so
+  - jdk/docs/index.html
+  - jdk/docs/api.html
+
+expected_prime_absent:
+  - docs/index.html
+  - docs/api.html

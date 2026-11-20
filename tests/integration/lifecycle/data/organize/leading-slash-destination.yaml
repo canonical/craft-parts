@@ -1,0 +1,40 @@
+# Organize pattern where destination paths are written with a leading slash,
+# as seen in various snapcraft.yaml files in the wild.  craft-parts strips
+# the leading slash transparently (see the lstrip("/") call in organize.py),
+# so the result is identical to omitting the slash.  Snaps sometimes use this
+# form because it visually matches the final on-disk path.
+#
+# This pattern appears, for example, in the git-cola snap's main build part:
+# Source: https://github.com/brlin-tw/git-cola-snap/blob/2cce2fb311c3644c9addcc5014ba8907c33aaf1d/snap/snapcraft.yaml
+#   git-cola part:
+#     organize:
+#       snap/$SNAPCRAFT_PROJECT_NAME/current/: /
+
+description: >
+  Destination paths written with a leading '/' are silently normalised to
+  relative paths by craft-parts. This test verifies that both files end up in
+  the same location whether or not the destination starts with '/'.
+
+parts:
+  my-part:
+    plugin: dump
+    source: src
+    organize:
+      'bin/myapp': /usr/bin/myapp
+      'lib/libmyapp.so.1': /usr/lib/libmyapp.so.1
+
+setup_dirs:
+  - src/bin
+  - src/lib
+
+setup_files:
+  - src/bin/myapp
+  - src/lib/libmyapp.so.1
+
+expected_prime_present:
+  - usr/bin/myapp
+  - usr/lib/libmyapp.so.1
+
+expected_prime_absent:
+  - bin/myapp
+  - lib/libmyapp.so.1
