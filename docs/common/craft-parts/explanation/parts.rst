@@ -134,12 +134,12 @@ as those that would be produced by manually compiling or building the software.
 Build artefacts
 ~~~~~~~~~~~~~~~
 
-At the end of the *build* step, the build artefacts can be organised before the *stage*
-step is run.
+At the end of the *build* step, the build artefacts can be organised before the
+*stage* step is run.
 
-The ``organize`` key is used to customise how files are copied from the building area to
-the staging area. It defines an ordered dictionary that maps paths in the building area
-to paths in the staging area.
+The ``organize`` key is used to customise the part's installed file layout before it is
+staged. It defines a mapping from source paths or patterns to destination paths in the
+part's install layout. For details, see :ref:`organize_explanation`.
 
 After the *build* step, the *stage* step is run to collect the artefacts from the build
 into a common staging area for all parts. Additional snaps and system packages that need
