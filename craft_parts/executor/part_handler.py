@@ -636,8 +636,8 @@ class PartHandler:
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             partitions_contents=migration_partitions_contents,
-            files=contents.partitions_contents[default_partition].files,
-            directories=contents.partitions_contents[default_partition].dirs,
+            files=default_contents.files,
+            directories=default_contents.dirs,
             overlay_hash=overlay_hash.hex(),
             backstage_files=default_contents.backstage_files,
             backstage_directories=default_contents.backstage_dirs,
@@ -669,6 +669,9 @@ class PartHandler:
         )
 
         default_partition = self._part_info.default_partition or DEFAULT_PARTITION
+        default_contents = contents.partitions_contents.get(
+            default_partition, StepPartitionContents()
+        )
 
         primed_stage_packages: set[str]
         if (
@@ -678,7 +681,7 @@ class PartHandler:
         ):
             prime_dirs = list(self._part.prime_dirs.values())
             primed_stage_packages = _get_primed_stage_packages(
-                contents.partitions_contents[default_partition].files,
+                default_contents.files,
                 prime_dirs=prime_dirs,
             )
         else:
@@ -695,8 +698,8 @@ class PartHandler:
             part_properties=self._part_properties,
             project_options=step_info.project_options,
             partitions_contents=non_default_partitions_contents,
-            files=contents.partitions_contents[default_partition].files,
-            directories=contents.partitions_contents[default_partition].dirs,
+            files=default_contents.files,
+            directories=default_contents.dirs,
             primed_stage_packages=primed_stage_packages,
         )
 
@@ -750,13 +753,12 @@ class PartHandler:
 
         scriptlet = self._part.spec.get_scriptlet(step_info.step)
         if scriptlet is not None:
-            step_handler.run_scriptlet(
+            return step_handler.run_scriptlet(
                 scriptlet,
                 scriptlet_name=scriptlet_name,
                 step=step_info.step,
                 work_dir=work_dir,
             )
-            return StepContents(stage=step_info.step == Step.STAGE)
 
         return step_handler.run_builtin()
 
