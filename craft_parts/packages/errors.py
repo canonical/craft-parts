@@ -367,5 +367,8 @@ class ChiselError(PackagesError):
             if line.startswith(":: error:"):
                 details = line
                 break
+        else:
+            # No recognised error line: show whatever Chisel printed.
+            details = output.strip() or None
 
         super().__init__(brief=brief, details=details)

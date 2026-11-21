@@ -14,14 +14,17 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+import subprocess
 import textwrap
 from pathlib import Path
+from unittest import mock
 
 import craft_parts
 import pytest
 import yaml
 from craft_parts import Step
-from craft_parts.packages import base, deb
+from craft_parts.packages import chisel, deb, errors
 from craft_parts.utils.deb_utils import has_slices
 
 
@@ -75,7 +78,6 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_process_run, mocker)
         stage_packages_path=stage_dir, install_path=install_dir, stage_packages=slices
     )
 
-    logger = base.logger
     fake_process_run.assert_called_once_with(
         [
             "chisel",
@@ -87,7 +89,7 @@ def test_unpack_stage_slices(tmp_path, fake_apt_cache, fake_process_run, mocker)
             "package1_slice1",
             "package2_slice2",
         ],
-        logger.debug,
+        mock.ANY,
     )
 
     # Make sure the contents of the cut slices have been normalized.
@@ -119,7 +121,6 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_process_run):
 
     install_dir = lf.project_info.parts_dir / "foo/install"
 
-    logger = base.logger
     fake_process_run.assert_called_once_with(
         [
             "chisel",
@@ -131,5 +132,57 @@ def test_chisel_pull_build(new_dir, fake_apt_cache, fake_process_run):
             "package1_slice1",
             "package2_slice2",
         ],
-        logger.debug,
+        mock.ANY,
     )
+
+
+def _fail_with_output(*lines: str):
+    def _fake_process_run(command, log_func, **kwargs):
+        for line in lines:
+            log_func(line)
+        raise subprocess.CalledProcessError(1, command)
+
+    return _fake_process_run
+
+
+def test_cut_slices_error_includes_output_without_debug_logging(
+    tmp_path, fake_process_run, caplog
+):
+    caplog.set_level(logging.WARNING)
+    fake_process_run.side_effect = _fail_with_output(
+        ":: fetching ubuntu-26.10 indexes",
+        ':: error: slices of package "not-a-package" not found',
+    )
+
+    with pytest.raises(errors.ChiselError) as raised:
+        chisel.cut_slices(["not-a-package_slice"], tmp_path)
+
+    assert raised.value.details == (
+        ':: error: slices of package "not-a-package" not found'
+    )
+    assert 'slices of package "not-a-package" not found' in str(raised.value)
+
+
+def test_cut_slices_logs_output(tmp_path, fake_process_run, caplog):
+    caplog.set_level(logging.DEBUG)
+    fake_process_run.side_effect = lambda command, log_func, **kwargs: log_func(
+        ":: cutting slices"
+    )
+
+    chisel.cut_slices(["package1_slice1"], tmp_path)
+
+    assert ":: cutting slices" in caplog.messages
+
+
+def test_chisel_error_details_fall_back_to_output():
+    error = errors.ChiselError(
+        slices=["package1_slice1"], output=":: something went wrong\n:: exit 1\n"
+    )
+
+    assert error.details == ":: something went wrong\n:: exit 1"
+
+
+def test_chisel_error_details_empty_output():
+    error = errors.ChiselError(slices=["package1_slice1"], output="")
+
+    assert error.details is None

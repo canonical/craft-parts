@@ -16,10 +16,8 @@
 
 """Support for Chisel operations."""
 
-import logging
 import pathlib
 import subprocess
-from io import StringIO
 from typing import Any
 
 import yaml
@@ -85,9 +83,14 @@ def cut_slices(slices: list[str], target_dir: pathlib.Path) -> None:
     os_release = os_utils.OsRelease()
     release = f"{os_release.id()}-{os_release.version_id()}"
 
-    output_stream = StringIO()
-    handler = logging.StreamHandler(stream=output_stream)
-    logger.addHandler(handler)
+    # Keep the output regardless of the logger's level, so that it can be
+    # reported if the command fails.
+    output_lines: list[str] = []
+
+    def _log_output(line: str) -> None:
+        output_lines.append(line)
+        logger.debug(line)
+
     try:
         os_utils.process_run(
             [
@@ -99,11 +102,8 @@ def cut_slices(slices: list[str], target_dir: pathlib.Path) -> None:
                 f"--root={target_dir}",
                 *slices,
             ],
-            logger.debug,
+            _log_output,
         )
     except subprocess.CalledProcessError as err:
-        command_output = output_stream.getvalue()
+        command_output = "\n".join(output_lines)
         raise errors.ChiselError(slices=slices, output=command_output) from err
-    finally:
-        logger.removeHandler(handler)
-        handler.close()
