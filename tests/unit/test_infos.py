@@ -92,6 +92,7 @@ def test_project_info(mocker, new_dir, tc_arch, tc_target_arch, tc_triplet, tc_c
         "arch_triplet": tc_triplet,
         "target_arch": tc_target_arch,
         "project_vars_part_name": "adopt",
+        "partitions": None,
         "project_vars": ProjectVarInfo.unmarshal(
             {"a": {"value": "b", "part-name": "adopt"}}
         ),
@@ -157,6 +158,7 @@ def test_project_info_translated_arch(  # pylint: disable=too-many-arguments
         "arch_triplet": tc_triplet,
         "target_arch": tc_target_arch,
         "project_vars_part_name": "adopt",
+        "partitions": None,
         "project_vars": ProjectVarInfo.unmarshal(
             {"a": ProjectVar(value="b", part_name="adopt").marshal()}
         ),

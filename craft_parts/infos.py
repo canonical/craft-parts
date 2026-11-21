@@ -635,6 +635,7 @@ class ProjectInfo:
             "target_arch": self.target_arch,
             "project_vars_part_name": self._project_vars_part_name,
             "project_vars": self._project_vars,
+            "partitions": self._partitions,
         }
 
     @property
@@ -817,6 +818,8 @@ class ProjectOptions(pydantic.BaseModel):
     :param project_vars: A dictionary containing the project variables.
     :param project_vars_part_name: Project variables can be set only if
         the part name matches this name.
+    :param partitions: The project partitions, if the partitions feature is
+        enabled.
     """
 
     application_name: str = ""
@@ -824,6 +827,7 @@ class ProjectOptions(pydantic.BaseModel):
     target_arch: str = ""
     project_vars_part_name: str | None = None
     project_vars: ProjectVarInfo = ProjectVarInfo()
+    partitions: list[str] | None = None
 
     @classmethod
     def from_project_info(cls, project_info: ProjectInfo) -> Self:

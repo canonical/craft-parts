@@ -51,7 +51,11 @@ from craft_parts.state_manager.stage_state import StageState
 from craft_parts.state_manager.state_manager import get_part_properties
 from craft_parts.steps import Step
 from craft_parts.utils import file_utils, os_utils
-from craft_parts.utils.partition_utils import BUILD_PARTITION, DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import (
+    BUILD_PARTITION,
+    DEFAULT_PARTITION,
+    get_partition_dir_map,
+)
 
 from . import filesets, migration
 from .environment import generate_step_environment
@@ -1156,21 +1160,53 @@ class PartHandler:
         if part_level < self._overlay_manager.cache_level:
             _remove(self._part.dirs.overlay_packages_dir)
 
+    def _step_partitions(self, step: Step) -> list[str] | None:
+        """Return the partitions the step last ran with.
+
+        The partitions may have changed since the step ran, and files must be
+        removed from where they were migrated to, not from where the current
+        partitions would put them. Falls back to the current partitions for
+        states that don't record them.
+        """
+        state = states.load_step_state(self._part, step)
+        if state and state.project_options.partitions:
+            return state.project_options.partitions
+        return self._part_info.partitions
+
+    def _step_partition_dirs(self, step: Step, dirname: str) -> dict[str | None, Path]:
+        """Return the partition directories the step last ran with."""
+        return get_partition_dir_map(
+            base_dir=self._part.dirs.work_dir,
+            partitions=self._step_partitions(step),
+            suffix=dirname,
+        )
+
     def _clean_build(self) -> None:
         """Remove the current part's build step files and state."""
         _remove(self._part.part_build_dir)
-        for install_dir in self._part.part_install_dirs.values():
+        install_dirs = {
+            *self._part.part_install_dirs.values(),
+            *self._step_partition_dirs(
+                Step.BUILD, f"parts/{self._part.name}/install"
+            ).values(),
+        }
+        for install_dir in install_dirs:
             _remove(install_dir)
 
         _remove(self._part.part_export_dir)
 
     def _clean_stage(self) -> None:
         """Remove the current part's stage step files and state."""
-        for (
-            partition,
-            stage_dir,
-        ) in self._part.stage_dirs.items():  # iterate over partitions
-            self._clean_shared(Step.STAGE, partition=partition, shared_dir=stage_dir)
+        overlay_dirs = self._step_partition_dirs(Step.STAGE, "overlay")
+        for partition, stage_dir in self._step_partition_dirs(
+            Step.STAGE, "stage"
+        ).items():
+            self._clean_shared(
+                Step.STAGE,
+                partition=partition,
+                shared_dir=stage_dir,
+                overlay_dir=overlay_dirs[partition],
+            )
 
         migration.clean_backstage(
             part_name=self._part.name,
@@ -1182,27 +1218,31 @@ class PartHandler:
 
     def _clean_prime(self) -> None:
         """Remove the current part's prime step files and state."""
-        for (
-            partition,
-            prime_dir,
-        ) in self._part.prime_dirs.items():  # iterate over partitions
-            self._clean_shared(Step.PRIME, partition=partition, shared_dir=prime_dir)
+        overlay_dirs = self._step_partition_dirs(Step.PRIME, "overlay")
+        for partition, prime_dir in self._step_partition_dirs(
+            Step.PRIME, "prime"
+        ).items():
+            self._clean_shared(
+                Step.PRIME,
+                partition=partition,
+                shared_dir=prime_dir,
+                overlay_dir=overlay_dirs[partition],
+            )
 
     def _clean_shared(
-        self, step: Step, *, partition: str | None, shared_dir: Path
+        self, step: Step, *, partition: str | None, shared_dir: Path, overlay_dir: Path
     ) -> None:
         """Remove the current part's shared files from the given directory.
 
         :param step: The step corresponding to the shared directory.
         :param shared_dir: The shared directory to clean.
+        :param overlay_dir: The overlay directory of the partition being cleaned.
         """
         logger.debug(
             f"clean shared dir: {shared_dir} for step: {step} for partition {partition}"
         )
         part_states = _load_part_states(step, self._part_list)
-        overlay_migration_state = states.load_overlay_migration_state(
-            self._part.overlay_dirs[partition], step
-        )
+        overlay_migration_state = states.load_overlay_migration_state(overlay_dir, step)
 
         migration.clean_shared_area(
             part_name=self._part.name,
@@ -1225,12 +1265,32 @@ class PartHandler:
                 partition=partition,
             )
             overlay_migration_state_path = states.get_overlay_migration_state_path(
-                self._part.overlay_dirs[partition], step
+                overlay_dir, step
             )
             logger.info(
                 f"remove overlay migration state file for part {self._part.name}, step {step}"
             )
             overlay_migration_state_path.unlink()
+
+    def _remove_stale_alias_symlinks(self) -> None:
+        """Remove alias symlinks left by a partition that was the default before.
+
+        If the partitions changed and a previous default partition is now a
+        regular one, its alias symlinks still point to the default partition
+        directories and would redirect its files there.
+        """
+        partition_dir = self._part_info.dirs.partition_dir
+        if not partition_dir:
+            return
+        default_partition = self._part_info.default_partition
+        for partition in self._part_info.partitions or []:
+            if partition == default_partition:
+                continue
+            for name in ("parts", "stage", "prime", "overlay"):
+                path = partition_dir / partition / name
+                if path.is_symlink():
+                    logger.debug("Remove stale alias symlink %s", path)
+                    path.unlink()
 
     def _symlink_alias_to_default(self) -> None:
         """Create directory and symlinks for the alias of the default partition.
@@ -1317,6 +1377,8 @@ class PartHandler:
             *self._part.prime_dirs.values(),
             *self._part.overlay_dirs.values(),
         ]
+        self._remove_stale_alias_symlinks()
+
         for dir_name in dirs:
             dir_name.mkdir(parents=True, exist_ok=True)
 
