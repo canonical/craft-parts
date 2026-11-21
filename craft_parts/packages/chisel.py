@@ -80,6 +80,11 @@ def cut_slices(slices: list[str], target_dir: pathlib.Path) -> None:
     :param slices: The list of names of slices to cut.
     :param target_dir: The destination directory.
     """
+    # Pass the release explicitly instead of letting Chisel infer it from
+    # /etc/lsb-release, which is no longer shipped from Ubuntu 26.10 onwards.
+    os_release = os_utils.OsRelease()
+    release = f"{os_release.id()}-{os_release.version_id()}"
+
     output_stream = StringIO()
     handler = logging.StreamHandler(stream=output_stream)
     logger.addHandler(handler)
@@ -88,6 +93,7 @@ def cut_slices(slices: list[str], target_dir: pathlib.Path) -> None:
             [
                 "chisel",
                 "cut",
+                f"--release={release}",
                 "--ignore=unmaintained",
                 "--ignore=unstable",
                 f"--root={target_dir}",

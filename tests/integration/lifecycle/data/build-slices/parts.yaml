@@ -42,3 +42,14 @@ parts:
       # The Chisel slice for go is very minimal and needs GOROOT to be set explicitly
       # for "go version" to succeed
       - GOROOT: /usr/lib/go
+
+  special-dirs:
+    plugin: nil
+    build-slices:
+      - coreutils_bins
+      - file_bins
+      - grep_bins
+    override-build: |
+      cat /proc/uptime > "$CRAFT_PART_INSTALL/uptime"
+      file /dev/null | grep "character special"
+      cat /sys/class/net/lo/flags  > "$CRAFT_PART_INSTALL/lo_flags"

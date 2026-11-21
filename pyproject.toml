@@ -102,6 +102,7 @@ lint = [
 ]
 tics = ["flake8", "pylint"]
 types = [
+  "tomli",  # ty can't find tomli in python>3.11 environments
   "types-Pillow",
   "types-PyYAML",
   "types-Pygments",  # Type checking
@@ -316,6 +317,9 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
 # NOTE: Do not merge starbase's auto-find here, as we are intentionally adding two
 # packages using this manual description.
+[tool.setuptools.package-data]
+"craft_parts" = ["**/*.sh"]
+
 [tool.setuptools.package-dir]
 "craft_parts" = "craft_parts"
 "craft_parts_docs" = "docs/common"
