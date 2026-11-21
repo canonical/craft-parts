@@ -1381,6 +1381,42 @@ class TestHelpers:
         # this should not raise and exception
         part_handler._remove(Path("not_here"))
 
+    def test_missing_parent_dirs(self, new_dir):
+        src, dest = Path("src"), Path("dest")
+        (src / "a/b/c").mkdir(parents=True)
+        (src / "x").mkdir()
+        (dest / "a").mkdir(parents=True)
+
+        missing = part_handler._missing_parent_dirs(
+            {Path("a/b/c/file"), Path("x/file"), Path("top-file")},
+            srcdir=src,
+            destdir=dest,
+        )
+
+        assert missing == {Path("a/b"), Path("a/b/c"), Path("x")}
+
+    def test_missing_parent_dirs_skips_non_dirs(self, new_dir):
+        src, dest = Path("src"), Path("dest")
+        (src / "real/dir").mkdir(parents=True)
+        (src / "link").symlink_to("real")
+        (src / "file").write_text("not a dir")
+        dest.mkdir()
+        (dest / "dangling").symlink_to("nowhere")
+
+        missing = part_handler._missing_parent_dirs(
+            {
+                Path("link/file"),  # parent is a symlink in src
+                Path("link/dir/file"),  # dir under a symlink in src
+                Path("file/oops"),  # parent is a file in src
+                Path("gone/file"),  # parent doesn't exist in src
+                Path("dangling/file"),  # parent exists in dest as a symlink
+            },
+            srcdir=src,
+            destdir=dest,
+        )
+
+        assert missing == set()
+
     @pytest.mark.parametrize(
         ("consolidated_states", "migrated_files", "migrated_directories", "result"),
         [
