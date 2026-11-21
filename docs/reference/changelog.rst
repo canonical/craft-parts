@@ -19,6 +19,20 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+
+.. _release-2.39.0:
+
+2.39.0 (unreleased)
+-------------------
+
+New features:
+
+- Warn when a part's ``source`` is an absolute path or a relative path that
+  leads out of the project directory, as these may not exist in a managed
+  build environment.
+
+For a complete list of commits, check out the `2.39.0`_ release on GitHub.
+
 .. _release-2.38.1:
 
 2.38.1 (2026-11-18)
@@ -2012,6 +2026,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.39.0: https://github.com/canonical/craft-parts/releases/tag/2.39.0
 .. _2.38.1: https://github.com/canonical/craft-parts/releases/tag/2.38.1
 .. _2.38.0: https://github.com/canonical/craft-parts/releases/tag/2.38.0
 .. _2.37.3: https://github.com/canonical/craft-parts/releases/tag/2.37.3

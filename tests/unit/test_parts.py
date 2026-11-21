@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import re
+import sys
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
@@ -246,6 +248,100 @@ class TestPartPartitionUsage:
 
         Part("a", part_data, partitions=partitions)
         Part("b", part_data, partitions=partitions)
+
+
+@pytest.mark.usefixtures("new_dir")
+class TestPartSourceLocation:
+    """Warn about sources outside the project directory."""
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            "..",
+            "../../../",
+            "../src",
+            "src/../../x",
+            "/opt/src",
+            "/opt/src.tar.gz",
+        ],
+    )
+    def test_source_outside_project(self, source, partitions, caplog):
+        caplog.set_level(logging.WARNING, logger="craft_parts")
+        Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)
+
+        expected = (
+            f"Source {source!r} for part 'foo' is outside the project directory "
+            "and may not exist when building in a managed environment."
+        )
+        assert [r.getMessage() for r in caplog.records] == [expected]
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            None,
+            ".",
+            "./src",
+            "src",
+            "sub/../src",
+            "src.tar.gz",
+            "https://example.com/src.tar.gz",
+            "git://example.com/src.git",
+            "git@github.com:org/src.git",
+            "lp:src",
+        ],
+    )
+    def test_source_inside_project(self, source, partitions, caplog):
+        caplog.set_level(logging.WARNING, logger="craft_parts")
+        part_data = {"plugin": "nil"}
+        if source:
+            part_data["source"] = source
+
+        Part("foo", part_data, partitions=partitions)
+
+        assert caplog.records == []
+
+    @pytest.mark.parametrize("subdir", ["", "src"])
+    def test_absolute_source_inside_project(self, subdir, partitions, caplog):
+        caplog.set_level(logging.WARNING, logger="craft_parts")
+        source = str(Path().resolve() / subdir)
+
+        Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)
+
+        assert caplog.records == []
+
+    def test_source_in_application_install(self, partitions, caplog):
+        """Files shipped with the application, like extension sources, are fine."""
+        caplog.set_level(logging.WARNING, logger="craft_parts")
+        source = str(Path(sys.prefix, "share", "app", "extensions", "chain"))
+
+        Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)
+
+        assert caplog.records == []
+
+    @pytest.mark.parametrize(
+        ("prefix", "source", "warns"),
+        [
+            ("/snap/snapcraft/current", "/snap/snapcraft/current/share/x", False),
+            ("/snap/snapcraft/current", "/snap/snapcraft/current/lib/x", True),
+            ("/snap/snapcraft/current", "/snap/snapcraft/current", True),
+            ("/snap/snapcraft/current", "/snap/snapcraft/current/share/../../o", True),
+            ("/snap/snapcraft/current", "/snap/snapcraft/currently/share/x", True),
+            ("/snap/snapcraft/current", "/snap/other/current/share/x", True),
+            ("/usr", "/usr/share/snapcraft/extensions/x", False),
+            ("/usr", "/usr/src/linux", True),
+            ("/usr", "/usr/local/src/x", True),
+        ],
+    )
+    def test_source_application_prefix(
+        self, prefix, source, warns, partitions, caplog, monkeypatch
+    ):
+        """Only the application's data directory is skipped, not its whole prefix."""
+        monkeypatch.setattr(sys, "prefix", prefix)
+        caplog.set_level(logging.WARNING, logger="craft_parts")
+
+        Part("foo", {"plugin": "nil", "source": source}, partitions=partitions)
+
+        assert bool(caplog.records) == warns
 
 
 class TestPartData:
