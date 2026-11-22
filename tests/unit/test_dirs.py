@@ -18,7 +18,16 @@ from pathlib import Path
 
 import pytest
 from craft_parts.dirs import ProjectDirs
+from craft_parts.utils.partition_utils import (
+    BUILD_PARTITION,
+    DEFAULT_PARTITION,
+    OVERLAY_PARTITION,
+)
 from hypothesis import given, strategies
+
+# Names a generated partition can't take: "default" is always passed first,
+# and the pseudo-partitions are rejected by validate_partition_names().
+RESERVED_PARTITIONS = (DEFAULT_PARTITION, OVERLAY_PARTITION, BUILD_PARTITION)
 
 
 def test_dirs(new_dir, partitions):
@@ -63,7 +72,7 @@ def test_dirs_work_dir_resolving(partitions):
     partitions=strategies.lists(
         strategies.text(
             strategies.sampled_from(string.ascii_lowercase), min_size=1
-        ).filter(lambda x: x not in ("default", "overlay")),
+        ).filter(lambda x: x not in RESERVED_PARTITIONS),
         min_size=1,
         unique=True,
     )
@@ -82,7 +91,7 @@ def test_get_stage_dir_with_partitions(partitions):
     partitions=strategies.lists(
         strategies.text(
             strategies.sampled_from(string.ascii_lowercase), min_size=1
-        ).filter(lambda x: x not in ("default", "overlay")),
+        ).filter(lambda x: x not in RESERVED_PARTITIONS),
         min_size=1,
         unique=True,
     )
