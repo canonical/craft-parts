@@ -19,6 +19,16 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.38.3:
+
+2.38.3 (unreleased)
+-------------------
+
+Bug fixes:
+
+- Running the build step again after a failed build no longer fails because of
+  files the failed build left in the part's install directory.
+
 .. _release-2.38.2:
 
 2.38.2 (2026-11-23)
