@@ -412,7 +412,9 @@ class PartHandler:
 
             # apply overlay filter
             overlay_fileset = filesets.Fileset(
-                self._part.spec.overlay_files, name="overlay"
+                self._part.spec.overlay_files,
+                name="overlay",
+                default_partition=self._part_info.default_partition,
             )
             destdir = self._part.part_layer_dir
             files, dirs = filesets.migratable_filesets(

@@ -117,6 +117,42 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         assert file1.exists() is False
         assert file2.is_file()
 
+    def test_run_overlay_with_filter_for_aliased_default(self, mocker, new_dir):
+        mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+        mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
+        mocker.patch("craft_parts.overlays.OverlayManager.install_packages")
+
+        partitions = ["mypart", "yourpart"]
+        p1 = Part(
+            "p1",
+            {"plugin": "nil", "overlay": ["wanted", "-secret"]},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[p1],
+            base_layer_dir=Path("/base"),
+            cache_level=0,
+        )
+        part_info = PartInfo(info, p1)
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+
+        p1.part_layer_dir.mkdir(parents=True)
+        (p1.part_layer_dir / "wanted").touch()
+        (p1.part_layer_dir / "secret").touch()
+
+        handler._run_overlay(StepInfo(part_info, Step.PULL), stdout=None, stderr=None)
+
+        assert (p1.part_layer_dir / "wanted").is_file()
+        assert (p1.part_layer_dir / "secret").exists() is False
+
     def test_run_build(self, mocker):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
         mocker.patch(
