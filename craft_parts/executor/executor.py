@@ -302,9 +302,14 @@ class Executor:
         packages.Repository.install_packages(sorted(build_packages))
 
     def _install_build_snaps(self) -> None:
-        build_snaps: set[str] = set(self._extra_build_snaps or ())
+        # Snaps required by a part, including plugin and source-provided snaps,
+        # are refreshed on channel changes. Application extras only need to
+        # be present, so an existing install is left untouched.
+        required_build_snaps: set[str] = set()
         for handler in self._handler.values():
-            build_snaps.update(handler.build_snaps)
+            required_build_snaps.update(handler.build_snaps)
+        extra_build_snaps = set(self._extra_build_snaps or ()) - required_build_snaps
+        build_snaps = required_build_snaps | extra_build_snaps
 
         if not build_snaps:
             return
@@ -320,7 +325,10 @@ class Executor:
             )
         else:
             logger.info("Installing build-snaps")
-            packages.snaps.install_snaps(build_snaps)
+            if extra_build_snaps:
+                packages.snaps.install_snaps(extra_build_snaps)
+            if required_build_snaps:
+                packages.snaps.install_snaps(required_build_snaps, refresh=True)
 
     def _cut_build_slices(self) -> None:
         build_slices = parts.get_build_slices(part_list=self._part_list)

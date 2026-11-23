@@ -25,6 +25,8 @@ represents how the file is going to be staged.
 from __future__ import annotations
 
 import contextlib
+import errno
+import glob
 import os
 import pathlib
 import shutil
@@ -42,6 +44,183 @@ from craft_parts.utils.partition_utils import (
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+
+def _resolve_path(path: pathlib.Path) -> pathlib.Path:
+    """Resolve all symlinks in a path that may not exist yet.
+
+    :meth:`pathlib.Path.resolve` only raises on symlink loops up to Python
+    3.12; from 3.13 it delegates to :func:`os.path.realpath` without
+    ``strict`` and returns the unresolved path instead. Loop detection
+    therefore needs an explicit :func:`os.path.realpath` call, and
+    ``strict=True`` is what reports the loop (an ``OSError`` with ``ELOOP``).
+    That mode also rejects paths that don't exist yet, so resolve as much of
+    the path as possible and only fall back when the missing part can't hold
+    a symlink loop.
+
+    :param path: The path to resolve.
+
+    :returns: The fully resolved path.
+
+    :raises OSError: If the path traverses a symlink loop.
+    """
+    try:
+        return pathlib.Path(os.path.realpath(path, strict=True))
+    except NotADirectoryError:
+        # A non-directory component can't introduce a symlink loop.
+        return pathlib.Path(os.path.realpath(path, strict=False))
+    except FileNotFoundError:
+        # The path doesn't exist yet, so resolve the existing prefix and
+        # re-attach the missing component.
+        if path == path.parent:
+            raise
+        return _resolve_path(path.parent) / path.name
+
+
+def _check_not_nested_in_source(
+    *,
+    part_name: str,
+    key: str,
+    file_map: dict[str, str],
+    src_path: pathlib.Path,
+    dst_path: pathlib.Path,
+) -> None:
+    """Check that a directory is not organized into a path inside itself.
+
+    An explicit key moves the source directory to the destination and then
+    removes the source. If the destination is nested inside the source, that
+    removal also deletes the freshly written destination, leaving the part
+    empty without reporting an error.
+
+    This is always a mistake in the organize rules: to move the contents of a
+    directory into a subdirectory of itself, use a glob key, which nests each
+    match inside the destination instead.
+
+    :param part_name: The name of the part being organized.
+    :param key: The organize key (source pattern).
+    :param file_map: The organize file map.
+    :param src_path: The source path.
+    :param dst_path: The destination path the source would be moved to.
+
+    :raises FileOrganizeError: If the destination is inside the source, or
+        either path traverses a symlink loop.
+    """
+    try:
+        resolved_dst_path = _resolve_path(dst_path)
+        resolved_src_path = _resolve_path(src_path)
+    except OSError as err:
+        if err.errno != errno.ELOOP:
+            raise
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize directory {key!r} to {file_map[key]!r}, but "
+                "could not resolve the source or destination path"
+            ),
+        ) from err
+
+    if not resolved_dst_path.is_relative_to(resolved_src_path):
+        return
+
+    message = (
+        f"trying to organize directory {key!r} to {file_map[key]!r} but the "
+        "destination is inside the source directory"
+    )
+    # Only suggest a glob key when the source key isn't already one. Other
+    # magic characters ("?", "[]") make a key a glob too, and suggesting
+    # "app/v?/*" for the already-glob key "app/v?" would not help.
+    if not glob.has_magic(key):
+        glob_destination = file_map[key]
+        if not glob_destination.endswith("/"):
+            glob_destination = f"{glob_destination}/"
+        message = (
+            f"{message}; to move the contents of {key!r} into {file_map[key]!r}, "
+            f"use a glob key instead ({key.rstrip('/')}/*: {glob_destination})"
+        )
+
+    raise errors.FileOrganizeError(part_name=part_name, message=message)
+
+
+def _check_symlink_destination_not_nested_in_target(
+    *,
+    part_name: str,
+    key: str,
+    file_map: dict[str, str],
+    src_path: pathlib.Path,
+    dst_path: pathlib.Path,
+) -> None:
+    """Check that organizing a symlink does not place it inside its target.
+
+    Moving a symlink preserves the link target. If the destination is nested
+    inside the resolved target directory, the relocated symlink points back to
+    one of its ancestors, creating a self-referential path.
+
+    :param part_name: The name of the part being organized.
+    :param key: The organize key (source pattern).
+    :param file_map: The organize file map.
+    :param src_path: The symlink source path.
+    :param dst_path: The destination path the symlink would be moved to.
+
+    :raises FileOrganizeError: If the destination is inside the symlink target,
+        or either path traverses a symlink loop.
+    """
+    if not src_path.is_symlink():
+        return
+
+    try:
+        resolved_src_path = _resolve_path(src_path)
+        resolved_dst_parent = _resolve_path(dst_path.parent)
+    except OSError as err:
+        if err.errno != errno.ELOOP:
+            raise
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize symlink {key!r} to {file_map[key]!r}, but "
+                "could not resolve the source or destination path"
+            ),
+        ) from err
+
+    if not resolved_dst_parent.is_relative_to(resolved_src_path):
+        return
+
+    raise errors.FileOrganizeError(
+        part_name=part_name,
+        message=(
+            f"trying to organize symlink {key!r} to {file_map[key]!r}, but the "
+            "destination is inside the symlink target"
+        ),
+    )
+
+
+def _check_destination_path_resolvable(
+    *,
+    part_name: str,
+    key: str,
+    file_map: dict[str, str],
+    dst_path: pathlib.Path,
+) -> None:
+    """Check that the destination path does not traverse a symlink loop.
+
+    :param part_name: The name of the part being organized.
+    :param key: The organize key (source pattern).
+    :param file_map: The organize file map.
+    :param dst_path: The destination path for the organize operation.
+
+    :raises FileOrganizeError: If the destination path traverses a symlink loop.
+    """
+    try:
+        _resolve_path(dst_path)
+    except OSError as err:
+        if err.errno != errno.ELOOP:
+            raise
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize {key!r} to {file_map[key]!r}, but "
+                "could not resolve the destination path"
+            ),
+        ) from err
 
 
 def _check_overlay_equivalence(
@@ -146,6 +325,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
         ):
             dst_path.unlink()
 
+        _check_destination_path_resolvable(
+            part_name=part_name,
+            key=key,
+            file_map=file_map,
+            dst_path=dst_path,
+        )
+
         base = src.parent
         if "*" in str(src):
             base = Path(*takewhile(lambda part: "*" not in part, src.parts))
@@ -217,6 +403,13 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     if real_dst_path.exists() and real_dst_path.samefile(src_path):
                         # Trying to organize a directory to the same place, skipping
                         continue
+                    _check_not_nested_in_source(
+                        part_name=part_name,
+                        key=key,
+                        file_map=file_map,
+                        src_path=src_path,
+                        dst_path=real_dst_path,
+                    )
                     file_utils.link_or_copy_tree(src, real_dst_path)
                     if src_partition_pair.partition != BUILD_PARTITION:
                         shutil.rmtree(src)
@@ -226,12 +419,30 @@ def organize_files(  # noqa: PLR0912, PLR0915
                 # Organizing to the root of a partition in overwrite mode.
                 organize_to_overlay = dst_partition_pair.partition == OVERLAY_PARTITION
 
+                if dst_path.exists() and dst_path.samefile(src_path):
+                    # Preserve the existing behavior for anchored globs such as
+                    # "app/*: app/app/": once a previous match created the
+                    # destination directory, skipping that self-match lets the
+                    # remaining entries merge into it. This is not equivalent to
+                    # organizing "app" to "app/app", but changing it would
+                    # break projects that currently build.
+                    # Reorganizing should ignore the destination directory if
+                    # the source glob matches it again.
+                    continue
+
                 if (
                     dst_path in install_dir_map.values()
                     or organize_to_overlay
                     or (src_is_build_partition and dst_path.is_dir())
                 ):
                     real_dst_path = dst_path / src_path.name
+                    _check_not_nested_in_source(
+                        part_name=part_name,
+                        key=key,
+                        file_map=file_map,
+                        src_path=src_path,
+                        dst_path=real_dst_path,
+                    )
                     if not overwrite:
                         conflicts = file_utils.find_merge_conflicts(
                             src_path,
@@ -269,6 +480,30 @@ def organize_files(  # noqa: PLR0912, PLR0915
                     if src_partition_pair.partition != BUILD_PARTITION:
                         shutil.rmtree(src)
                     continue
+
+                real_dst_path = (
+                    dst_path / src_path.name if dst_string.endswith("/") else dst_path
+                )
+                _check_not_nested_in_source(
+                    part_name=part_name,
+                    key=key,
+                    file_map=file_map,
+                    src_path=src_path,
+                    dst_path=real_dst_path,
+                )
+
+            # The destination the source is actually placed at, once the
+            # destination directory (if any) exists.
+            final_dst_path = (
+                dst / src.name if dst_string.endswith("/") or dst.is_dir() else dst
+            )
+            _check_symlink_destination_not_nested_in_target(
+                part_name=part_name,
+                key=key,
+                file_map=file_map,
+                src_path=src_path,
+                dst_path=final_dst_path,
+            )
 
             # Organize a "not dir" (file, character device, etc.) to a "not dir"
             if dst.is_file():
@@ -396,7 +631,23 @@ def get_src_path(
     # Empty source paths refer to the install directory itself, so validate the
     # source path directly instead of its parent.
     src_parent = src_path if not src_inner_path else src_path.parent
-    if not src_parent.resolve().is_relative_to(base_dir):
+    try:
+        # Detect loops consistently across Python versions, then use resolve()
+        # to preserve its handling of paths with missing components.
+        _resolve_path(src_parent)
+        resolved_src_parent = src_parent.resolve()
+    except (OSError, RuntimeError) as err:
+        if isinstance(err, OSError) and err.errno != errno.ELOOP:
+            raise
+        raise errors.FileOrganizeError(
+            part_name=part_name,
+            message=(
+                f"trying to organize from {src_string!r}, but could not resolve "
+                "the source path"
+            ),
+        ) from err
+
+    if not resolved_src_parent.is_relative_to(base_dir):
         raise errors.FileOrganizeError(
             part_name=part_name,
             message=(

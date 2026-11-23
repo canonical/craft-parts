@@ -316,7 +316,8 @@ class PartSpec(BaseModel):
     * ``<snap-name>@<track>/<risk>``
     * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If an entry specifies no track or risk, ``latest/stable`` is used.
+    If an entry specifies no track or risk, the channel is left unspecified
+    and the snap's default channel is used.
 
     The ``/`` character may also be used to separate the snap name from the
     track, but this is deprecated in favor of the ``@`` character.
@@ -363,7 +364,8 @@ class PartSpec(BaseModel):
     * ``<snap-name>@<track>/<risk>``
     * ``<snap-name>@<track>/<risk>/<branch>``
 
-    If an entry specifies no track or risk, ``latest/stable`` is used.
+    If an entry specifies no track or risk, the channel is left unspecified
+    and the snap's default channel is used.
 
     The ``/`` character may also be used to separate the snap name from the
     track, but this is deprecated in favor of the ``@`` character.
@@ -435,6 +437,14 @@ class PartSpec(BaseModel):
 
     At the end of the build step, the files at the source paths are copied to
     their destination paths in the stage directory.
+
+    A source directory can't be organized into a path inside itself, because
+    the source directory is removed after it is copied, which would also remove
+    the destination. To move the contents of a directory into a subdirectory of
+    itself, use a wildcard in the source path so that each match is nested in
+    the destination. For example, use ``app/*: app/app/`` instead of
+    ``app: app/app/``. If ``app/app`` already exists, that glob behavior merges
+    matching entries into ``app/app``. It does not nest them again.
     """
 
     overlay_files: list[str] = Field(

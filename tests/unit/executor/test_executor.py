@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import shutil
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 from craft_parts import callbacks, errors
@@ -184,7 +185,51 @@ class TestPackages:
         e = Executor(project_info=info, part_list=[p1, p2])
         e.prologue()
 
-        install.assert_called_once_with({"snap1", "snap2"})
+        install.assert_called_once_with({"snap1", "snap2"}, refresh=True)
+
+    def test_install_build_snaps_extra_not_refreshed(self, mocker, new_dir, partitions):
+        mocker.patch(
+            "craft_parts.utils.os_utils.is_inside_container", return_value=False
+        )
+        install = mocker.patch("craft_parts.packages.snaps.install_snaps")
+
+        p1 = Part(
+            "foo",
+            {"plugin": "nil", "build-snaps": ["snap1", "snap2"]},
+            partitions=partitions,
+        )
+
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+
+        e = Executor(
+            project_info=info,
+            part_list=[p1],
+            extra_build_snaps=["chisel@latest/stable", "snap2"],
+        )
+        e.prologue()
+
+        assert install.mock_calls == [
+            call({"chisel@latest/stable"}),
+            call({"snap1", "snap2"}, refresh=True),
+        ]
+
+    def test_install_plugin_build_snaps_is_refreshed(self, mocker, new_dir, partitions):
+        mocker.patch(
+            "craft_parts.executor.part_handler._get_build_snaps",
+            return_value=["plugin-snap@latest/candidate"],
+        )
+        install = mocker.patch("craft_parts.packages.snaps.install_snaps")
+
+        part = Part("foo", {"plugin": "nil"}, partitions=partitions)
+        info = ProjectInfo(
+            application_name="test", cache_dir=new_dir, partitions=partitions
+        )
+
+        Executor(project_info=info, part_list=[part]).prologue()
+
+        install.assert_called_once_with({"plugin-snap@latest/candidate"}, refresh=True)
 
     def test_install_build_snaps_in_container(self, mocker, new_dir, partitions):
         mocker.patch(

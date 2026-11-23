@@ -129,11 +129,16 @@ rediraffe_dir_only = True
 ############################
 
 # This description is included in llms.txt to provide some initial context for your
-# product docs.
+# product docs. Prefer reusing the first sentence of your home page (docs/index.rst)
+# here, so the description stays in sync with the home page.
+# If your home page does not have a sentence that works as a description yet, you can
+# write one in the form "This is the documentation for <product name>, <summary>".
+# Do not maintain a second, hand-authored description alongside the home page:
+# it will drift from the home page over time.
 llms_txt_description = textwrap.dedent(
     """\
-    Craft Parts is a Python package to support a family of tools that create
-    standalone software packages for deployment on Linux-based systems.
+    This is the documentation for Craft Parts, a Python package to support a family of
+    tools that create standalone software packages for deployment on Linux-based systems.
     """
 )
 
