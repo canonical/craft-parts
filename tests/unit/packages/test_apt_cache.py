@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 from pathlib import Path
 from typing import cast
 from unittest.mock import call
 
 import apt.package
+import apt_pkg
 import pytest
 from craft_parts.packages import apt_cache, errors
 from craft_parts.packages.apt_cache import AptCache
@@ -411,3 +413,141 @@ def test_ignore_unreadable_files(tmp_path):
     result = apt_cache._ignore_unreadable_files(tmp_path, ["unreadable", "readable"])
 
     assert result == ["unreadable"]
+
+
+@pytest.fixture
+def sandbox_user():
+    """Set apt's sandbox user to _apt for the test and restore it afterwards."""
+    old = apt_pkg.config.find("APT::Sandbox::User")
+    apt_pkg.config.set("APT::Sandbox::User", "_apt")
+    yield "_apt"
+    apt_pkg.config.set("APT::Sandbox::User", old)
+
+
+@pytest.fixture
+def as_root(mocker):
+    mocker.patch("os.geteuid", return_value=0)
+    return mocker.patch("pwd.getpwnam", return_value=mocker.Mock(pw_uid=42, pw_gid=43))
+
+
+@pytest.mark.usefixtures("sandbox_user")
+class TestSandboxUserCanWrite:
+    def test_not_root(self, mocker, tmp_path):
+        mocker.patch("os.geteuid", return_value=1000)
+        mock_run = mocker.patch("subprocess.run")
+
+        assert apt_cache._sandbox_user_can_write(tmp_path)
+        mock_run.assert_not_called()
+
+    @pytest.mark.parametrize("user", ["", "root"])
+    def test_sandbox_disabled(self, mocker, as_root, tmp_path, user):
+        apt_pkg.config.set("APT::Sandbox::User", user)
+        mock_run = mocker.patch("subprocess.run")
+
+        assert apt_cache._sandbox_user_can_write(tmp_path)
+        mock_run.assert_not_called()
+
+    def test_sandbox_user_missing(self, mocker, as_root, tmp_path):
+        as_root.side_effect = KeyError("_apt")
+        mock_run = mocker.patch("subprocess.run")
+
+        assert apt_cache._sandbox_user_can_write(tmp_path)
+        mock_run.assert_not_called()
+
+    def test_writable(self, mocker, as_root, tmp_path):
+        probe = tmp_path / "tmp.abc123"
+        probe.touch()
+        mock_run = mocker.patch(
+            "subprocess.run",
+            return_value=subprocess.CompletedProcess(
+                [], returncode=0, stdout=f"{probe}\n", stderr=""
+            ),
+        )
+
+        assert apt_cache._sandbox_user_can_write(tmp_path)
+        mock_run.assert_called_once_with(
+            ["mktemp", "-p", str(tmp_path)],
+            user=42,
+            group=43,
+            extra_groups=[],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        as_root.assert_called_once_with("_apt")
+        assert not probe.exists(), "probe file must be cleaned up"
+
+    def test_not_writable(self, mocker, as_root, tmp_path):
+        mocker.patch(
+            "subprocess.run",
+            return_value=subprocess.CompletedProcess(
+                [], returncode=1, stdout="", stderr="Permission denied"
+            ),
+        )
+
+        assert not apt_cache._sandbox_user_can_write(tmp_path)
+
+    def test_cannot_switch_user(self, mocker, as_root, tmp_path):
+        mocker.patch("subprocess.run", side_effect=PermissionError("setuid"))
+
+        assert not apt_cache._sandbox_user_can_write(tmp_path)
+
+
+@pytest.mark.usefixtures("sandbox_user")
+class TestFetchArchivesSandbox:
+    """The sandbox is only disabled when apt's sandbox user cannot write."""
+
+    @staticmethod
+    def _mock_package(seen_users, error=None):
+        class MockCandidate:
+            uri = "http://example.com/pool/mock_1.0_amd64.deb"
+            version = "1.0"
+
+            def fetch_binary(self, destdir, progress=None, allow_unauthenticated=None):
+                seen_users.append(apt_pkg.config.find("APT::Sandbox::User"))
+                if error:
+                    raise error
+                return str(Path(destdir, "mock_1.0_amd64.deb"))
+
+        class MockPackage:
+            name = "mock"
+            candidate = MockCandidate()
+
+        return cast(apt.package.Package, MockPackage())
+
+    @pytest.mark.parametrize(
+        ("writable", "expected_user"), [(True, "_apt"), (False, "root")]
+    )
+    def test_sandbox_user_during_fetch(self, tmp_path, mocker, writable, expected_user):
+        seen: list[str] = []
+        mocker.patch(
+            "apt.cache.Cache.get_changes", return_value=[self._mock_package(seen)]
+        )
+        mocker.patch.object(apt_cache, "_sandbox_user_can_write", return_value=writable)
+        stage_cache = tmp_path / "cache"
+        stage_cache.mkdir()
+
+        with AptCache(stage_cache=stage_cache) as cache:
+            fetched = cache.fetch_archives(tmp_path / "debs")
+
+        assert seen == [expected_user]
+        assert fetched == [("mock", "1.0", tmp_path / "debs" / "mock_1.0_amd64.deb")]
+        assert apt_pkg.config.find("APT::Sandbox::User") == "_apt"
+
+    def test_sandbox_user_restored_on_error(self, tmp_path, mocker):
+        seen: list[str] = []
+        error = apt.package.FetchError("download failed")
+        mocker.patch(
+            "apt.cache.Cache.get_changes",
+            return_value=[self._mock_package(seen, error=error)],
+        )
+        mocker.patch.object(apt_cache, "_sandbox_user_can_write", return_value=False)
+        stage_cache = tmp_path / "cache"
+        stage_cache.mkdir()
+
+        with AptCache(stage_cache=stage_cache) as cache:
+            with pytest.raises(errors.PackageFetchError):
+                cache.fetch_archives(tmp_path / "debs")
+
+        assert seen == ["root"]
+        assert apt_pkg.config.find("APT::Sandbox::User") == "_apt"
