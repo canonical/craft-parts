@@ -701,11 +701,8 @@ class TestOverlayMigration:
         # clean part data
         self._p3_handler.clean_step(step)
         assert Path(f"{step_dir}/bar").exists()
-        if step == Step.STAGE:
-            # file1 remains (also belongs to p1)
-            assert Path(f"{step_dir}/file1").exists()
-        else:
-            assert Path(f"{step_dir}/file1").exists() is False
+        # file1 remains (also belongs to p1)
+        assert Path(f"{step_dir}/file1").exists()
 
         # clean overlay data
         self._p1_handler.clean_step(step)
@@ -794,6 +791,7 @@ class TestOverlayMigration:
             p1.overlay_dirs[p1.default_partition], Step.PRIME
         )
         assert prime_state is not None
+        assert prime_state.partition == p1.default_partition
         assert Path("my-dir") in prime_state.directories
         assert Path("my-dir/my-file.txt") in prime_state.files
 

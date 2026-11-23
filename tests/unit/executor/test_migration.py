@@ -28,6 +28,7 @@ from craft_parts.infos import PartInfo, ProjectInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
 from craft_parts.permissions import Permissions
+from craft_parts.state_manager.step_state import MigrationState
 from craft_parts.steps import Step
 
 
@@ -722,6 +723,25 @@ class TestHelpers:
 
         assert not foo_path.exists()
         assert not bar_path.exists()
+
+    def test_clean_shared_area_with_legacy_overlay_state(self):
+        part = Part("p1", {"plugin": "nil"})
+        state = MigrationState(files={Path("foo.txt")})
+        shared_dir = Path("stage")
+        shared_dir.mkdir()
+        (shared_dir / "foo.txt").touch()
+
+        migration.clean_shared_area(
+            part_name=part.name,
+            shared_dir=shared_dir,
+            part_states={
+                part.name: MigrationState(partition="default", files={Path("foo.txt")})
+            },
+            overlay_migration_state=state,
+            partition="default",
+        )
+
+        assert (shared_dir / "foo.txt").exists()
 
     def test_clean_migrated_files(self, new_dir, partitions):
         Path("subdir").mkdir()

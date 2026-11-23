@@ -1059,7 +1059,9 @@ class PartHandler:
                 )
 
             migration_states[partition] = MigrationState(
-                files=migrated_files, directories=migrated_dirs
+                partition=partition,
+                files=migrated_files,
+                directories=migrated_dirs,
             )
 
         self._write_overlay_migration_states(migration_states, Step.PRIME)

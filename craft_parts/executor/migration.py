@@ -184,6 +184,11 @@ def clean_shared_area(
     # If overlay has been migrated, also take overlay files into account
     if overlay_migration_state:
         overlay_contents = overlay_migration_state.contents(partition=partition)
+        # Older overlay state files did not record their partition. Since the
+        # state file is stored in a partition-specific overlay directory, its
+        # top-level contents still belong to the partition being cleaned.
+        if overlay_contents is None and overlay_migration_state.partition is None:
+            overlay_contents = overlay_migration_state.contents(partition=None)
         if overlay_migration_state and overlay_contents:
             overlay_files, overlay_directories = overlay_contents
             files -= overlay_files
