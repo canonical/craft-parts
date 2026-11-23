@@ -65,6 +65,16 @@ def test_remove_parenthesised_path_when_partitions_disabled():
     assert fs.entries == []
 
 
+def test_escaped_include_preserves_escape_marker():
+    fs = Fileset([r"\-foo"])
+    assert fs.entries == [r"\(default)/-foo"]
+    includes, excludes = filesets._get_file_list(
+        fs, partition="default", default_partition="default"
+    )
+    assert includes == ["-foo"]
+    assert excludes == []
+
+
 @pytest.mark.parametrize(
     ("tc_fs1", "tc_fs2", "tc_result"),
     [

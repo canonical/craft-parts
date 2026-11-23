@@ -438,8 +438,16 @@ def normalize_entry(
 
     :returns: Normalized entry.
     """
-    # split file into an optional prefix (a hyphen character) and the file
-    prefix, file = _split_entry(entry)
+    # Keep an escaped entry marker before the generated partition prefix so
+    # filtering can remove it before interpreting the path.
+    escape = ""
+    if entry.startswith("\\"):
+        escape = "\\"
+        entry = entry[1:]
+        prefix, file = "", Path(entry)
+    else:
+        # split file into an optional prefix (a hyphen character) and the file
+        prefix, file = _split_entry(entry)
 
     if user_entry:
         partition, inner_path = path_utils.get_user_partition_and_path(
@@ -451,9 +459,9 @@ def normalize_entry(
         )
 
     if partition:
-        return f"{prefix}({partition})/{inner_path}"
+        return f"{escape}{prefix}({partition})/{inner_path}"
 
-    return entry
+    return f"{escape}{entry}"
 
 
 def _split_entry(entry: str) -> tuple[str, Path]:
