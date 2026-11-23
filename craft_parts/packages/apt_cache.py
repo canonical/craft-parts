@@ -18,8 +18,10 @@
 
 import logging
 import os
+import pwd
 import re
 import shutil
+import subprocess
 from collections.abc import Iterable
 from contextlib import ContextDecorator
 from pathlib import Path
@@ -48,6 +50,42 @@ logger = logging.getLogger(__name__)
 
 
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
+
+
+def _sandbox_user_can_write(directory: Path) -> bool:
+    """Check whether apt's sandbox user can create files in ``directory``.
+
+    This mirrors the check apt runs before downloading as root: if the
+    sandbox user (usually ``_apt``) cannot create a file in the destination
+    directory, apt downloads unsandboxed as root and emits a warning.
+    """
+    if os.geteuid() != 0:
+        return True
+    user = apt_pkg.config.find("APT::Sandbox::User")
+    if not user or user == "root":
+        return True
+    try:
+        pw_entry = pwd.getpwnam(user)
+    except KeyError:
+        # apt reports a missing sandbox user itself.
+        return True
+    try:
+        proc = subprocess.run(
+            ["mktemp", "-p", str(directory)],
+            user=pw_entry.pw_uid,
+            group=pw_entry.pw_gid,
+            extra_groups=[],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as err:
+        logger.debug("Cannot check access to %r as %r: %s", str(directory), user, err)
+        return False
+    if proc.returncode != 0:
+        return False
+    Path(proc.stdout.strip()).unlink(missing_ok=True)
+    return True
 
 
 class LogProgress(apt.progress.base.AcquireProgress):
@@ -246,6 +284,23 @@ class AptCache(ContextDecorator):
 
         :return: A list of (<package-name>, <package-version>, <dl-path>) tuples.
         """
+        sandbox_user = apt_pkg.config.find("APT::Sandbox::User")
+        if not _sandbox_user_can_write(download_path):
+            # apt would fall back to an unsandboxed download and warn about it;
+            # make the fallback explicit so the warning is not emitted.
+            logger.debug(
+                "%r is not writable by apt sandbox user %r, downloading as root",
+                str(download_path),
+                sandbox_user,
+            )
+            apt_pkg.config.set("APT::Sandbox::User", "root")
+        try:
+            return self._fetch_archives_to(download_path)
+        finally:
+            apt_pkg.config.set("APT::Sandbox::User", sandbox_user)
+
+    def _fetch_archives_to(self, download_path: Path) -> list[tuple[str, str, Path]]:
+        """Download the packages marked to be fetched into download_path."""
         downloaded: list[tuple[str, str, Path]] = []
         for package in self.cache.get_changes():
             if package.candidate is None:
