@@ -17,13 +17,13 @@
 """Handle the execution of built-in or user specified step commands."""
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from craft_parts import overlays
 from craft_parts.permissions import Permissions, filter_permissions
 from craft_parts.state_manager.stage_state import StageState
-from craft_parts.state_manager.states import MigrationState, StepState
+from craft_parts.state_manager.states import MigrationState
 from craft_parts.utils import file_utils
 
 logger = logging.getLogger(__name__)
@@ -144,7 +144,7 @@ def clean_shared_area(
     *,
     part_name: str,
     shared_dir: Path,
-    part_states: dict[str, StepState],
+    part_states: Mapping[str, MigrationState],
     overlay_migration_state: MigrationState | None,
     partition: str | None,
 ) -> None:
@@ -224,7 +224,7 @@ def clean_backstage(
 def clean_shared_overlay(
     *,
     shared_dir: Path,
-    part_states: dict[str, StepState],
+    part_states: Mapping[str, MigrationState],
     overlay_migration_state: MigrationState | None,
     partition: str | None,
 ) -> None:
