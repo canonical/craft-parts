@@ -21,7 +21,7 @@ Changelog
 
 .. _release-2.38.2:
 
-2.38.2 (2026-MM-DD)
+2.38.2 (unreleased)
 -------------------
 
 Bug fixes:
