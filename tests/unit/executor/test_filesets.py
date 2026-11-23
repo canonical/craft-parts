@@ -59,6 +59,12 @@ def test_remove():
     assert fs.entries == ["(default)/foo", "(default)/baz"]
 
 
+def test_remove_parenthesised_path_when_partitions_disabled():
+    fs = Fileset(["(etc)/foo"])
+    fs.remove("(etc)/foo")
+    assert fs.entries == []
+
+
 @pytest.mark.parametrize(
     ("tc_fs1", "tc_fs2", "tc_result"),
     [

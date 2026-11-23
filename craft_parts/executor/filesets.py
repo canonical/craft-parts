@@ -156,7 +156,9 @@ class Fileset:
 
         :param item: The item to remove.
         """
-        self._list.remove(normalize_entry(item, self._default_partition))
+        self._list.remove(
+            normalize_entry(item, self._default_partition, user_entry=True)
+        )
 
     def combine(self, other: "Fileset") -> None:
         """Combine the entries in this fileset with entries from another fileset.
@@ -168,7 +170,7 @@ class Fileset:
         wildcard = normalize_entry("*", self._default_partition)
         if wildcard in self.entries:
             to_combine = True
-            self.remove(wildcard)
+            self.remove("*")
 
         other_excludes = set(other.excludes)
         my_includes = set(self.includes)
