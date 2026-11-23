@@ -730,7 +730,7 @@ New features:
 Bug fixes:
 
 - The ``--recurse-submodules`` link in the ``source-submodules`` docstring
-  no longer produces a ``linkcheck`` error.
+  no longer produces a linkcheck error.
 - ``CRAFT_DEFAULT_*`` environment variables are set when the default partition
   is aliased.
 
