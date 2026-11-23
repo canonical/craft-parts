@@ -74,7 +74,11 @@ def _get_candidate_from_install_dir(
     if not stage_files:
         return None
 
-    stage_fileset = filesets.Fileset(stage_files, name="stage")
+    stage_fileset = filesets.Fileset(
+        stage_files,
+        name="stage",
+        default_partition=part.default_partition,
+    )
     resolved_partition = part.default_partition if partition is None else partition
     srcdir = part.part_install_dirs[resolved_partition]
     part_files, part_directories = filesets.migratable_filesets(
