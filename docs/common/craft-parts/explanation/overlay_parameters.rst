@@ -12,7 +12,7 @@ overlay-files parameter) behave much the same way as the related parameters on t
 <https://www.debian.org/doc/manuals/debian-faq/pkg-basics.en.html#depends>`__ that the
 target packages might have.
 
-The ``overlay-script`` and ``override-overlay`` keys both take as value a scriplet that
+The ``overlay-script`` and ``override-overlay`` keys both take as value a scriptlet that
 replaces the default overlay step behaviour. They are mutually incompatible.
 
 The ``override-overlay`` key is unique in that it runs the script in a
