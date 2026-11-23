@@ -13,7 +13,7 @@ headings and main text.
 Replace the instructions with suitable descriptions.
 
 After writing the page, link to it from the appropriate group in the :ref:`plugins`
-reference, and add it to the toctree at the bottom of that page.
+reference and add it to the toctree at the end of that page.
 
 
 <Name> plugin
