@@ -26,9 +26,9 @@ Changelog
 
 Bug fixes:
 
-- Stop apt from warning that a stage package download "is performed
-  unsandboxed as root" when the ``_apt`` user can't write to the download
-  cache. In that case, stage packages are now downloaded as root on purpose.
+- Stop apt from warning that stage packages are downloaded outside its sandbox
+  when the ``_apt`` user can't write to the download cache. In that case, stage
+  packages are now downloaded as root on purpose.
 
 For a complete list of commits, check out the `2.38.2`_ release on GitHub.
 
