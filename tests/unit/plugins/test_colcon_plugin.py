@@ -24,12 +24,12 @@ from craft_parts.plugins.colcon_plugin import ColconPlugin
 
 @pytest.fixture
 def setup_method_fixture():
-    def _setup_method_fixture(new_dir, properties=None):
+    def _setup_method_fixture(new_dir, properties=None, part_data=None):
         if properties is None:
             properties = {}
         properties["source"] = "."
         plugin_properties = ColconPlugin.properties_class.unmarshal(properties)
-        part = Part("foo", {})
+        part = Part("foo", part_data or {})
 
         project_info = ProjectInfo(application_name="test", cache_dir=new_dir)
         project_info._parallel_build_count = 42
@@ -150,6 +150,17 @@ class TestPluginColconPlugin:
                 f"--parallel-workers {plugin._part_info.parallel_build_count}"
             ),
         ]
+
+    def test_get_build_commands_base_paths_uses_source_subdir(
+        self, setup_method_fixture, new_dir
+    ):
+        plugin = setup_method_fixture(new_dir, part_data={"source-subdir": "my/subdir"})
+
+        part_src_dir = plugin._part_info.part_src_dir
+        build_command = plugin.get_build_commands()[-1]
+
+        assert f'--base-paths "{part_src_dir / "my/subdir"}"' in build_command
+        assert f'--base-paths "{part_src_dir}"' not in build_command
 
     @pytest.mark.parametrize(
         ("properties", "colcon_cmake_args"),
