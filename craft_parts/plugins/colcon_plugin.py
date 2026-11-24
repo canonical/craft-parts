@@ -142,7 +142,7 @@ class ColconPlugin(Plugin):
             "colcon",
             "build",
             "--base-paths",
-            f'"{self._part_info.part_src_dir}"',
+            f'"{self._part_info.part_src_subdir}"',
             "--build-base",
             f'"{self._part_info.part_build_dir}"',
             "--merge-install",

@@ -19,6 +19,16 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.38.2:
+
+2.38.2 (unreleased)
+-------------------
+
+Bug fixes:
+
+- The colcon plugin now builds the packages found in the part's
+  ``source-subdir`` instead of the whole source directory.
+
 .. _release-2.38.1:
 
 2.38.1 (2026-11-18)
