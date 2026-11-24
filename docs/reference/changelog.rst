@@ -19,6 +19,18 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+.. _release-2.38.3:
+
+2.38.3 (unreleased)
+-------------------
+
+Bug fixes:
+
+- The stage collision check now runs once per stage phase instead of once for
+  every part's stage action.
+
+For a complete list of commits, check out the `2.38.3`_ release on GitHub.
+
 .. _release-2.38.2:
 
 2.38.2 (2026-11-23)
@@ -2023,6 +2035,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
+.. _2.38.3: https://github.com/canonical/craft-parts/releases/tag/2.38.3
 .. _2.38.2: https://github.com/canonical/craft-parts/releases/tag/2.38.2
 .. _2.38.1: https://github.com/canonical/craft-parts/releases/tag/2.38.1
 .. _2.38.0: https://github.com/canonical/craft-parts/releases/tag/2.38.0
