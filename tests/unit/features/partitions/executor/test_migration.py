@@ -17,7 +17,7 @@
 from pathlib import Path
 
 import pytest
-from craft_parts import errors, features
+from craft_parts import errors
 from craft_parts.executor import filesets
 from craft_parts.executor.filesets import Fileset
 
@@ -41,9 +41,8 @@ class TestFileMigrationErrors:
                 partition=None,
             )
 
-        assert features.Features().enable_partitions
         assert (
-            "A partition must be provided if the partition feature is enabled."
+            "A partition must be provided when filtering partition filesets."
         ) in str(raised.value)
 
 
