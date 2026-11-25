@@ -17,6 +17,7 @@
 """Utility functions for paths."""
 
 import re
+from collections.abc import Iterable
 from pathlib import PurePath
 from typing import NamedTuple, TypeVar
 
@@ -31,11 +32,15 @@ HAS_PARTITION_REGEX = re.compile(
     r"^(\(" + partition_utils.VALID_PARTITION_REGEX.pattern + r"\))(/.*)?$"
 )
 
+# regex for a path whose first component is any name in parentheses, like
+# "(etc)/foo" or "-(etc)", regardless of whether it's a valid partition name
+_PARENTHESISED_PATH_REGEX = re.compile(r"^-?\([^/]*\)(/|$)")
+
 
 class PartitionPathPair(NamedTuple):
     """A pair containing a partition name and a path."""
 
-    partition: str | None
+    partition: str
     path: PurePath | str
 
 
@@ -51,27 +56,55 @@ def get_partition_and_path(
 
     If the path begins with a partition, that is used. Otherwise, the default
     partition is used.
-    If partitions are not enabled, the partition will be None.
-
     :param path: The filepath to parse.
 
     :returns: A tuple of (partition, filepath)
     """
     str_path = str(path)
 
-    if not Features().enable_partitions:
-        if _has_partition(str_path):
-            partition, inner_path = _split_partition_and_inner_path(str_path)
-            partition_name = partition.strip("()")
-            if partition_name == partition_utils.BUILD_PARTITION:
-                return PartitionPathPair(partition_name, type(path)(inner_path))
-        return PartitionPathPair(None, path)
-
     if _has_partition(str_path):
         partition, inner_path = _split_partition_and_inner_path(str_path)
         return PartitionPathPair(partition.strip("()"), type(path)(inner_path))
 
     return PartitionPathPair(default_partition, path)
+
+
+def get_user_partition_and_path(
+    path: FlexiblePath,
+    default_partition: str,
+    *,
+    special_partitions: Iterable[str] = (),
+) -> PartitionPathPair:
+    """Break a user-provided path into the partition and the child path.
+
+    If the partitions feature is enabled, this is the same as
+    :func:`get_partition_and_path`. Otherwise, a leading parenthesised name is
+    a regular path component, unless it's one of ``special_partitions``. This
+    keeps paths such as ``(etc)/foo`` working in projects without partitions.
+
+    :param path: The filepath to parse.
+    :param default_partition: The name of the default partition.
+    :param special_partitions: Pseudo-partitions to parse even if partitions
+        are not enabled.
+
+    :returns: A tuple of (partition, filepath)
+    """
+    if Features().enable_partitions:
+        return get_partition_and_path(path, default_partition)
+
+    pair = get_partition_and_path(path, default_partition)
+    if _has_partition(str(path)) and pair.partition in special_partitions:
+        return pair
+
+    return PartitionPathPair(default_partition, path)
+
+
+def is_parenthesised_path(path: str) -> bool:
+    """Check whether the first path component is wrapped in parentheses.
+
+    :param path: The filepath to check, optionally prefixed with ``-``.
+    """
+    return bool(_PARENTHESISED_PATH_REGEX.match(path))
 
 
 def _split_partition_and_inner_path(str_path: str) -> tuple[str, str]:
