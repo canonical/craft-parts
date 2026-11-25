@@ -77,6 +77,9 @@ docs/_linkcheck/
 docs/reference/gen/
 docs/spelling/
 
+# Staged by build.rs / maturin develop from docs/common (editable-mode artifact)
+/craft_parts_docs/
+
 # PyBuilder
 target/
 

@@ -163,6 +163,7 @@ jobs:
           cache: |
             uv:cache
             go:mod-cache
+            rust:cargo-registry
       - name: Launch workshop jammy
         uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
         with:
@@ -170,6 +171,7 @@ jobs:
           cache: |
             uv:cache
             go:mod-cache
+            rust:cargo-registry
       - name: Launch workshop noble
         uses: canonical/launch-workshop@b9e184e38f49808ced78e25de19483fe02484c46 # v1.0.1
         with:
@@ -177,6 +179,7 @@ jobs:
           cache: |
             uv:cache
             go:mod-cache
+            rust:cargo-registry
       - name: Run lint
         run: |
           workshop run dev -- setup

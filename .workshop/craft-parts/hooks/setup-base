@@ -42,3 +42,9 @@ sudo apt-get install --yes --no-install-recommends \
 cat >/etc/profile.d/uv-project.sh <<'EOF'
 export UV_PROJECT_ENVIRONMENT=/opt/venv
 EOF
+
+# Keep compiled Cargo build artifacts outside /project so multiple workshops
+# with different glibc versions (e.g. dev vs jammy) do not collide.
+cat >/etc/profile.d/cargo-target.sh <<'EOF'
+export CARGO_TARGET_DIR=/home/workshop/.cargo/target
+EOF
