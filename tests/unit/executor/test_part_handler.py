@@ -36,12 +36,79 @@ from craft_parts.infos import PartInfo, ProjectInfo, StepInfo
 from craft_parts.overlays import OverlayManager
 from craft_parts.parts import Part
 from craft_parts.state_manager import states
-from craft_parts.state_manager.step_state import MigrationState
+from craft_parts.state_manager.step_state import MigrationState, StepState
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
 from pytest_mock import MockerFixture
 
 # pylint: disable=too-many-lines
+
+
+def test_cleanup_state_copies_only_mutable_sets():
+    target_state = states.StageState(
+        files={Path("root-file")},
+        directories={Path("root-dir")},
+        partitions_contents={
+            "default": MigrationContents(
+                files={Path("default-file")},
+                directories={Path("default-dir")},
+            ),
+            "other": MigrationContents(
+                files={Path("other-file")},
+                directories={Path("other-dir")},
+            ),
+        },
+        backstage_files={Path("backstage-file")},
+        backstage_directories={Path("backstage-dir")},
+    )
+    other_state = states.StageState(files={Path("shared-file")})
+    # Annotate explicitly: a dict literal of concrete ``StageState`` values would
+    # otherwise be inferred as ``dict[str, StageState]``, which type checkers
+    # reject when passed to a ``dict[str, StepState]`` parameter (dict is
+    # invariant in its value type).
+    part_states: dict[str, StepState] = {"foo": target_state, "bar": other_state}
+
+    partition_copy = part_handler._copy_part_states_for_cleanup(
+        part_states, "foo", partition="default"
+    )
+    assert partition_copy is not part_states
+    assert partition_copy["foo"] is not target_state
+    assert partition_copy["bar"] is other_state
+    assert partition_copy["foo"].files is target_state.files
+    assert (
+        partition_copy["foo"].partitions_contents
+        is not target_state.partitions_contents
+    )
+    assert (
+        partition_copy["foo"].partitions_contents["default"]
+        is not target_state.partitions_contents["default"]
+    )
+    assert (
+        partition_copy["foo"].partitions_contents["other"]
+        is target_state.partitions_contents["other"]
+    )
+
+    partition_copy["foo"].partitions_contents["default"].files.clear()
+    assert target_state.partitions_contents["default"].files == {Path("default-file")}
+
+    root_copy = part_handler._copy_part_states_for_cleanup(
+        part_states, "foo", partition=None
+    )
+    assert root_copy["foo"].files is not target_state.files
+    assert root_copy["foo"].partitions_contents is target_state.partitions_contents
+    root_copy["foo"].files.clear()
+    assert target_state.files == {Path("root-file")}
+
+    backstage_copy = part_handler._copy_stage_states_for_backstage_cleanup(
+        part_states, "foo"
+    )
+    # The helper is only valid for StageState entries (and asserts this at
+    # runtime); cast so the type checker knows backstage_files is available.
+    backstage_foo = cast(states.StageState, backstage_copy["foo"])
+    assert backstage_foo.backstage_files is not target_state.backstage_files
+    assert backstage_foo.files is target_state.files
+    backstage_foo.backstage_files.clear()
+    assert target_state.backstage_files == {Path("backstage-file")}
 
 
 @pytest.mark.usefixtures("new_dir")

@@ -30,37 +30,6 @@ from craft_parts.permissions import Permissions, permissions_are_compatible
 from . import filesets
 
 
-def check_for_stage_collisions(
-    part_list: list[Part], partitions: list[str] | None
-) -> None:
-    """Verify whether parts have conflicting files to stage.
-
-    If the partitions feature is enabled, then check if parts have conflicting files to
-        stage for each partition.
-    If the partitions feature is disabled, only check for conflicts in the default
-        stage directory.
-
-    :param part_list: The list of parts to check.
-    :param partitions: An optional list of partition names.
-
-    :raises PartConflictError: If conflicts are found.
-    :raises FeatureError: If partitions are specified but the feature is not enabled or
-        if partitions are not specified and the feature is enabled.
-    """
-    if partitions and not Features().enable_partitions:
-        raise errors.FeatureError(
-            "Partitions specified but partitions feature is not enabled."
-        )
-
-    if partitions is None and Features().enable_partitions:
-        raise errors.FeatureError(
-            "Partitions feature is enabled but no partitions specified."
-        )
-
-    for partition in partitions or [None]:
-        _check_for_stage_collisions_per_partition(part_list, partition)
-
-
 @dataclass
 class StageCandidate:
     """Representation of a set of files and directories that want to be staged."""
@@ -75,6 +44,217 @@ class StageCandidate:
     permissions: list[Permissions]
     # Whether this set comes from a part's overlay (used for error reporting)
     is_overlay: bool
+
+
+class StageCandidateCache:
+    """Cache install-tree inventories and previously validated candidate pairs.
+
+    The cache is scoped to one executor run. Callers must invalidate a part before
+    lifecycle actions that can change its install tree. Overlay candidates are not
+    reused after overlay actions because their visibility depends on the layer stack.
+    """
+
+    def __init__(self) -> None:
+        self._install_contents: dict[
+            tuple[str, str | None, tuple[str, ...], Path, str], set[Path]
+        ] = {}
+        self._validated_candidates: dict[str | None, list[StageCandidate]] = {}
+        self._validation_signature: tuple[object, ...] | None = None
+        self._dirty_parts: set[str] | None = None
+
+    def get_install_candidate(
+        self, part: Part, partition: str | None
+    ) -> StageCandidate | None:
+        """Return a candidate using cached contents and current part metadata."""
+        stage_files = tuple(part.spec.stage_files)
+        if not stage_files:
+            return None
+
+        source_dir = part.part_install_dirs[partition]
+        key = (
+            part.name,
+            partition,
+            stage_files,
+            source_dir,
+            part.default_partition,
+        )
+        if key not in self._install_contents:
+            candidate = _get_candidate_from_install_dir(part, partition)
+            if candidate is None:
+                return None
+            self._install_contents[key] = candidate.contents
+
+        return StageCandidate(
+            part_name=part.name,
+            contents=self._install_contents[key],
+            source_dir=source_dir,
+            permissions=part.spec.permissions,
+            is_overlay=False,
+        )
+
+    def invalidate(
+        self, part: Part | None = None, *, overlays_changed: bool = False
+    ) -> None:
+        """Invalidate candidate data affected by a lifecycle action."""
+        if part is None:
+            self._install_contents.clear()
+            self._validated_candidates.clear()
+            self._validation_signature = None
+            self._dirty_parts = None
+            return
+
+        for key in tuple(self._install_contents):
+            if key[0] == part.name:
+                del self._install_contents[key]
+
+        if overlays_changed:
+            self._dirty_parts = None
+        elif self._dirty_parts is not None:
+            self._dirty_parts.add(part.name)
+
+    def get_validation_signature(
+        self, part_list: list[Part], partitions: list[str] | None
+    ) -> tuple[object, ...]:
+        """Build the configuration signature for a collision validation."""
+        features = Features()
+        return (
+            None if partitions is None else tuple(partitions),
+            features.enable_partitions,
+            features.enable_overlay,
+            tuple(
+                (
+                    part.name,
+                    tuple(part.spec.stage_files),
+                    tuple(
+                        (
+                            permission.path,
+                            permission.owner,
+                            permission.group,
+                            permission.mode,
+                        )
+                        for permission in part.spec.permissions
+                    ),
+                    part.default_partition,
+                    tuple(part.part_install_dirs.items()),
+                    part.has_overlay,
+                    tuple(part.spec.overlay_files),
+                    tuple(part.part_layer_dirs.items()),
+                )
+                for part in part_list
+            ),
+        )
+
+    def validation_is_current(self, signature: tuple[object, ...]) -> bool:
+        """Return whether all candidate pairs remain validated."""
+        if self._validation_signature != signature:
+            self._dirty_parts = None
+            return False
+        return self._dirty_parts == set()
+
+    def get_candidates_for_validation(
+        self, part_list: list[Part], partition: str | None
+    ) -> tuple[list[StageCandidate], set[str] | None]:
+        """Build current candidates and identify parts requiring comparisons."""
+        if self._dirty_parts is None or partition not in self._validated_candidates:
+            candidates = _get_candidates_from_overlay(part_list, partition)
+            for part in part_list:
+                candidate = self.get_install_candidate(part, partition)
+                if candidate is not None:
+                    candidates.append(candidate)
+            return candidates, None
+
+        dirty_parts = self._dirty_parts
+        cached_candidates = self._validated_candidates[partition]
+        candidates = [
+            candidate for candidate in cached_candidates if candidate.is_overlay
+        ]
+        cached_install_candidates = {
+            candidate.part_name: candidate
+            for candidate in cached_candidates
+            if not candidate.is_overlay
+        }
+
+        for part in part_list:
+            if part.name in dirty_parts:
+                candidate = self.get_install_candidate(part, partition)
+            else:
+                candidate = cached_install_candidates.get(part.name)
+            if candidate is not None:
+                candidates.append(candidate)
+
+        return candidates, dirty_parts
+
+    def store_validation(
+        self,
+        signature: tuple[object, ...],
+        candidates_by_partition: dict[str | None, list[StageCandidate]],
+    ) -> None:
+        """Store candidates after the corresponding checks pass."""
+        self._validation_signature = signature
+        self._validated_candidates = candidates_by_partition
+        self._dirty_parts = set()
+
+
+def check_for_stage_collisions(
+    part_list: list[Part],
+    partitions: list[str] | None,
+    *,
+    candidate_cache: StageCandidateCache | None = None,
+    reuse_validation: bool = False,
+) -> None:
+    """Verify whether parts have conflicting files to stage.
+
+    If the partitions feature is enabled, then check if parts have conflicting files to
+        stage for each partition.
+    If the partitions feature is disabled, only check for conflicts in the default
+        stage directory.
+
+    :param part_list: The list of parts to check.
+    :param partitions: An optional list of partition names.
+    :param reuse_validation: Reuse collision results for unchanged candidates. The
+        caller must invalidate the cache before lifecycle actions that can change
+        candidate inputs.
+
+    :raises PartConflictError: If conflicts are found.
+    :raises FeatureError: If partitions are specified but the feature is not enabled or
+        if partitions are not specified and the feature is enabled.
+    """
+    if reuse_validation and candidate_cache is None:
+        raise ValueError("reuse_validation requires a candidate cache")
+
+    if partitions and not Features().enable_partitions:
+        raise errors.FeatureError(
+            "Partitions specified but partitions feature is not enabled."
+        )
+
+    if partitions is None and Features().enable_partitions:
+        raise errors.FeatureError(
+            "Partitions feature is enabled but no partitions specified."
+        )
+
+    signature = None
+    if reuse_validation:
+        if candidate_cache is None:
+            raise ValueError("reuse_validation requires a candidate cache")
+        signature = candidate_cache.get_validation_signature(part_list, partitions)
+        if candidate_cache.validation_is_current(signature):
+            return
+
+    validated_candidates: dict[str | None, list[StageCandidate]] = {}
+    for partition in partitions or [None]:
+        candidates = _check_for_stage_collisions_per_partition(
+            part_list,
+            partition,
+            candidate_cache,
+            reuse_validation=reuse_validation,
+        )
+        if reuse_validation:
+            validated_candidates[partition] = candidates
+
+    if reuse_validation:
+        if candidate_cache is None or signature is None:
+            raise RuntimeError("collision validation cache was not initialized")
+        candidate_cache.store_validation(signature, validated_candidates)
 
 
 def _get_candidate_from_install_dir(
@@ -175,7 +355,10 @@ def _get_candidates_from_overlay(
 def _check_for_stage_collisions_per_partition(
     part_list: list[Part],
     partition: str | None,
-) -> None:
+    candidate_cache: StageCandidateCache | None,
+    *,
+    reuse_validation: bool = False,
+) -> list[StageCandidate]:
     """Verify whether parts have conflicting files for a stage directory in a partition.
 
     If no partition is provided, then the default stage directory is checked.
@@ -188,37 +371,61 @@ def _check_for_stage_collisions_per_partition(
     :raises OverlayStageConflict: If conflicts between build and overlay content are
       found.
     """
-    # Start by describing the candidates from the overlay, since by definition they
-    # don't conflict with each other.
-    all_candidates: list[StageCandidate] = _get_candidates_from_overlay(
-        part_list, partition
-    )
+    if reuse_validation:
+        if candidate_cache is None:
+            raise ValueError("reuse_validation requires a candidate cache")
+        candidates, changed_parts = candidate_cache.get_candidates_for_validation(
+            part_list, partition
+        )
+    else:
+        candidates = _get_candidates_from_overlay(part_list, partition)
+        for part in part_list:
+            candidate = (
+                candidate_cache.get_install_candidate(part, partition)
+                if candidate_cache is not None
+                else _get_candidate_from_install_dir(part, partition)
+            )
+            if candidate is not None:
+                candidates.append(candidate)
+        changed_parts = None
 
-    for part in part_list:
-        candidate = _get_candidate_from_install_dir(part, partition)
-        if candidate is None:
+    _check_candidate_pairs(candidates, changed_parts, partition)
+    return candidates
+
+
+def _check_candidate_pairs(
+    candidates: list[StageCandidate],
+    changed_parts: set[str] | None,
+    partition: str | None,
+) -> int:
+    """Check candidate pairs, optionally restricting work to changed parts."""
+    pair_checks = 0
+    for index, candidate in enumerate(candidates):
+        if candidate.is_overlay:
             continue
 
-        # Scan previous candidates for collisions. Since ``all_candidates`` contains
-        # candidates from the overlay, this will also check for collisions between
-        # install dirs and layers.
-        for other_candidate in all_candidates:
-            # Our files that are also in a different part.
-            common = candidate.contents & other_candidate.contents
+        # Overlay candidates are first in the list; this also checks each install
+        # candidate against all earlier install candidates in recipe order.
+        for other_candidate in candidates[:index]:
+            if (
+                changed_parts is not None
+                and candidate.part_name not in changed_parts
+                and other_candidate.part_name not in changed_parts
+            ):
+                continue
 
+            pair_checks += 1
+            common = candidate.contents & other_candidate.contents
             conflict_files: list[Path] = []
             for item in common:
                 this = Path(candidate.source_dir, item)
                 other = Path(other_candidate.source_dir, item)
-
                 permissions_this = permissions.filter_permissions(
                     item, candidate.permissions
                 )
-
                 permissions_other = permissions.filter_permissions(
                     item, other_candidate.permissions
                 )
-
                 if paths_collide(
                     this,
                     other,
@@ -244,9 +451,7 @@ def _check_for_stage_collisions_per_partition(
                     conflicting_files=conflict_files,
                     partition=partition,
                 )
-
-        # And add our candidate to the list.
-        all_candidates.append(candidate)
+    return pair_checks
 
 
 def paths_collide(
