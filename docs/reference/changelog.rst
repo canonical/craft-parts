@@ -41,6 +41,14 @@ New features:
   version, as names in parentheses are reserved for partitions. The ``(build)``
   and ``(overlay)`` prefixes in the ``organize`` key aren't affected.
 
+Bug fixes:
+
+- When using host package sources, APT now accesses the build environment's
+  CA bundle and a temporary host-side APT configuration file through read-only
+  mounts. Package-owned certificate paths are left unmounted. This preserves
+  generated certificates in the overlay and prevents certificate writes from
+  changing the build environment.
+
 For a complete list of commits, check out the `3.0.0`_ release on GitHub.
 
 

@@ -24,7 +24,9 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from collections.abc import Callable
+from contextlib import ExitStack
 from dataclasses import dataclass
 from multiprocessing.connection import Connection
 from pathlib import Path
@@ -41,6 +43,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _T = TypeVar("_T")
+
+_CHROOT_CA_CERTIFICATES = "/etc/apt/craft-parts-ca-certificates.crt"
+_CHROOT_APT_CA_CONFIG = "/etc/apt/apt.conf.d/99craft-parts-ca-certificates"
 
 
 @dataclass(frozen=True)
@@ -105,18 +110,32 @@ def chroot(
         )
         for mount in bind_mounts
     ]
-    try:
-        _setup_chroot(
-            path, use_host_sources=use_host_sources, extra_mounts=extra_mounts
-        )
-        child.start()
-        res, err = parent_conn.recv()
-        child.join()
-    finally:
-        logger.debug("[pid=%d] clean up chroot", os.getpid())
-        _cleanup_chroot(
-            path, use_host_sources=use_host_sources, extra_mounts=extra_mounts
-        )
+    with ExitStack() as stack:
+        if sys.platform == "linux" and use_host_sources:
+            apt_conf = stack.enter_context(
+                tempfile.NamedTemporaryFile(mode="w", encoding="utf-8")
+            )
+            apt_conf.write(f'Acquire::https::CaInfo "{_CHROOT_CA_CERTIFICATES}";\n')
+            apt_conf.flush()
+            os.fchmod(apt_conf.fileno(), 0o644)
+            extra_mounts.insert(
+                0,
+                _ReadOnlyBindMount(
+                    apt_conf.name, _CHROOT_APT_CA_CONFIG, skip_missing=False
+                ),
+            )
+        try:
+            _setup_chroot(
+                path, use_host_sources=use_host_sources, extra_mounts=extra_mounts
+            )
+            child.start()
+            res, err = parent_conn.recv()
+            child.join()
+        finally:
+            logger.debug("[pid=%d] clean up chroot", os.getpid())
+            _cleanup_chroot(
+                path, use_host_sources=use_host_sources, extra_mounts=extra_mounts
+            )
 
     if isinstance(err, str):
         raise errors.OverlayChrootExecutionError(err)
@@ -404,16 +423,12 @@ _linux_mounts: Sequence[_Mount] = [
 # Mounts required to import host's Ubuntu Pro apt configuration to chroot
 _ubuntu_apt_mounts: Sequence[_Mount] = [
     _TempFSClone("/etc/apt", "/etc/apt", skip_missing=False),
-    _BindMount(
-        "/usr/share/ca-certificates/",
-        "/usr/share/ca-certificates/",
+    _ReadOnlyBindMount(
+        "/etc/ssl/certs/ca-certificates.crt",
+        _CHROOT_CA_CERTIFICATES,
         skip_missing=False,
     ),
     _BindMount("/usr/share/keyrings/", "/usr/share/keyrings/", skip_missing=True),
-    _BindMount("/etc/ssl/certs/", "/etc/ssl/certs/", skip_missing=False),
-    _BindMount(
-        "/etc/ca-certificates.conf", "/etc/ca-certificates.conf", skip_missing=False
-    ),
 ]
 
 

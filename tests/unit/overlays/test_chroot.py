@@ -193,7 +193,16 @@ class TestChroot:
         assert str(fake_conn.sent[1]) == "bummer"
 
     def test_chroot_use_host_sources(self, mocker, new_dir, mock_chroot):
-        mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
+        host_apt_configs = []
+
+        def mount(source, target, *args):
+            if (
+                target == new_root / "etc/apt/apt.conf.d/99craft-parts-ca-certificates"
+                and args == ("--bind",)
+            ):
+                host_apt_configs.append((source, source.read_text()))
+
+        mock_mount = mocker.patch("craft_parts.utils.os_utils.mount", side_effect=mount)
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         mock_copytree = mocker.patch("shutil.copytree")
 
@@ -202,11 +211,26 @@ class TestChroot:
 
         # this runs in the child process
         Path("dir1").mkdir()
-        for subdir in ["etc", "proc", "sys", "dev", "dev/shm"]:
+        for subdir in [
+            "etc",
+            "etc/apt",
+            "etc/apt/apt.conf.d",
+            "proc",
+            "sys",
+            "dev",
+            "dev/shm",
+        ]:
             Path(new_root, subdir).mkdir()
 
         chroot.chroot(new_root, target_func, "content", use_host_sources=True)
 
+        assert len(host_apt_configs) == 1
+        host_apt_conf, contents = host_apt_configs[0]
+        assert contents == (
+            'Acquire::https::CaInfo "/etc/apt/craft-parts-ca-certificates.crt";\n'
+        )
+        assert not host_apt_conf.is_relative_to(new_root)
+        assert not host_apt_conf.exists()
         assert Path("dir1/foo.txt").read_text() == "content"
         assert spy_process.mock_calls == [
             call(
@@ -230,45 +254,56 @@ class TestChroot:
             ),
             call(PosixPath("/etc/apt"), PosixPath(f"{new_root}/etc/apt"), "-ttmpfs"),
             call(
-                PosixPath("/usr/share/ca-certificates"),
-                PosixPath(f"{new_root}/usr/share/ca-certificates"),
+                PosixPath("/etc/ssl/certs/ca-certificates.crt"),
+                new_root / "etc/apt/craft-parts-ca-certificates.crt",
                 "--bind",
             ),
             call(
-                PosixPath("/etc/ssl/certs"),
-                PosixPath(f"{new_root}/etc/ssl/certs"),
+                new_root / "etc/apt/craft-parts-ca-certificates.crt",
+                None,
+                "-o",
+                "remount,bind,ro",
+            ),
+            call(
+                host_apt_conf,
+                new_root / "etc/apt/apt.conf.d/99craft-parts-ca-certificates",
                 "--bind",
             ),
             call(
-                PosixPath("/etc/ca-certificates.conf"),
-                PosixPath(f"{new_root}/etc/ca-certificates.conf"),
-                "--bind",
+                new_root / "etc/apt/apt.conf.d/99craft-parts-ca-certificates",
+                None,
+                "-o",
+                "remount,bind,ro",
+            ),
+            call(
+                new_root / "etc/apt/apt.conf.d/99craft-parts-ca-certificates",
+                None,
+                "--make-rprivate",
             ),
             call(PosixPath(f"{new_root}/dev"), None, "--make-rprivate"),
             call(PosixPath(f"{new_root}/sys"), None, "--make-rprivate"),
             call(PosixPath(f"{new_root}/proc"), None, "--make-rprivate"),
             call(PosixPath(f"{new_root}/etc/resolv.conf"), None, "--make-rprivate"),
             call(
-                PosixPath(f"{new_root}/etc/ca-certificates.conf"),
-                None,
-                "--make-rprivate",
-            ),
-            call(PosixPath(f"{new_root}/etc/ssl/certs"), None, "--make-rprivate"),
-            call(
-                PosixPath(f"{new_root}/usr/share/ca-certificates"),
+                new_root / "etc/apt/craft-parts-ca-certificates.crt",
                 None,
                 "--make-rprivate",
             ),
             call(PosixPath(f"{new_root}/etc/apt"), None, "--make-rprivate"),
         ]
         assert mock_umount.mock_calls == [
+            call(
+                new_root / "etc/apt/apt.conf.d/99craft-parts-ca-certificates",
+                "--recursive",
+            ),
             call(PosixPath(f"{new_root}/dev"), "--recursive", "--lazy"),
             call(PosixPath(f"{new_root}/sys"), "--recursive"),
             call(PosixPath(f"{new_root}/proc"), "--recursive"),
             call(PosixPath(f"{new_root}/etc/resolv.conf"), "--recursive"),
-            call(PosixPath(f"{new_root}/etc/ca-certificates.conf"), "--recursive"),
-            call(PosixPath(f"{new_root}/etc/ssl/certs"), "--recursive"),
-            call(PosixPath(f"{new_root}/usr/share/ca-certificates"), "--recursive"),
+            call(
+                new_root / "etc/apt/craft-parts-ca-certificates.crt",
+                "--recursive",
+            ),
             call(PosixPath(f"{new_root}/etc/apt"), "--recursive"),
         ]
 
@@ -279,6 +314,49 @@ class TestChroot:
                 PosixPath(f"{new_root}/etc/apt"),
                 dirs_exist_ok=True,
             )
+        ]
+
+    @pytest.mark.parametrize("fail_configuration_mount", [True, False])
+    def test_chroot_host_sources_failure_cleans_ca_mount(
+        self, mocker, new_dir, mock_chroot, fail_configuration_mount
+    ):
+        new_root = Path(new_dir, "root")
+        (new_root / "etc/apt/apt.conf.d").mkdir(parents=True)
+        apt_conf_target = new_root / "etc/apt/apt.conf.d/99craft-parts-ca-certificates"
+        host_apt_configs = []
+
+        def mount(source, target, *args):
+            if target == apt_conf_target and args == ("--bind",):
+                host_apt_configs.append(source)
+            if fail_configuration_mount and source == apt_conf_target and "-o" in args:
+                raise subprocess.CalledProcessError(32, ["mount"])
+
+        def umount(target, *args):
+            if target == apt_conf_target:
+                assert host_apt_configs[0].exists()
+
+        mocker.patch("craft_parts.utils.os_utils.mount", side_effect=mount)
+        mock_umount = mocker.patch(
+            "craft_parts.utils.os_utils.umount", side_effect=umount
+        )
+        mocker.patch("shutil.copytree")
+
+        if fail_configuration_mount:
+            expected_error = subprocess.CalledProcessError
+            message = "mount"
+        else:
+            expected_error = chroot.errors.OverlayChrootExecutionError
+            message = "bummer"
+
+        with pytest.raises(expected_error, match=message):
+            chroot.chroot(new_root, target_func_error, "content", use_host_sources=True)
+
+        assert len(host_apt_configs) == 1
+        assert not host_apt_configs[0].exists()
+        assert mock_umount.mock_calls[0] == call(apt_conf_target, "--recursive")
+        assert mock_umount.mock_calls[-2:] == [
+            call(new_root / "etc/apt/craft-parts-ca-certificates.crt", "--recursive"),
+            call(new_root / "etc/apt", "--recursive"),
         ]
 
     def test_chroot_additional_bind_mounts(self, mocker, new_dir, mock_chroot):
