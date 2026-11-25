@@ -68,7 +68,7 @@ endif
 
 # Dependencies for sources
 ifeq ($(wildcard /usr/share/doc/p7zip-full/copyright /usr/share/doc/7zip/copyright),)
-ifneq ($(filter $(VERSION_CODENAME),focal jammy),)
+ifneq ($(filter $(VERSION_CODENAME),focal jammy noble oracular plucky questing),)
 APT_PACKAGES += p7zip-full
 else
 APT_PACKAGES += 7zip
