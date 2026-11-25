@@ -265,7 +265,10 @@ class TestPackageManagement:
         self.mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
         self.mock_chroot = mocker.patch(
             "craft_parts.overlays.chroot.chroot",
-            side_effect=lambda path, target, *args, **kwargs: target(*args, **kwargs),
+            # Like the real chroot, don't pass use_host_certificates to the target
+            side_effect=lambda path, target, *args, use_host_certificates=True, **kwargs: (
+                target(*args, **kwargs)
+            ),
         )
         self.mock_refresh_packages_list = mocker.patch(
             "craft_parts.packages.Repository.refresh_packages_list"
@@ -342,6 +345,7 @@ class TestPackageManagement:
             ["pkg1", "pkg2"],
             refresh_package_cache=False,
             use_host_sources=False,
+            use_host_certificates=False,
             include_recommends=False,
         )
         mock_install_packages.assert_called_once_with(
@@ -439,6 +443,7 @@ class TestPackageManagement:
             ["pkg1", "pkg2"],
             refresh_package_cache=False,
             use_host_sources=False,
+            use_host_certificates=False,
             include_recommends=False,
         )
         mock_install_packages.assert_called_once_with(
@@ -486,6 +491,7 @@ class TestPackageManagement:
             ["pkg1", "pkg2"],
             refresh_package_cache=False,
             use_host_sources=False,
+            use_host_certificates=False,
             include_recommends=True,
         )
         mock_install_packages.assert_called_once_with(
@@ -543,6 +549,7 @@ class TestPackageManagement:
             ["pkg1", "pkg2"],
             refresh_package_cache=False,
             use_host_sources=False,
+            use_host_certificates=False,
             include_recommends=True,
         )
         mock_install_packages.assert_called_once_with(
