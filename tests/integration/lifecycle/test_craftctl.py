@@ -22,7 +22,16 @@ from pathlib import Path
 import craft_parts
 import pytest
 import yaml
-from craft_parts import Action, ActionType, ProjectVar, ProjectVarInfo, Step, errors
+from craft_parts import (
+    Action,
+    ActionType,
+    Part,
+    ProjectVar,
+    ProjectVarInfo,
+    Step,
+    errors,
+)
+from craft_parts.state_manager import states
 
 from tests import TESTS_DIR
 
@@ -701,3 +710,233 @@ def test_craftctl_project_vars_write_once_from_state(new_dir, partitions, capfd)
     captured = capfd.readouterr()
     assert "variable 'myvar' can be set only once" in captured.err
     assert lf.project_info.get_project_var("myvar2") == "val2"
+
+
+def test_craftctl_default_tracks_primed_files(new_dir, mocker):
+    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+    mocker.patch("craft_parts.utils.os_utils.get_system_info", return_value="Linux")
+
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            override-build: |
+              : > "$CRAFT_PART_INSTALL/file1.txt"
+              : > "$CRAFT_PART_INSTALL/file2.txt"
+              craftctl default
+            override-stage: |
+              craftctl default
+            override-prime: |
+              craftctl default
+              /bin/rm "$CRAFT_PRIME/file2.txt"
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_ctl_track",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
+    )
+
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    part = Part("foo", parts["parts"]["foo"])
+    stage_state = states.load_step_state(part, Step.STAGE)
+    assert stage_state is not None
+    assert stage_state.files == {Path("file1.txt"), Path("file2.txt")}
+
+    prime_state = states.load_step_state(part, Step.PRIME)
+    assert prime_state is not None
+    assert prime_state.files == {Path("file1.txt")}
+
+
+def test_craftctl_default_aliased_partitions(
+    new_dir, mocker, enable_partitions_feature
+):
+    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+    mocker.patch("craft_parts.utils.os_utils.get_system_info", return_value="Linux")
+
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            override-build: |
+              : > "$CRAFT_PART_INSTALL/foo.txt"
+              craftctl default
+            override-stage: |
+              craftctl default
+            override-prime: |
+              craftctl default
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_ctl_alias",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
+        partitions=["alpha", "beta"],
+    )
+
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    part = Part("foo", parts["parts"]["foo"], partitions=["alpha", "beta"])
+    prime_state = states.load_step_state(part, Step.PRIME)
+    assert prime_state is not None
+    assert prime_state.partition == "alpha"
+    assert prime_state.files == {Path("foo.txt")}
+
+
+def test_craftctl_clean_removes_override_primed_files(new_dir, mocker):
+    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+    mocker.patch("craft_parts.utils.os_utils.get_system_info", return_value="Linux")
+
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            override-build: |
+              : > "$CRAFT_PART_INSTALL/foo.txt"
+              craftctl default
+            override-stage: |
+              craftctl default
+            override-prime: |
+              craftctl default
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_clean_override",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
+    )
+
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert Path("prime/foo.txt").exists()
+
+    lf.clean(Step.PRIME, part_names=["foo"])
+
+    assert not Path("prime/foo.txt").exists()
+
+
+def test_craftctl_rebuild_leaves_no_stale_files(new_dir, mocker):
+    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+    mocker.patch("craft_parts.utils.os_utils.get_system_info", return_value="Linux")
+
+    def make_parts(include_stale: bool) -> dict:
+        build_script = ': > "$CRAFT_PART_INSTALL/keep.txt"\n'
+        if include_stale:
+            build_script += ': > "$CRAFT_PART_INSTALL/stale.txt"\n'
+        build_script += "craftctl default\n"
+
+        return yaml.safe_load(
+            textwrap.dedent(
+                f"""\
+                parts:
+                  foo:
+                    plugin: nil
+                    override-build: |
+{textwrap.indent(build_script, "                      ")}
+                    override-stage: |
+                      craftctl default
+                    override-prime: |
+                      craftctl default
+                """
+            )
+        )
+
+    lf = craft_parts.LifecycleManager(
+        make_parts(include_stale=True),
+        application_name="test_rebuild",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
+    )
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert Path("prime/keep.txt").exists()
+    assert Path("prime/stale.txt").exists()
+
+    lf = craft_parts.LifecycleManager(
+        make_parts(include_stale=False),
+        application_name="test_rebuild",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
+    )
+    lf.clean(Step.PULL, part_names=["foo"])
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert Path("prime/keep.txt").exists()
+    assert not Path("prime/stale.txt").exists()
+
+
+def test_craftctl_override_without_default_aliased_partitions(
+    new_dir, mocker, enable_partitions_feature
+):
+    mocker.patch("craft_parts.lifecycle_manager._ensure_overlay_supported")
+    mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+    mocker.patch("craft_parts.utils.os_utils.get_system_info", return_value="Linux")
+
+    parts_yaml = textwrap.dedent(
+        """\
+        parts:
+          foo:
+            plugin: nil
+            override-stage: |
+              echo "custom stage without default"
+            override-prime: |
+              echo "custom prime without default"
+        """
+    )
+    parts = yaml.safe_load(parts_yaml)
+
+    lf = craft_parts.LifecycleManager(
+        parts,
+        application_name="test_no_default_alias",
+        cache_dir=new_dir,
+        base_layer_dir=new_dir,
+        base_layer_hash=b"hash",
+        partitions=["alpha", "beta"],
+    )
+
+    actions = lf.plan(Step.PRIME)
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    part = Part("foo", parts["parts"]["foo"], partitions=["alpha", "beta"])
+    stage_state = states.load_step_state(part, Step.STAGE)
+    assert stage_state is not None
+    assert stage_state.partition == "alpha"
+    assert stage_state.files == set()
+
+    prime_state = states.load_step_state(part, Step.PRIME)
+    assert prime_state is not None
+    assert prime_state.partition == "alpha"
+    assert prime_state.files == set()

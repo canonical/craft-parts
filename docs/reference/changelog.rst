@@ -41,6 +41,13 @@ New features:
   version, as names in parentheses are reserved for partitions. The ``(build)``
   and ``(overlay)`` prefixes in the ``organize`` key aren't affected.
 
+Bug fixes:
+
+- Track staged and primed files in step state when using ``craftctl default``
+  in ``override-stage`` or ``override-prime``. This ensures downstream fixups
+  that rely on tracked files (such as Snapcraft's patchelf and Rockcraft's
+  Python fixups) apply to override parts as expected.
+
 For a complete list of commits, check out the `3.0.0`_ release on GitHub.
 
 
