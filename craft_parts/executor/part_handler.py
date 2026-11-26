@@ -19,7 +19,7 @@
 import logging
 import os
 import shutil
-from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
+from collections.abc import Callable, Generator, Iterable, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
@@ -328,6 +328,9 @@ class PartHandler:
         :return: The pull step state.
         """
         _remove(self._part.part_src_dir)
+        # Pull clean so stale snaps and assertions from earlier pulls can't be
+        # mistaken for the ones about to be downloaded.
+        _remove(self._part.part_snaps_dir)
         self._make_dirs()
 
         fetched_packages = self._fetch_stage_packages(step_info=step_info)
@@ -1352,17 +1355,15 @@ class PartHandler:
 
         return fetched_packages
 
-    def _fetch_stage_snaps(self) -> Sequence[str] | None:
+    def _fetch_stage_snaps(self) -> list[str] | None:
         """Download snap packages to the part's snap directory."""
         stage_snaps = self._part.spec.stage_snaps
         if not stage_snaps:
             return None
 
-        packages.snaps.download_snaps(
+        return packages.snaps.download_snaps(
             snaps_list=stage_snaps, directory=self._part.part_snaps_dir
         )
-
-        return stage_snaps
 
     def _merged_overlay_packages(self) -> list[str]:
         """Return overlay packages from both the part spec and the plugin."""

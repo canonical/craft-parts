@@ -92,7 +92,10 @@ class TestPartHandling:
             "craft_parts.packages.Repository.fetch_stage_packages",
             return_value=["pkg1", "pkg2"],
         )
-        mocker.patch("craft_parts.packages.snaps.download_snaps")
+        mocker.patch(
+            "craft_parts.packages.snaps.download_snaps",
+            return_value=["snap1=42"],
+        )
         mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
 
         state = self._handler._run_pull(
@@ -103,10 +106,28 @@ class TestPartHandling:
             project_options=self._part_info.project_options,
             assets={
                 "stage-packages": ["pkg1", "pkg2"],
-                "stage-snaps": ["snap1"],
+                "stage-snaps": ["snap1=42"],
                 "source-details": None,
             },
         )
+
+    def test_run_pull_removes_stale_stage_snaps(self, mocker, new_dir):
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_pull")
+        mocker.patch("craft_parts.packages.Repository.fetch_stage_packages")
+        mocker.patch("craft_parts.packages.snaps.download_snaps", return_value=[])
+        mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
+
+        snaps_dir = self._part.part_snaps_dir
+        snaps_dir.mkdir(parents=True)
+        stale = [snaps_dir / "snap1_1.snap", snaps_dir / "snap1_1.assert"]
+        for path in stale:
+            path.write_text("stale")
+
+        self._handler._run_pull(
+            StepInfo(self._part_info, Step.PULL), stdout=None, stderr=None
+        )
+
+        assert not any(path.exists() for path in stale)
 
     def test_run_build(self, mocker):
         mock_chroot = mocker.patch(
@@ -1080,6 +1101,7 @@ class TestPackages:
     def test_fetch_stage_snaps(self, mocker, new_dir, partitions):
         mock_download_snaps = mocker.patch(
             "craft_parts.packages.snaps.download_snaps",
+            return_value=["word-salad=42"],
         )
 
         p1 = Part(
@@ -1097,7 +1119,7 @@ class TestPackages:
         )
 
         result = handler._fetch_stage_snaps()
-        assert result == ["word-salad"]
+        assert result == ["word-salad=42"]
         mock_download_snaps.assert_called_once_with(
             snaps_list=["word-salad"],
             directory=Path(new_dir, "parts/p1/stage_snaps"),

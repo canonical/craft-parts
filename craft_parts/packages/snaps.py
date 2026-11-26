@@ -17,11 +17,13 @@
 """Helpers to install snap packages."""
 
 import contextlib
+import hashlib
 import logging
 import pathlib
 import subprocess
 import sys
 import time
+from base64 import urlsafe_b64encode
 from collections.abc import Sequence
 from http import HTTPStatus
 from typing import (
@@ -294,6 +296,18 @@ class SnapPackage:
                 detail=_decode_subprocess_stderr(err),
             ) from err
 
+        if directory is None:
+            return
+
+        assertion_path = _find_downloaded_snap_assertion(
+            snap_name=self.name, directory=pathlib.Path(directory)
+        )
+        assertion_headers = _read_assertion_headers(assertion_path)
+        _verify_downloaded_snap(
+            assertion_path=assertion_path,
+            headers=assertion_headers,
+        )
+
     def install(self) -> None:
         """Installs the snap onto the system."""
         logger.debug("Installing snap: %s", self.name)
@@ -387,16 +401,126 @@ def _wait_for_snapd_ready(timeout: float = _SNAPD_READY_TIMEOUT) -> None:
     logger.debug("Timed out waiting for snapd to be ready after %ss", timeout)
 
 
-def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> None:
+def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> list[str]:
     """Download snaps of the format <snap-name>[@<channel>] into directory.
 
     The target directory is created if it does not exist.
+
+    :return: The downloaded snaps, with a channel (if any) normalized to the
+        ``<snap>@channel`` form and the revision appended as
+        ``<snap>[@channel]=revision``.
     """
     directory.mkdir(parents=True, exist_ok=True)
+    downloaded_snaps: list[str] = []
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
         logger.debug("Downloading snap %s", snap_pkg.name)
         snap_pkg.download(directory=directory)
+
+        snap_info = snap_pkg.get_store_snap_info()
+        snap_id = snap_info.get("snap-id") if snap_info else None
+        revision = _get_downloaded_snap_revision(
+            snap_name=snap_pkg.name, snap_id=snap_id, directory=directory
+        )
+        snap_name, snap_channel = _get_parsed_snap(snap)
+        normalized_snap = f"{snap_name}@{snap_channel}" if snap_channel else snap_name
+        downloaded_snaps.append(f"{normalized_snap}={revision}")
+
+    return downloaded_snaps
+
+
+def _get_downloaded_snap_revision(
+    *, snap_name: str, directory: pathlib.Path, snap_id: str | None = None
+) -> str:
+    """Read the revision from a downloaded snap-revision assertion."""
+    assertion_path = _find_downloaded_snap_assertion(
+        snap_name=snap_name, snap_id=snap_id, directory=directory
+    )
+    headers = _read_assertion_headers(assertion_path)
+    try:
+        return headers["snap-revision"]
+    except KeyError as err:
+        raise errors.SnapDownloadError(
+            snap_name=snap_name,
+            snap_channel="",
+            detail=f"Assertion {assertion_path} has no snap revision.",
+        ) from err
+
+
+def _find_downloaded_snap_assertion(
+    *, snap_name: str, directory: pathlib.Path, snap_id: str | None = None
+) -> pathlib.Path:
+    """Find the snap-revision assertion for a downloaded snap."""
+    for assertion_path in directory.glob("*.assert"):
+        headers = _read_assertion_headers(assertion_path)
+        if headers.get("type") != "snap-revision":
+            continue
+        if snap_id is not None:
+            if headers.get("snap-id") == snap_id:
+                return assertion_path
+            continue
+        if assertion_path.stem == snap_name or assertion_path.stem == (
+            f"{snap_name}_{headers.get('snap-revision', '')}"
+        ):
+            return assertion_path
+
+    raise errors.SnapDownloadError(
+        snap_name=snap_name,
+        snap_channel="",
+        detail=f"No snap-revision assertion found in {directory}.",
+    )
+
+
+def _read_assertion_headers(assertion_path: pathlib.Path) -> dict[str, str]:
+    """Read the snap-revision headers from an assertion file."""
+    try:
+        content = assertion_path.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+
+    first_headers: dict[str, str] | None = None
+    for assertion in content.replace("\r\n", "\n").split("\n\n"):
+        headers: dict[str, str] = {}
+        for line in assertion.splitlines():
+            try:
+                name, value = line.split(":", 1)
+            except ValueError:
+                continue
+            headers[name] = value.lstrip()
+
+        if first_headers is None:
+            first_headers = headers
+        if headers.get("type") == "snap-revision":
+            return headers
+
+    return first_headers or {}
+
+
+def _verify_downloaded_snap(
+    *, assertion_path: pathlib.Path, headers: dict[str, str]
+) -> None:
+    """Verify a downloaded snap against its assertion digest, when available."""
+    expected_digest = headers.get("snap-sha3-384")
+    if not expected_digest:
+        return
+
+    snap_path = assertion_path.with_suffix(".snap")
+    try:
+        digest = hashlib.sha3_384(snap_path.read_bytes()).digest()
+    except OSError as err:
+        raise errors.SnapDownloadError(
+            snap_name=headers.get("snap-name", ""),
+            snap_channel="",
+            detail=f"Unable to read downloaded snap {snap_path}.",
+        ) from err
+
+    actual_digest = urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+    if actual_digest != expected_digest:
+        raise errors.SnapDownloadError(
+            snap_name=headers.get("snap-name", ""),
+            snap_channel="",
+            detail=f"Downloaded snap {snap_path} does not match its assertion.",
+        )
 
 
 def install_snaps(

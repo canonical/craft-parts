@@ -33,11 +33,22 @@ def foo_install_dir(new_dir):
 
 
 @pytest.mark.parametrize(
-    "stage_snap",
-    ["basic@latest/stable", "basic/latest/stable"],
+    ("stage_snap", "expected"),
+    [
+        ("basic@latest/stable", "basic@latest/stable=42"),
+        ("basic/latest/stable", "basic@latest/stable=42"),
+        ("basic@stable", "basic@stable=42"),
+        ("basic", "basic=42"),
+    ],
 )
 def test_stage_snap(
-    new_dir, partitions, fake_snap_command, foo_install_dir, stage_snap
+    new_dir,
+    partitions,
+    fake_snapd,
+    fake_snap_command,
+    foo_install_dir,
+    stage_snap,
+    expected,
 ):
     _parts_yaml = textwrap.dedent(
         """\
@@ -69,6 +80,10 @@ def test_stage_snap(
     with lf.action_executor() as ctx:
         ctx.execute(actions[0])
 
+    pull_assets = lf.get_pull_assets(part_name="foo")
+    assert pull_assets is not None
+    assert pull_assets["stage-snaps"] == [expected]
+
     snaps = list(Path("parts/foo/stage_snaps").glob("*.snap"))
     assert len(snaps) == 1
     assert snaps[0].name == "basic.snap"
@@ -78,7 +93,7 @@ def test_stage_snap(
     assert (foo_install_dir / "meta.basic" / "snap.yaml").is_file()
 
 
-def test_stage_snap_download_error(new_dir, partitions, fake_snap_command):
+def test_stage_snap_download_error(new_dir, partitions, fake_snapd, fake_snap_command):
     _parts_yaml = textwrap.dedent(
         """\
         parts:
@@ -113,7 +128,7 @@ def test_stage_snap_download_error(new_dir, partitions, fake_snap_command):
     assert raised.value.snap_channel == "latest/stable"
 
 
-def test_stage_snap_unpack_error(new_dir, partitions, fake_snap_command):
+def test_stage_snap_unpack_error(new_dir, partitions, fake_snapd, fake_snap_command):
     _parts_yaml = textwrap.dedent(
         """\
         parts:

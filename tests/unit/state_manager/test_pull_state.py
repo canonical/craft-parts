@@ -102,6 +102,10 @@ class TestPullStateChanges:
             "source-submodules",
             "override-pull",
             "stage-packages",
+            "stage-snaps",
+            "stage-slices",
+            "overlay-packages",
+            "overlay-recommended-packages",
         ]
 
         for prop in properties:
@@ -136,6 +140,10 @@ class TestPullStateChanges:
             "source-submodules",
             "override-pull",
             "stage-packages",
+            "stage-snaps",
+            "stage-slices",
+            "overlay-packages",
+            "overlay-recommended-packages",
             "extra-property",
         ]
 
