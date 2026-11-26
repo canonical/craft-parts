@@ -101,6 +101,9 @@ def fake_all_packages_installed(mocker):
             tuple(sorted(["package=1.0"])): [
                 ("package", "1.0"),
             ],
+            tuple(sorted(["package"])): [
+                ("package", "1.0"),
+            ],
         }.get(tuple(sorted(package_names)), []),
     )
 
@@ -1505,6 +1508,27 @@ def test_refresh_not_called_when_disabled(mocker: MockerFixture) -> None:
 
     mock_refresh.assert_not_called()
     mock_mark.assert_called_once_with(["foo"], include_recommends=False)
+
+
+def test_install_packages_skips_install_when_nothing_marked(
+    fake_deb_run, mocker: MockerFixture
+) -> None:
+    """Skip apt-get install when simulation marks no packages (e.g. satisfied virtual package)."""
+    mocker.patch.object(
+        deb.Ubuntu,
+        "_check_if_all_packages_installed",
+        return_value=False,
+    )
+    mocker.patch.object(deb.Ubuntu, "refresh_packages_list")
+    mocker.patch(
+        "craft_parts.packages.deb._get_packages_marked_for_installation_apt_get",
+        return_value=[],
+    )
+
+    build_packages = deb.Ubuntu.install_packages(["p7zip-full"])
+
+    assert build_packages == []
+    fake_deb_run.assert_not_called()
 
 
 class TestIncludeRecommends:
