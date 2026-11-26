@@ -458,13 +458,15 @@ class TestStepHandlerRunScriptlet:
             part_info=self._part_info,
             part=self._part,
             dirs=self._dirs,
+            partitions=self._dirs.partitions,
         )
-        prime_dir = self._dirs.prime_dir
+        partition = self._part.default_partition
+        prime_dir = self._dirs.get_prime_dir(partition)
         prime_dir.mkdir(parents=True, exist_ok=True)
         (prime_dir / "primed.txt").touch()
 
-        mock_contents = StepContents()
-        mock_contents.partitions_contents[DEFAULT_PARTITION] = StepPartitionContents(
+        mock_contents = StepContents(partitions=self._dirs.partitions)
+        mock_contents.partitions_contents[partition] = StepPartitionContents(
             files={Path("primed.txt")}
         )
         mocker.patch.object(sh, "_builtin_prime", return_value=mock_contents)
@@ -475,9 +477,7 @@ class TestStepHandlerRunScriptlet:
             step=Step.PRIME,
             work_dir=prime_dir,
         )
-        assert result.partitions_contents[DEFAULT_PARTITION].files == {
-            Path("primed.txt")
-        }
+        assert result.partitions_contents[partition].files == {Path("primed.txt")}
 
     def test_run_scriptlet_override_prime_filters_deleted_files(self, new_dir, mocker):
         sh = _step_handler_for_step(
@@ -486,13 +486,15 @@ class TestStepHandlerRunScriptlet:
             part_info=self._part_info,
             part=self._part,
             dirs=self._dirs,
+            partitions=self._dirs.partitions,
         )
-        prime_dir = self._dirs.prime_dir
+        partition = self._part.default_partition
+        prime_dir = self._dirs.get_prime_dir(partition)
         prime_dir.mkdir(parents=True, exist_ok=True)
         (prime_dir / "keep.txt").touch()
 
-        mock_contents = StepContents()
-        mock_contents.partitions_contents[DEFAULT_PARTITION] = StepPartitionContents(
+        mock_contents = StepContents(partitions=self._dirs.partitions)
+        mock_contents.partitions_contents[partition] = StepPartitionContents(
             files={Path("keep.txt"), Path("deleted.txt")},
             dirs={Path("keep_dir"), Path("deleted_dir")},
         )
@@ -505,8 +507,8 @@ class TestStepHandlerRunScriptlet:
             step=Step.PRIME,
             work_dir=prime_dir,
         )
-        assert result.partitions_contents[DEFAULT_PARTITION].files == {Path("keep.txt")}
-        assert result.partitions_contents[DEFAULT_PARTITION].dirs == {Path("keep_dir")}
+        assert result.partitions_contents[partition].files == {Path("keep.txt")}
+        assert result.partitions_contents[partition].dirs == {Path("keep_dir")}
 
     def test_run_scriptlet_override_prime_preserves_symlinks(self, new_dir, mocker):
         sh = _step_handler_for_step(
@@ -515,14 +517,16 @@ class TestStepHandlerRunScriptlet:
             part_info=self._part_info,
             part=self._part,
             dirs=self._dirs,
+            partitions=self._dirs.partitions,
         )
-        prime_dir = self._dirs.prime_dir
+        partition = self._part.default_partition
+        prime_dir = self._dirs.get_prime_dir(partition)
         prime_dir.mkdir(parents=True, exist_ok=True)
         (prime_dir / "broken_file_link").symlink_to("nonexistent_file")
         (prime_dir / "broken_dir_link").symlink_to("nonexistent_dir")
 
-        mock_contents = StepContents()
-        mock_contents.partitions_contents[DEFAULT_PARTITION] = StepPartitionContents(
+        mock_contents = StepContents(partitions=self._dirs.partitions)
+        mock_contents.partitions_contents[partition] = StepPartitionContents(
             files={Path("broken_file_link")},
             dirs={Path("broken_dir_link")},
         )
@@ -534,7 +538,7 @@ class TestStepHandlerRunScriptlet:
             step=Step.PRIME,
             work_dir=prime_dir,
         )
-        pcontents = result.partitions_contents[DEFAULT_PARTITION]
+        pcontents = result.partitions_contents[partition]
         assert pcontents.files == {Path("broken_file_link")}
         assert pcontents.dirs == {Path("broken_dir_link")}
 
@@ -545,8 +549,10 @@ class TestStepHandlerRunScriptlet:
             part_info=self._part_info,
             part=self._part,
             dirs=self._dirs,
+            partitions=self._dirs.partitions,
         )
-        stage_dir = self._dirs.stage_dir
+        partition = self._part.default_partition
+        stage_dir = self._dirs.get_stage_dir(partition)
         stage_dir.mkdir(parents=True, exist_ok=True)
         (stage_dir / "staged.txt").touch()
 
@@ -554,8 +560,8 @@ class TestStepHandlerRunScriptlet:
         backstage_dir.mkdir(parents=True, exist_ok=True)
         (backstage_dir / "back.txt").touch()
 
-        mock_contents = StepContents(stage=True)
-        mock_contents.partitions_contents[DEFAULT_PARTITION] = StagePartitionContents(
+        mock_contents = StepContents(partitions=self._dirs.partitions, stage=True)
+        mock_contents.partitions_contents[partition] = StagePartitionContents(
             files={Path("staged.txt")},
             dirs=set(),
             backstage_files={Path("back.txt")},
@@ -569,7 +575,7 @@ class TestStepHandlerRunScriptlet:
             step=Step.STAGE,
             work_dir=stage_dir,
         )
-        pcontents = result.partitions_contents[DEFAULT_PARTITION]
+        pcontents = result.partitions_contents[partition]
         assert isinstance(pcontents, StagePartitionContents)
         assert pcontents.files == {Path("staged.txt")}
         assert pcontents.backstage_files == {Path("back.txt")}
