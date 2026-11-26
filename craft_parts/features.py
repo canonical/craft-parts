@@ -30,7 +30,9 @@ class Features(metaclass=Singleton):
     """Configurable craft-parts features.
 
     :cvar enable_overlay: Enables the overlay step.
-    :cvar enable_partitions: Enables the usage of partitions.
+    :cvar enable_partitions: Partitions are always enabled internally. This flag
+        only controls partition-specific environment variables and partition
+        misuse warnings.
     :cvar enable_build_slices: Enables cutting Chisel slices into a build root.
     """
 

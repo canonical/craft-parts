@@ -117,6 +117,42 @@ class TestPartHandling(test_part_handler.TestPartHandling):
         assert file1.exists() is False
         assert file2.is_file()
 
+    def test_run_overlay_with_filter_for_aliased_default(self, mocker, new_dir):
+        mocker.patch("craft_parts.overlays.OverlayManager.refresh_packages_list")
+        mocker.patch("craft_parts.overlays.OverlayManager.download_packages")
+        mocker.patch("craft_parts.overlays.OverlayManager.install_packages")
+
+        partitions = ["mypart", "yourpart"]
+        p1 = Part(
+            "p1",
+            {"plugin": "nil", "overlay": ["wanted", "-secret"]},
+            partitions=partitions,
+        )
+        info = ProjectInfo(
+            application_name="test",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        ovmgr = OverlayManager(
+            project_info=info,
+            part_list=[p1],
+            base_layer_dir=Path("/base"),
+            cache_level=0,
+        )
+        part_info = PartInfo(info, p1)
+        handler = PartHandler(
+            p1, part_info=part_info, part_list=[p1], overlay_manager=ovmgr
+        )
+
+        p1.part_layer_dir.mkdir(parents=True)
+        (p1.part_layer_dir / "wanted").touch()
+        (p1.part_layer_dir / "secret").touch()
+
+        handler._run_overlay(StepInfo(part_info, Step.PULL), stdout=None, stderr=None)
+
+        assert (p1.part_layer_dir / "wanted").is_file()
+        assert (p1.part_layer_dir / "secret").exists() is False
+
     def test_run_build(self, mocker):
         mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
         mocker.patch(
@@ -701,7 +737,8 @@ class TestOverlayMigration:
         # clean part data
         self._p3_handler.clean_step(step)
         assert Path(f"{step_dir}/bar").exists()
-        assert Path(f"{step_dir}/file1").exists()  # file1 remains (also belongs to p1)
+        # file1 remains (also belongs to p1)
+        assert Path(f"{step_dir}/file1").exists()
 
         # clean overlay data
         self._p1_handler.clean_step(step)
@@ -777,7 +814,7 @@ class TestOverlayMigration:
         # migration state
         p1_handler.run_action(Action("", Step.STAGE))
         stage_state = states.load_overlay_migration_state(
-            p1.overlay_dirs[None], Step.STAGE
+            p1.overlay_dirs[p1.default_partition], Step.STAGE
         )
         assert stage_state is not None
         assert Path("my-dir") in stage_state.directories
@@ -787,9 +824,10 @@ class TestOverlayMigration:
         # migration state
         p1_handler.run_action(Action("", Step.PRIME))
         prime_state = states.load_overlay_migration_state(
-            p1.overlay_dirs[None], Step.PRIME
+            p1.overlay_dirs[p1.default_partition], Step.PRIME
         )
         assert prime_state is not None
+        assert prime_state.partition == p1.default_partition
         assert Path("my-dir") in prime_state.directories
         assert Path("my-dir/my-file.txt") in prime_state.files
 
