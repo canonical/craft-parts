@@ -41,6 +41,12 @@ New features:
   version, as names in parentheses are reserved for partitions. The ``(build)``
   and ``(overlay)`` prefixes in the ``organize`` key aren't affected.
 
+Bug fixes:
+
+- Fix a crash when priming overlay files inside a directory that another part
+  staged but didn't prime. The missing parent directories are now created in
+  the prime directory.
+
 For a complete list of commits, check out the `3.0.0`_ release on GitHub.
 
 
