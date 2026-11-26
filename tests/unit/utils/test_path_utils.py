@@ -23,6 +23,8 @@ from craft_parts.utils.path_utils import (
     _has_partition,
     _split_partition_and_inner_path,
     get_partition_and_path,
+    get_user_partition_and_path,
+    is_parenthesised_path,
 )
 
 PATH_CLASSES = [Path, PurePosixPath]
@@ -142,20 +144,26 @@ def test_has_partition(full_path, expected):
 
 @pytest.mark.parametrize("path", NON_PARTITION_PATHS + PARTITION_PATHS)
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
-def test_get_partition_compatible_filepath_disabled_passthrough(path, path_class):
-    """Test that when partitions are disabled this is a no-op."""
+def test_get_partition_compatible_filepath(path, path_class):
     actual_partition, actual_inner_path = get_partition_and_path(
         path_class(path), "default"
     )
 
-    assert actual_partition is None
-    assert actual_inner_path == path_class(path)
+    if path in PARTITION_PATHS:
+        index = PARTITION_PATHS.index(path)
+        expected_partition = PARTITION_EXPECTED_PARTITIONS[index]
+        expected_inner_path = path_class(PARTITION_EXPECTED_INNER_PATHS[index])
+    else:
+        expected_partition = "default"
+        expected_inner_path = path_class(path)
+
+    assert actual_partition == expected_partition
+    assert actual_inner_path == expected_inner_path
     assert isinstance(actual_inner_path, path_class)
 
 
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
-def test_get_partition_compatible_filepath_disabled_build_partition(path_class):
-    """Build pseudo-partition paths are parsed even when partitions are disabled."""
+def test_get_partition_compatible_filepath_build_partition(path_class):
     actual_partition, actual_inner_path = get_partition_and_path(
         path_class("(build)/generated.txt"), "default"
     )
@@ -165,25 +173,8 @@ def test_get_partition_compatible_filepath_disabled_build_partition(path_class):
     assert isinstance(actual_inner_path, path_class)
 
 
-@pytest.mark.parametrize("path", ["(default)/generated.txt", "(overlay)/generated.txt"])
-@pytest.mark.parametrize("path_class", PATH_CLASSES)
-def test_get_partition_compatible_filepath_disabled_non_build_passthrough(
-    path,
-    path_class,
-):
-    """Only the build pseudo-partition is parsed when partitions are disabled."""
-    actual_partition, actual_inner_path = get_partition_and_path(
-        path_class(path), "default"
-    )
-
-    assert actual_partition is None
-    assert actual_inner_path == path_class(path)
-    assert isinstance(actual_inner_path, path_class)
-
-
 @pytest.mark.parametrize("path", ["*"])
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
-@pytest.mark.usefixtures("enable_partitions_feature")
 def test_get_partition_compatible_filepath_glob(path, path_class):
     expected = path_class(path)
     actual_partition, actual_inner_path = get_partition_and_path(expected, "default")
@@ -194,7 +185,6 @@ def test_get_partition_compatible_filepath_glob(path, path_class):
 
 @pytest.mark.parametrize("path", NON_PARTITION_PATHS)
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
-@pytest.mark.usefixtures("enable_partitions_feature")
 def test_get_partition_compatible_filepath_non_partition(path, path_class):
     """Non-partitioned paths get a default partition."""
     actual_partition, actual_inner_path = get_partition_and_path(
@@ -217,7 +207,6 @@ ZIPPED_PARTITIONS = list(
 
 @pytest.mark.parametrize("partition_paths", ZIPPED_PARTITIONS)
 @pytest.mark.parametrize("path_class", PATH_CLASSES)
-@pytest.mark.usefixtures("enable_partitions_feature")
 def test_get_partition_compatible_filepath_partition(partition_paths, path_class):
     """Non-partitioned paths match their given partition."""
     path, expected_partition, expected_inner_path = partition_paths
@@ -228,6 +217,84 @@ def test_get_partition_compatible_filepath_partition(partition_paths, path_class
     assert actual_partition == expected_partition
     assert actual_inner_path == path_class(expected_inner_path)
     assert isinstance(actual_inner_path, path_class)
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_partition", "expected_inner_path"),
+    [
+        ("foo", "default", "foo"),
+        ("(etc)/foo", "default", "(etc)/foo"),
+        ("(default)/foo", "default", "(default)/foo"),
+        ("(build)/foo", "default", "(build)/foo"),
+        ("(overlay)/foo", "default", "(overlay)/foo"),
+    ],
+)
+@pytest.mark.parametrize("path_class", PATH_CLASSES)
+def test_get_user_partition_and_path_literal(
+    path, expected_partition, expected_inner_path, path_class
+):
+    """Parenthesised names are regular path components without partitions."""
+    actual_partition, actual_inner_path = get_user_partition_and_path(
+        path_class(path), "default"
+    )
+
+    assert actual_partition == expected_partition
+    assert actual_inner_path == path_class(expected_inner_path)
+    assert isinstance(actual_inner_path, path_class)
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_partition", "expected_inner_path"),
+    [
+        ("(etc)/foo", "default", "(etc)/foo"),
+        ("(build)/foo", "build", "foo"),
+        ("(overlay)/foo", "overlay", "foo"),
+    ],
+)
+def test_get_user_partition_and_path_special(
+    path, expected_partition, expected_inner_path
+):
+    """Special pseudo-partitions are parsed even without partitions."""
+    assert get_user_partition_and_path(
+        path, "default", special_partitions=("build", "overlay")
+    ) == (expected_partition, expected_inner_path)
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+@pytest.mark.parametrize(
+    ("path", "expected_partition", "expected_inner_path"),
+    [
+        ("foo", "default", "foo"),
+        ("(etc)/foo", "etc", "foo"),
+        ("(default)/foo", "default", "foo"),
+    ],
+)
+def test_get_user_partition_and_path_partitions_enabled(
+    path, expected_partition, expected_inner_path
+):
+    """Parenthesised names are partitions if partitions are enabled."""
+    assert get_user_partition_and_path(path, "default") == (
+        expected_partition,
+        expected_inner_path,
+    )
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("(etc)", True),
+        ("(etc)/foo", True),
+        ("-(etc)/foo", True),
+        ("(Not A Partition!)/foo", True),
+        ("foo", False),
+        ("foo/(etc)", False),
+        ("(etc)foo", False),
+        ("(etc/foo)bar", False),
+        ("", False),
+    ],
+)
+def test_is_parenthesised_path(path, expected):
+    assert is_parenthesised_path(path) is expected
 
 
 def test_split_partition_and_inner_path_error():
