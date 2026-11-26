@@ -928,7 +928,7 @@ class TestOverlayMigration:
         p1_handler.run_action(Action("", Step.STAGE))
         p2_handler.run_action(Action("", Step.STAGE))
         stage_state = states.load_overlay_migration_state(
-            p2.overlay_dirs[None], Step.STAGE
+            p2.overlay_dirs[p2.default_partition], Step.STAGE
         )
         assert stage_state is not None
         assert stage_state.directories == set()
@@ -942,7 +942,7 @@ class TestOverlayMigration:
         assert (prime_dir / "foo/sub/link").readlink() == Path("../foo")
 
         prime_state = states.load_overlay_migration_state(
-            p2.overlay_dirs[None], Step.PRIME
+            p2.overlay_dirs[p2.default_partition], Step.PRIME
         )
         assert prime_state is not None
         assert {Path("foo"), Path("foo/sub")} <= prime_state.directories
@@ -966,7 +966,7 @@ class TestOverlayMigration:
         assert (prime_dir / "foo/bar").readlink() == Path("foo")
 
         prime_state = states.load_overlay_migration_state(
-            p2.overlay_dirs[None], Step.PRIME
+            p2.overlay_dirs[p2.default_partition], Step.PRIME
         )
         assert prime_state is not None
         assert Path("foo") not in prime_state.directories
