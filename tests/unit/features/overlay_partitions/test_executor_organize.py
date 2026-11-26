@@ -413,9 +413,9 @@ def test_organize_merge_overlay_directories(new_path):
     assert ((overlay_dir / "my-dir").stat().st_mode & 0o777) == 0o755
 
 
-def _partition_dirs(base: Path) -> dict[str | None, Path]:
+def _partition_dirs(base: Path) -> dict[str, Path]:
     base = Path(base)
-    dirs: dict[str | None, Path] = {
+    dirs: dict[str, Path] = {
         "default": base / "install",
         OVERLAY_PARTITION: base / "overlay_dir",
         BUILD_PARTITION: base / "build_dir",

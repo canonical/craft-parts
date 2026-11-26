@@ -20,10 +20,26 @@ Changelog
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
 
-.. _release-2.39.0:
+.. _release-3.0.0:
 
-2.39.0 (unreleased)
--------------------
+3.0.0 (2026-MM-DD)
+------------------
+
+New features:
+
+- Partitions are now always handled internally. Projects that don't define
+  partitions use a single ``default`` partition, so projects with and without
+  partitions share the same code path. The ``enable_partitions`` feature flag
+  is still accepted. It now only controls the partition-specific environment
+  variables, such as ``CRAFT_DEFAULT_STAGE``, and the warning for partition
+  names that aren't wrapped in parentheses.
+
+- For projects that don't define partitions, paths in the ``organize``,
+  ``stage``, ``prime``, and ``overlay`` keys that start with a directory name in
+  parentheses, such as ``(etc)/foo``, are deprecated and produce a warning.
+  These paths still work as before, but won't be supported in a future
+  version, as names in parentheses are reserved for partitions. The ``(build)``
+  and ``(overlay)`` prefixes in the ``organize`` key aren't affected.
 
 Bug fixes:
 
@@ -32,7 +48,8 @@ Bug fixes:
   that rely on tracked files (such as Snapcraft's patchelf and Rockcraft's
   Python fixups) apply to override parts as expected.
 
-For a complete list of commits, check out the `2.39.0`_ release on GitHub.
+For a complete list of commits, check out the `3.0.0`_ release on GitHub.
+
 
 .. _release-2.38.1:
 
@@ -106,6 +123,11 @@ Bug fixes:
 
 - Fix a quadratic slowdown when the ``stage`` or ``prime`` keys exclude many
   directories, such as ``-**/__pycache__`` in a large Python environment.
+
+Documentation:
+
+- Group the plugins in the :ref:`plugins` reference by the kind of sources they
+  build.
 
 For a complete list of commits, check out the `2.38.0`_ release on GitHub.
 
@@ -2027,7 +2049,7 @@ For a complete list of commits, check out the `2.0.0`_ release on GitHub.
 .. _craft-cli issue #172: https://github.com/canonical/craft-cli/issues/172
 .. _Poetry: https://python-poetry.org
 
-.. _2.39.0: https://github.com/canonical/craft-parts/releases/tag/2.39.0
+.. _3.0.0: https://github.com/canonical/craft-parts/releases/tag/3.0.0
 .. _2.38.1: https://github.com/canonical/craft-parts/releases/tag/2.38.1
 .. _2.38.0: https://github.com/canonical/craft-parts/releases/tag/2.38.0
 .. _2.37.3: https://github.com/canonical/craft-parts/releases/tag/2.37.3

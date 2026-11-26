@@ -35,7 +35,7 @@ from craft_parts.plugins import Plugin
 from craft_parts.sources.local_source import SourceHandler
 from craft_parts.steps import Step
 from craft_parts.utils import process
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION
+from craft_parts.utils.partition_utils import normalize_partition_names
 
 from . import filesets
 from .filesets import Fileset
@@ -75,8 +75,7 @@ class StepContents:
     def __init__(
         self, *, partitions: list[str] | None = None, stage: bool = False
     ) -> None:
-        if partitions is None or len(partitions) == 0:
-            partitions = [DEFAULT_PARTITION]
+        partitions = normalize_partition_names(partitions)
         if stage:
             self.partitions_contents = {
                 partition: StagePartitionContents() for partition in partitions
@@ -155,9 +154,9 @@ class StepHandler:
         self._env = env
         self._stdout = stdout
         self._stderr = stderr
-        self._partitions = partitions
+        self._partitions = normalize_partition_names(partitions)
         self._scriptlet_contents = StepContents(
-            partitions=partitions, stage=step_info.step == Step.STAGE
+            partitions=self._partitions, stage=step_info.step == Step.STAGE
         )
 
     def run_builtin(self) -> StepContents:
@@ -201,14 +200,14 @@ class StepHandler:
                     errors.PluginPullError(part_name=self._part.name)
                 ) from process_error
 
-        return StepContents()
+        return StepContents(partitions=self._partitions)
 
     def _builtin_overlay(self) -> StepContents:
         """Run the built-in overlay handler (plugin chroot commands)."""
         self._run_overlay_scriptlet(
             "craftctl default", work_dir=Path("/"), scriptlet_name="overlay"
         )
-        return StepContents()
+        return StepContents(partitions=self._partitions)
 
     def _builtin_build(self) -> StepContents:
         # Plugin commands.
@@ -237,7 +236,7 @@ class StepHandler:
                 stderr=process_error.result.stderr,
             ) from process_error
 
-        return StepContents()
+        return StepContents(partitions=self._partitions)
 
     def _builtin_stage(self) -> StepContents:
         stage_fileset = Fileset(
@@ -257,87 +256,49 @@ class StepHandler:
                 prefix_trim=self._part.part_install_dir,
             )
 
-        step_contents = StepContents(stage=True)
+        step_contents = StepContents(partitions=self._partitions, stage=True)
 
-        if self._partitions:
-            backstage_files, backstage_dirs = filesets.migratable_filesets(
-                Fileset(
-                    [f"({self._step_info.default_partition})/*"],
-                    name="backstage",
-                    default_partition=self._step_info.default_partition,
-                ),
-                self._part.part_export_dir,
-                self._step_info.default_partition,
-                self._step_info.default_partition,
-            )
-            for partition in self._partitions:
-                partition_files, partition_dirs = filesets.migratable_filesets(
-                    stage_fileset,
-                    self._part.part_install_dirs[partition],
-                    self._step_info.default_partition,
-                    partition,
-                )
-                partition_files, partition_dirs = migrate_files(
-                    files=partition_files,
-                    dirs=partition_dirs,
-                    srcdir=self._part.part_install_dirs[partition],
-                    destdir=self._part.dirs.get_stage_dir(partition),
-                    fixup_func=pkgconfig_fixup,
-                )
-                # Backstage content is managed only in the default partition
-                if partition == self._step_info.default_partition:
-                    backstage_files, backstage_dirs = migrate_files(
-                        files=backstage_files,
-                        dirs=backstage_dirs,
-                        srcdir=self._part.part_export_dir,
-                        destdir=self._part.backstage_dir,
-                    )
-                    step_contents.partitions_contents[partition] = (
-                        StagePartitionContents(
-                            files=partition_files,
-                            dirs=partition_dirs,
-                            backstage_files=backstage_files,
-                            backstage_dirs=backstage_dirs,
-                        )
-                    )
-                else:
-                    step_contents.partitions_contents[partition] = (
-                        StagePartitionContents(
-                            files=partition_files, dirs=partition_dirs
-                        )
-                    )
-        else:
-            files, dirs = filesets.migratable_filesets(
+        backstage_files, backstage_dirs = filesets.migratable_filesets(
+            Fileset(
+                ["*"],
+                name="backstage",
+                default_partition=self._step_info.default_partition,
+            ),
+            self._part.part_export_dir,
+            self._step_info.default_partition,
+            self._step_info.default_partition,
+        )
+        for partition in self._partitions:
+            partition_files, partition_dirs = filesets.migratable_filesets(
                 stage_fileset,
-                self._part.part_install_dir,
-                DEFAULT_PARTITION,
+                self._part.part_install_dirs[partition],
+                self._step_info.default_partition,
+                partition,
             )
-            files, dirs = migrate_files(
-                files=files,
-                dirs=dirs,
-                srcdir=self._part.part_install_dir,
-                destdir=self._part.stage_dir,
+            partition_files, partition_dirs = migrate_files(
+                files=partition_files,
+                dirs=partition_dirs,
+                srcdir=self._part.part_install_dirs[partition],
+                destdir=self._part.dirs.get_stage_dir(partition),
                 fixup_func=pkgconfig_fixup,
             )
-            backstage_files, backstage_dirs = filesets.migratable_filesets(
-                Fileset(["*"], name="backstage"),
-                self._part.part_export_dir,
-                DEFAULT_PARTITION,
-            )
-            backstage_files, backstage_dirs = migrate_files(
-                files=backstage_files,
-                dirs=backstage_dirs,
-                srcdir=self._part.part_export_dir,
-                destdir=self._part.backstage_dir,
-            )
-            step_contents.partitions_contents[DEFAULT_PARTITION] = (
-                StagePartitionContents(
-                    files=files,
-                    dirs=dirs,
+            if partition == self._step_info.default_partition:
+                backstage_files, backstage_dirs = migrate_files(
+                    files=backstage_files,
+                    dirs=backstage_dirs,
+                    srcdir=self._part.part_export_dir,
+                    destdir=self._part.backstage_dir,
+                )
+                step_contents.partitions_contents[partition] = StagePartitionContents(
+                    files=partition_files,
+                    dirs=partition_dirs,
                     backstage_files=backstage_files,
                     backstage_dirs=backstage_dirs,
                 )
-            )
+            else:
+                step_contents.partitions_contents[partition] = StagePartitionContents(
+                    files=partition_files, dirs=partition_dirs
+                )
 
         return step_contents
 
@@ -364,47 +325,26 @@ class StepHandler:
             )
             prime_fileset.combine(stage_fileset)
 
-        step_contents = StepContents()
+        step_contents = StepContents(partitions=self._partitions)
 
-        if self._partitions:
-            for partition in self._partitions:
-                partition_files, partition_dirs = filesets.migratable_filesets(
-                    prime_fileset,
-                    self._part.part_install_dirs[partition],
-                    self._step_info.default_partition,
-                    partition,
-                )
-
-                srcdir = self._part.dirs.get_stage_dir(partition)
-                destdir = self._part.dirs.get_prime_dir(partition)
-
-                partition_files, partition_dirs = migrate_files(
-                    files=partition_files,
-                    dirs=partition_dirs,
-                    srcdir=srcdir,
-                    destdir=destdir,
-                    permissions=self._part.spec.permissions,
-                )
-
-                step_contents.partitions_contents[partition] = StepPartitionContents(
-                    files=partition_files, dirs=partition_dirs
-                )
-
-        else:
-            files, dirs = filesets.migratable_filesets(
+        for partition in self._partitions:
+            partition_files, partition_dirs = filesets.migratable_filesets(
                 prime_fileset,
-                self._part.part_install_dir,
-                DEFAULT_PARTITION,
+                self._part.part_install_dirs[partition],
+                self._step_info.default_partition,
+                partition,
             )
-            files, dirs = migrate_files(
-                files=files,
-                dirs=dirs,
-                srcdir=self._part.stage_dir,
-                destdir=self._part.prime_dir,
+
+            partition_files, partition_dirs = migrate_files(
+                files=partition_files,
+                dirs=partition_dirs,
+                srcdir=self._part.dirs.get_stage_dir(partition),
+                destdir=self._part.dirs.get_prime_dir(partition),
                 permissions=self._part.spec.permissions,
             )
-            step_contents.partitions_contents[DEFAULT_PARTITION] = (
-                StepPartitionContents(files=files, dirs=dirs)
+
+            step_contents.partitions_contents[partition] = StepPartitionContents(
+                files=partition_files, dirs=partition_dirs
             )
 
         return step_contents
@@ -752,21 +692,13 @@ class StepHandler:
 
         filtered = StepContents(partitions=self._partitions, stage=step == Step.STAGE)
         for partition, pcontents in contents.partitions_contents.items():
-            if self._partitions and partition not in self._partitions:
+            if partition not in self._partitions:
                 continue
 
             if step == Step.STAGE:
-                destdir = (
-                    self._part.dirs.get_stage_dir(partition)
-                    if self._partitions
-                    else self._part.stage_dir
-                )
+                destdir = self._part.dirs.get_stage_dir(partition)
             else:
-                destdir = (
-                    self._part.dirs.get_prime_dir(partition)
-                    if self._partitions
-                    else self._part.prime_dir
-                )
+                destdir = self._part.dirs.get_prime_dir(partition)
 
             existing_files = {
                 f

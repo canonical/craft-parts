@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
@@ -235,17 +236,47 @@ class TestPartSpecs:
 class TestPartPartitionUsage:
     """Test usage of partitions in parts."""
 
-    def test_part_invalid_partition_usage_no_error(self, partitions):
-        """Do not error for invalid partition usage when the feature is disabled."""
-        # if partitions were enabled, this would raise a ValueError
+    def test_part_parenthesised_paths_deprecated(self, partitions, caplog):
+        """Parenthesised paths are regular paths, but are deprecated."""
         part_data = {
-            "organize": {"test": "(foo)"},
-            "stage": ["(bar)/test"],
+            "organize": {"(src)/foo": "(foo)", "(build)/bar": "(overlay)/bar"},
+            "stage": ["(bar)/test", "-(default)/x"],
             "prime": ["(baz)"],
         }
 
         Part("a", part_data, partitions=partitions)
-        Part("b", part_data, partitions=partitions)
+
+        assert caplog.messages == [
+            (
+                "Part 'a' uses paths starting with a directory name in parentheses. "
+                "These paths are deprecated and won't be supported in a future "
+                "version: organize: '(src)/foo', organize: '(foo)', "
+                "stage: '(bar)/test', stage: '-(default)/x', prime: '(baz)'"
+            )
+        ]
+
+    def test_part_no_parenthesised_paths_no_warning(self, partitions, caplog):
+        """Don't warn about paths without parenthesised names."""
+        part_data = {
+            "organize": {"foo": "bar(baz)", "(build)/qux": "quux"},
+            "stage": ["foo/(bar)"],
+        }
+
+        Part("a", part_data, partitions=partitions)
+
+        assert caplog.messages == []
+
+    def test_part_partition_misuse_no_warning(self, partitions):
+        """Don't warn about partition misuse if partitions aren't enabled."""
+        part_data = {
+            "organize": {"test": "default/foo"},
+            "stage": ["default/foo"],
+            "prime": ["default/foo"],
+        }
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", errors.PartitionUsageWarning)
+            Part("a", part_data, partitions=partitions)
 
 
 class TestPartData:
@@ -466,7 +497,7 @@ class TestPartData:
     def test_part_install_dirs(self, new_dir):
         p = Part("foo", {"organize": {"foo": "bar"}})
         assert p.part_install_dirs == {
-            None: Path(new_dir / "parts/foo/install"),
+            "default": Path(new_dir / "parts/foo/install"),
         }
 
     @pytest.mark.parametrize(
