@@ -41,6 +41,11 @@ New features:
   version, as names in parentheses are reserved for partitions. The ``(build)``
   and ``(overlay)`` prefixes in the ``organize`` key aren't affected.
 
+Bug fixes:
+
+- Changing the list of partitions now reruns the build step, and files left in
+  partitions from the previous build are cleaned up.
+
 For a complete list of commits, check out the `3.0.0`_ release on GitHub.
 
 
