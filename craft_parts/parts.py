@@ -48,10 +48,16 @@ from craft_parts.utils.deb_utils import has_debs, has_slices
 from craft_parts.utils.partition_utils import (
     BUILD_PARTITION,
     DEFAULT_PARTITION,
+    ORGANIZE_PSEUDO_PARTITIONS,
     OVERLAY_PARTITION,
     get_partition_dir_map,
+    normalize_partition_names,
 )
-from craft_parts.utils.path_utils import get_partition_and_path
+from craft_parts.utils.path_utils import (
+    get_partition_and_path,
+    get_user_partition_and_path,
+    is_parenthesised_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -770,7 +776,7 @@ class PartSpec(BaseModel):
     @property
     def organizes_to_overlay(self) -> bool:
         """Return whether the part organizes file to the overlay."""
-        if not Features().enable_partitions or not Features().enable_overlay:
+        if not Features().enable_overlay:
             return False
         for dest in self.organize_files.values():
             partition, _ = get_partition_and_path(Path(dest), DEFAULT_PARTITION)
@@ -808,6 +814,14 @@ class PartSpec(BaseModel):
     def has_build_slices(self) -> bool:
         """Return whether the part has build slices."""
         return bool(self.build_slices)
+
+
+def _is_organize_pseudo_partition(path: str) -> bool:
+    """Check whether an organize path starts with (build) or (overlay)."""
+    partition, _ = get_user_partition_and_path(
+        path, DEFAULT_PARTITION, special_partitions=ORGANIZE_PSEUDO_PARTITIONS
+    )
+    return partition in ORGANIZE_PSEUDO_PARTITIONS
 
 
 def _get_build_partition_usage_error(fileset_name: str, partition: str) -> str | None:
@@ -867,7 +881,7 @@ class Part:
         partitions: Sequence[str] | None = None,
         stage_packages_slice_support: bool = True,
     ) -> None:
-        self._partitions = partitions
+        self._partitions = normalize_partition_names(partitions)
         if not isinstance(data, dict):
             raise errors.PartSpecificationError(
                 part_name=name, message="part data is not a dictionary"
@@ -902,7 +916,6 @@ class Part:
                 part_name=name, error_list=err.errors()
             ) from err
 
-        self._check_partition_feature()
         self._check_partition_usage()
         self._check_overlay_script_plugin_conflict()
 
@@ -971,10 +984,10 @@ class Part:
         return self._part_dir / "export"
 
     @property
-    def part_install_dirs(self) -> Mapping[str | None, Path]:
+    def part_install_dirs(self) -> Mapping[str, Path]:
         """Return a mapping of partition names to install directories.
 
-        With partitions disabled, the only partition name is ``None``
+        The default partition maps to the top-level install directory.
         """
         dir_map = get_partition_dir_map(
             base_dir=self.dirs.work_dir,
@@ -1016,10 +1029,10 @@ class Part:
         return self._part_dir / "layer"
 
     @property
-    def part_layer_dirs(self) -> Mapping[str | None, Path]:
+    def part_layer_dirs(self) -> Mapping[str, Path]:
         """Return a mapping of partition names to layer directories.
 
-        With partitions disabled, the only partition name is ``None``
+        The default partition maps to the top-level layer directory.
         """
         return MappingProxyType(
             get_partition_dir_map(
@@ -1035,10 +1048,10 @@ class Part:
         return self.dirs.overlay_dir
 
     @property
-    def overlay_dirs(self) -> Mapping[str | None, Path]:
+    def overlay_dirs(self) -> Mapping[str, Path]:
         """A mapping of partition name to partition overlay directory.
 
-        If partitions are disabled, the only key is ``None``.
+        The default partition maps to the top-level overlay directory.
         """
         return self.dirs.overlay_dirs
 
@@ -1056,10 +1069,10 @@ class Part:
         return self.dirs.stage_dir
 
     @property
-    def stage_dirs(self) -> Mapping[str | None, Path]:
+    def stage_dirs(self) -> Mapping[str, Path]:
         """A mapping of partition name to partition staging directory.
 
-        If partitions are disabled, the only key is ``None``.
+        The default partition maps to the top-level stage directory.
         """
         return self.dirs.stage_dirs
 
@@ -1072,10 +1085,10 @@ class Part:
         return self.dirs.prime_dir
 
     @property
-    def prime_dirs(self) -> Mapping[str | None, Path]:
+    def prime_dirs(self) -> Mapping[str, Path]:
         """A mapping of partition name to partition prime directory.
 
-        If partitions are disabled, the only key is ``None``.
+        The default partition maps to the top-level prime directory.
         """
         return self.dirs.prime_dirs
 
@@ -1120,34 +1133,16 @@ class Part:
     @property
     def default_partition(self) -> str:
         """Get the "default" partition from a partition list."""
-        if self._partitions:
-            return self._partitions[0]
-        return DEFAULT_PARTITION
-
-    def _check_partition_feature(self) -> None:
-        """Check if the partitions feature is properly used.
-
-        :raises FeatureError: If partitions are defined but the feature is not enabled.
-        """
-        if self._partitions and not Features().enable_partitions:
-            raise errors.FeatureError(
-                "Partitions specified but partitions feature is not enabled."
-            )
-
-        if self._partitions is None and Features().enable_partitions:
-            raise errors.FeatureError(
-                "Partitions feature is enabled but no partitions specified."
-            )
+        return self._partitions[0]
 
     def _check_partition_usage(self) -> None:
         """Check if partitions are properly used in a part.
 
-        Assumes the partition feature is enabled.
-
         :raises PartitionError: If partitions are not used properly in a fileset.
         :raises PartitionWarning: If a fileset entry is misusing a partition.
         """
-        if not self._partitions:
+        if not Features().enable_partitions:
+            self._warn_parenthesised_paths()
             return
 
         error_list: list[str] = []
@@ -1175,6 +1170,37 @@ class Part:
             raise errors.PartitionUsageError(
                 error_list=error_list,
                 partitions=self._partitions,
+            )
+
+    def _warn_parenthesised_paths(self) -> None:
+        """Warn about paths that start with a parenthesised directory name.
+
+        If partitions are not enabled, these are regular paths. Warn that they
+        are deprecated, because parenthesised names are reserved for partitions.
+        The (build) and (overlay) pseudo-partitions in organize are not paths.
+        """
+        organize_files = self.spec.organize_files
+        deprecated = [
+            f"{name}: {path!r}"
+            for name, paths, special in [
+                ("organize", list(organize_files), True),
+                ("organize", list(organize_files.values()), True),
+                ("stage", self.spec.stage_files, False),
+                ("prime", self.spec.prime_files, False),
+                ("overlay", self.spec.overlay_files, False),
+            ]
+            for path in paths
+            if is_parenthesised_path(path)
+            and not (special and _is_organize_pseudo_partition(path))
+        ]
+
+        if deprecated:
+            logger.warning(
+                "Part %r uses paths starting with a directory name in parentheses. "
+                "These paths are deprecated and won't be supported in a future "
+                "version: %s",
+                self.name,
+                ", ".join(deprecated),
             )
 
     def _check_partitions_in_filepaths(
@@ -1207,9 +1233,6 @@ class Part:
         """
         error_list: list[str] = []
         warning_list: list[str] = []
-
-        if not self._partitions:
-            return warning_list, error_list
 
         partition_pattern = re.compile("^-?\\((?P<partition>.*?)\\)")
         possible_partition_pattern = re.compile("^-?(?P<possible_partition>[a-z]+)/?")

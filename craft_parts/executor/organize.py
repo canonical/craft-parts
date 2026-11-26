@@ -39,6 +39,7 @@ from craft_parts.utils import file_utils, path_utils
 from craft_parts.utils.partition_utils import (
     BUILD_PARTITION,
     DEFAULT_PARTITION,
+    ORGANIZE_PSEUDO_PARTITIONS,
     OVERLAY_PARTITION,
 )
 
@@ -272,7 +273,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
     *,
     part_name: str,
     file_map: dict[str, str],
-    install_dir_map: Mapping[str | None, Path],
+    install_dir_map: Mapping[str, Path],
     overwrite: bool,
     default_partition: str,
 ) -> None:
@@ -295,19 +296,23 @@ def organize_files(  # noqa: PLR0912, PLR0915
         the default partition.
     """
     for key in sorted(file_map, key=lambda x: ["*" in x, x]):
-        src_partition_pair = path_utils.get_partition_and_path(key, default_partition)
+        src_partition_pair = path_utils.get_user_partition_and_path(
+            key, default_partition, special_partitions=ORGANIZE_PSEUDO_PARTITIONS
+        )
         src = get_src_path(
             src_partition_pair,
             part_name,
             install_dir_map,
             default_partition,
         )
-        src_root = install_dir_map.get(None) or install_dir_map[default_partition]
+        src_root = install_dir_map[default_partition]
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
-        dst_partition_pair = path_utils.get_partition_and_path(
-            file_map[key].lstrip("/"), default_partition
+        dst_partition_pair = path_utils.get_user_partition_and_path(
+            file_map[key].lstrip("/"),
+            default_partition,
+            special_partitions=ORGANIZE_PSEUDO_PARTITIONS,
         )
         dst, dst_string = get_dst_path(
             dst_partition_pair,
@@ -594,7 +599,7 @@ def organize_files(  # noqa: PLR0912, PLR0915
 def get_src_path(
     src_partition_path: path_utils.PartitionPathPair,
     part_name: str,
-    install_dir_map: Mapping[str | None, Path],
+    install_dir_map: Mapping[str, Path],
     default_partition: str,
 ) -> Path:
     """Return the full path for a relative source."""
@@ -662,7 +667,7 @@ def get_src_path(
 def get_dst_path(
     dst_partition_path: path_utils.PartitionPathPair,
     part_name: str,
-    install_dir_map: Mapping[str | None, Path],
+    install_dir_map: Mapping[str, Path],
     default_partition: str,
 ) -> tuple[Path, str]:
     """Return the full destination path and log-friendly representation of a destination."""

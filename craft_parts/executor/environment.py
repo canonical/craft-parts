@@ -23,7 +23,6 @@ import logging
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, overload
 
-from craft_parts import errors
 from craft_parts.features import Features
 from craft_parts.steps import Step
 from craft_parts.utils import os_utils
@@ -205,18 +204,11 @@ def _translate_partition_env(partition: str) -> str:
 def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     """Get environment variables related to partitions.
 
-    Assumes the partition feature is enabled.
-
     :param info: The project information.
 
     :returns: A dictionary contain environment variables for partitions.
-
-    :raises FeatureError: If the Project does not specify any partitions.
     """
     environment: dict[str, str] = {}
-
-    if not info.partitions:
-        raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
     for partition in info.partitions:
         # CRAFT_DEFAULT_* vars for the default partition
@@ -245,18 +237,11 @@ def _get_step_overlay_environment_for_partitions(
 ) -> dict[str, str]:
     """Get environment variables related to partitions and overlay for a part.
 
-    Assumes the partition feature is enabled.
-
     :param step_info: Information about the current step.
 
     :returns: A dictionary containing step environment variables for partitions.
-
-    :raises FeatureError: If the Project does not specify any partitions.
     """
     environment: dict[str, str] = {}
-
-    if not partitions:
-        raise errors.FeatureError("Partitions enabled but no partitions specified.")
 
     for partition in partitions:
         # CRAFT_DEFAULT_* var for the default partition

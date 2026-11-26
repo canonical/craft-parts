@@ -35,7 +35,11 @@ from craft_parts.filesystem_mounts import (
     FilesystemMountItem,
     FilesystemMounts,
 )
-from craft_parts.utils.partition_utils import DEFAULT_PARTITION, is_default_partition
+from craft_parts.utils.partition_utils import (
+    DEFAULT_PARTITION,
+    is_default_partition,
+    normalize_partition_names,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence, ValuesView
@@ -448,6 +452,8 @@ class ProjectInfo:
         if arch and arch not in _DEB_TO_TRIPLET:
             raise errors.InvalidArchitecture(arch)
 
+        partitions = normalize_partition_names(partitions)
+
         if not project_dirs:
             project_dirs = ProjectDirs(partitions=partitions)
 
@@ -639,23 +645,19 @@ class ProjectInfo:
         }
 
     @property
-    def partitions(self) -> list[str] | None:
+    def partitions(self) -> list[str]:
         """Return the project's partitions."""
-        return self._partitions
+        return list(self._partitions)
 
     @property
-    def default_partition(self) -> str | None:
+    def default_partition(self) -> str:
         """Get the "default" partition from a partition list."""
-        if self._partitions:
-            return self._partitions[0]
-        return None
+        return self._partitions[0]
 
     @property
     def is_default_partition_aliased(self) -> bool:
         """Check if the default partition is aliased."""
-        return (
-            self._partitions is not None and self.default_partition != DEFAULT_PARTITION
-        )
+        return self.default_partition != DEFAULT_PARTITION
 
     @property
     def alias_partition_dir(self) -> Path | None:
@@ -711,7 +713,13 @@ class ProjectInfo:
             if default_filesytem_mount:
                 return default_filesytem_mount
 
-        return FilesystemMount(root=[FilesystemMountItem(mount="/", device="default")])
+        return FilesystemMount(
+            root=[
+                FilesystemMountItem(
+                    mount="/", device=self.default_partition or "default"
+                )
+            ]
+        )
 
     @property
     def base_layer_dir(self) -> Path | None:
@@ -818,8 +826,7 @@ class ProjectOptions(pydantic.BaseModel):
     :param project_vars: A dictionary containing the project variables.
     :param project_vars_part_name: Project variables can be set only if
         the part name matches this name.
-    :param partitions: The project partitions, if the partitions feature is
-        enabled.
+    :param partitions: The project partitions.
     """
 
     application_name: str = ""
@@ -914,7 +921,7 @@ class PartInfo:
         return self._part_install_dir
 
     @property
-    def part_install_dirs(self) -> Mapping[str | None, Path]:
+    def part_install_dirs(self) -> Mapping[str, Path]:
         """Return the subdirectories to install build artifacts in partitions."""
         return self._part_install_dirs
 

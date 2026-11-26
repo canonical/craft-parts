@@ -272,9 +272,6 @@ class Executor:
         from parts that weren't cleaned yet can be in the way of the new layout,
         for example where the new default partition was a regular one before.
         """
-        if not self._project_info.partitions:
-            return
-
         options = ProjectOptions.from_project_info(self._project_info)
         cleaned = False
         for part in self._part_list:
