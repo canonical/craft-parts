@@ -1155,6 +1155,7 @@ class TestPackages:
 
         handler._run_build(StepInfo(part_info, Step.BUILD), stdout=None, stderr=None)
         unpack.assert_called_once()
+        assert unpack.call_args.kwargs["arch"] == info.target_arch
 
     def test_unpack_stage_snaps(self, mocker, new_dir, partitions):
         mock_snap_provision = mocker.patch(

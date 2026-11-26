@@ -41,6 +41,11 @@ New features:
   version, as names in parentheses are reserved for partitions. The ``(build)``
   and ``(overlay)`` prefixes in the ``organize`` key aren't affected.
 
+Bug fixes:
+
+- When cross-compiling, cut Chisel slices for the target architecture instead
+  of the host architecture.
+
 For a complete list of commits, check out the `3.0.0`_ release on GitHub.
 
 
