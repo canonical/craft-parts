@@ -221,6 +221,9 @@ class OverlayManager:
             package_names,
             refresh_package_cache=False,
             use_host_sources=self._use_host_sources,
+            # Packages come from the cache filled by download_packages, and the
+            # host certificates would hide what packages write to /etc/ssl/certs.
+            use_host_certificates=False,
             include_recommends=include_recommends,
         )
 

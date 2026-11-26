@@ -281,6 +281,66 @@ class TestChroot:
             )
         ]
 
+    def test_chroot_use_host_sources_without_host_certificates(
+        self, mocker, new_dir, mock_chroot
+    ):
+        """The host CA certificates are not mounted over what the chroot installs."""
+        mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
+        mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")
+        mocker.patch("shutil.copytree")
+
+        spy_process = mocker.spy(_FORK_CTX, "Process")
+        new_root = Path(new_dir, "dir1")
+
+        # this runs in the child process
+        Path("dir1").mkdir()
+        for subdir in ["etc", "proc", "sys", "dev", "dev/shm"]:
+            Path(new_root, subdir).mkdir()
+
+        chroot.chroot(
+            new_root,
+            target_func,
+            "content",
+            use_host_sources=True,
+            use_host_certificates=False,
+        )
+
+        assert Path("dir1/foo.txt").read_text() == "content"
+        assert spy_process.mock_calls == [
+            call(
+                target=chroot._runner,
+                args=(new_root, ANY, target_func, ("content",), {}),
+            )
+        ]
+        assert mock_mount.mock_calls == [
+            call(
+                PosixPath("/etc/resolv.conf"),
+                PosixPath(f"{new_root}/etc/resolv.conf"),
+                "--bind",
+            ),
+            call(PosixPath("proc"), PosixPath(f"{new_root}/proc"), "-tproc"),
+            call(PosixPath("sysfs"), PosixPath(f"{new_root}/sys"), "-tsysfs"),
+            call(
+                PosixPath("/dev"),
+                PosixPath(f"{new_root}/dev"),
+                "--rbind",
+                "--make-rprivate",
+            ),
+            call(PosixPath("/etc/apt"), PosixPath(f"{new_root}/etc/apt"), "-ttmpfs"),
+            call(PosixPath(f"{new_root}/dev"), None, "--make-rprivate"),
+            call(PosixPath(f"{new_root}/sys"), None, "--make-rprivate"),
+            call(PosixPath(f"{new_root}/proc"), None, "--make-rprivate"),
+            call(PosixPath(f"{new_root}/etc/resolv.conf"), None, "--make-rprivate"),
+            call(PosixPath(f"{new_root}/etc/apt"), None, "--make-rprivate"),
+        ]
+        assert mock_umount.mock_calls == [
+            call(PosixPath(f"{new_root}/dev"), "--recursive", "--lazy"),
+            call(PosixPath(f"{new_root}/sys"), "--recursive"),
+            call(PosixPath(f"{new_root}/proc"), "--recursive"),
+            call(PosixPath(f"{new_root}/etc/resolv.conf"), "--recursive"),
+            call(PosixPath(f"{new_root}/etc/apt"), "--recursive"),
+        ]
+
     def test_chroot_additional_bind_mounts(self, mocker, new_dir, mock_chroot):
         mock_mount = mocker.patch("craft_parts.utils.os_utils.mount")
         mock_umount = mocker.patch("craft_parts.utils.os_utils.umount")

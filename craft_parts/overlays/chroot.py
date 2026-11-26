@@ -57,6 +57,7 @@ def chroot(
     target: Callable[..., _T],
     *args: Any,
     use_host_sources: bool = False,
+    use_host_certificates: bool = True,
     bind_mounts: Sequence[BindMount] = (),
     **kwargs: Any,
 ) -> _T:
@@ -68,6 +69,10 @@ def chroot(
     :param kwargs: Keyword arguments for target.
     :param use_host_sources: Whether overlay steps should also include the repository
       sources defined on the host.
+    :param use_host_certificates: Whether to bind mount the host's CA certificates
+      when using host sources. They are needed to fetch from HTTPS archives, but
+      anything written to them in the chroot goes to the host, so steps that only
+      install already downloaded packages should not mount them.
     :param bind_mounts: Additional paths to bind mount inside the chroot.
 
     :returns: The target function return value.
@@ -107,7 +112,10 @@ def chroot(
     ]
     try:
         _setup_chroot(
-            path, use_host_sources=use_host_sources, extra_mounts=extra_mounts
+            path,
+            use_host_sources=use_host_sources,
+            use_host_certificates=use_host_certificates,
+            extra_mounts=extra_mounts,
         )
         child.start()
         res, err = parent_conn.recv()
@@ -115,7 +123,10 @@ def chroot(
     finally:
         logger.debug("[pid=%d] clean up chroot", os.getpid())
         _cleanup_chroot(
-            path, use_host_sources=use_host_sources, extra_mounts=extra_mounts
+            path,
+            use_host_sources=use_host_sources,
+            use_host_certificates=use_host_certificates,
+            extra_mounts=extra_mounts,
         )
 
     if isinstance(err, str):
@@ -165,7 +176,11 @@ def _host_compatible_chroot(path: Path) -> None:
 
 
 def _setup_chroot(
-    path: Path, *, use_host_sources: bool, extra_mounts: Sequence[_Mount] = ()
+    path: Path,
+    *,
+    use_host_sources: bool,
+    use_host_certificates: bool = True,
+    extra_mounts: Sequence[_Mount] = (),
 ) -> None:
     """Prepare the chroot environment before executing the target function."""
     logger.debug("setup chroot: %r", path)
@@ -176,12 +191,18 @@ def _setup_chroot(
         if use_host_sources:
             _host_compatible_chroot(path)
             _setup_chroot_mounts(path, _ubuntu_apt_mounts)
+            if use_host_certificates:
+                _setup_chroot_mounts(path, _ubuntu_apt_certificate_mounts)
 
         _setup_chroot_mounts(path, extra_mounts)
 
 
 def _cleanup_chroot(
-    path: Path, *, use_host_sources: bool, extra_mounts: Sequence[_Mount] = ()
+    path: Path,
+    *,
+    use_host_sources: bool,
+    use_host_certificates: bool = True,
+    extra_mounts: Sequence[_Mount] = (),
 ) -> None:
     """Clean the chroot environment after executing the target function."""
     logger.debug("cleanup chroot: %r", path)
@@ -192,6 +213,8 @@ def _cleanup_chroot(
         if use_host_sources:
             # Note: no need to check if host is compatible since
             # we already called _host_compatible_chroot in _setup_chroot
+            if use_host_certificates:
+                _cleanup_chroot_mounts(path, _ubuntu_apt_certificate_mounts)
             _cleanup_chroot_mounts(path, _ubuntu_apt_mounts)
 
     logger.debug("chroot cleanup complete")
@@ -404,12 +427,18 @@ _linux_mounts: Sequence[_Mount] = [
 # Mounts required to import host's Ubuntu Pro apt configuration to chroot
 _ubuntu_apt_mounts: Sequence[_Mount] = [
     _TempFSClone("/etc/apt", "/etc/apt", skip_missing=False),
+    _BindMount("/usr/share/keyrings/", "/usr/share/keyrings/", skip_missing=True),
+]
+
+# Host CA certificates, so apt can fetch from HTTPS archives such as Ubuntu Pro's
+# even if the chroot has no certificates. These are bind mounts, so whatever a
+# package writes there during installation lands on the host and not the chroot.
+_ubuntu_apt_certificate_mounts: Sequence[_Mount] = [
     _BindMount(
         "/usr/share/ca-certificates/",
         "/usr/share/ca-certificates/",
         skip_missing=False,
     ),
-    _BindMount("/usr/share/keyrings/", "/usr/share/keyrings/", skip_missing=True),
     _BindMount("/etc/ssl/certs/", "/etc/ssl/certs/", skip_missing=False),
     _BindMount(
         "/etc/ca-certificates.conf", "/etc/ca-certificates.conf", skip_missing=False
