@@ -666,6 +666,20 @@ class TestSnapPackageLifecycle:
             )
             assert downloaded == ["fake-snap=42"]
 
+    def test_download_snaps_does_not_query_store_after_download(
+        self, fake_snap_command, mocker, tmp_path
+    ):
+        get_store_snap_info = mocker.patch.object(
+            snaps.SnapPackage,
+            "get_store_snap_info",
+            side_effect=AssertionError("store lookup should not be needed"),
+        )
+
+        downloaded = snaps.download_snaps(snaps_list=["fake-snap"], directory=tmp_path)
+
+        assert downloaded == ["fake-snap=42"]
+        get_store_snap_info.assert_not_called()
+
     def test_refresh_to_classic(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [
             {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}

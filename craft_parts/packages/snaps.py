@@ -432,11 +432,8 @@ def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> lis
         logger.debug("Downloading snap %s", snap_pkg.name)
         assertion_path = snap_pkg.download(directory=directory)
 
-        snap_info = snap_pkg.get_store_snap_info()
-        snap_id = snap_info.get("snap-id") if snap_info else None
         revision = _get_downloaded_snap_revision(
             snap_name=snap_pkg.name,
-            snap_id=snap_id,
             directory=directory,
             assertion_path=assertion_path,
         )
