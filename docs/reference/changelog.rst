@@ -27,6 +27,9 @@ Changelog
 
 New features:
 
+- Stage snap pull assets now include the revision read from the downloaded
+  assertion.
+
 - Partitions are now always handled internally. Projects that don't define
   partitions use a single ``default`` partition, so projects with and without
   partitions share the same code path. The ``enable_partitions`` feature flag

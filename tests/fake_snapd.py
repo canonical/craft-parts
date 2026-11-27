@@ -166,6 +166,9 @@ class _FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
         if snap_name == "new-fake-snap":
             status_code = 200
             params = {"channels": {"latest/stable": {"confinement": "strict"}}}
+        elif snap_name in ("basic", "bad-snap"):
+            status_code = 200
+            params = {"snap-id": f"{snap_name}-id"}
         elif snap_name in ("core16", "core18"):
             status_code = 200
             params = {

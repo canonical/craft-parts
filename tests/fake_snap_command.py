@@ -108,9 +108,21 @@ class FakeSnapCommand:
             )
 
         if cmd == "download":
-            if self.fake_download:
+            if kwargs.get("cwd") is not None:
                 dest = Path(kwargs["cwd"], f"{params[0]}.snap")
-                shutil.copyfile(self.fake_download, dest)
+                if self.fake_download:
+                    shutil.copyfile(self.fake_download, dest)
+                else:
+                    dest.write_bytes(b"fake snap")
+                assertion = Path(kwargs["cwd"], f"{params[0]}.assert")
+                assertion.write_text(
+                    "type: account-key\n"
+                    "account-id: developer-id\n\n"
+                    "type: snap-revision\n"
+                    f"snap-id: {params[0]}-id\n"
+                    "snap-revision: 42\n\n"
+                    "signature\n"
+                )
             return b"Downloaded  "
 
         return None
