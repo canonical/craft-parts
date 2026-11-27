@@ -578,6 +578,7 @@ class TestSnapPackageLifecycle:
 
     def test_download_snaps_reads_revision_from_assertion(self, tmp_path):
         assertion = tmp_path / "fake-snap_123.assert"
+        assertion.with_suffix(".snap").write_bytes(b"snap")
         assertion.write_text(
             "type: account-key\n"
             "account-id: developer-id\n\n"
@@ -596,6 +597,7 @@ class TestSnapPackageLifecycle:
 
     def test_download_snaps_reads_revision_for_store_snap_id(self, tmp_path):
         assertion = tmp_path / "downloaded_123.assert"
+        assertion.with_suffix(".snap").write_bytes(b"snap")
         assertion.write_text(
             "type: snap-revision\n"
             "snap-id: expected-snap-id\n"
@@ -611,6 +613,58 @@ class TestSnapPackageLifecycle:
             )
             == "123"
         )
+
+    def test_find_downloaded_snap_assertion_requires_matching_snap(self, tmp_path):
+        assertion = tmp_path / "fake-snap_123.assert"
+        assertion.write_text(
+            "type: snap-revision\nsnap-id: snap-id\nsnap-revision: 123\n\nsignature\n"
+        )
+
+        with pytest.raises(errors.SnapDownloadError):
+            snaps._find_downloaded_snap_assertion(
+                snap_name="fake-snap", directory=tmp_path
+            )
+
+    def test_download_snaps_uses_assertion_from_current_download(
+        self, fake_snapd, fake_snap_command, tmp_path
+    ):
+        fake_snapd.find_result = [
+            {
+                "fake-snap": {
+                    "snap-id": "fake-snap-id",
+                    "channels": {"latest/stable": {"confinement": "strict"}},
+                }
+            }
+        ]
+        old_assertion = tmp_path / "fake-snap_41.assert"
+        old_assertion.with_suffix(".snap").write_bytes(b"old snap")
+        old_assertion.write_text(
+            "type: snap-revision\n"
+            "snap-id: fake-snap-id\n"
+            "snap-revision: 41\n\n"
+            "signature\n"
+        )
+
+        downloaded = snaps.download_snaps(snaps_list=["fake-snap"], directory=tmp_path)
+
+        assert downloaded == ["fake-snap=42"]
+
+    def test_download_snaps_same_revision_again(
+        self, fake_snapd, fake_snap_command, tmp_path
+    ):
+        fake_snapd.find_result = [
+            {
+                "fake-snap": {
+                    "snap-id": "fake-snap-id",
+                    "channels": {"latest/stable": {"confinement": "strict"}},
+                }
+            }
+        ]
+        for _ in range(2):
+            downloaded = snaps.download_snaps(
+                snaps_list=["fake-snap"], directory=tmp_path
+            )
+            assert downloaded == ["fake-snap=42"]
 
     def test_refresh_to_classic(self, fake_snapd, fake_snap_command):
         fake_snapd.find_result = [

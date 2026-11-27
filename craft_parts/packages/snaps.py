@@ -273,12 +273,18 @@ class SnapPackage:
         # available in the store.
         return self.installed or self.in_store
 
-    def download(self, *, directory: str | pathlib.Path | None = None) -> None:
+    def download(
+        self, *, directory: str | pathlib.Path | None = None
+    ) -> pathlib.Path | None:
         """Download a given snap."""
         # We use the `snap download` command here on recommendation
         # of the snapd team.
         logger.debug("Downloading snap: %s", self.name)
         snap_download_cmd = ["snap", "download", self.name]
+        existing_snap_paths: set[pathlib.Path] = set()
+        if directory is not None:
+            directory = pathlib.Path(directory)
+            existing_snap_paths = set(directory.glob("*.snap"))
         if self._original_channel:
             snap_download_cmd.extend(["--channel", self._original_channel])
         try:
@@ -297,16 +303,25 @@ class SnapPackage:
             ) from err
 
         if directory is None:
-            return
+            return None
+
+        # If the same revision was already in the directory, the download leaves
+        # no new file, so fall back to the existing snap/assertion pairs.
+        downloaded_snap_paths = {
+            path for path in directory.glob("*.snap") if path not in existing_snap_paths
+        } or None
 
         assertion_path = _find_downloaded_snap_assertion(
-            snap_name=self.name, directory=pathlib.Path(directory)
+            snap_name=self.name,
+            directory=directory,
+            snap_paths=downloaded_snap_paths,
         )
         assertion_headers = _read_assertion_headers(assertion_path)
         _verify_downloaded_snap(
             assertion_path=assertion_path,
             headers=assertion_headers,
         )
+        return assertion_path
 
     def install(self) -> None:
         """Installs the snap onto the system."""
@@ -415,12 +430,15 @@ def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> lis
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
         logger.debug("Downloading snap %s", snap_pkg.name)
-        snap_pkg.download(directory=directory)
+        assertion_path = snap_pkg.download(directory=directory)
 
         snap_info = snap_pkg.get_store_snap_info()
         snap_id = snap_info.get("snap-id") if snap_info else None
         revision = _get_downloaded_snap_revision(
-            snap_name=snap_pkg.name, snap_id=snap_id, directory=directory
+            snap_name=snap_pkg.name,
+            snap_id=snap_id,
+            directory=directory,
+            assertion_path=assertion_path,
         )
         snap_name, snap_channel = _get_parsed_snap(snap)
         normalized_snap = f"{snap_name}@{snap_channel}" if snap_channel else snap_name
@@ -430,10 +448,14 @@ def download_snaps(*, snaps_list: Sequence[str], directory: pathlib.Path) -> lis
 
 
 def _get_downloaded_snap_revision(
-    *, snap_name: str, directory: pathlib.Path, snap_id: str | None = None
+    *,
+    snap_name: str,
+    directory: pathlib.Path,
+    snap_id: str | None = None,
+    assertion_path: pathlib.Path | None = None,
 ) -> str:
     """Read the revision from a downloaded snap-revision assertion."""
-    assertion_path = _find_downloaded_snap_assertion(
+    assertion_path = assertion_path or _find_downloaded_snap_assertion(
         snap_name=snap_name, snap_id=snap_id, directory=directory
     )
     headers = _read_assertion_headers(assertion_path)
@@ -448,10 +470,19 @@ def _get_downloaded_snap_revision(
 
 
 def _find_downloaded_snap_assertion(
-    *, snap_name: str, directory: pathlib.Path, snap_id: str | None = None
+    *,
+    snap_name: str,
+    directory: pathlib.Path,
+    snap_id: str | None = None,
+    snap_paths: set[pathlib.Path] | None = None,
 ) -> pathlib.Path:
     """Find the snap-revision assertion for a downloaded snap."""
     for assertion_path in directory.glob("*.assert"):
+        snap_path = assertion_path.with_suffix(".snap")
+        if not snap_path.is_file():
+            continue
+        if snap_paths is not None and snap_path not in snap_paths:
+            continue
         headers = _read_assertion_headers(assertion_path)
         if headers.get("type") != "snap-revision":
             continue
