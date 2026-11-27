@@ -43,6 +43,7 @@ _pull_state_foo = textwrap.dedent(
       source-commit: ''
       source-submodules: null
       stage-packages: []
+      stage-snaps: []
       stage-slices: []
       overlay-packages: []
       overlay-recommended-packages: []
@@ -85,6 +86,7 @@ _pull_state_bar = textwrap.dedent(
       source-commit: ''
       source-submodules: null
       stage-packages: []
+      stage-snaps: []
       stage-slices: []
       overlay-packages: []
       overlay-recommended-packages: []
