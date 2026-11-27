@@ -35,7 +35,7 @@ Replace ``<step>`` with the name of a step in the lifecycle.
 Override a step
 ---------------
 
-Craftctl comes in most handy when when you need to tweak files or settings before or
+Craftctl comes in most handy when you need to tweak files or settings before or
 after executing a step.
 
 To specify where the regular step behavior occurs inside the scriptlet, call it with the
