@@ -140,6 +140,10 @@ def test_get_build_commands(part_info, maven_settings_path):
 
     assert plugin.get_build_commands() == (
         [
+            *plugin._get_maven_prefetch_commands(
+                maven_executable="mvn",
+                settings_path=maven_settings_path,
+            ),
             f"mvn package -s {maven_settings_path}",
             *plugin._get_java_post_build_commands(),
         ]
@@ -157,6 +161,10 @@ def test_get_build_commands_with_parameters(part_info, maven_settings_path):
 
     assert plugin.get_build_commands() == (
         [
+            *plugin._get_maven_prefetch_commands(
+                maven_executable="mvn",
+                settings_path=maven_settings_path,
+            ),
             f"mvn package -s {maven_settings_path} -Dprop1=1 -c",
             *plugin._get_java_post_build_commands(),
         ]
@@ -179,6 +187,10 @@ def test_get_build_commands_use_maven_wrapper(part_info, maven_settings_path):
 https://canonical-craft-parts.readthedocs-hosted.com/en/latest/\
 common/craft-parts/reference/plugins/maven_plugin.html'; exit 1;
 }""",
+            *plugin._get_maven_prefetch_commands(
+                maven_executable="${CRAFT_PART_BUILD_WORK}/mvnw",
+                settings_path=maven_settings_path,
+            ),
             "${CRAFT_PART_BUILD_WORK}/mvnw package" + f" -s {maven_settings_path}",
             *plugin._get_java_post_build_commands(),
         ]
