@@ -315,6 +315,54 @@ class TestPartHandling:
         assert organize_install_dirs["build"] == self._part.part_build_dir
         assert "build" not in self._part.part_install_dirs
 
+    @pytest.mark.parametrize(("update", "expect_kept"), [(False, False), (True, True)])
+    def test_run_build_stale_install_files(self, mocker, update, expect_kept):
+        """A fresh build starts from empty install dirs, an update keeps them."""
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
+        mocker.patch("craft_parts.packages.Repository.get_installed_packages")
+        mocker.patch("craft_parts.packages.snaps.get_installed_snaps")
+        mocker.patch("subprocess.check_output", return_value=b"os-info")
+
+        stale_files = []
+        for install_dir in self._part.part_install_dirs.values():
+            install_dir.mkdir(parents=True)
+            stale_file = install_dir / "stale"
+            stale_file.write_text("left over from a failed build")
+            stale_files.append(stale_file)
+
+        self._handler._run_build(
+            StepInfo(self._part_info, Step.BUILD),
+            stdout=None,
+            stderr=None,
+            update=update,
+        )
+
+        for stale_file in stale_files:
+            assert stale_file.exists() is expect_kept
+        for install_dir in self._part.part_install_dirs.values():
+            assert install_dir.is_dir()
+
+    def test_run_build_keeps_unpacked_stage_packages(self, mocker):
+        """Clearing the install dir happens before stage packages are unpacked."""
+        mocker.patch("craft_parts.executor.step_handler.StepHandler._builtin_build")
+        mocker.patch("craft_parts.packages.Repository.get_installed_packages")
+        mocker.patch("craft_parts.packages.snaps.get_installed_snaps")
+        mocker.patch("subprocess.check_output", return_value=b"os-info")
+
+        def fake_unpack(*, install_path, **kwargs):
+            (install_path / "from-stage-package").write_text("unpacked")
+
+        mocker.patch(
+            "craft_parts.packages.Repository.unpack_stage_packages",
+            side_effect=fake_unpack,
+        )
+
+        self._handler._run_build(
+            StepInfo(self._part_info, Step.BUILD), stdout=None, stderr=None
+        )
+
+        assert (self._part.part_install_dir / "from-stage-package").exists()
+
     @pytest.mark.usefixtures("new_dir")
     @pytest.mark.parametrize("out_of_source", [True, False])
     def test_run_build_out_of_source_behavior(self, mocker, out_of_source):

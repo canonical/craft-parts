@@ -270,6 +270,52 @@ def test_lifecycle_rerun_actions(new_dir, partitions, mocker):
     ]
 
 
+def test_build_after_failed_build(new_dir, partitions):
+    """A build that failed after installing files can be run again.
+
+    The failed build leaves no state, so the next build is a fresh run rather
+    than a rerun and must not trip over the files installed last time.
+    """
+    Path("src").mkdir()
+    Path("src/hello.txt").write_text("hello")
+
+    def build_parts(override_build: str) -> dict:
+        return {
+            "parts": {
+                "foo": {
+                    "plugin": "dump",
+                    "source": "src",
+                    "override-build": override_build,
+                }
+            }
+        }
+
+    failing_parts = build_parts("craftctl default\nexit 1")
+    for _ in range(2):
+        lf = craft_parts.LifecycleManager(
+            failing_parts,
+            application_name="test_demo",
+            cache_dir=new_dir,
+            partitions=partitions,
+        )
+        with pytest.raises(craft_parts.errors.ScriptletRunError):
+            with lf.action_executor() as ctx:
+                ctx.execute(lf.plan(Step.BUILD))
+
+    lf = craft_parts.LifecycleManager(
+        build_parts("craftctl default"),
+        application_name="test_demo",
+        cache_dir=new_dir,
+        partitions=partitions,
+    )
+    actions = lf.plan(Step.BUILD)
+    assert Action("foo", Step.BUILD) in actions
+    with lf.action_executor() as ctx:
+        ctx.execute(actions)
+
+    assert Path(lf.project_info.dirs.parts_dir, "foo/install/hello.txt").exists()
+
+
 @pytest.mark.usefixtures("new_dir")
 class TestCleaning:
     @pytest.fixture(autouse=True)

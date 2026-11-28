@@ -463,6 +463,13 @@ class PartHandler:
 
         :return: The build step state.
         """
+        if not update:
+            # A build that failed leaves no state behind, so the next build is a
+            # fresh run rather than a rerun and the step is not cleaned first.
+            # Start from empty install dirs so files from that run don't clash.
+            for install_dir in self._part.part_install_dirs.values():
+                _remove(install_dir)
+
         self._make_dirs()
         self._unpack_stage_packages()
         self._unpack_stage_snaps()
