@@ -41,6 +41,10 @@ New features:
   version, as names in parentheses are reserved for partitions. The ``(build)``
   and ``(overlay)`` prefixes in the ``organize`` key aren't affected.
 
+- Warn when a part's ``source`` is an absolute path or a relative path that
+  leads out of the project directory, as these may not exist in a managed
+  build environment.
+
 For a complete list of commits, check out the `3.0.0`_ release on GitHub.
 
 

@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 import textwrap
 import time
@@ -72,6 +73,28 @@ class TestLifecycleManager:
                 **self._lcm_kwargs,
             )
         assert raised.value.arch_name == "invalid"
+
+    @pytest.mark.parametrize(
+        ("source", "warns"),
+        [
+            ("$CRAFT_PROJECT_DIR", False),
+            ("${CRAFT_PROJECT_DIR}/src", False),
+            ("/opt/src", True),
+        ],
+    )
+    def test_source_location_warning(self, new_dir, caplog, source, warns):
+        caplog.set_level(logging.WARNING, logger="craft_parts")
+        self._data["parts"]["foo"]["source"] = source
+
+        lifecycle_manager.LifecycleManager(
+            self._data,
+            application_name="test_manager",
+            cache_dir=new_dir,
+            **self._lcm_kwargs,
+        )
+
+        messages = [r.getMessage() for r in caplog.records]
+        assert any("outside the project directory" in m for m in messages) == warns
 
     @pytest.mark.parametrize("name", ["myapp", "Myapp_2", "MYAPP", "x"])
     def test_application_name(self, new_dir, name):
