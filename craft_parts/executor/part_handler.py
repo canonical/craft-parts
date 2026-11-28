@@ -100,12 +100,12 @@ class _Squasher:
 
     def __init__(
         self,
-        partition: str | None,
+        partition: str,
         default_partition: str | None,
         filesystem_mount: FilesystemMount | None = None,
     ) -> None:
-        self.migrated_files: dict[str | None, _MigratedContents] = {partition: {}}
-        self.migrated_directories: dict[str | None, _MigratedContents] = {partition: {}}
+        self.migrated_files: dict[str, _MigratedContents] = {partition: {}}
+        self.migrated_directories: dict[str, _MigratedContents] = {partition: {}}
         self._src_partition = partition
         self._default_partition = default_partition
         self._distributed_paths: set[Path] = set()
@@ -115,17 +115,14 @@ class _Squasher:
     def migrate(
         self,
         srcdir: Path,
-        destdirs: Mapping[str | None, Path],
+        destdirs: Mapping[str, Path],
     ) -> None:
         """Migrate layered content from a partition to destination directories.
 
         If the source partition is the default one, content can be distributed to other
         partitions using the provided filesystem mounts.
         """
-        if (
-            self._src_partition is not None
-            and self._src_partition == self._default_partition
-        ):
+        if self._src_partition == self._default_partition:
             # Distribute content into partitions according to the filesystem mounts
             for entry in reversed(self._filesystem_mount):
                 # Only migrate content from the subdirectory indicated by the filesystem mounts
@@ -160,7 +157,7 @@ class _Squasher:
         srcdir: Path,
         destdir: Path,
         sub_path: Path,
-        dst_partition: str | None,
+        dst_partition: str,
     ) -> None:
         """Actually migrate content from a source to a destination.
 
@@ -415,7 +412,9 @@ class PartHandler:
 
             # apply overlay filter
             overlay_fileset = filesets.Fileset(
-                self._part.spec.overlay_files, name="overlay"
+                self._part.spec.overlay_files,
+                name="overlay",
+                default_partition=self._part_info.default_partition,
             )
             destdir = self._part.part_layer_dir
             files, dirs = filesets.migratable_filesets(
@@ -426,7 +425,7 @@ class PartHandler:
             )
             _apply_file_filter(filter_files=files, filter_dirs=dirs, destdir=destdir)
         else:
-            contents = StepContents()
+            contents = StepContents(partitions=self._part_info.partitions)
 
         partitions_contents: dict[str, MigrationContents] = {
             p: MigrationContents(files=c.files, directories=c.dirs)
@@ -756,7 +755,10 @@ class PartHandler:
                 step=step_info.step,
                 work_dir=work_dir,
             )
-            return StepContents(stage=step_info.step == Step.STAGE)
+            return StepContents(
+                partitions=self._part_info.partitions,
+                stage=step_info.step == Step.STAGE,
+            )
 
         return step_handler.run_builtin()
 
@@ -932,7 +934,7 @@ class PartHandler:
     ) -> None:
         """Clean and repopulate the current part's layer, keeping its state."""
         # delete partition layer dirs, if any
-        for partition in self._part_info.partitions or (None,):
+        for partition in self._part_info.partitions:
             _remove(self._part.part_layer_dirs[partition])
 
         self._run_overlay(step_info, stdout=stdout, stderr=stderr)
@@ -958,7 +960,7 @@ class PartHandler:
         consolidated_states: dict[str | None, MigrationState] = {}
 
         # process parts in each partition
-        for src_partition in self._part_info.partitions or (None,):
+        for src_partition in self._part_info.partitions:
             stage_overlay_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dirs[src_partition], Step.STAGE
             )
@@ -1012,7 +1014,7 @@ class PartHandler:
         migration_states: dict[str | None, MigrationState] = {}
 
         # Process each partition.
-        for partition in self._part_info.partitions or (None,):
+        for partition in self._part_info.partitions:
             prime_overlay_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dirs[partition], Step.PRIME
             )
@@ -1059,7 +1061,9 @@ class PartHandler:
                 )
 
             migration_states[partition] = MigrationState(
-                files=migrated_files, directories=migrated_dirs
+                partition=partition,
+                files=migrated_files,
+                directories=migrated_dirs,
             )
 
         self._write_overlay_migration_states(migration_states, Step.PRIME)
@@ -1071,7 +1075,7 @@ class PartHandler:
 
         Do not overwrite an existing migration state file.
         """
-        for partition in self._part_info.partitions or (None,):
+        for partition in self._part_info.partitions:
             step_overlay_state_path = states.get_overlay_migration_state_path(
                 self._part.overlay_dirs[partition],
                 step,
@@ -1147,7 +1151,7 @@ class PartHandler:
 
     def _clean_overlay(self) -> None:
         """Remove the current part' s layer data and verification hash."""
-        for partition in self._part_info.partitions or (None,):
+        for partition in self._part_info.partitions:
             _remove(self._part.part_layer_dirs[partition])
         _remove(self._part.part_state_dir / "layer_hash")
         # Clean the package cache if the part was below it and if the
@@ -1188,9 +1192,7 @@ class PartHandler:
         ) in self._part.prime_dirs.items():  # iterate over partitions
             self._clean_shared(Step.PRIME, partition=partition, shared_dir=prime_dir)
 
-    def _clean_shared(
-        self, step: Step, *, partition: str | None, shared_dir: Path
-    ) -> None:
+    def _clean_shared(self, step: Step, *, partition: str, shared_dir: Path) -> None:
         """Remove the current part's shared files from the given directory.
 
         :param step: The step corresponding to the shared directory.
@@ -1642,8 +1644,8 @@ def _get_primed_stage_packages(
 
 def _consolidate_states(
     consolidated_states: dict[str | None, MigrationState],
-    migrated_files: dict[str | None, _MigratedContents],
-    migrated_directories: dict[str | None, _MigratedContents],
+    migrated_files: dict[str, _MigratedContents],
+    migrated_directories: dict[str, _MigratedContents],
 ) -> None:
     """Consolidate migrated files into MigrationStates."""
     for partition, files in migrated_files.items():

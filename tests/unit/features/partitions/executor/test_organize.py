@@ -418,7 +418,7 @@ def test_organize_file_from_build_copies_and_keeps_source(tmp_path: Path):
     organize_files(
         part_name="part-name",
         file_map={"(build)/README": "usr/share/doc/README"},
-        install_dir_map={None: install_dir, "default": install_dir, "build": build_dir},
+        install_dir_map={"default": install_dir, "build": build_dir},
         overwrite=False,
         default_partition="default",
     )
@@ -441,7 +441,7 @@ def test_organize_directory_from_build_copies_and_keeps_source(tmp_path: Path):
     organize_files(
         part_name="part-name",
         file_map={"(build)/examples": "usr/share/doc/examples"},
-        install_dir_map={None: install_dir, "default": install_dir, "build": build_dir},
+        install_dir_map={"default": install_dir, "build": build_dir},
         overwrite=False,
         default_partition="default",
     )
@@ -466,7 +466,6 @@ def test_organize_into_build_errors(tmp_path: Path):
             part_name="part-name",
             file_map={"README": "(build)/README"},
             install_dir_map={
-                None: install_dir,
                 "default": install_dir,
                 "build": build_dir,
             },
